@@ -1,0 +1,38 @@
+# MATLAB generated files
+*.asv
+*.m~
+
+# Large data files
+*.mat
+*.fig
+
+# Temporary files
+*~
+*.tmp
+*.bak
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# IDE files
+*.swp
+*.swo
+*~
+
+# Logs
+*.log
+
+# Output directories
+output/
+results/
+temp/
+
+# Data directories (now submodules)
+_archive/
+data/
