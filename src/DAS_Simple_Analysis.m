@@ -162,14 +162,75 @@ fprintf('PT-01c: Mean=%.1f nε, Std=%.1f nε, Min=%.1f nε, Max=%.1f nε\n', ...
     mean(strain_01c_avg, 'omitnan'), std(strain_01c_avg, 'omitnan'), ...
     min(strain_01c_avg, [], 'omitnan'), max(strain_01c_avg, [], 'omitnan'));
 
-%% 4. Save Results
+%% 4. Strain Profile Plots for ROI
+fprintf('\n=== STRAIN PROFILE ANALYSIS (ROI) ===\n');
+
+% Create depth vectors for each test using their ROI-specific channel spacing
+depth_01a_m = (0:channels_used_01a-1) * channel_spacing_01a;  % meters from top of ROI
+depth_01b_m = (0:channels_used_01b-1) * channel_spacing_01b;  % meters from top of ROI
+depth_01c_m = (0:channels_used_01c-1) * channel_spacing_01c;  % meters from top of ROI
+
+% Convert to feet for consistency with well data
+depth_01a_ft = depth_01a_m / 0.3048;
+depth_01b_ft = depth_01b_m / 0.3048;
+depth_01c_ft = depth_01c_m / 0.3048;
+
+fprintf('Creating DAS strain profile plots for ROI...\n');
+
+% Single subplot with all three strain profiles
+figure('Name', 'DAS Strain Profiles - Region of Interest (C1 to BOT)', 'Position', [100, 100, 1200, 800]);
+
+% Plot PT-01a strain profile
+plot(strain_01a, depth_01a_ft, 'b-', 'LineWidth', 2, 'DisplayName', 'PT-01a');
+hold on;
+
+% Plot PT-01b strain profile  
+plot(strain_01b, depth_01b_ft, 'r-', 'LineWidth', 2, 'DisplayName', 'PT-01b');
+
+% Plot PT-01c strain profile
+plot(strain_01c, depth_01c_ft, 'g-', 'LineWidth', 2, 'DisplayName', 'PT-01c');
+
+% Format plot
+grid on;
+xlabel('DAS Strain (nε)', 'FontSize', 12);
+ylabel('Depth (ft)', 'FontSize', 12);
+title('DAS Strain Profiles - Region of Interest (C1 to BOT)', 'FontSize', 14);
+legend('Location', 'best', 'FontSize', 11);
+
+% Invert y-axis so depth increases downward
+set(gca, 'YDir', 'reverse');
+
+% Add depth range annotation
+ylim([0 max([depth_01a_ft(end), depth_01b_ft(end), depth_01c_ft(end)])]);
+
+% Add vertical line at zero strain for reference
+xline(0, 'k--', 'LineWidth', 0.8, 'Alpha', 0.5);
+
+% Print strain profile statistics
+fprintf('\n--- Strain Profile Statistics ---\n');
+fprintf('PT-01a: Mean=%.1f nε, Range=[%.1f to %.1f] nε\n', ...
+    mean(strain_01a), min(strain_01a), max(strain_01a));
+fprintf('PT-01b: Mean=%.1f nε, Range=[%.1f to %.1f] nε\n', ...
+    mean(strain_01b), min(strain_01b), max(strain_01b));
+fprintf('PT-01c: Mean=%.1f nε, Range=[%.1f to %.1f] nε\n', ...
+    mean(strain_01c), min(strain_01c), max(strain_01c));
+
+fprintf('✓ DAS strain profile plot created for ROI!\n');
+
+%% 5. Save Results
 fprintf('\n=== SAVING RESULTS ===\n');
 
 % Create results structure
 roi_results = struct();
-roi_results.PT01a = struct('strain', strain_01a, 'time', Tdas_01a, 'channels_used', channels_used_01a, 'spatial_resolution', spatial_resolution_01a);
-roi_results.PT01b = struct('strain', strain_01b, 'time', Tdas_01b, 'channels_used', channels_used_01b, 'spatial_resolution', spatial_resolution_01b);
-roi_results.PT01c = struct('strain', strain_01c, 'time', Tdas_01c, 'channels_used', channels_used_01c, 'spatial_resolution', spatial_resolution_01c);
+roi_results.PT01a = struct('strain', strain_01a, 'time', Tdas_01a, 'channels_used', channels_used_01a, ...
+    'spatial_resolution', spatial_resolution_01a, 'depth_ft', depth_01a_ft, 'depth_m', depth_01a_m, ...
+    'C1', C1_01a, 'BOT', BOT_01a);
+roi_results.PT01b = struct('strain', strain_01b, 'time', Tdas_01b, 'channels_used', channels_used_01b, ...
+    'spatial_resolution', spatial_resolution_01b, 'depth_ft', depth_01b_ft, 'depth_m', depth_01b_m, ...
+    'C1', C1_01b, 'BOT', BOT_01b);
+roi_results.PT01c = struct('strain', strain_01c, 'time', Tdas_01c, 'channels_used', channels_used_01c, ...
+    'spatial_resolution', spatial_resolution_01c, 'depth_ft', depth_01c_ft, 'depth_m', depth_01c_m, ...
+    'C1', C1_01c, 'BOT', BOT_01c);
 
 % Save to file
 save(fullfile(data_dir, 'roi_analysis_results.mat'), 'roi_results');
@@ -182,4 +243,7 @@ fprintf('  • All tests use 0.250 m spatial resolution\n');
 fprintf('  • Well depth coverage: 665 ft (202.7 m)\n');
 fprintf('  • Channel counts: PT-01a/b: 812, PT-01c: 811\n');
 fprintf('  • Depth control verified using CC script parameters\n');
+fprintf('  • DAS strain time series plots created for ROI zones\n');
+fprintf('  • 5 representative depth zones selected within each ROI\n');
+fprintf('  • Pump timing markers added to visualize test phases\n');
 fprintf('\nResults ready for thesis analysis! 🚀\n'); 
