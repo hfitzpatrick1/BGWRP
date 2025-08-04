@@ -143,7 +143,7 @@ zonea_strain_01c = cumsum(zonea_strain_rate_01c) * dt - zonea_strain_rate_01c(1)
 
 % Apply low-pass filter to smooth the integrated strain
 fprintf('Applying low-pass filter to smooth strain for each zone...\n');
-fc = 1/60; % Cutoff frequency (1/60 Hz = 1 minute period)
+fc = 1/15; % Cutoff frequency (1/15 Hz = 15 second period) - light noise removal
 fs = 1;    % Sampling frequency (1 Hz)
 
 % Design Butterworth low-pass filter
@@ -368,7 +368,7 @@ fprintf('Creating filtered strain rate plots...\n');
 
 % Apply filtering to strain rate data for plotting
 fprintf('Applying filter to strain rate data for visualization...\n');
-fc_rate = 1/30; % Cutoff frequency for strain rate (1/30 Hz = 30 second period)
+fc_rate = 1/10; % Cutoff frequency for strain rate (1/10 Hz = 10 second period) - light noise removal
 fs = 1;         % Sampling frequency (1 Hz)
 
 % Design Butterworth low-pass filter for strain rate
@@ -524,6 +524,6 @@ fprintf('    - Zone a: 450-510 ft (PT-01c pumping depth)\n');
 fprintf('  • Created two complementary plots:\n');
 fprintf('    - Integrated strain time series (cumulative effect)\n');
 fprintf('    - Filtered strain rate time series (instantaneous response)\n');
-fprintf('  • Applied proper filtering: 60s for strain, 30s for strain rate\n');
+fprintf('  • Applied light noise filtering: 15s for strain, 10s for strain rate\n');
 fprintf('  • Shows both cumulative and real-time strain responses\n');
 fprintf('\nResults ready for thesis analysis! 🚀\n');
