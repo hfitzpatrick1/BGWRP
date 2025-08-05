@@ -81,9 +81,9 @@ fprintf('  PT-01b: %s to %s (%.1f hours, %.1f min baseline)\n', char(time_01b(1)
 fprintf('  PT-01c: %s to %s (%.1f hours, %.1f min baseline)\n', char(time_01c(1)), char(time_01c(end)), hours(time_01c(end)-time_01c(1)), baseline_duration_01c/60);
 
 %% Compute all methods for each pump test
-fprintf('\nComputing all 4 integration methods...\n');
+fprintf('\nComputing 3 integration methods...\n');
 
-% PT-01a - All 4 methods
+% PT-01a - 3 methods
 fprintf('Processing PT-01a...\n');
 % Method 1: Detrend first
 t_numeric = (1:length(zonec_strain_rate_01a))';
@@ -93,24 +93,7 @@ strain_rate_detrended = zonec_strain_rate_01a - baseline_trend;
 methods_01a.method1 = cumsum(strain_rate_detrended) * dt;
 methods_01a.method1 = methods_01a.method1 - methods_01a.method1(1);
 
-% Method 2: High-pass filter
-fs = 1; fc_high = 1/1800;
-[b_hp, a_hp] = butter(2, fc_high/(fs/2), 'high');
-strain_rate_filtered = filtfilt(b_hp, a_hp, zonec_strain_rate_01a);
-methods_01a.method2 = cumsum(strain_rate_filtered) * dt;
-methods_01a.method2 = methods_01a.method2 - methods_01a.method2(1);
 
-% Method 3: Baseline correct (PT-01a has NO baseline, use first 10 minutes)
-if baseline_duration_01a > 0
-    baseline_idx = round(baseline_duration_01a);
-    baseline_rate = mean(zonec_strain_rate_01a(1:baseline_idx), 'omitnan');
-else
-    % No baseline available, use first 10 minutes as reference
-    baseline_rate = mean(zonec_strain_rate_01a(1:min(600, end)), 'omitnan');
-end
-strain_rate_corrected = zonec_strain_rate_01a - baseline_rate;
-methods_01a.method3 = cumsum(strain_rate_corrected) * dt;
-methods_01a.method3 = methods_01a.method3 - methods_01a.method3(1);
 
 % Method 4: Post-process
 methods_01a.method4 = cumsum(zonec_strain_rate_01a) * dt;
@@ -119,7 +102,15 @@ background_trend = polyval(p4, t_numeric);
 methods_01a.method4 = methods_01a.method4 - background_trend;
 methods_01a.method4 = methods_01a.method4 - methods_01a.method4(1);
 
-% PT-01b - All 4 methods
+% Method 5: Low-pass filter before integration
+fs = 1; % 1 Hz sampling rate
+fc_low = 1/300; % 5-minute cutoff (remove high-frequency noise)
+[b_lp, a_lp] = butter(2, fc_low/(fs/2), 'low');
+strain_rate_lowpass = filtfilt(b_lp, a_lp, zonec_strain_rate_01a);
+methods_01a.method5 = cumsum(strain_rate_lowpass) * dt;
+methods_01a.method5 = methods_01a.method5 - methods_01a.method5(1);
+
+% PT-01b - 3 methods
 fprintf('Processing PT-01b...\n');
 % Method 1: Detrend first
 t_numeric = (1:length(zonec_strain_rate_01b))';
@@ -129,17 +120,7 @@ strain_rate_detrended = zonec_strain_rate_01b - baseline_trend;
 methods_01b.method1 = cumsum(strain_rate_detrended) * dt;
 methods_01b.method1 = methods_01b.method1 - methods_01b.method1(1);
 
-% Method 2: High-pass filter
-strain_rate_filtered = filtfilt(b_hp, a_hp, zonec_strain_rate_01b);
-methods_01b.method2 = cumsum(strain_rate_filtered) * dt;
-methods_01b.method2 = methods_01b.method2 - methods_01b.method2(1);
 
-% Method 3: Baseline correct (PT-01b has 16.2 min baseline)
-baseline_idx = round(baseline_duration_01b);
-baseline_rate = mean(zonec_strain_rate_01b(1:baseline_idx), 'omitnan');
-strain_rate_corrected = zonec_strain_rate_01b - baseline_rate;
-methods_01b.method3 = cumsum(strain_rate_corrected) * dt;
-methods_01b.method3 = methods_01b.method3 - methods_01b.method3(1);
 
 % Method 4: Post-process
 methods_01b.method4 = cumsum(zonec_strain_rate_01b) * dt;
@@ -148,7 +129,12 @@ background_trend = polyval(p4, t_numeric);
 methods_01b.method4 = methods_01b.method4 - background_trend;
 methods_01b.method4 = methods_01b.method4 - methods_01b.method4(1);
 
-% PT-01c - All 4 methods
+% Method 5: Low-pass filter before integration
+strain_rate_lowpass = filtfilt(b_lp, a_lp, zonec_strain_rate_01b);
+methods_01b.method5 = cumsum(strain_rate_lowpass) * dt;
+methods_01b.method5 = methods_01b.method5 - methods_01b.method5(1);
+
+% PT-01c - 3 methods
 fprintf('Processing PT-01c...\n');
 % Method 1: Detrend first
 t_numeric = (1:length(zonec_strain_rate_01c))';
@@ -158,17 +144,7 @@ strain_rate_detrended = zonec_strain_rate_01c - baseline_trend;
 methods_01c.method1 = cumsum(strain_rate_detrended) * dt;
 methods_01c.method1 = methods_01c.method1 - methods_01c.method1(1);
 
-% Method 2: High-pass filter
-strain_rate_filtered = filtfilt(b_hp, a_hp, zonec_strain_rate_01c);
-methods_01c.method2 = cumsum(strain_rate_filtered) * dt;
-methods_01c.method2 = methods_01c.method2 - methods_01c.method2(1);
 
-% Method 3: Baseline correct (PT-01c has 15.4 min baseline)
-baseline_idx = round(baseline_duration_01c);
-baseline_rate = mean(zonec_strain_rate_01c(1:baseline_idx), 'omitnan');
-strain_rate_corrected = zonec_strain_rate_01c - baseline_rate;
-methods_01c.method3 = cumsum(strain_rate_corrected) * dt;
-methods_01c.method3 = methods_01c.method3 - methods_01c.method3(1);
 
 % Method 4: Post-process
 methods_01c.method4 = cumsum(zonec_strain_rate_01c) * dt;
@@ -177,16 +153,20 @@ background_trend = polyval(p4, t_numeric);
 methods_01c.method4 = methods_01c.method4 - background_trend;
 methods_01c.method4 = methods_01c.method4 - methods_01c.method4(1);
 
+% Method 5: Low-pass filter before integration
+strain_rate_lowpass = filtfilt(b_lp, a_lp, zonec_strain_rate_01c);
+methods_01c.method5 = cumsum(strain_rate_lowpass) * dt;
+methods_01c.method5 = methods_01c.method5 - methods_01c.method5(1);
+
 %% Create Dashboard - All Methods by Pump Test Date
 figure('Position', [50, 50, 1800, 1200]);
 
-%% PT-01a (Nov 7, 2023) - All 4 methods
+%% PT-01a (Nov 7, 2023) - 3 methods
 subplot(2,2,1)
 plot(time_01a, methods_01a.method1, 'b-', 'LineWidth', 2, 'DisplayName', 'Method 1: Detrend first');
 hold on
-plot(time_01a, methods_01a.method2, 'r-', 'LineWidth', 2, 'DisplayName', 'Method 2: High-pass filter');
-plot(time_01a, methods_01a.method3, 'g-', 'LineWidth', 2, 'DisplayName', 'Method 3: Baseline correct');
 plot(time_01a, methods_01a.method4, 'm-', 'LineWidth', 2, 'DisplayName', 'Method 4: Post-process');
+plot(time_01a, methods_01a.method5, 'c-', 'LineWidth', 2, 'DisplayName', 'Method 5: Low-pass filter');
 
 % Add pump schedule for PT-01a (November 7, 2023)
 pump_times_01a = [
@@ -197,7 +177,7 @@ pump_times_01a = [
     datetime(2023,11,7,20,45,0,'TimeZone','UTC');  % 0 GPM (pump off)
 ];
 pump_rates = [50, 80, 110, 150, 0];
-all_data_01a = [methods_01a.method1; methods_01a.method2; methods_01a.method3; methods_01a.method4];
+all_data_01a = [methods_01a.method1; methods_01a.method4; methods_01a.method5];
 for i = 1:length(pump_times_01a)
     xline(pump_times_01a(i), 'k--', 'LineWidth', 1, 'Alpha', 0.7);
     if pump_rates(i) == 0
@@ -210,17 +190,16 @@ for i = 1:length(pump_times_01a)
 end
 
 xlabel('Time (UTC)'); ylabel('DAS Strain (nε)');
-title('PT-01a (Nov 7, 2023): All 4 Integration Methods');
+title('PT-01a (Nov 7, 2023): 3 Integration Methods');
 legend('Location', 'best', 'FontSize', 9);
 grid on; xlim([time_01a(1), time_01a(end)]);
 
-%% PT-01b (Oct 31, 2023) - All 4 methods  
+%% PT-01b (Oct 31, 2023) - 3 methods  
 subplot(2,2,2)
 plot(time_01b, methods_01b.method1, 'b-', 'LineWidth', 2, 'DisplayName', 'Method 1: Detrend first');
 hold on
-plot(time_01b, methods_01b.method2, 'r-', 'LineWidth', 2, 'DisplayName', 'Method 2: High-pass filter');
-plot(time_01b, methods_01b.method3, 'g-', 'LineWidth', 2, 'DisplayName', 'Method 3: Baseline correct');
 plot(time_01b, methods_01b.method4, 'm-', 'LineWidth', 2, 'DisplayName', 'Method 4: Post-process');
+plot(time_01b, methods_01b.method5, 'c-', 'LineWidth', 2, 'DisplayName', 'Method 5: Low-pass filter');
 
 % Add pump schedule for PT-01b (October 31, 2023)
 pump_times_01b = [
@@ -231,7 +210,7 @@ pump_times_01b = [
     datetime(2023,10,31,19,30,0,'TimeZone','UTC');  % 0 GPM (pump off)
 ];
 pump_rates_01b = [50, 80, 110, 148, 0];
-all_data_01b = [methods_01b.method1; methods_01b.method2; methods_01b.method3; methods_01b.method4];
+all_data_01b = [methods_01b.method1; methods_01b.method4; methods_01b.method5];
 for i = 1:length(pump_times_01b)
     xline(pump_times_01b(i), 'k--', 'LineWidth', 1, 'Alpha', 0.7);
     if pump_rates_01b(i) == 0
@@ -244,17 +223,16 @@ for i = 1:length(pump_times_01b)
 end
 
 xlabel('Time (UTC)'); ylabel('DAS Strain (nε)');
-title('PT-01b (Oct 31, 2023): All 4 Integration Methods');
+title('PT-01b (Oct 31, 2023): 3 Integration Methods');
 legend('Location', 'best', 'FontSize', 9);
 grid on; xlim([time_01b(1), time_01b(end)]);
 
-%% PT-01c (Oct 24, 2023) - All 4 methods
+%% PT-01c (Oct 24, 2023) - 3 methods
 subplot(2,2,3)
 plot(time_01c, methods_01c.method1, 'b-', 'LineWidth', 2, 'DisplayName', 'Method 1: Detrend first');
 hold on
-plot(time_01c, methods_01c.method2, 'r-', 'LineWidth', 2, 'DisplayName', 'Method 2: High-pass filter');
-plot(time_01c, methods_01c.method3, 'g-', 'LineWidth', 2, 'DisplayName', 'Method 3: Baseline correct');
 plot(time_01c, methods_01c.method4, 'm-', 'LineWidth', 2, 'DisplayName', 'Method 4: Post-process');
+plot(time_01c, methods_01c.method5, 'c-', 'LineWidth', 2, 'DisplayName', 'Method 5: Low-pass filter');
 
 % Add pump schedule for PT-01c (October 24, 2023)
 pump_times_01c = [
@@ -265,7 +243,7 @@ pump_times_01c = [
     datetime(2023,10,24,19,15,0,'TimeZone','UTC');  % 0 GPM (pump off)
 ];
 pump_rates_01c = [50, 80, 110, 148, 0];
-all_data_01c = [methods_01c.method1; methods_01c.method2; methods_01c.method3; methods_01c.method4];
+all_data_01c = [methods_01c.method1; methods_01c.method4; methods_01c.method5];
 for i = 1:length(pump_times_01c)
     xline(pump_times_01c(i), 'k--', 'LineWidth', 1, 'Alpha', 0.7);
     if pump_rates_01c(i) == 0
@@ -278,7 +256,7 @@ for i = 1:length(pump_times_01c)
 end
 
 xlabel('Time (UTC)'); ylabel('DAS Strain (nε)');
-title('PT-01c (Oct 24, 2023): All 4 Integration Methods');
+title('PT-01c (Oct 24, 2023): 3 Integration Methods');
 legend('Location', 'best', 'FontSize', 9);
 grid on; xlim([time_01c(1), time_01c(end)]);
 
@@ -301,25 +279,25 @@ sgtitle('DAS Integration Methods Analysis - Zone c (260-310 ft) - All Pump Test 
 fprintf('\n=== INTEGRATION METHODS COMPARISON SUMMARY ===\n');
 fprintf('\nPT-01a (Nov 7, 2023) - Zone c strain ranges:\n');
 fprintf('  Method 1: [%.1f to %.1f] nε\n', min(methods_01a.method1), max(methods_01a.method1));
-fprintf('  Method 2: [%.1f to %.1f] nε\n', min(methods_01a.method2), max(methods_01a.method2));
-fprintf('  Method 3: [%.1f to %.1f] nε\n', min(methods_01a.method3), max(methods_01a.method3));
 fprintf('  Method 4: [%.1f to %.1f] nε\n', min(methods_01a.method4), max(methods_01a.method4));
+fprintf('  Method 5: [%.1f to %.1f] nε\n', min(methods_01a.method5), max(methods_01a.method5));
 
 fprintf('\nPT-01b (Oct 31, 2023) - Zone c strain ranges:\n');
 fprintf('  Method 1: [%.1f to %.1f] nε\n', min(methods_01b.method1), max(methods_01b.method1));
-fprintf('  Method 2: [%.1f to %.1f] nε\n', min(methods_01b.method2), max(methods_01b.method2));
-fprintf('  Method 3: [%.1f to %.1f] nε\n', min(methods_01b.method3), max(methods_01b.method3));
 fprintf('  Method 4: [%.1f to %.1f] nε\n', min(methods_01b.method4), max(methods_01b.method4));
+fprintf('  Method 5: [%.1f to %.1f] nε\n', min(methods_01b.method5), max(methods_01b.method5));
 
 fprintf('\nPT-01c (Oct 24, 2023) - Zone c strain ranges:\n');
 fprintf('  Method 1: [%.1f to %.1f] nε\n', min(methods_01c.method1), max(methods_01c.method1));
-fprintf('  Method 2: [%.1f to %.1f] nε\n', min(methods_01c.method2), max(methods_01c.method2));
-fprintf('  Method 3: [%.1f to %.1f] nε\n', min(methods_01c.method3), max(methods_01c.method3));
 fprintf('  Method 4: [%.1f to %.1f] nε\n', min(methods_01c.method4), max(methods_01c.method4));
+fprintf('  Method 5: [%.1f to %.1f] nε\n', min(methods_01c.method5), max(methods_01c.method5));
 
 fprintf('\n=== ANALYSIS COMPLETE ===\n');
-fprintf('✓ Method 1 (Detrend first) recommended for best baseline stability\n');
-fprintf('✓ All methods show consistent pump response patterns\n');
+fprintf('✓ 3 integration methods tested and compared\n');
+fprintf('✓ Method descriptions:\n');
+fprintf('   1: Linear detrend before integration\n');
+fprintf('   4: Quadratic detrend after integration\n');
+fprintf('   5: Low-pass filter (5-min cutoff)\n');
 fprintf('✓ Zone c (260-310 ft) shows strong response across all tests\n');
 fprintf('\nPump test schedules:\n');
 fprintf('  PT-01a (Nov 7): 50→80→110→150→0 GPM\n');
