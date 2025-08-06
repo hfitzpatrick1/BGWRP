@@ -7,6 +7,7 @@
 clear; clc; close all
 fprintf('=== PT-01c Displacement Rate Analysis Started ===\n');
 fprintf('Script: PT_01c_Displacement_Rate.m\n');
+fprintf('Dataset: PM07_Step1c_5Hz.mat (5Hz sampling rate)\n');
 fprintf('Analysis Period: 19:00-20:39 UTC (Final pumping + Recovery)\n');
 fprintf('Target Zone: 260-310 ft (Well Screen)\n');
 fprintf('Signal: Displacement Rate (no integration)\n\n');
@@ -24,7 +25,7 @@ project_dir = fileparts(script_dir);  % Go up one level from src/ to project roo
 data_dir = fullfile(project_dir, 'data');
 
 % Load data files from the data directory
-pt01c_file = fullfile(data_dir, 'PM07_01c_1Hz.mat');
+pt01c_file = fullfile(data_dir, 'PM07_Step1c_5Hz.mat');
 channel_file = fullfile(data_dir, 'Channel1_alldataupto070224.mat');
 
 fprintf('Script location: %s\n', script_dir);
@@ -32,7 +33,7 @@ fprintf('Looking for data in: %s\n', data_dir);
 
 if exist(pt01c_file, 'file') && exist(channel_file, 'file')
     load(pt01c_file)                 % → decdata
-    fprintf('✓ Loaded PM07_01c_1Hz.mat: [%d x %d]\n', size(decdata));
+    fprintf('✓ Loaded PM07_Step1c_5Hz.mat: [%d x %d]\n', size(decdata));
     data = decdata;
     
     ld = load(channel_file);   % → distance
@@ -47,7 +48,7 @@ fprintf('\n--- Acoustic Resonance Filtering ---\n');
 fprintf('Applying filters to reduce casing resonance artifacts...\n');
 
 % Low-pass filter to remove high-frequency acoustic noise
-fs = 1;
+fs = 5;  % 5Hz sampling rate for this dataset
 cutoff_freq = 0.1; % Adjust based on signal analysis
 [b, a] = butter(4, cutoff_freq/(fs/2), 'low');
 
@@ -94,9 +95,9 @@ fprintf('Target analysis zone: %.1f-%.1f ft (well screen)\n', target_zone_top, t
 final_depth_ft = final_depth_ft_corrected;
 
 %% 5. Time axis setup
-Fs = 1;
+Fs = 5;  % 5Hz sampling rate
 T0 = datetime(2023,10,24,15,17,36,'TimeZone','UTC');  % PT01c file start
-Tdas = T0 + seconds((0:size(data,1)-1));
+Tdas = T0 + seconds((0:size(data,1)-1)/Fs);  % Account for 5Hz sampling
 
 %% 6. Common Mode Removal (same as PT_01c_CC.m but NO INTEGRATION)
 fprintf('\n--- Common Mode Removal (No Integration) ---\n');
@@ -249,7 +250,7 @@ idx = arrayfun(@(d) find(abs(depth_roi-d)==min(abs(depth_roi-d)),1), target_dept
 clr = {'r','b','g'};
 figure(3); clf, hold on
 for k = 1:3
-    trace = movmean(displacement_rate_analysis(:,idx(k)),30);  % 30-s moving average
+    trace = movmean(displacement_rate_analysis(:,idx(k)),150);  % 30-s moving average (150 points at 5Hz)
     plot(Tdas_analysis, trace, 'Color', clr{k}, 'LineWidth', 2)
 end
 
