@@ -7,7 +7,7 @@
 clear; clc; close all
 fprintf('=== PT-01c Displacement Rate Analysis Started ===\n');
 fprintf('Script: PT_01c_Displacement_Rate.m\n');
-fprintf('Dataset: PM07_Step1c_5Hz.mat (5Hz sampling rate)\n');
+fprintf('Dataset: PM07_01c_1Hz.mat (1Hz sampling rate)\n');
 fprintf('Analysis Period: 19:00-20:39 UTC (Final pumping + Recovery)\n');
 fprintf('Target Zone: 260-310 ft (Well Screen)\n');
 fprintf('Signal: Displacement Rate (no integration)\n\n');
@@ -25,7 +25,7 @@ project_dir = fileparts(script_dir);  % Go up one level from src/ to project roo
 data_dir = fullfile(project_dir, 'data');
 
 % Load data files from the data directory
-pt01c_file = fullfile(data_dir, 'PM07_Step1c_5Hz.mat');
+pt01c_file = fullfile(data_dir, 'PM07_01c_1Hz.mat');
 channel_file = fullfile(data_dir, 'Channel1_alldataupto070224.mat');
 
 fprintf('Script location: %s\n', script_dir);
@@ -33,7 +33,7 @@ fprintf('Looking for data in: %s\n', data_dir);
 
 if exist(pt01c_file, 'file') && exist(channel_file, 'file')
     load(pt01c_file)                 % → decdata
-    fprintf('✓ Loaded PM07_Step1c_5Hz.mat: [%d x %d]\n', size(decdata));
+    fprintf('✓ Loaded PM07_01c_1Hz.mat: [%d x %d]\n', size(decdata));
     data = decdata;
     
     ld = load(channel_file);   % → distance
@@ -43,26 +43,21 @@ else
     error('❌ Data files not found in %s\nMake sure PM07_01c_1Hz.mat and Channel1_alldataupto070224.mat are in the data folder.', data_dir);
 end
 
-%% 2. Acoustic Resonance Filtering (same as PT_01c_CC.m)
-fprintf('\n--- Acoustic Resonance Filtering ---\n');
-fprintf('Applying filters to reduce casing resonance artifacts...\n');
+%% 2. Simple filtering for 1Hz data
+fprintf('\n--- Basic Filtering for 1Hz Data ---\n');
+fprintf('Applying basic filtering to clean up signals...\n');
 
-% Low-pass filter to remove high-frequency acoustic noise
-fs = 5;  % 5Hz sampling rate for this dataset
-cutoff_freq = 0.1; % Adjust based on signal analysis
-[b, a] = butter(4, cutoff_freq/(fs/2), 'low');
+% Simple low-pass filtering for 1Hz data
+fs = 1;
+cutoff_freq = 0.3; % Conservative cutoff
+[b, a] = butter(3, cutoff_freq/(fs/2), 'low');  % Low order filter
 
-% Apply filtering
-data_filtered = data;
+% Apply light filtering
 for ch = 1:size(data, 2)
-    data_filtered(:, ch) = filtfilt(b, a, data(:, ch));
+    data(:, ch) = filtfilt(b, a, data(:, ch));
 end
 
-% Replace original data with filtered data
-data = data_filtered;
-clear data_filtered;
-
-fprintf('Applied low-pass filter with %.3f Hz cutoff\n', cutoff_freq);
+fprintf('Applied basic low-pass filtering\n');
 
 %% 3. Depth control (same parameters as PT_01c_CC.m)
 fprintf('\n--- Depth Control Setup ---\n');
@@ -95,30 +90,58 @@ fprintf('Target analysis zone: %.1f-%.1f ft (well screen)\n', target_zone_top, t
 final_depth_ft = final_depth_ft_corrected;
 
 %% 5. Time axis setup
-Fs = 5;  % 5Hz sampling rate
 T0 = datetime(2023,10,24,15,17,36,'TimeZone','UTC');  % PT01c file start
-Tdas = T0 + seconds((0:size(data,1)-1)/Fs);  % Account for 5Hz sampling
+Tdas = T0 + seconds((0:size(data,1)-1));  % Now at 1Hz after decimation
 
-%% 6. Common Mode Removal (same as PT_01c_CC.m but NO INTEGRATION)
-fprintf('\n--- Common Mode Removal (No Integration) ---\n');
+%% 6. Enhanced Common Mode Removal (NO INTEGRATION)
+fprintf('\n--- Enhanced Common Mode Removal (No Integration) ---\n');
 fprintf('Processing displacement rate data (strain rate)...\n');
 
-% Focus on the well casing region
-roi = final_depth_ft>=0 & final_depth_ft<=well_depth_ft;
+% Focus on clean middle section (avoid surface noise and cable termination)
+roi_top = 200;      % ft - avoid surface/shallow noise
+roi_bottom = 580;   % ft - avoid cable termination effects
+roi = final_depth_ft>=roi_top & final_depth_ft<=roi_bottom;
 data_well = data(:, roi);
 depth_roi = final_depth_ft(roi);
 
-% For each depth channel, remove its temporal mean
-data_cleaned = zeros(size(data));
+fprintf('Analysis ROI: %.0f - %.0f ft (excludes surface noise and termination effects)\n', roi_top, roi_bottom);
+
+% Step 1: Remove temporal mean from each channel
+data_temp_cleaned = zeros(size(data));
 for ch = 1:size(data, 2)
     channel_data = data(:, ch);
-    
-    % Remove temporal mean from this channel
     temporal_mean = mean(channel_data, 'omitnan');
-    data_cleaned(:, ch) = channel_data - temporal_mean;
+    data_temp_cleaned(:, ch) = channel_data - temporal_mean;
 end
 
-fprintf('Applied per-channel temporal mean removal to %d channels\n', size(data, 2));
+% Step 2: Aggressive Common Mode Removal
+fprintf('Applying aggressive common mode removal...\n');
+
+% Method: Use running spatial median to remove horizontal stripes
+data_cleaned = data_temp_cleaned;
+
+% Apply spatial common mode removal with local references
+reference_channels = final_depth_ft>=300 & final_depth_ft<=500;  % Use stable deep zone as reference
+
+for t = 1:size(data_cleaned, 1)
+    % Calculate spatial common mode from reference zone
+    ref_slice = data_cleaned(t, reference_channels);
+    spatial_cm = median(ref_slice, 'omitnan');
+    
+    % Remove common mode from all channels
+    data_cleaned(t, :) = data_cleaned(t, :) - spatial_cm;
+end
+
+% Additional step: Remove any remaining temporal trends in each channel
+for ch = 1:size(data_cleaned, 2)
+    % Detrend each channel (remove linear trends)
+    if sum(~isnan(data_cleaned(:, ch))) > 10  % Only if enough data points
+        data_cleaned(:, ch) = detrend(data_cleaned(:, ch), 'linear');
+    end
+end
+
+fprintf('Applied temporal mean removal to %d channels\n', size(data, 2));
+fprintf('Applied spatial common mode removal (median subtraction)\n');
 fprintf('Working with displacement rate (nε/s) - NO integration applied\n');
 
 % Extract displacement rate data for ROI
@@ -127,11 +150,15 @@ displacement_rate_roi = data_cleaned(:, roi);
 %% 7. Define Analysis Time Windows
 fprintf('\n--- Time Window Definition ---\n');
 
-% Define analysis periods based on corrected timeline
+% Define analysis periods based on actual data availability
 final_pumping_start = datetime(2023,10,24,19,0,0,'TimeZone','UTC');   % 15 min before shutoff
 pump_shutoff = datetime(2023,10,24,19,15,0,'TimeZone','UTC');         % Pumps shut off
-recovery_end = datetime(2023,10,24,20,39,0,'TimeZone','UTC');         % End of analysis
 
+% Determine actual data end time
+data_end_time = max(Tdas);
+recovery_end = min(datetime(2023,10,24,20,39,0,'TimeZone','UTC'), data_end_time); % Use actual data end
+
+fprintf('Data available until: %s\n', datestr(data_end_time));
 fprintf('Final pumping period: %s to %s (%.1f minutes)\n', ...
     datestr(final_pumping_start), datestr(pump_shutoff), ...
     minutes(pump_shutoff - final_pumping_start));
@@ -178,8 +205,9 @@ fprintf('Target zone signal range: [%.3f, %.3f] nε/s\n', ...
 % 9a. Full analysis period heatmap (19:00-20:39)
 fprintf('\n--- Creating Visualizations ---\n');
 
+% Use cleaned data without additional smoothing to avoid artifacts
 % Calculate color limits for optimal contrast
-analysis_lims = prctile(displacement_rate_analysis(:),[2 98]);  % 2nd and 98th percentiles
+analysis_lims = prctile(displacement_rate_analysis(:),[10 90]);  % Use 10-90 percentiles to clip extreme noise
 
 figure(1); clf
 pcolor(datenum(Tdas_analysis), depth_roi, displacement_rate_analysis'), shading interp
@@ -187,7 +215,7 @@ colormap jet; caxis(analysis_lims)
 c = colorbar; 
 ylabel(c, 'Displacement Rate (nε/s)', 'FontSize', 12)
 set(gca,'YDir','reverse')
-ylim([0 well_depth_ft])
+ylim([roi_top roi_bottom])  % Focus on clean middle section: 200-580 ft
 xlim([datenum(final_pumping_start), datenum(recovery_end)])
 
 % Add time markers
@@ -210,16 +238,24 @@ set(gcf, 'Visible', 'on');
 figure(1);
 fprintf('✅ Figure 1: Full analysis period heatmap\n');
 
-% 9b. Target zone focused heatmap (260-310 ft)
-target_zone_lims = prctile(target_zone_data_analysis(:), [5 95]);  % Tighter percentiles for contrast
+% 9b. Extended target zone heatmap (250-320 ft)
+% Extract extended zone data for better context
+extended_zone_top = 250;
+extended_zone_bot = 320;
+extended_zone_mask = depth_roi >= extended_zone_top & depth_roi <= extended_zone_bot;
+extended_zone_depths = depth_roi(extended_zone_mask);
+extended_zone_data = displacement_rate_analysis(:, extended_zone_mask);
+
+% Use cleaned data without smoothing artifacts
+extended_zone_lims = prctile(extended_zone_data(:), [10 90]);  % Clip extreme noise
 
 figure(2); clf
-pcolor(datenum(Tdas_analysis), target_zone_depths, target_zone_data_analysis'), shading interp
-colormap jet; caxis(target_zone_lims)
+pcolor(datenum(Tdas_analysis), extended_zone_depths, extended_zone_data'), shading interp
+colormap jet; caxis(extended_zone_lims)
 c = colorbar; 
 ylabel(c, 'Displacement Rate (nε/s)', 'FontSize', 12)
 set(gca,'YDir','reverse')
-ylim([target_zone_top-10, target_zone_bot+10])  % Add 10 ft buffer
+ylim([extended_zone_top, extended_zone_bot])  % Full extended range
 xlim([datenum(final_pumping_start), datenum(recovery_end)])
 
 % Add zone and time markers
@@ -231,7 +267,7 @@ hold off
 
 % Clean time axis and formatting
 datetick('x','HH:MM','keeplimits')
-title('PT-01c Target Zone Displacement Rate (260-310 ft)', 'FontSize', 14)
+title('PT-01c Extended Target Zone Displacement Rate (250-320 ft)', 'FontSize', 14)
 xlabel('Time (UTC)', 'FontSize', 12)
 ylabel('Depth (ft)', 'FontSize', 12)
 
@@ -241,7 +277,7 @@ box on
 
 set(gcf, 'Visible', 'on');
 figure(2);
-fprintf('✅ Figure 2: Target zone focused heatmap\n');
+fprintf('✅ Figure 2: Extended target zone heatmap (250-320 ft)\n');
 
 % 9c. Displacement rate traces at key depths
 target_depths = [270, 285, 300];  % Within well screen zone
@@ -250,7 +286,7 @@ idx = arrayfun(@(d) find(abs(depth_roi-d)==min(abs(depth_roi-d)),1), target_dept
 clr = {'r','b','g'};
 figure(3); clf, hold on
 for k = 1:3
-    trace = movmean(displacement_rate_analysis(:,idx(k)),150);  % 30-s moving average (150 points at 5Hz)
+    trace = movmean(displacement_rate_analysis(:,idx(k)),30);  % 30-s moving average (30 points at 1Hz)
     plot(Tdas_analysis, trace, 'Color', clr{k}, 'LineWidth', 2)
 end
 
