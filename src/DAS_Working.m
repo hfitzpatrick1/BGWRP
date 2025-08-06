@@ -4,6 +4,9 @@
 
 clear; clc; close all
 
+
+%%
+
 fprintf('=== DAS INTEGRATION METHODS BY PUMP TEST DATE ===\n');
 
 %% Setup
@@ -45,10 +48,26 @@ zonec_start_01c = round(260 * n_channels_01c / well_depth_ft);
 zonec_end_01c = round(310 * n_channels_01c / well_depth_ft);
 zonec_01c = zonec_start_01c:zonec_end_01c;
 
+% Define additional pumping zones for ROI2 analysis
+% Zone a (450-510 ft) for PT-01a
+zonea_start_01a = round(450 * n_channels_01a / well_depth_ft);
+zonea_end_01a = round(510 * n_channels_01a / well_depth_ft);
+zonea_01a = zonea_start_01a:zonea_end_01a;
+
+% Zone b (350-400 ft) for PT-01b  
+zoneb_start_01b = round(350 * n_channels_01b / well_depth_ft);
+zoneb_end_01b = round(400 * n_channels_01b / well_depth_ft);
+zoneb_01b = zoneb_start_01b:zoneb_end_01b;
+
 fprintf('Zone c channel ranges (consistent with DAS_ROI_TimeSeries):\n');
 fprintf('  PT-01a: ROI channels %d-%d\n', zonec_01a(1), zonec_01a(end));
 fprintf('  PT-01b: ROI channels %d-%d\n', zonec_01b(1), zonec_01b(end));
 fprintf('  PT-01c: ROI channels %d-%d\n', zonec_01c(1), zonec_01c(end));
+
+fprintf('\nPumping zone channel ranges for ROI2:\n');
+fprintf('  PT-01a (Zone a): ROI channels %d-%d (450-510 ft)\n', zonea_01a(1), zonea_01a(end));
+fprintf('  PT-01b (Zone b): ROI channels %d-%d (350-400 ft)\n', zoneb_01b(1), zoneb_01b(end));
+fprintf('  PT-01c (Zone c): ROI channels %d-%d (260-310 ft)\n', zonec_01c(1), zonec_01c(end));
 
 % Extract Zone c strain rates (consistent with DAS_ROI_TimeSeries.m)
 roi_strain_rate_01a = data_01a(:, C1_01a:BOT_01a);
@@ -59,6 +78,11 @@ zonec_strain_rate_01b = mean(roi_strain_rate_01b(:, zonec_01b), 2, 'omitnan');
 
 roi_strain_rate_01c = data_01c(:, C1_01c:BOT_01c);
 zonec_strain_rate_01c = mean(roi_strain_rate_01c(:, zonec_01c), 2, 'omitnan');
+
+% Extract pumping zone strain rates for ROI2
+zonea_strain_rate_01a = mean(roi_strain_rate_01a(:, zonea_01a), 2, 'omitnan');
+zoneb_strain_rate_01b = mean(roi_strain_rate_01b(:, zoneb_01b), 2, 'omitnan');
+% zonec_strain_rate_01c already extracted above
 
 %% Create Time Vectors with Correct Data Windows
 dt = 1;
@@ -91,6 +115,11 @@ end_idx_01c = find(time_01c_full <= end_01c, 1, 'last');
 time_01c = time_01c_full(1:end_idx_01c);
 zonec_strain_rate_01c = zonec_strain_rate_01c(1:end_idx_01c);
 baseline_duration_01c = seconds(pump_start_01c - start_01c); % 15.4 minutes
+
+% Trim pumping zone strain rates to match time vectors
+zonea_strain_rate_01a = zonea_strain_rate_01a(1:end_idx_01a);
+zoneb_strain_rate_01b = zoneb_strain_rate_01b(1:end_idx_01b);
+% zonec_strain_rate_01c already trimmed above
 
 fprintf('\nCorrected data time ranges:\n');
 fprintf('  PT-01a: %s to %s (%.1f hours, %.1f min baseline)\n', char(time_01a(1)), char(time_01a(end)), hours(time_01a(end)-time_01a(1)), baseline_duration_01a/60);
@@ -266,6 +295,49 @@ roi1_strain_rate_01a_filtered = roi1_strain_rate_01a_filtered(1:end_idx_01a);
 roi1_strain_rate_01b_filtered = roi1_strain_rate_01b_filtered(1:end_idx_01b);
 roi1_strain_rate_01c_filtered = roi1_strain_rate_01c_filtered(1:end_idx_01c);
 
+%% Calculate ROI1 Integration Methods (Full Depth 0-665 ft)
+% PT-01a ROI1 Integration Methods
+t_numeric_01a = (1:length(roi1_strain_rate_01a))';
+p1_roi1_01a = polyfit(t_numeric_01a, roi1_strain_rate_01a, 1);
+baseline_trend_roi1_01a = polyval(p1_roi1_01a, t_numeric_01a);
+strain_rate_detrended_roi1_01a = roi1_strain_rate_01a - baseline_trend_roi1_01a;
+methods_01a_roi1.method1 = cumsum(strain_rate_detrended_roi1_01a) * dt;
+methods_01a_roi1.method1 = methods_01a_roi1.method1 - methods_01a_roi1.method1(1);
+
+methods_01a_roi1.method4 = cumsum(roi1_strain_rate_01a) * dt;
+p4_roi1_01a = polyfit(t_numeric_01a, methods_01a_roi1.method4, 2);
+background_trend_roi1_01a = polyval(p4_roi1_01a, t_numeric_01a);
+methods_01a_roi1.method4 = methods_01a_roi1.method4 - background_trend_roi1_01a;
+methods_01a_roi1.method4 = methods_01a_roi1.method4 - methods_01a_roi1.method4(1);
+
+% PT-01b ROI1 Integration Methods
+t_numeric_01b = (1:length(roi1_strain_rate_01b))';
+p1_roi1_01b = polyfit(t_numeric_01b, roi1_strain_rate_01b, 1);
+baseline_trend_roi1_01b = polyval(p1_roi1_01b, t_numeric_01b);
+strain_rate_detrended_roi1_01b = roi1_strain_rate_01b - baseline_trend_roi1_01b;
+methods_01b_roi1.method1 = cumsum(strain_rate_detrended_roi1_01b) * dt;
+methods_01b_roi1.method1 = methods_01b_roi1.method1 - methods_01b_roi1.method1(1);
+
+methods_01b_roi1.method4 = cumsum(roi1_strain_rate_01b) * dt;
+p4_roi1_01b = polyfit(t_numeric_01b, methods_01b_roi1.method4, 2);
+background_trend_roi1_01b = polyval(p4_roi1_01b, t_numeric_01b);
+methods_01b_roi1.method4 = methods_01b_roi1.method4 - background_trend_roi1_01b;
+methods_01b_roi1.method4 = methods_01b_roi1.method4 - methods_01b_roi1.method4(1);
+
+% PT-01c ROI1 Integration Methods
+t_numeric_01c = (1:length(roi1_strain_rate_01c))';
+p1_roi1_01c = polyfit(t_numeric_01c, roi1_strain_rate_01c, 1);
+baseline_trend_roi1_01c = polyval(p1_roi1_01c, t_numeric_01c);
+strain_rate_detrended_roi1_01c = roi1_strain_rate_01c - baseline_trend_roi1_01c;
+methods_01c_roi1.method1 = cumsum(strain_rate_detrended_roi1_01c) * dt;
+methods_01c_roi1.method1 = methods_01c_roi1.method1 - methods_01c_roi1.method1(1);
+
+methods_01c_roi1.method4 = cumsum(roi1_strain_rate_01c) * dt;
+p4_roi1_01c = polyfit(t_numeric_01c, methods_01c_roi1.method4, 2);
+background_trend_roi1_01c = polyval(p4_roi1_01c, t_numeric_01c);
+methods_01c_roi1.method4 = methods_01c_roi1.method4 - background_trend_roi1_01c;
+methods_01c_roi1.method4 = methods_01c_roi1.method4 - methods_01c_roi1.method4(1);
+
 % Create pump schedule data for annotations
 pump_data.pump_times_01a = [
     datetime(2023,11,7,16,45,0,'TimeZone','UTC');
@@ -301,7 +373,7 @@ hold on
 plot(time_01a, roi1_strain_rate_01a_filtered, 'b-', 'LineWidth', 2.5, 'DisplayName', 'Low-pass (5min) - BEST');
 % Add pump annotations
 for i = 1:length(pump_data.pump_times_01a)
-    xline(pump_data.pump_times_01a(i), 'k--', 'Alpha', 0.7, 'LineWidth', 1);
+    xline(pump_data.pump_times_01a(i), 'k--', 'Alpha', 0.7, 'LineWidth', 1, 'HandleVisibility', 'off');
     if pump_data.rates_01a(i) == 0
         text(pump_data.pump_times_01a(i), max(roi1_strain_rate_01a)*0.8, '0 GPM', ...
             'HorizontalAlignment', 'center', 'FontSize', 8, 'FontWeight', 'bold', 'Color', 'red');
@@ -323,7 +395,7 @@ hold on
 plot(time_01b, roi1_strain_rate_01b_filtered, 'b-', 'LineWidth', 2.5, 'DisplayName', 'Low-pass (5min) - BEST');
 % Add pump annotations
 for i = 1:length(pump_data.pump_times_01b)
-    xline(pump_data.pump_times_01b(i), 'k--', 'Alpha', 0.7, 'LineWidth', 1);
+    xline(pump_data.pump_times_01b(i), 'k--', 'Alpha', 0.7, 'LineWidth', 1, 'HandleVisibility', 'off');
     if pump_data.rates_01b(i) == 0
         text(pump_data.pump_times_01b(i), max(roi1_strain_rate_01b)*0.8, '0 GPM', ...
             'HorizontalAlignment', 'center', 'FontSize', 8, 'FontWeight', 'bold', 'Color', 'red');
@@ -345,7 +417,7 @@ hold on
 plot(time_01c, roi1_strain_rate_01c_filtered, 'b-', 'LineWidth', 2.5, 'DisplayName', 'Low-pass (5min) - BEST');
 % Add pump annotations
 for i = 1:length(pump_data.pump_times_01c)
-    xline(pump_data.pump_times_01c(i), 'k--', 'Alpha', 0.7, 'LineWidth', 1);
+    xline(pump_data.pump_times_01c(i), 'k--', 'Alpha', 0.7, 'LineWidth', 1, 'HandleVisibility', 'off');
     if pump_data.rates_01c(i) == 0
         text(pump_data.pump_times_01c(i), max(roi1_strain_rate_01c)*0.8, '0 GPM', ...
             'HorizontalAlignment', 'center', 'FontSize', 8, 'FontWeight', 'bold', 'Color', 'red');
@@ -375,140 +447,17 @@ ax = gca; ax.YAxis.TickLabelFormat = '%.2e';
 sgtitle('Figure 1: ROI1 Strain Rate Analysis - Full Depth (0-665 ft)', ...
     'FontSize', 16, 'FontWeight', 'bold');
 
-%% Figure 2: ROI2 Strain Rate Analysis (Pumping zones for each test)
-fprintf('Figure 2: ROI2 strain rate analysis...\n');
-
-% Define ROI2 for each test (pumping zones) - already computed earlier
-roi2_01a = zonea_01a;  % Pumping zone a (450-510 ft)
-roi2_01b = zoneb_01b;  % Pumping zone b (350-400 ft)
-roi2_01c = zonec_01c;  % Pumping zone c (260-310 ft)
-
-% Extract ROI2 strain rates (already computed earlier)
-roi2_strain_rate_01a = zonea_strain_rate_01a;
-roi2_strain_rate_01b = zoneb_strain_rate_01b;
-roi2_strain_rate_01c = zonec_strain_rate_01c;
-
-% Apply filtering to ROI2 data
-roi2_strain_rate_01a_filtered = filtfilt(b_lp, a_lp, roi2_strain_rate_01a);
-roi2_strain_rate_01b_filtered = filtfilt(b_lp, a_lp, roi2_strain_rate_01b);
-roi2_strain_rate_01c_filtered = filtfilt(b_lp, a_lp, roi2_strain_rate_01c);
-
-figure('Position', [100, 100, 1600, 1000]);
-
-% PT-01a ROI2 strain rate (Zone a: 450-510 ft)
-subplot(2,2,1)
-plot(time_01a, roi2_strain_rate_01a, 'k-', 'LineWidth', 0.8, 'DisplayName', 'Raw');
-hold on
-plot(time_01a, roi2_strain_rate_01a_filtered, 'b-', 'LineWidth', 2.5, 'DisplayName', 'Low-pass (5min) - BEST');
-% Add pump annotations
-for i = 1:length(pump_data.pump_times_01a)
-    xline(pump_data.pump_times_01a(i), 'k--', 'Alpha', 0.7, 'LineWidth', 1);
-    if pump_data.rates_01a(i) == 0
-        text(pump_data.pump_times_01a(i), max(roi2_strain_rate_01a)*0.8, '0 GPM', ...
-            'HorizontalAlignment', 'center', 'FontSize', 8, 'FontWeight', 'bold', 'Color', 'red');
-    else
-        text(pump_data.pump_times_01a(i), max(roi2_strain_rate_01a)*0.9, sprintf('%d GPM', pump_data.rates_01a(i)), ...
-            'HorizontalAlignment', 'center', 'FontSize', 8, 'FontWeight', 'bold');
-    end
-end
-xlabel('Time (UTC)'); ylabel('Strain Rate (nε/s)');
-title('PT-01a ROI2 (Zone a: 450-510 ft): Raw vs. Low-pass Filtered', 'FontWeight', 'bold');
-legend('Location', 'best', 'FontSize', 9);
-grid on; xlim([time_01a(1), time_01a(end)]);
-ax = gca; ax.YAxis.TickLabelFormat = '%.2e';
-
-% PT-01b Zone c strain rate
-subplot(2,2,2)
-plot(time_01b, strain_rate_methods.test01b.raw, 'k-', 'LineWidth', 0.8, 'DisplayName', 'Raw');
-hold on
-plot(time_01b, strain_rate_methods.test01b.lowpass, 'b-', 'LineWidth', 2.5, 'DisplayName', 'Low-pass (5min) - BEST');
-% Add pump annotations
-for i = 1:length(pump_data.pump_times_01b)
-    xline(pump_data.pump_times_01b(i), 'k--', 'Alpha', 0.7, 'LineWidth', 1);
-    if pump_data.rates_01b(i) == 0
-        text(pump_data.pump_times_01b(i), max(strain_rate_methods.test01b.raw)*0.8, '0 GPM', ...
-            'HorizontalAlignment', 'center', 'FontSize', 8, 'FontWeight', 'bold', 'Color', 'red');
-    else
-        text(pump_data.pump_times_01b(i), max(strain_rate_methods.test01b.raw)*0.9, sprintf('%d GPM', pump_data.rates_01b(i)), ...
-            'HorizontalAlignment', 'center', 'FontSize', 8, 'FontWeight', 'bold');
-    end
-end
-xlabel('Time (UTC)'); ylabel('Strain Rate (nε/s)');
-title('PT-01b Zone c (260-310 ft): Raw vs. Low-pass Filtered', 'FontWeight', 'bold');
-legend('Location', 'best', 'FontSize', 9);
-grid on; xlim([time_01b(1), time_01b(end)]);
-ax = gca; ax.YAxis.TickLabelFormat = '%.2e';
-
-% PT-01c Zone c strain rate
-subplot(2,2,3)
-plot(time_01c, strain_rate_methods.test01c.raw, 'k-', 'LineWidth', 0.8, 'DisplayName', 'Raw');
-hold on
-plot(time_01c, strain_rate_methods.test01c.lowpass, 'b-', 'LineWidth', 2.5, 'DisplayName', 'Low-pass (5min) - BEST');
-% Add pump annotations
-for i = 1:length(pump_data.pump_times_01c)
-    xline(pump_data.pump_times_01c(i), 'k--', 'Alpha', 0.7, 'LineWidth', 1);
-    if pump_data.rates_01c(i) == 0
-        text(pump_data.pump_times_01c(i), max(strain_rate_methods.test01c.raw)*0.8, '0 GPM', ...
-            'HorizontalAlignment', 'center', 'FontSize', 8, 'FontWeight', 'bold', 'Color', 'red');
-    else
-        text(pump_data.pump_times_01c(i), max(strain_rate_methods.test01c.raw)*0.9, sprintf('%d GPM', pump_data.rates_01c(i)), ...
-            'HorizontalAlignment', 'center', 'FontSize', 8, 'FontWeight', 'bold');
-    end
-end
-xlabel('Time (UTC)'); ylabel('Strain Rate (nε/s)');
-title('PT-01c Zone c (260-310 ft): Raw vs. Low-pass Filtered', 'FontWeight', 'bold');
-legend('Location', 'best', 'FontSize', 9);
-grid on; xlim([time_01c(1), time_01c(end)]);
-ax = gca; ax.YAxis.TickLabelFormat = '%.2e';
-
-% ROI1 comparison - low-pass filtered across all tests
-subplot(2,2,4)
-plot(time_01a, strain_rate_methods.test01a.lowpass, 'b-', 'LineWidth', 2, 'DisplayName', 'PT-01a Zone c (Nov 7)');
-hold on
-plot(time_01b, strain_rate_methods.test01b.lowpass, 'r-', 'LineWidth', 2, 'DisplayName', 'PT-01b Zone c (Oct 31)');
-plot(time_01c, strain_rate_methods.test01c.lowpass, 'g-', 'LineWidth', 2, 'DisplayName', 'PT-01c Zone c (Oct 24)');
-xlabel('Time'); ylabel('Strain Rate (nε/s)');
-title('ROI1: Zone c Low-pass Filtered Comparison', 'FontWeight', 'bold');
-legend('Location', 'best', 'FontSize', 9);
-grid on;
-ax = gca; ax.YAxis.TickLabelFormat = '%.2e';
-
-sgtitle('Figure 1: ROI1 Strain Rate Analysis - Zone c (260-310 ft)', ...
-    'FontSize', 16, 'FontWeight', 'bold');
-
 %% ROI_2 Analysis - Pumping Zone Responses
 fprintf('\n=== ROI_2 ANALYSIS: PUMPING ZONE RESPONSES ===\n');
 fprintf('Analyzing strain response at each pumping zone depth...\n');
 
-% Define pumping zone depths for each test
-% PT-01a pumps Zone a (450-510 ft), PT-01b pumps Zone b (350-400 ft), PT-01c pumps Zone c (260-310 ft)
-
-% Zone a (450-510 ft) for PT-01a
-zonea_start_01a = round(450 * n_channels_01a / well_depth_ft);
-zonea_end_01a = round(510 * n_channels_01a / well_depth_ft);
-zonea_01a = zonea_start_01a:zonea_end_01a;
-
-% Zone b (350-400 ft) for PT-01b  
-zoneb_start_01b = round(350 * n_channels_01b / well_depth_ft);
-zoneb_end_01b = round(400 * n_channels_01b / well_depth_ft);
-zoneb_01b = zoneb_start_01b:zoneb_end_01b;
-
-% Zone c (260-310 ft) for PT-01c (already defined above)
-% zonec_01c already exists
-
-fprintf('Pumping zone channel ranges:\n');
+% Pumping zone definitions already created above
+fprintf('Pumping zone analysis using pre-defined zones:\n');
 fprintf('  PT-01a (Zone a): ROI channels %d-%d (450-510 ft)\n', zonea_01a(1), zonea_01a(end));
 fprintf('  PT-01b (Zone b): ROI channels %d-%d (350-400 ft)\n', zoneb_01b(1), zoneb_01b(end));
 fprintf('  PT-01c (Zone c): ROI channels %d-%d (260-310 ft)\n', zonec_01c(1), zonec_01c(end));
 
-% Extract pumping zone strain rates
-zonea_strain_rate_01a = mean(roi_strain_rate_01a(:, zonea_01a), 2, 'omitnan');
-zonea_strain_rate_01a = zonea_strain_rate_01a(1:end_idx_01a);
-
-zoneb_strain_rate_01b = mean(roi_strain_rate_01b(:, zoneb_01b), 2, 'omitnan');
-zoneb_strain_rate_01b = zoneb_strain_rate_01b(1:end_idx_01b);
-
-% zonec_strain_rate_01c already extracted above
+% Pumping zone strain rates already extracted and trimmed above
 
 %% Compute Integration Methods for Pumping Zones (ROI_2)
 fprintf('\nComputing 3 integration methods for pumping zones...\n');
@@ -585,7 +534,7 @@ hold on
 plot(time_01a, strain_rate_roi2.test01a.lowpass, 'b-', 'LineWidth', 2.5, 'DisplayName', 'Low-pass (5min) - BEST');
 % Add pump annotations with rate labels
 for i = 1:length(pump_data.pump_times_01a)
-    xline(pump_data.pump_times_01a(i), 'k--', 'Alpha', 0.7, 'LineWidth', 1);
+    xline(pump_data.pump_times_01a(i), 'k--', 'Alpha', 0.7, 'LineWidth', 1, 'HandleVisibility', 'off');
     if pump_data.rates_01a(i) == 0
         text(pump_data.pump_times_01a(i), max(strain_rate_roi2.test01a.raw)*0.8, '0 GPM', ...
             'HorizontalAlignment', 'center', 'FontSize', 8, 'FontWeight', 'bold', 'Color', 'red');
@@ -606,7 +555,7 @@ hold on
 plot(time_01b, strain_rate_roi2.test01b.lowpass, 'r-', 'LineWidth', 2.5, 'DisplayName', 'Low-pass (5min) - BEST');
 % Add pump annotations
 for i = 1:length(pump_data.pump_times_01b)
-    xline(pump_data.pump_times_01b(i), 'k--', 'Alpha', 0.7, 'LineWidth', 1);
+    xline(pump_data.pump_times_01b(i), 'k--', 'Alpha', 0.7, 'LineWidth', 1, 'HandleVisibility', 'off');
     if pump_data.rates_01b(i) == 0
         text(pump_data.pump_times_01b(i), max(strain_rate_roi2.test01b.raw)*0.8, '0 GPM', ...
             'HorizontalAlignment', 'center', 'FontSize', 8, 'FontWeight', 'bold', 'Color', 'red');
@@ -627,7 +576,7 @@ hold on
 plot(time_01c, strain_rate_roi2.test01c.lowpass, 'g-', 'LineWidth', 2.5, 'DisplayName', 'Low-pass (5min) - BEST');
 % Add pump annotations
 for i = 1:length(pump_data.pump_times_01c)
-    xline(pump_data.pump_times_01c(i), 'k--', 'Alpha', 0.7, 'LineWidth', 1);
+    xline(pump_data.pump_times_01c(i), 'k--', 'Alpha', 0.7, 'LineWidth', 1, 'HandleVisibility', 'off');
     if pump_data.rates_01c(i) == 0
         text(pump_data.pump_times_01c(i), max(strain_rate_roi2.test01c.raw)*0.8, '0 GPM', ...
             'HorizontalAlignment', 'center', 'FontSize', 8, 'FontWeight', 'bold', 'Color', 'red');
@@ -669,7 +618,7 @@ pump_times_01a = pump_data.pump_times_01a;
 pump_rates = pump_data.rates_01a;
 all_data_01a_roi2 = [methods_01a_roi2.method1; methods_01a_roi2.method4];
 for i = 1:length(pump_times_01a)
-    xline(pump_times_01a(i), 'k--', 'LineWidth', 1, 'Alpha', 0.7);
+    xline(pump_times_01a(i), 'k--', 'LineWidth', 1, 'Alpha', 0.7, 'HandleVisibility', 'off');
     if pump_rates(i) == 0
         text(pump_times_01a(i), min(all_data_01a_roi2)*0.9, '0 GPM', ...
             'HorizontalAlignment', 'center', 'FontSize', 8, 'FontWeight', 'bold');
@@ -698,7 +647,7 @@ pump_times_01b = pump_data.pump_times_01b;
 pump_rates_01b = pump_data.rates_01b;
 all_data_01b_roi2 = [methods_01b_roi2.method1; methods_01b_roi2.method4];
 for i = 1:length(pump_times_01b)
-    xline(pump_times_01b(i), 'k--', 'LineWidth', 1, 'Alpha', 0.7);
+    xline(pump_times_01b(i), 'k--', 'LineWidth', 1, 'Alpha', 0.7, 'HandleVisibility', 'off');
     if pump_rates_01b(i) == 0
         text(pump_times_01b(i), min(all_data_01b_roi2)*0.9, '0 GPM', ...
             'HorizontalAlignment', 'center', 'FontSize', 8, 'FontWeight', 'bold');
@@ -727,7 +676,7 @@ pump_times_01c = pump_data.pump_times_01c;
 pump_rates_01c = pump_data.rates_01c;
 all_data_01c_roi2 = [methods_01c_roi2.method1; methods_01c_roi2.method4];
 for i = 1:length(pump_times_01c)
-    xline(pump_times_01c(i), 'k--', 'LineWidth', 1, 'Alpha', 0.7);
+    xline(pump_times_01c(i), 'k--', 'LineWidth', 1, 'Alpha', 0.7, 'HandleVisibility', 'off');
     if pump_rates_01c(i) == 0
         text(pump_times_01c(i), min(all_data_01c_roi2)*0.9, '0 GPM', ...
             'HorizontalAlignment', 'center', 'FontSize', 8, 'FontWeight', 'bold');
@@ -760,7 +709,7 @@ grid on;
 ax = gca;
 ax.YAxis.TickLabelFormat = '%.0f';
 
-sgtitle('ROI_2: DAS Integration Methods - Pumping Zone Analysis', ...
+sgtitle('Figure 3: ROI2 Integrated Strain Analysis - Pumping Zones', ...
     'FontSize', 14, 'FontWeight', 'bold');
 
 
@@ -770,9 +719,9 @@ figure('Position', [50, 50, 1800, 1200]);
 
 %% PT-01a (Nov 7, 2023) - 2 methods
 subplot(2,2,1)
-plot(time_01a, methods_01a.method1, 'b-', 'LineWidth', 2, 'DisplayName', 'Method 1: Detrend first');
+plot(time_01a, methods_01a_roi1.method1, 'b-', 'LineWidth', 2, 'DisplayName', 'Method 1: Detrend first');
 hold on
-plot(time_01a, methods_01a.method4, 'm-', 'LineWidth', 2, 'DisplayName', 'Method 4: Post-process');
+plot(time_01a, methods_01a_roi1.method4, 'm-', 'LineWidth', 2, 'DisplayName', 'Method 4: Post-process');
 
 % Add pump schedule for PT-01a (November 7, 2023)
 pump_times_01a = [
@@ -783,9 +732,9 @@ pump_times_01a = [
     datetime(2023,11,7,20,45,0,'TimeZone','UTC');  % 0 GPM (pump off)
 ];
 pump_rates = [50, 80, 110, 150, 0];
-all_data_01a = [methods_01a.method1; methods_01a.method4];
+all_data_01a = [methods_01a_roi1.method1; methods_01a_roi1.method4];
 for i = 1:length(pump_times_01a)
-    xline(pump_times_01a(i), 'k--', 'LineWidth', 1, 'Alpha', 0.7);
+    xline(pump_times_01a(i), 'k--', 'LineWidth', 1, 'Alpha', 0.7, 'HandleVisibility', 'off');
     if pump_rates(i) == 0
         text(pump_times_01a(i), min(all_data_01a)*0.9, '0 GPM', ...
             'HorizontalAlignment', 'center', 'FontSize', 8, 'FontWeight', 'bold');
@@ -805,9 +754,9 @@ ax.YAxis.TickLabelFormat = '%.0f';
 
 %% PT-01b (Oct 31, 2023) - 2 methods  
 subplot(2,2,2)
-plot(time_01b, methods_01b.method1, 'b-', 'LineWidth', 2, 'DisplayName', 'Method 1: Detrend first');
+plot(time_01b, methods_01b_roi1.method1, 'b-', 'LineWidth', 2, 'DisplayName', 'Method 1: Detrend first');
 hold on
-plot(time_01b, methods_01b.method4, 'm-', 'LineWidth', 2, 'DisplayName', 'Method 4: Post-process');
+plot(time_01b, methods_01b_roi1.method4, 'm-', 'LineWidth', 2, 'DisplayName', 'Method 4: Post-process');
 
 % Add pump schedule for PT-01b (October 31, 2023)
 pump_times_01b = [
@@ -818,9 +767,9 @@ pump_times_01b = [
     datetime(2023,10,31,19,30,0,'TimeZone','UTC');  % 0 GPM (pump off)
 ];
 pump_rates_01b = [50, 80, 110, 148, 0];
-all_data_01b = [methods_01b.method1; methods_01b.method4];
+all_data_01b = [methods_01b_roi1.method1; methods_01b_roi1.method4];
 for i = 1:length(pump_times_01b)
-    xline(pump_times_01b(i), 'k--', 'LineWidth', 1, 'Alpha', 0.7);
+    xline(pump_times_01b(i), 'k--', 'LineWidth', 1, 'Alpha', 0.7, 'HandleVisibility', 'off');
     if pump_rates_01b(i) == 0
         text(pump_times_01b(i), min(all_data_01b)*0.9, '0 GPM', ...
             'HorizontalAlignment', 'center', 'FontSize', 8, 'FontWeight', 'bold');
@@ -840,9 +789,9 @@ ax.YAxis.TickLabelFormat = '%.0f';
 
 %% PT-01c (Oct 24, 2023) - 2 methods
 subplot(2,2,3)
-plot(time_01c, methods_01c.method1, 'b-', 'LineWidth', 2, 'DisplayName', 'Method 1: Detrend first');
+plot(time_01c, methods_01c_roi1.method1, 'b-', 'LineWidth', 2, 'DisplayName', 'Method 1: Detrend first');
 hold on
-plot(time_01c, methods_01c.method4, 'm-', 'LineWidth', 2, 'DisplayName', 'Method 4: Post-process');
+plot(time_01c, methods_01c_roi1.method4, 'm-', 'LineWidth', 2, 'DisplayName', 'Method 4: Post-process');
 
 % Add pump schedule for PT-01c (October 24, 2023)
 pump_times_01c = [
@@ -853,9 +802,9 @@ pump_times_01c = [
     datetime(2023,10,24,19,15,0,'TimeZone','UTC');  % 0 GPM (pump off)
 ];
 pump_rates_01c = [50, 80, 110, 148, 0];
-all_data_01c = [methods_01c.method1; methods_01c.method4];
+all_data_01c = [methods_01c_roi1.method1; methods_01c_roi1.method4];
 for i = 1:length(pump_times_01c)
-    xline(pump_times_01c(i), 'k--', 'LineWidth', 1, 'Alpha', 0.7);
+    xline(pump_times_01c(i), 'k--', 'LineWidth', 1, 'Alpha', 0.7, 'HandleVisibility', 'off');
     if pump_rates_01c(i) == 0
         text(pump_times_01c(i), min(all_data_01c)*0.9, '0 GPM', ...
             'HorizontalAlignment', 'center', 'FontSize', 8, 'FontWeight', 'bold');
@@ -875,10 +824,10 @@ ax.YAxis.TickLabelFormat = '%.0f';
 
 %% Method Comparison Across All Tests (Method 1 - Best)
 subplot(2,2,4)
-plot(time_01a, methods_01a.method1, 'b-', 'LineWidth', 2, 'DisplayName', 'PT-01a (Nov 7)');
+plot(time_01a, methods_01a_roi1.method1, 'b-', 'LineWidth', 2, 'DisplayName', 'PT-01a (Nov 7)');
 hold on
-plot(time_01b, methods_01b.method1, 'r-', 'LineWidth', 2, 'DisplayName', 'PT-01b (Oct 31)');
-plot(time_01c, methods_01c.method1, 'g-', 'LineWidth', 2, 'DisplayName', 'PT-01c (Oct 24)');
+plot(time_01b, methods_01b_roi1.method1, 'r-', 'LineWidth', 2, 'DisplayName', 'PT-01b (Oct 31)');
+plot(time_01c, methods_01c_roi1.method1, 'g-', 'LineWidth', 2, 'DisplayName', 'PT-01c (Oct 24)');
 
 xlabel('Time'); ylabel('DAS Strain (nε)');
 title('Method 1 (Recommended): All Pump Tests Comparison');
@@ -888,22 +837,22 @@ grid on;
 ax = gca;
 ax.YAxis.TickLabelFormat = '%.0f';
 
-sgtitle('DAS Integration Methods Analysis - Zone c (260-310 ft) - All Pump Test Dates', ...
+sgtitle('Figure 4: ROI1 Integrated Strain Analysis - Full Depth (0-665 ft)', ...
     'FontSize', 14, 'FontWeight', 'bold');
 
 %% Summary Report
 fprintf('\n=== INTEGRATION METHODS COMPARISON SUMMARY ===\n');
-fprintf('\nPT-01a (Nov 7, 2023) - Zone c strain ranges:\n');
-fprintf('  Method 1: [%.1f to %.1f] nε\n', min(methods_01a.method1), max(methods_01a.method1));
-fprintf('  Method 4: [%.1f to %.1f] nε\n', min(methods_01a.method4), max(methods_01a.method4));
+fprintf('\nPT-01a (Nov 7, 2023) - ROI1 strain ranges:\n');
+fprintf('  Method 1: [%.1f to %.1f] nε\n', min(methods_01a_roi1.method1), max(methods_01a_roi1.method1));
+fprintf('  Method 4: [%.1f to %.1f] nε\n', min(methods_01a_roi1.method4), max(methods_01a_roi1.method4));
 
-fprintf('\nPT-01b (Oct 31, 2023) - Zone c strain ranges:\n');
-fprintf('  Method 1: [%.1f to %.1f] nε\n', min(methods_01b.method1), max(methods_01b.method1));
-fprintf('  Method 4: [%.1f to %.1f] nε\n', min(methods_01b.method4), max(methods_01b.method4));
+fprintf('\nPT-01b (Oct 31, 2023) - ROI1 strain ranges:\n');
+fprintf('  Method 1: [%.1f to %.1f] nε\n', min(methods_01b_roi1.method1), max(methods_01b_roi1.method1));
+fprintf('  Method 4: [%.1f to %.1f] nε\n', min(methods_01b_roi1.method4), max(methods_01b_roi1.method4));
 
-fprintf('\nPT-01c (Oct 24, 2023) - Zone c strain ranges:\n');
-fprintf('  Method 1: [%.1f to %.1f] nε\n', min(methods_01c.method1), max(methods_01c.method1));
-fprintf('  Method 4: [%.1f to %.1f] nε\n', min(methods_01c.method4), max(methods_01c.method4));
+fprintf('\nPT-01c (Oct 24, 2023) - ROI1 strain ranges:\n');
+fprintf('  Method 1: [%.1f to %.1f] nε\n', min(methods_01c_roi1.method1), max(methods_01c_roi1.method1));
+fprintf('  Method 4: [%.1f to %.1f] nε\n', min(methods_01c_roi1.method4), max(methods_01c_roi1.method4));
 
 %% Strain Rate Analysis Summary
 fprintf('\n=== STRAIN RATE ANALYSIS SUMMARY ===\n');
@@ -960,195 +909,8 @@ fprintf('  PT-01a (Nov 7): 50→80→110→150→0 GPM\n');
 fprintf('  PT-01b (Oct 31): 50→80→110→148→0 GPM\n');
 fprintf('  PT-01c (Oct 24): 50→80→110→148→0 GPM\n');
 
-%% ===================================================================
-%% REORGANIZED 4-FIGURE DASHBOARD 
-%% ===================================================================
-fprintf('\n=== CREATING REORGANIZED 4-FIGURE DASHBOARD ===\n');
-
-% Figure 3: ROI1 Integrated Strain Analysis
-fprintf('Creating Figure 3: ROI1 integrated strain analysis...\n');
-figure('Position', [200, 150, 1600, 1000]);
-
-% PT-01a ROI1 integrated strain
-subplot(2,2,1)
-plot(time_01a, methods_01a.method1, 'b-', 'LineWidth', 2, 'DisplayName', 'Method 1: Detrend first');
-hold on
-plot(time_01a, methods_01a.method4, 'm-', 'LineWidth', 2, 'DisplayName', 'Method 4: Post-process');
-% Add pump schedule annotations
-pump_times_01a = pump_data.pump_times_01a;
-pump_rates = pump_data.rates_01a;
-all_data_01a = [methods_01a.method1; methods_01a.method4];
-for i = 1:length(pump_times_01a)
-    xline(pump_times_01a(i), 'k--', 'LineWidth', 1, 'Alpha', 0.7);
-    if pump_rates(i) == 0
-        text(pump_times_01a(i), min(all_data_01a)*0.9, '0 GPM', ...
-            'HorizontalAlignment', 'center', 'FontSize', 8, 'FontWeight', 'bold');
-    else
-        text(pump_times_01a(i), max(all_data_01a)*0.9, sprintf('%d GPM', pump_rates(i)), ...
-            'HorizontalAlignment', 'center', 'FontSize', 8, 'FontWeight', 'bold');
-    end
-end
-xlabel('Time (UTC)'); ylabel('DAS Strain (nε)');
-title('PT-01a ROI1 (Full Depth): 2 Integration Methods');
-legend('Location', 'best', 'FontSize', 9);
-grid on; xlim([time_01a(1), time_01a(end)]);
-ax = gca; ax.YAxis.TickLabelFormat = '%.0f';
-
-% PT-01b ROI1 integrated strain
-subplot(2,2,2)
-plot(time_01b, methods_01b.method1, 'b-', 'LineWidth', 2, 'DisplayName', 'Method 1: Detrend first');
-hold on
-plot(time_01b, methods_01b.method4, 'm-', 'LineWidth', 2, 'DisplayName', 'Method 4: Post-process');
-% Add pump schedule annotations
-pump_times_01b = pump_data.pump_times_01b;
-pump_rates_01b = pump_data.rates_01b;
-all_data_01b = [methods_01b.method1; methods_01b.method4];
-for i = 1:length(pump_times_01b)
-    xline(pump_times_01b(i), 'k--', 'LineWidth', 1, 'Alpha', 0.7);
-    if pump_rates_01b(i) == 0
-        text(pump_times_01b(i), min(all_data_01b)*0.9, '0 GPM', ...
-            'HorizontalAlignment', 'center', 'FontSize', 8, 'FontWeight', 'bold');
-    else
-        text(pump_times_01b(i), max(all_data_01b)*0.9, sprintf('%d GPM', pump_rates_01b(i)), ...
-            'HorizontalAlignment', 'center', 'FontSize', 8, 'FontWeight', 'bold');
-    end
-end
-xlabel('Time (UTC)'); ylabel('DAS Strain (nε)');
-title('PT-01b ROI1 (Full Depth): 2 Integration Methods');
-legend('Location', 'best', 'FontSize', 9);
-grid on; xlim([time_01b(1), time_01b(end)]);
-ax = gca; ax.YAxis.TickLabelFormat = '%.0f';
-
-% PT-01c ROI1 integrated strain
-subplot(2,2,3)
-plot(time_01c, methods_01c.method1, 'b-', 'LineWidth', 2, 'DisplayName', 'Method 1: Detrend first');
-hold on
-plot(time_01c, methods_01c.method4, 'm-', 'LineWidth', 2, 'DisplayName', 'Method 4: Post-process');
-% Add pump schedule annotations
-pump_times_01c = pump_data.pump_times_01c;
-pump_rates_01c = pump_data.rates_01c;
-all_data_01c = [methods_01c.method1; methods_01c.method4];
-for i = 1:length(pump_times_01c)
-    xline(pump_times_01c(i), 'k--', 'LineWidth', 1, 'Alpha', 0.7);
-    if pump_rates_01c(i) == 0
-        text(pump_times_01c(i), min(all_data_01c)*0.9, '0 GPM', ...
-            'HorizontalAlignment', 'center', 'FontSize', 8, 'FontWeight', 'bold');
-    else
-        text(pump_times_01c(i), max(all_data_01c)*0.9, sprintf('%d GPM', pump_rates_01c(i)), ...
-            'HorizontalAlignment', 'center', 'FontSize', 8, 'FontWeight', 'bold');
-    end
-end
-xlabel('Time (UTC)'); ylabel('DAS Strain (nε)');
-title('PT-01c ROI1 (Full Depth): 2 Integration Methods');
-legend('Location', 'best', 'FontSize', 9);
-grid on; xlim([time_01c(1), time_01c(end)]);
-ax = gca; ax.YAxis.TickLabelFormat = '%.0f';
-
-% Method 1 comparison across all ROI1
-subplot(2,2,4)
-plot(time_01a, methods_01a.method1, 'b-', 'LineWidth', 2, 'DisplayName', 'PT-01a ROI1 (Nov 7)');
-hold on
-plot(time_01b, methods_01b.method1, 'r-', 'LineWidth', 2, 'DisplayName', 'PT-01b ROI1 (Oct 31)');
-plot(time_01c, methods_01c.method1, 'g-', 'LineWidth', 2, 'DisplayName', 'PT-01c ROI1 (Oct 24)');
-xlabel('Time'); ylabel('DAS Strain (nε)');
-title('Method 1 (Recommended): All ROI1 Tests Comparison');
-legend('Location', 'best', 'FontSize', 9);
-grid on;
-ax = gca; ax.YAxis.TickLabelFormat = '%.0f';
-
-sgtitle('Figure 3: ROI1 Integrated Strain Analysis - Full Depth (0-665 ft)', ...
-    'FontSize', 16, 'FontWeight', 'bold');
-
-% Figure 4: ROI2 Integrated Strain Analysis
-fprintf('Creating Figure 4: ROI2 integrated strain analysis...\n');
-figure('Position', [250, 200, 1600, 1000]);
-
-% PT-01a ROI2 integrated strain (Zone a)
-subplot(2,2,1)
-plot(time_01a, methods_01a_roi2.method1, 'b-', 'LineWidth', 2, 'DisplayName', 'Method 1: Detrend first');
-hold on
-plot(time_01a, methods_01a_roi2.method4, 'm-', 'LineWidth', 2, 'DisplayName', 'Method 4: Post-process');
-% Add pump schedule annotations
-all_data_01a_roi2 = [methods_01a_roi2.method1; methods_01a_roi2.method4];
-for i = 1:length(pump_times_01a)
-    xline(pump_times_01a(i), 'k--', 'LineWidth', 1, 'Alpha', 0.7);
-    if pump_rates(i) == 0
-        text(pump_times_01a(i), min(all_data_01a_roi2)*0.9, '0 GPM', ...
-            'HorizontalAlignment', 'center', 'FontSize', 8, 'FontWeight', 'bold');
-    else
-        text(pump_times_01a(i), max(all_data_01a_roi2)*0.9, sprintf('%d GPM', pump_rates(i)), ...
-            'HorizontalAlignment', 'center', 'FontSize', 8, 'FontWeight', 'bold');
-    end
-end
-xlabel('Time (UTC)'); ylabel('DAS Strain (nε)');
-title('PT-01a ROI2 (Zone a: 450-510 ft): 2 Integration Methods');
-legend('Location', 'best', 'FontSize', 9);
-grid on; xlim([time_01a(1), time_01a(end)]);
-ax = gca; ax.YAxis.TickLabelFormat = '%.0f';
-
-% PT-01b ROI2 integrated strain (Zone b)
-subplot(2,2,2)
-plot(time_01b, methods_01b_roi2.method1, 'b-', 'LineWidth', 2, 'DisplayName', 'Method 1: Detrend first');
-hold on
-plot(time_01b, methods_01b_roi2.method4, 'm-', 'LineWidth', 2, 'DisplayName', 'Method 4: Post-process');
-% Add pump schedule annotations
-all_data_01b_roi2 = [methods_01b_roi2.method1; methods_01b_roi2.method4];
-for i = 1:length(pump_times_01b)
-    xline(pump_times_01b(i), 'k--', 'LineWidth', 1, 'Alpha', 0.7);
-    if pump_rates_01b(i) == 0
-        text(pump_times_01b(i), min(all_data_01b_roi2)*0.9, '0 GPM', ...
-            'HorizontalAlignment', 'center', 'FontSize', 8, 'FontWeight', 'bold');
-    else
-        text(pump_times_01b(i), max(all_data_01b_roi2)*0.9, sprintf('%d GPM', pump_rates_01b(i)), ...
-            'HorizontalAlignment', 'center', 'FontSize', 8, 'FontWeight', 'bold');
-    end
-end
-xlabel('Time (UTC)'); ylabel('DAS Strain (nε)');
-title('PT-01b ROI2 (Zone b: 350-400 ft): 2 Integration Methods');
-legend('Location', 'best', 'FontSize', 9);
-grid on; xlim([time_01b(1), time_01b(end)]);
-ax = gca; ax.YAxis.TickLabelFormat = '%.0f';
-
-% PT-01c ROI2 integrated strain (Zone c)
-subplot(2,2,3)
-plot(time_01c, methods_01c_roi2.method1, 'b-', 'LineWidth', 2, 'DisplayName', 'Method 1: Detrend first');
-hold on
-plot(time_01c, methods_01c_roi2.method4, 'm-', 'LineWidth', 2, 'DisplayName', 'Method 4: Post-process');
-% Add pump schedule annotations
-all_data_01c_roi2 = [methods_01c_roi2.method1; methods_01c_roi2.method4];
-for i = 1:length(pump_times_01c)
-    xline(pump_times_01c(i), 'k--', 'LineWidth', 1, 'Alpha', 0.7);
-    if pump_rates_01c(i) == 0
-        text(pump_times_01c(i), min(all_data_01c_roi2)*0.9, '0 GPM', ...
-            'HorizontalAlignment', 'center', 'FontSize', 8, 'FontWeight', 'bold');
-    else
-        text(pump_times_01c(i), max(all_data_01c_roi2)*0.9, sprintf('%d GPM', pump_rates_01c(i)), ...
-            'HorizontalAlignment', 'center', 'FontSize', 8, 'FontWeight', 'bold');
-    end
-end
-xlabel('Time (UTC)'); ylabel('DAS Strain (nε)');
-title('PT-01c ROI2 (Zone c: 260-310 ft): 2 Integration Methods');
-legend('Location', 'best', 'FontSize', 9);
-grid on; xlim([time_01c(1), time_01c(end)]);
-ax = gca; ax.YAxis.TickLabelFormat = '%.0f';
-
-% Method 1 comparison across all ROI2 pumping zones
-subplot(2,2,4)
-plot(time_01a, methods_01a_roi2.method1, 'b-', 'LineWidth', 2, 'DisplayName', 'PT-01a ROI2 Zone a (Nov 7)');
-hold on
-plot(time_01b, methods_01b_roi2.method1, 'r-', 'LineWidth', 2, 'DisplayName', 'PT-01b ROI2 Zone b (Oct 31)');
-plot(time_01c, methods_01c_roi2.method1, 'g-', 'LineWidth', 2, 'DisplayName', 'PT-01c ROI2 Zone c (Oct 24)');
-xlabel('Time'); ylabel('DAS Strain (nε)');
-title('Method 1 (Recommended): All ROI2 Pumping Zones Comparison');
-legend('Location', 'best', 'FontSize', 9);
-grid on;
-ax = gca; ax.YAxis.TickLabelFormat = '%.0f';
-
-sgtitle('Figure 4: ROI2 Integrated Strain Analysis - Pumping Zones', ...
-    'FontSize', 16, 'FontWeight', 'bold');
-
 fprintf('\n=== 4-FIGURE DASHBOARD COMPLETE ===\n');
 fprintf('✓ Figure 1: ROI1 Strain Rate Analysis - Full Depth (0-665 ft)\n');
 fprintf('✓ Figure 2: ROI2 Strain Rate Analysis - Pumping Zones\n');
-fprintf('✓ Figure 3: ROI1 Integrated Strain Analysis - Full Depth (0-665 ft)\n');
-fprintf('✓ Figure 4: ROI2 Integrated Strain Analysis - Pumping Zones\n');
+fprintf('✓ Figure 3: ROI2 Integrated Strain Analysis - Pumping Zones\n');
+fprintf('✓ Figure 4: ROI1 Integrated Strain Analysis - Full Depth (0-665 ft)\n');
