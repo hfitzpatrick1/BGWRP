@@ -26,7 +26,7 @@ project_dir = fileparts(script_dir);
 data_dir = fullfile(project_dir, 'data');
 
 load(fullfile(data_dir, 'DAS Data', 'PM07_Step1c_1Hz.mat'));
-load(fullfile(data_dir, 'head', 'headz1.mat'));
+load(fullfile(data_dir, 'head', 'head_c_z5.mat'));
 C1=110;  %starting channel (corrected from reference PT_01c_CC.m)
 MperChan=0.25;  %meters per channel (corrected from reference PT_01c_CC.m)
 data=data1Hz;
@@ -71,22 +71,38 @@ end
  ylabel('Channel Number')
 % Plot Displacement Rate
 
-Start50= datetime(2023,10,24,15,10,00,00,'TimeZone','UTC'); 
-Start80= Start50+hours(1);
-Start110= Start80+hours(1);
-Start140= Start110+hours(1);
-StartRec= Start140+hours(1);
+% Convert head data time to UTC to match DAS data
+Thead = Date;
+Thead.TimeZone = 'UTC';  % Keep in UTC to match DAS data
+hm = Depthft*.3048;
+hft = Depthft;
+
+% Set time window for plotting (19:14-19:18 UTC)
+StartPlot = datetime(2023,10,24,19,14,00,00,'TimeZone','UTC');
+EndPlot = datetime(2023,10,24,19,18,00,00,'TimeZone','UTC');
+
+% For reference points on plot
+Start50 = datetime(2023,10,24,15,10,00,00,'TimeZone','UTC');
+Start80 = Start50+hours(1);
+Start110 = Start80+hours(1);
+Start140 = Start110+hours(1);
+StartRec = Start140+hours(1);
 
 %remove common mode
 %cmdata=data1Hz-mean(data1Hz(:,200:800),2);
 mdata=movmean(data1Hz,10,1);
-Thead=headz1.Date;
-hm=headz1.Depthft*.3048;
-hft=headz1.Depthft;
-Thead.TimeZone='America/Los_Angeles';
 
-StartPlot=StartRec+minutes(4);
-EndPlot=StartRec+minutes(8);
+% Debug prints
+fprintf('Head data time range: %s to %s\n', min(Thead), max(Thead));
+fprintf('DAS data time range: %s to %s\n', min(Tdas), max(Tdas));
+fprintf('StartPlot: %s\n', StartPlot);
+fprintf('EndPlot: %s\n', EndPlot);
+fprintf('Max drawdown: %.3f ft\n', max(Drawdownft));
+
+% Find drawdown values in our plot window
+window_mask = Thead >= StartPlot & Thead <= EndPlot;
+window_drawdown = Drawdownft(window_mask);
+fprintf('Drawdown in plot window: min=%.3f ft, max=%.3f ft\n', min(window_drawdown), max(window_drawdown));
 
 figure(2)
 subplot(2,1,1)
@@ -108,13 +124,16 @@ subplot(2,1,1)
     %title('5 sec Moving Mean Displacement Rate Test 1c')
  subplot(2,1,2)
    yyaxis left
-    plot(Thead,hft)
+    plot(Thead, Drawdownft, 'b-', 'LineWidth', 1.5)
     xlim([StartPlot EndPlot])
-    xlabel('Date Time Local')
-    ylabel('Head (ft)')
+    xlabel('Date Time UTC')  % Changed to UTC to match top plot
+    ylabel('Drawdown (ft)')
+    ylim([-0.2 0])  % Adjusted to show actual drawdown range (-0.161 to -0.063 ft)
    yyaxis right
-    plot(Tdas,mdata(:,492))
+    plot(Tdas, mdata(:,492), 'r-', 'LineWidth', 1.5)
     ylabel('Displacement Rate (nm/s)')
+    grid on
+    legend('Drawdown', 'Displacement Rate', 'Location', 'northwest')
     
     
     %% Plot Strain
@@ -138,10 +157,13 @@ subplot(2,1,1)
     %title('5 sec Moving Mean Displacement Rate Test 1c')
  subplot(2,1,2)
    yyaxis left
-    plot(Thead,hft)
+    plot(Thead, Drawdownft, 'b-', 'LineWidth', 1.5)
     xlim([StartPlot EndPlot])
-    xlabel('Date Time Local')
-    ylabel('Head (ft)')
+    xlabel('Date Time UTC')  % Changed to UTC to match top plot
+    ylabel('Drawdown (ft)')
+    ylim([-0.2 0])  % Adjusted to show actual drawdown range (-0.161 to -0.063 ft)
    yyaxis right
-    plot(iTdas,intdata(:,492)/10)
+    plot(iTdas, intdata(:,492)/10, 'r-', 'LineWidth', 1.5)
     ylabel('Strain (nm/m)')
+    grid on
+    legend('Drawdown', 'Strain', 'Location', 'northwest')
