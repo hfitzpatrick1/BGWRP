@@ -20,8 +20,13 @@
 %% Manual inputs:
 
 %Load DAS and transducer Data
-load('data\DAS Data\PM07_Step1c_1Hz.mat');
-load('data\head\headz1.mat');
+% Get the directory where this script is located
+script_dir = fileparts(mfilename('fullpath'));
+project_dir = fileparts(script_dir);
+data_dir = fullfile(project_dir, 'data');
+
+load(fullfile(data_dir, 'DAS Data', 'PM07_Step1c_1Hz.mat'));
+load(fullfile(data_dir, 'head', 'headz1.mat'));
 C1=110;  %starting channel (corrected from reference PT_01c_CC.m)
 MperChan=0.25;  %meters per channel (corrected from reference PT_01c_CC.m)
 data=data1Hz;
@@ -75,9 +80,9 @@ StartRec= Start140+hours(1);
 %remove common mode
 %cmdata=data1Hz-mean(data1Hz(:,200:800),2);
 mdata=movmean(data1Hz,10,1);
-Thead=headz5.Date;
-hm=headz5.Depthft*.3048;
-hft=headz5.Depthft;
+Thead=headz1.Date;
+hm=headz1.Depthft*.3048;
+hft=headz1.Depthft;
 Thead.TimeZone='America/Los_Angeles';
 
 StartPlot=StartRec+minutes(4);
