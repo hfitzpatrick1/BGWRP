@@ -133,7 +133,7 @@ v = pcolor(Tdas,depthft, mdata');
     grid on; set(gca,'layer','top');
     ylabel('Depth (ft)')
     axis ij
-    ylim([zone_min_ft zone_max_ft])
+    ylim([100 665])
     xline([Start50 Start80 Start110 Start140 StartRec],'--w',{'50 gpm','80 gpm','110 gpm','140 gpm','Recovery'},LineWidth=2)
     yline(zone_min_ft, '--w', 'Zone min', LineWidth=1.5)
     yline(zone_max_ft, '--w', 'Zone max', LineWidth=1.5)
@@ -171,7 +171,7 @@ v = pcolor(iTdas,depthft, intdata'/10);
     grid on; set(gca,'layer','top');
     ylabel('Depth (ft)')
     axis ij
-    ylim([zone_min_ft zone_max_ft])
+    ylim([100 665])
     xline([Start50 Start80 Start110 Start140 StartRec],'--w',{'50 gpm','80 gpm','110 gpm','140 gpm','Recovery'},LineWidth=2)
     yline(zone_min_ft, '--w', 'Zone min', LineWidth=1.5)
     yline(zone_max_ft, '--w', 'Zone max', LineWidth=1.5)
