@@ -80,9 +80,9 @@ TheadLocal.TimeZone = 'America/Los_Angeles';  % Convert to local time for bottom
 hm = Depthft*.3048;
 hft = Depthft;
 
-% Set time window for plotting (focus on pump shutoff at 19:30 UTC)
-StartPlot = datetime(2023,10,31,19,29,00,00,'TimeZone','UTC');
-EndPlot = datetime(2023,10,31,19,33,00,00,'TimeZone','UTC');
+% Set time window for plotting (requested window)
+StartPlot = datetime(2023,10,31,19,25,00,00,'TimeZone','UTC');
+EndPlot   = datetime(2023,10,31,20,28,00,00,'TimeZone','UTC');
 
 % For reference points on plot
 Start50 = datetime(2023,10,31,15,30,00,00,'TimeZone','UTC');
@@ -107,21 +107,39 @@ window_mask = Thead >= StartPlot & Thead <= EndPlot;
 window_drawdown = Drawdownft(window_mask);
 fprintf('Drawdown in plot window: min=%.3f ft, max=%.3f ft\n', min(window_drawdown), max(window_drawdown));
 
+% Choose a representative channel in the pumping zone (350-400 ft)
+zone_min_ft = 350;  % lower bound of zone of interest
+zone_max_ft = 400;  % upper bound of zone of interest
+target_depth_ft = (zone_min_ft + zone_max_ft)/2;  % center of zone of interest
+[~, channel_idx] = min(abs(depthft - target_depth_ft));
+depth_at_channel = depthft(channel_idx);
+fprintf('Selected channel %d at depth %.1f ft (target %.1f ft, zone %.1f-%.1f ft)\n', channel_idx, depth_at_channel, target_depth_ft, zone_min_ft, zone_max_ft);
+fprintf('mdata range: [%.3f, %.3f] nm/s\n', min(mdata(:)), max(mdata(:)));
+fprintf('mdata(:,%d) range: [%.3f, %.3f] nm/s\n', channel_idx, min(mdata(:,channel_idx)), max(mdata(:,channel_idx)));
+
+% Zone masks and averages for plotting
+idxZone = depthft >= zone_min_ft & depthft <= zone_max_ft;
+avg_disp_rate = mean(mdata(:, idxZone), 2, 'omitnan');
+avg_strain = mean(intdata(:, idxZone), 2, 'omitnan')/10;  % nm/m
+
 figure(2)
 subplot(2,1,1)
 v = pcolor(Tdas,depthft, mdata');
     set(v, 'EdgeColor', 'none')
-    set(gca, 'clim', [-0.25 0.15]);
+    set(gca, 'clim', [-1.0 0]);
     colormap('jet');
     c7=colorbar; c7.Location="northoutside";
     c7.Ruler.TickLabelFormat='%g nm/s';
     grid on; set(gca,'layer','top');
     ylabel('Depth (ft)')
     axis ij
-    ylim([300 450])  % Focus on well screen zone (350-400 ft)
+    ylim([zone_min_ft zone_max_ft])
     xline([Start50 Start80 Start110 Start140 StartRec],'--w',{'50 gpm','80 gpm','110 gpm','140 gpm','Recovery'},LineWidth=2)
+    yline(zone_min_ft, '--w', 'Zone min', LineWidth=1.5)
+    yline(zone_max_ft, '--w', 'Zone max', LineWidth=1.5)
     xlim([StartPlot EndPlot])
     xlabel('Date Time UTC')
+    title('Displacement Rate (350-400 ft zone)')
 subplot(2,1,2)
    yyaxis left
     plot(TheadLocal, Drawdownft, 'b-', 'LineWidth', 1.5)
@@ -132,11 +150,11 @@ subplot(2,1,2)
     xlim([StartPlotLocal EndPlotLocal])
     xlabel('Date Time Local')
     ylabel('Drawdown (ft)')
-    ylim([-0.08 -0.06])  % Adjusted for actual drawdown range (-0.074 to -0.067 ft)
+    ylim([-0.07 -0.02])  % Adjusted for actual drawdown range (-0.068 to -0.024 ft)
    yyaxis right
     TdasLocal = Tdas;
     TdasLocal.TimeZone = 'America/Los_Angeles';
-    plot(TdasLocal, mdata(:,492), 'r-', 'LineWidth', 1.5)
+    plot(TdasLocal, avg_disp_rate, 'r-', 'LineWidth', 1.5)
     ylabel('Displacement Rate (nm/s)')
     grid on
     legend('Drawdown', 'Displacement Rate', 'Location', 'northwest')
@@ -146,17 +164,20 @@ figure(3)
 subplot(2,1,1)
 v = pcolor(iTdas,depthft, intdata'/10);
     set(v, 'EdgeColor', 'none')
-    set(gca, 'clim', [-2 0]);
+    set(gca, 'clim', [-2200 -1880]);  % Adjusted to match strain data range
     colormap('jet');
     c7=colorbar; c7.Location="northoutside";
     c7.Ruler.TickLabelFormat='%g nm/m';
     grid on; set(gca,'layer','top');
     ylabel('Depth (ft)')
     axis ij
-    ylim([300 450])  % Focus on well screen zone (350-400 ft)
+    ylim([zone_min_ft zone_max_ft])
     xline([Start50 Start80 Start110 Start140 StartRec],'--w',{'50 gpm','80 gpm','110 gpm','140 gpm','Recovery'},LineWidth=2)
+    yline(zone_min_ft, '--w', 'Zone min', LineWidth=1.5)
+    yline(zone_max_ft, '--w', 'Zone max', LineWidth=1.5)
     xlim([StartPlot EndPlot])
     xlabel('Date Time UTC')
+    title('Strain (350-400 ft zone)')
 subplot(2,1,2)
    yyaxis left
     plot(TheadLocal, Drawdownft, 'b-', 'LineWidth', 1.5)
@@ -167,11 +188,11 @@ subplot(2,1,2)
     xlim([StartPlotLocal EndPlotLocal])
     xlabel('Date Time Local')
     ylabel('Drawdown (ft)')
-    ylim([-0.08 -0.06])  % Adjusted for actual drawdown range (-0.074 to -0.067 ft)
+    ylim([-0.07 -0.02])  % Adjusted for actual drawdown range (-0.068 to -0.024 ft)
    yyaxis right
     iTdasLocal = iTdas;
     iTdasLocal.TimeZone = 'America/Los_Angeles';
-    plot(iTdasLocal, intdata(:,492)/10, 'r-', 'LineWidth', 1.5)
+    plot(iTdasLocal, avg_strain, 'r-', 'LineWidth', 1.5)
     ylabel('Strain (nm/m)')
     grid on
     legend('Drawdown', 'Strain', 'Location', 'northwest')

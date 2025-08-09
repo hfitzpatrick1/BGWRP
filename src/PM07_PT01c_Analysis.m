@@ -56,6 +56,7 @@ subdata1Hz=data1Hz(15085:end,:);
 intdata=cumtrapz( subdata1Hz,1 );
 iTdas=Tdas(15085:end);
 %% Detrend integrated DAS data
+dintdata = zeros(size(intdata));  % Pre-allocate
 for nn = 1:size(intdata,2)
     dintdata(:,nn)=detrend(intdata(:,nn),2);
 end
