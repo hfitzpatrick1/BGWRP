@@ -150,7 +150,7 @@ subplot(2,1,2)
     xlim([StartPlotLocal EndPlotLocal])
     xlabel('Date Time Local')
     ylabel('Drawdown (ft)')
-    ylim([-0.07 -0.02])  % Adjusted for actual drawdown range (-0.068 to -0.024 ft)
+    ylim([-0.07 0.05])  % Adjusted for actual drawdown range (-0.068 to -0.024 ft)
    yyaxis right
     TdasLocal = Tdas;
     TdasLocal.TimeZone = 'America/Los_Angeles';
@@ -188,7 +188,7 @@ subplot(2,1,2)
     xlim([StartPlotLocal EndPlotLocal])
     xlabel('Date Time Local')
     ylabel('Drawdown (ft)')
-    ylim([-0.07 -0.02])  % Adjusted for actual drawdown range (-0.068 to -0.024 ft)
+    ylim([-0.07 0.05])  % Adjusted for actual drawdown range (-0.068 to -0.024 ft)
    yyaxis right
     iTdasLocal = iTdas;
     iTdasLocal.TimeZone = 'America/Los_Angeles';

@@ -25,8 +25,27 @@ script_dir = fileparts(mfilename('fullpath'));
 project_dir = fileparts(script_dir);
 data_dir = fullfile(project_dir, 'data');
 
-load(fullfile(data_dir, 'DAS Data', 'PM07_Step1c_1Hz.mat'));
+load(fullfile(data_dir, 'DAS Data', 'PM07_01c_1Hz.mat'));
 load(fullfile(data_dir, 'head', 'head_c_z5.mat'));
+
+% Check what variables are loaded and rename if needed
+if exist('data1Hz', 'var')
+    % Variable is already named data1Hz
+    fprintf('Found data1Hz variable\n');
+elseif exist('decdata', 'var')
+    % Variable is named decdata (like in PT-01a)
+    data1Hz = decdata;
+    fprintf('Found decdata variable, renamed to data1Hz\n');
+else
+    % List available variables to help debug
+    vars = whos('-file', fullfile(data_dir, 'DAS Data', 'PM07_01c_1Hz.mat'));
+    fprintf('Available variables in PM07_01c_1Hz.mat:\n');
+    for i = 1:length(vars)
+        fprintf('  %s: %s\n', vars(i).name, mat2str(vars(i).size));
+    end
+    error('Could not find data1Hz or decdata variable. Please check the variable names above.');
+end
+
 C1=110;  %starting channel (corrected from reference PT_01c_CC.m)
 MperChan=0.25;  %meters per channel (corrected from reference PT_01c_CC.m)
 data=data1Hz;
