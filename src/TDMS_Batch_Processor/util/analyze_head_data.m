@@ -45,10 +45,22 @@ for i = 1:length(test_labels)
         analysis_results.(test_label).timing.end = analysis_end;
         analysis_results.(test_label).timing.duration_minutes = analysis_duration;
         
-        % Placeholder for head data loading and analysis
-        % This would load head data files based on test_label
-        fprintf('  Head data analysis would be performed here\n');
-        fprintf('  Looking for head data files: head_%s_z*.mat\n', test_label);
+        % Look for head data files in project data directory
+        head_data_dir = 'C:\Coding\BGWRP\data\head';
+        head_files = dir(fullfile(head_data_dir, sprintf('head_%s_z*.mat', test_label)));
+        
+        fprintf('  Looking for head data files: head_%s_z*.mat in %s\n', test_label, head_data_dir);
+        fprintf('  Found %d head data files\n', length(head_files));
+        
+        if length(head_files) > 0
+            for j = 1:length(head_files)
+                head_file = head_files(j);
+                fprintf('    Loading: %s\n', head_file.name);
+                % Load head data here
+            end
+        else
+            fprintf('  No head data files found\n');
+        end
         
         % Initialize results structure for this test
         analysis_results.(test_label).zones = struct();

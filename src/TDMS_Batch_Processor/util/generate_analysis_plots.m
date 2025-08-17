@@ -25,10 +25,13 @@ if isfield(config, 'save_charts') && config.save_charts
     plot_results.save_enabled = true;
     
     % Determine save directory (same as data source path)
-    if isfield(config, 'chart_output_dir')
+    if isfield(config, 'chart_output_dir') && ~isempty(config.chart_output_dir)
         save_dir = config.chart_output_dir;
     else
+        % Debug: check what base_input contains
+        fprintf('DEBUG: config.base_input = "%s"\n', config.base_input);
         save_dir = fullfile(config.base_input, 'analysis_charts');
+        fprintf('DEBUG: save_dir = "%s"\n', save_dir);
     end
     
     % Create directory if it doesn't exist

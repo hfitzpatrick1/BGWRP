@@ -1,0 +1,14 @@
+# TDMS Batch Processor Configuration
+# Simple text file with key=value pairs
+
+# Root data directory path
+base_input=E:\PM_07 Step Test\MATLAB\recovery_extract\
+
+# Optional: Override test directory names (comma-separated)
+# test_directories=PT01a_Recovery,PT01b_Recovery,PT01c_Recovery
+
+# Optional: Override test labels (comma-separated)  
+# test_labels=a,b,c
+
+# Optional: Override decimation factor
+# decimation_factor=100

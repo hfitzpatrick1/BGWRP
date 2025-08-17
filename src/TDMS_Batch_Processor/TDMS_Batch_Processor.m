@@ -17,6 +17,59 @@ addpath(util_dir);
 fprintf('Added util directory to path: %s\n', util_dir);
 
 %% Configuration Setup
+% Handle shorthand mode parameter
+if exist('mode', 'var') && ischar(mode)
+    fprintf('Using shorthand mode: %s\n', mode);
+    config = struct();
+    
+    switch lower(mode)
+        case 'prep'
+            % Preparation mode: TDMS conversion + concatenation only
+            config.run_tdms_conversion = true;
+            config.run_concatenation = true;
+            config.run_timing_extraction = false;
+            config.run_data_analysis = false;
+            config.save_charts = false;
+            
+        case 'run'
+            % Analysis mode: timing + analysis, no chart saving
+            config.run_tdms_conversion = false;
+            config.run_concatenation = false;
+            config.run_timing_extraction = true;
+            config.run_data_analysis = true;
+            config.save_charts = false;
+            
+        case 'run_save'
+            % Analysis mode with chart saving
+            config.run_tdms_conversion = false;
+            config.run_concatenation = false;
+            config.run_timing_extraction = true;
+            config.run_data_analysis = true;
+            config.save_charts = true;
+            
+        case 'all'
+            % Full pipeline
+            config.run_tdms_conversion = true;
+            config.run_concatenation = true;
+            config.run_timing_extraction = true;
+            config.run_data_analysis = true;
+            config.save_charts = false;
+            
+        case 'all_save'
+            % Full pipeline with chart saving
+            config.run_tdms_conversion = true;
+            config.run_concatenation = true;
+            config.run_timing_extraction = true;
+            config.run_data_analysis = true;
+            config.save_charts = true;
+            
+        otherwise
+            error('Unknown mode: %s. Valid modes: prep, run, run_save, all, all_save', mode);
+    end
+    
+    fprintf('Mode "%s" configured with defaults\n', mode);
+end
+
 % Create configuration struct (can be overridden by input parameters)
 if ~exist('config', 'var')
     config = struct();
