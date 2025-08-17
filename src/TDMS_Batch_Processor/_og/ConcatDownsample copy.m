@@ -1,15 +1,7 @@
 %This code decimates iDAS data then concatenates into a single matrix
-% NOTE: Variables should be set by calling script before running this
-
-if ~exist('directory', 'var')
-    directory       =   'D:\PM_07 Step Test\MATLAB\mat\PM07Step_c\';
-end
-if ~exist('filesearch', 'var')
-    filesearch      =   '*.mat';
-end
-if ~exist('r', 'var')
-    r = 100;  % Default decimation factor
-end 
+clear all;
+directory       =   'D:\PM_07 Step Test\MATLAB\mat\PM07Step_c\';
+filesearch      =   '*.mat'; 
 tic
 
 % Find files

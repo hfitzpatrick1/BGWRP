@@ -16,40 +16,73 @@ util_dir = fullfile(script_dir, 'util');
 addpath(util_dir);
 fprintf('Added util directory to path: %s\n', util_dir);
 
-%% Configuration
-base_input = 'E:\PM_07 Step Test\MATLAB\recovery_extract\';
-test_directories = {'PT01a_Recovery', 'PT01b_Recovery', 'PT01c_Recovery'};
-test_labels = {'a', 'b', 'c'};
+%% Configuration Setup
+% Create configuration struct (can be overridden by input parameters)
+if ~exist('config', 'var')
+    config = struct();
+end
 
-% Default processing stage controls (can be overridden by input parameters)
-if ~exist('run_tdms_conversion', 'var')
-    run_tdms_conversion = false;  % Step 1: TDMS to individual MAT files (DEFAULT: SKIPPED)
+% Set defaults
+if ~isfield(config, 'base_input')
+    config.base_input = 'E:\PM_07 Step Test\MATLAB\recovery_extract\';
 end
-if ~exist('run_concatenation', 'var')
-    run_concatenation = true;     % Step 2: Concatenate and downsample (DEFAULT: ENABLED)
+if ~isfield(config, 'test_directories')
+    config.test_directories = {'PT01a_Recovery', 'PT01b_Recovery', 'PT01c_Recovery'};
 end
-if ~exist('run_timing_extraction', 'var')
-    run_timing_extraction = true; % Step 3: Extract timing configuration (DEFAULT: ENABLED)
+if ~isfield(config, 'test_labels')
+    config.test_labels = {'a', 'b', 'c'};
+end
+if ~isfield(config, 'run_tdms_conversion')
+    config.run_tdms_conversion = false;  % DEFAULT: SKIP
+end
+if ~isfield(config, 'run_concatenation')
+    config.run_concatenation = true;     % DEFAULT: ENABLED
+end
+if ~isfield(config, 'run_timing_extraction')
+    config.run_timing_extraction = true; % DEFAULT: ENABLED
+end
+if ~isfield(config, 'decimation_factor')
+    config.decimation_factor = 100;      % DEFAULT: 100x decimation
 end
 
 fprintf('Processing stages enabled:\n');
-fprintf('  TDMS Conversion: %s\n', char("✓" * run_tdms_conversion + "✗" * ~run_tdms_conversion));
-fprintf('  Concatenation: %s\n', char("✓" * run_concatenation + "✗" * ~run_concatenation));
-fprintf('  Timing Extraction: %s\n', char("✓" * run_timing_extraction + "✗" * ~run_timing_extraction));
+if config.run_tdms_conversion
+    fprintf('  TDMS Conversion: ENABLED\n');
+else
+    fprintf('  TDMS Conversion: DISABLED\n');
+end
+if config.run_concatenation
+    fprintf('  Concatenation: ENABLED\n');
+else
+    fprintf('  Concatenation: DISABLED\n');
+end
+if config.run_timing_extraction
+    fprintf('  Timing Extraction: ENABLED\n');
+else
+    fprintf('  Timing Extraction: DISABLED\n');
+end
 
 %% Step 1: Convert TDMS to individual MAT files
-if run_tdms_conversion
+if config.run_tdms_conversion
     fprintf('\n=== STEP 1: TDMS TO MAT CONVERSION ===\n');
     
-    for i = 1:length(test_directories)
-    fprintf('\n--- Processing %s ---\n', test_directories{i});
-    
-    % Set parameters for Silixa script
-    directory = [base_input test_directories{i} '\'];
-    filesearch = '*.tdms';
-    fileindex = [];
-    save_data = 1;
-    save_directory = base_input;
+    for i = 1:length(config.test_directories)
+        current_test = config.test_directories{i};
+        fprintf('\n--- Processing %s ---\n', current_test);
+        
+        % Set parameters for Silixa script (store in config to avoid clearing)
+        config.silixa.directory = [config.base_input current_test '\'];
+        config.silixa.filesearch = '*.tdms';
+        config.silixa.fileindex = [];
+        config.silixa.save_data = 1;
+        config.silixa.save_directory = config.base_input;
+        
+        % Extract for script compatibility
+        directory = config.silixa.directory;
+        filesearch = config.silixa.filesearch;
+        fileindex = config.silixa.fileindex;
+        save_data = config.silixa.save_data;
+        save_directory = config.silixa.save_directory;
     
     % Verify input directory exists
     if ~exist(directory, 'dir')
@@ -78,20 +111,27 @@ else
 end
 
 %% Step 2: Concatenate and downsample individual MAT files
-if run_concatenation
+if config.run_concatenation
     fprintf('\n=== STEP 2: CONCATENATION AND DOWNSAMPLING ===\n');
 
-for i = 1:length(test_directories)
-    fprintf('\n--- Concatenating %s ---\n', test_directories{i});
+% Store config values locally before loop to survive clear statements
+local_test_directories = config.test_directories;
+local_test_labels = config.test_labels;
+local_base_input = config.base_input;
+local_decimation_factor = config.decimation_factor;
+
+for i = 1:length(local_test_directories)
+    current_test_dir = local_test_directories{i};
+    fprintf('\n--- Concatenating %s ---\n', current_test_dir);
     
     % Set parameters for ConcatDownsample script
-    mat_directory = [base_input test_directories{i} '_mat\'];
+    mat_directory = [local_base_input current_test_dir '_mat\'];
     directory = mat_directory;  % ConcatDownsample expects 'directory' variable
     filesearch = '*.mat';
-    r = 100;  % Decimation factor
+    r = local_decimation_factor;  % Use config decimation factor
     
     % Output filename
-    outname = sprintf('Dataset_%s_1Hz.mat', test_labels{i});
+    outname = sprintf('Dataset_%s_1Hz.mat', local_test_labels{i});
     
     % Verify MAT directory exists
     if ~exist(mat_directory, 'dir')
@@ -112,7 +152,7 @@ for i = 1:length(test_directories)
         run(fullfile(util_dir, 'ConcatDownsample.m'));
         fprintf('✓ Concatenation completed: %s\n', outname);
     catch ME
-        fprintf('✗ Concatenation failed for %s: %s\n', test_directories{i}, ME.message);
+        fprintf('✗ Concatenation failed for test %d: %s\n', i, ME.message);
     end
 end
 else
@@ -120,14 +160,14 @@ else
 end
 
 %% Step 3: Extract timing configuration
-if run_timing_extraction
+if config.run_timing_extraction
     fprintf('\n=== STEP 3: EXTRACTING TIMING CONFIGURATION ===\n');
 
 timing_config = struct();
 
-for i = 1:length(test_directories)
-    test_label = test_labels{i};
-    tdms_directory = [base_input test_directories{i} '\'];
+for i = 1:length(config.test_directories)
+    test_label = config.test_labels{i};
+    tdms_directory = [config.base_input config.test_directories{i} '\'];
     
     fprintf('Extracting timing for dataset %s...\n', test_label);
     
@@ -200,14 +240,14 @@ end
 %% Step 4: Save timing configuration
 fprintf('\n=== STEP 4: SAVING CONFIGURATION ===\n');
 
-config_file = [base_input 'Batch_Timing_Config.mat'];
+config_file = [config.base_input 'Batch_Timing_Config.mat'];
 save(config_file, 'timing_config');
 fprintf('✓ Timing configuration saved: %s\n', config_file);
 
 % Display configuration summary
 fprintf('\n=== EXTRACTED TIMING CONFIGURATION ===\n');
-for i = 1:length(test_labels)
-    test_label = test_labels{i};
+for i = 1:length(config.test_labels)
+    test_label = config.test_labels{i};
     if isfield(timing_config, test_label)
         config = timing_config.(test_label);
         fprintf('Dataset %s:\n', upper(test_label));
@@ -224,15 +264,15 @@ end
 %% Final Summary
 fprintf('\n=== BATCH PROCESSING COMPLETE ===\n');
 fprintf('Final outputs:\n');
-for i = 1:length(test_labels)
-    final_file = sprintf('Dataset_%s_1Hz.mat', test_labels{i});
-    if exist([base_input final_file], 'file')
+for i = 1:length(config.test_labels)
+    final_file = sprintf('Dataset_%s_1Hz.mat', config.test_labels{i});
+    if exist([config.base_input final_file], 'file')
         fprintf('  ✓ %s\n', final_file);
     else
         fprintf('  ✗ %s (not created)\n', final_file);
     end
 end
-    if run_timing_extraction
+    if config.run_timing_extraction
         fprintf('  ✓ Batch_Timing_Config.mat\n');
     end
     fprintf('\nReady for analysis!\n');
