@@ -47,6 +47,15 @@ end
 if ~isfield(config, 'decimation_factor')
     config.decimation_factor = 100;      % DEFAULT: 100x decimation
 end
+if ~isfield(config, 'run_data_analysis')
+    config.run_data_analysis = true;     % DEFAULT: ENABLED
+end
+if ~isfield(config, 'save_charts')
+    config.save_charts = false;          % DEFAULT: DISABLED (charts displayed only)
+end
+if ~isfield(config, 'chart_output_dir')
+    config.chart_output_dir = '';        % DEFAULT: Use base_input/analysis_charts
+end
 
 fprintf('Processing stages enabled:\n');
 if config.run_tdms_conversion
@@ -64,6 +73,16 @@ if config.run_timing_extraction
     fprintf('  Timing Extraction: ENABLED\n');
 else
     fprintf('  Timing Extraction: DISABLED\n');
+end
+if config.run_data_analysis
+    fprintf('  Data Analysis: ENABLED\n');
+else
+    fprintf('  Data Analysis: DISABLED\n');
+end
+if config.save_charts
+    fprintf('  Chart Saving: ENABLED\n');
+else
+    fprintf('  Chart Saving: DISABLED\n');
 end
 
 %% Step 1: Convert TDMS to individual MAT files
@@ -272,6 +291,86 @@ else
     fprintf('\n=== STEP 3: SKIPPED (Timing extraction disabled) ===\n');
 end
 
+%% Step 5: Data Analysis
+if config.run_data_analysis
+    fprintf('\n=== STEP 5: DATA ANALYSIS ===\n');
+    
+    % Ensure we have timing configuration
+    if ~exist('timing_config', 'var') || isempty(timing_config)
+        fprintf('⚠ No timing configuration available. Running timing extraction first...\n');
+        
+        % Generate timing config if not available
+        timing_config = struct();
+        for i = 1:length(config.test_labels)
+            test_label = config.test_labels{i};
+            tdms_directory = [config.base_input config.test_directories{i} '\'];
+            
+            if exist(tdms_directory, 'dir')
+                tdms_files = dir([tdms_directory '*.tdms']);
+                if ~isempty(tdms_files)
+                    first_file = tdms_files(1).name;
+                    timestamp_match = regexp(first_file, 'UTC_(\d{8}_\d{6}\.\d{3})', 'tokens');
+                    if ~isempty(timestamp_match)
+                        timestamp_str = timestamp_match{1}{1};
+                        year = str2double(timestamp_str(1:4));
+                        month = str2double(timestamp_str(5:6));
+                        day = str2double(timestamp_str(7:8));
+                        hour = str2double(timestamp_str(10:11));
+                        minute = str2double(timestamp_str(12:13));
+                        second = str2double(timestamp_str(14:15));
+                        millisecond = str2double(timestamp_str(17:19));
+                        
+                        start_time = datetime(year, month, day, hour, minute, second, millisecond, 'TimeZone', 'UTC');
+                        timing_config.(test_label).start = start_time;
+                        
+                        % Estimate end time
+                        last_file = tdms_files(end).name;
+                        last_timestamp_match = regexp(last_file, 'UTC_(\d{8}_\d{6}\.\d{3})', 'tokens');
+                        if ~isempty(last_timestamp_match)
+                            last_timestamp_str = last_timestamp_match{1}{1};
+                            last_year = str2double(last_timestamp_str(1:4));
+                            last_month = str2double(last_timestamp_str(5:6));
+                            last_day = str2double(last_timestamp_str(7:8));
+                            last_hour = str2double(last_timestamp_str(10:11));
+                            last_minute = str2double(last_timestamp_str(12:13));
+                            last_second = str2double(last_timestamp_str(14:15));
+                            last_millisecond = str2double(last_timestamp_str(17:19));
+                            
+                            end_time = datetime(last_year, last_month, last_day, last_hour, last_minute, last_second, last_millisecond, 'TimeZone', 'UTC');
+                            timing_config.(test_label).end = end_time;
+                        end
+                    end
+                end
+            end
+        end
+    end
+    
+    try
+        % Analyze head data
+        fprintf('Running head data analysis...\n');
+        head_results = analyze_head_data(timing_config, config.test_labels, config);
+        
+        % Analyze DAS data
+        fprintf('Running DAS data analysis...\n');
+        das_results = analyze_das_data(timing_config, config.test_labels, config);
+        
+        % Generate plots
+        fprintf('Generating analysis plots...\n');
+        plot_results = generate_analysis_plots(head_results, das_results, config);
+        
+        fprintf('✓ Data analysis completed successfully\n');
+        
+    catch ME
+        fprintf('✗ Data analysis failed: %s\n', ME.message);
+        if length(ME.stack) > 0
+            fprintf('   Location: %s (line %d)\n', ME.stack(1).name, ME.stack(1).line);
+        end
+    end
+    
+else
+    fprintf('\n=== STEP 5: SKIPPED (Data analysis disabled) ===\n');
+end
+
 %% Final Summary
 fprintf('\n=== BATCH PROCESSING COMPLETE ===\n');
 fprintf('Final outputs:\n');
@@ -285,5 +384,11 @@ for i = 1:length(config.test_labels)
 end
 if config.run_timing_extraction
     fprintf('  ✓ Batch_Timing_Config.mat\n');
+end
+if config.run_data_analysis && exist('plot_results', 'var')
+    fprintf('  ✓ Data analysis completed\n');
+    if plot_results.save_enabled && ~isempty(plot_results.figures_created)
+        fprintf('  ✓ Charts saved: %d files\n', length(plot_results.figures_created));
+    end
 end
 fprintf('\nReady for analysis!\n');
