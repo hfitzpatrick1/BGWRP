@@ -7,7 +7,7 @@
 % Input: TDMS files organized in subdirectories
 % Output: Final 1Hz MAT files + timing configuration
 
-clear all;
+% clear all; % REMOVED - this was clearing input config struct!
 fprintf('=== TDMS BATCH PROCESSING PIPELINE ===\n');
 
 %% Setup paths
@@ -36,7 +36,10 @@ if ~isfield(config, 'run_tdms_conversion')
     config.run_tdms_conversion = false;  % DEFAULT: SKIP
 end
 if ~isfield(config, 'run_concatenation')
-    config.run_concatenation = true;     % DEFAULT: ENABLED
+    config.run_concatenation = true;     % DEFAULT: ENABLED (only if not set)
+else
+    % Ensure boolean type (in case it was set as numeric)
+    config.run_concatenation = logical(config.run_concatenation);
 end
 if ~isfield(config, 'run_timing_extraction')
     config.run_timing_extraction = true; % DEFAULT: ENABLED
@@ -51,6 +54,7 @@ if config.run_tdms_conversion
 else
     fprintf('  TDMS Conversion: DISABLED\n');
 end
+fprintf('DEBUG: config.run_concatenation = %s (type: %s)\n', string(config.run_concatenation), class(config.run_concatenation));
 if config.run_concatenation
     fprintf('  Concatenation: ENABLED\n');
 else
@@ -111,6 +115,7 @@ else
 end
 
 %% Step 2: Concatenate and downsample individual MAT files
+fprintf('DEBUG: config.run_concatenation = %d\n', config.run_concatenation);
 if config.run_concatenation
     fprintf('\n=== STEP 2: CONCATENATION AND DOWNSAMPLING ===\n');
 
@@ -147,12 +152,14 @@ for i = 1:length(local_test_directories)
         continue;
     end
     
-    % Run concatenation
-    try
-        run(fullfile(util_dir, 'ConcatDownsample.m'));
+    % Run concatenation using modern function
+    output_file = fullfile(local_base_input, outname);
+    success = concatenate_and_downsample(mat_directory, output_file, local_decimation_factor);
+    
+    if success
         fprintf('✓ Concatenation completed: %s\n', outname);
-    catch ME
-        fprintf('✗ Concatenation failed for test %d: %s\n', i, ME.message);
+    else
+        fprintf('✗ Concatenation failed for test %d\n', i);
     end
 end
 else
@@ -249,16 +256,20 @@ fprintf('\n=== EXTRACTED TIMING CONFIGURATION ===\n');
 for i = 1:length(config.test_labels)
     test_label = config.test_labels{i};
     if isfield(timing_config, test_label)
-        config = timing_config.(test_label);
+        timing_data = timing_config.(test_label);
         fprintf('Dataset %s:\n', upper(test_label));
-        fprintf('  Start: %s\n', config.start);
-        if isfield(config, 'end')
-            fprintf('  End: %s\n', config.end);
-            fprintf('  Duration: %.1f minutes\n', config.duration_minutes);
+        fprintf('  Start: %s\n', timing_data.start);
+        if isfield(timing_data, 'end')
+            fprintf('  End: %s\n', timing_data.end);
+            fprintf('  Duration: %.1f minutes\n', timing_data.duration_minutes);
         end
-        fprintf('  Files: %d\n', config.num_files);
-        fprintf('  Source: %s\n', config.source);
+        fprintf('  Files: %d\n', timing_data.num_files);
+        fprintf('  Source: %s\n', timing_data.source);
     end
+end
+
+else
+    fprintf('\n=== STEP 3: SKIPPED (Timing extraction disabled) ===\n');
 end
 
 %% Final Summary
@@ -272,10 +283,7 @@ for i = 1:length(config.test_labels)
         fprintf('  ✗ %s (not created)\n', final_file);
     end
 end
-    if config.run_timing_extraction
-        fprintf('  ✓ Batch_Timing_Config.mat\n');
-    end
-    fprintf('\nReady for analysis!\n');
-else
-    fprintf('\n=== STEP 3: SKIPPED (Timing extraction disabled) ===\n');
+if config.run_timing_extraction
+    fprintf('  ✓ Batch_Timing_Config.mat\n');
 end
+fprintf('\nReady for analysis!\n');
