@@ -21,10 +21,27 @@ base_input = 'E:\PM_07 Step Test\MATLAB\recovery_extract\';
 test_directories = {'PT01a_Recovery', 'PT01b_Recovery', 'PT01c_Recovery'};
 test_labels = {'a', 'b', 'c'};
 
-%% Step 1: Convert TDMS to individual MAT files
-fprintf('\n=== STEP 1: TDMS TO MAT CONVERSION ===\n');
+% Default processing stage controls (can be overridden by input parameters)
+if ~exist('run_tdms_conversion', 'var')
+    run_tdms_conversion = false;  % Step 1: TDMS to individual MAT files (DEFAULT: SKIPPED)
+end
+if ~exist('run_concatenation', 'var')
+    run_concatenation = true;     % Step 2: Concatenate and downsample (DEFAULT: ENABLED)
+end
+if ~exist('run_timing_extraction', 'var')
+    run_timing_extraction = true; % Step 3: Extract timing configuration (DEFAULT: ENABLED)
+end
 
-for i = 1:length(test_directories)
+fprintf('Processing stages enabled:\n');
+fprintf('  TDMS Conversion: %s\n', char("✓" * run_tdms_conversion + "✗" * ~run_tdms_conversion));
+fprintf('  Concatenation: %s\n', char("✓" * run_concatenation + "✗" * ~run_concatenation));
+fprintf('  Timing Extraction: %s\n', char("✓" * run_timing_extraction + "✗" * ~run_timing_extraction));
+
+%% Step 1: Convert TDMS to individual MAT files
+if run_tdms_conversion
+    fprintf('\n=== STEP 1: TDMS TO MAT CONVERSION ===\n');
+    
+    for i = 1:length(test_directories)
     fprintf('\n--- Processing %s ---\n', test_directories{i});
     
     % Set parameters for Silixa script
@@ -55,10 +72,14 @@ for i = 1:length(test_directories)
     catch ME
         fprintf('✗ TDMS conversion failed for %s: %s\n', test_directories{i}, ME.message);
     end
+    end
+else
+    fprintf('\n=== STEP 1: SKIPPED (TDMS conversion disabled) ===\n');
 end
 
 %% Step 2: Concatenate and downsample individual MAT files
-fprintf('\n=== STEP 2: CONCATENATION AND DOWNSAMPLING ===\n');
+if run_concatenation
+    fprintf('\n=== STEP 2: CONCATENATION AND DOWNSAMPLING ===\n');
 
 for i = 1:length(test_directories)
     fprintf('\n--- Concatenating %s ---\n', test_directories{i});
@@ -94,9 +115,13 @@ for i = 1:length(test_directories)
         fprintf('✗ Concatenation failed for %s: %s\n', test_directories{i}, ME.message);
     end
 end
+else
+    fprintf('\n=== STEP 2: SKIPPED (Concatenation disabled) ===\n');
+end
 
 %% Step 3: Extract timing configuration
-fprintf('\n=== STEP 3: EXTRACTING TIMING CONFIGURATION ===\n');
+if run_timing_extraction
+    fprintf('\n=== STEP 3: EXTRACTING TIMING CONFIGURATION ===\n');
 
 timing_config = struct();
 
@@ -207,5 +232,10 @@ for i = 1:length(test_labels)
         fprintf('  ✗ %s (not created)\n', final_file);
     end
 end
-fprintf('  ✓ Batch_Timing_Config.mat\n');
-fprintf('\nReady for analysis!\n');
+    if run_timing_extraction
+        fprintf('  ✓ Batch_Timing_Config.mat\n');
+    end
+    fprintf('\nReady for analysis!\n');
+else
+    fprintf('\n=== STEP 3: SKIPPED (Timing extraction disabled) ===\n');
+end
