@@ -319,10 +319,76 @@ for i = 1:length(test_labels)
         
         subplot(3,1,3)
         % Combined comparison plot (normalized)
-        % This would contain additional analysis combining both datasets
-        title('Combined Analysis');
+        hold on;
+        
+        % Get head data for normalization and plotting
+        zones = fieldnames(head_results.(test_label).zones);
+        head_colors = lines(length(zones));
+        
+        % Plot normalized head recovery rates
+        for j = 1:length(zones)
+            zone_name = zones{j};
+            zone_data = head_results.(test_label).zones.(zone_name);
+            
+            if isfield(zone_data, 'recovery_time') && isfield(zone_data, 'recovery_rate_ms')
+                if ~isempty(zone_data.recovery_time) && ~isempty(zone_data.recovery_rate_ms)
+                    % Normalize head data to 0-1 range
+                    head_data = zone_data.recovery_rate_ms * 1000; % Convert to mm/s
+                    head_normalized = (head_data - min(head_data)) / (max(head_data) - min(head_data));
+                    if any(isnan(head_normalized))
+                        head_normalized = zeros(size(head_data)); % Handle case where all values are the same
+                    end
+                    
+                    plot(zone_data.recovery_time, head_normalized, '--', ...
+                        'Color', head_colors(j,:), 'LineWidth', 1.5, ...
+                        'DisplayName', sprintf('Head %s (norm)', zone_name));
+                end
+            end
+        end
+        
+        % Plot normalized DAS strain rate
+        das_data = das_results.(test_label);
+        if isfield(das_data, 'analysis_time') && isfield(das_data, 'analysis_strain_rate')
+            % Normalize DAS data to 0-1 range
+            das_strain = das_data.analysis_strain_rate;
+            das_normalized = (das_strain - min(das_strain)) / (max(das_strain) - min(das_strain));
+            if any(isnan(das_normalized))
+                das_normalized = zeros(size(das_strain)); % Handle case where all values are the same
+            end
+            
+            plot(das_data.analysis_time, das_normalized, 'b-', 'LineWidth', 2, ...
+                'DisplayName', sprintf('DAS Ch%d (norm)', das_data.pumping_zone.channel_idx));
+        end
+        
+        % Calculate and display cross-correlation if both datasets exist
+        if exist('head_normalized', 'var') && exist('das_normalized', 'var') && length(zones) >= 1
+            % Use first zone for correlation analysis
+            zone_data = head_results.(test_label).zones.(zones{1});
+            if isfield(zone_data, 'recovery_time') && ~isempty(zone_data.recovery_time)
+                % Interpolate to common time grid for correlation
+                common_time = das_data.analysis_time;
+                if length(zone_data.recovery_time) > 1 && length(common_time) > 1
+                    head_interp = interp1(zone_data.recovery_time, head_normalized, common_time, 'linear', 'extrap');
+                    
+                    % Calculate correlation coefficient
+                    valid_idx = ~isnan(head_interp) & ~isnan(das_normalized);
+                    if sum(valid_idx) > 10 % Need enough points for meaningful correlation
+                        corr_coef = corrcoef(head_interp(valid_idx), das_normalized(valid_idx));
+                        correlation = corr_coef(1,2);
+                        
+                        % Add correlation text
+                        text(0.02, 0.95, sprintf('Correlation: %.3f', correlation), ...
+                            'Units', 'normalized', 'VerticalAlignment', 'top', ...
+                            'BackgroundColor', 'white', 'FontWeight', 'bold');
+                    end
+                end
+            end
+        end
+        
+        title(sprintf('Test %s: Normalized Combined Analysis', upper(test_label)));
         xlabel('Time');
-        ylabel('Normalized Response');
+        ylabel('Normalized Response (0-1)');
+        legend('Location', 'best');
         grid on;
         
         if plot_results.save_enabled
