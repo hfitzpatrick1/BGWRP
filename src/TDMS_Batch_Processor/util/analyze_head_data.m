@@ -76,13 +76,31 @@ for i = 1:length(test_labels)
             fullfile(config.base_input, '..', 'head')  % Sibling to recovery_extract
         };
         
+        % Determine head file pattern from test label FIRST
+        if length(test_label) == 1 && ismember(test_label, {'a', 'b', 'c'})
+            % Traditional single-letter test labels
+            head_pattern = sprintf('head_%s_z*.mat', test_label);
+        else
+            % Dynamic dataset names - extract test identifier
+            if contains(test_label, 'PT01a') || contains(test_label, '_a_') || endsWith(test_label, '_a')
+                head_pattern = 'head_a_z*.mat';
+            elseif contains(test_label, 'PT01b') || contains(test_label, '_b_') || endsWith(test_label, '_b')
+                head_pattern = 'head_b_z*.mat';
+            elseif contains(test_label, 'PT01c') || contains(test_label, 'c')
+                head_pattern = 'head_c_z*.mat';
+            else
+                fprintf('  WARNING: Cannot determine head file pattern for test label: %s\n', test_label);
+                head_pattern = 'head_*_z*.mat';  % Try all
+            end
+        end
+        
         head_files = [];
         head_data_dir = '';
         
         for dir_idx = 1:length(possible_dirs)
             test_dir = possible_dirs{dir_idx};
             if exist(test_dir, 'dir')
-                test_files = dir(fullfile(test_dir, sprintf('head_%s_z*.mat', test_label)));
+                test_files = dir(fullfile(test_dir, head_pattern));
                 if ~isempty(test_files)
                     head_files = test_files;
                     head_data_dir = test_dir;
@@ -90,8 +108,7 @@ for i = 1:length(test_labels)
                 end
             end
         end
-        
-        fprintf('  Looking for head data files: head_%s_z*.mat\n', test_label);
+        fprintf('  Looking for head data files: %s\n', head_pattern);
         if ~isempty(head_files)
             fprintf('  Found %d head data files in: %s\n', length(head_files), head_data_dir);
             

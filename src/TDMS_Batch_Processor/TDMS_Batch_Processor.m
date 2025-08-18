@@ -52,7 +52,15 @@ if exist('mode', 'var') && ischar(mode)
             end
             
         case 'run'
-            % Analysis mode: timing + analysis
+            % Analysis mode: analysis-only (no timing extraction)
+            config.run_tdms_conversion = false;
+            config.run_concatenation = false;
+            config.run_timing_extraction = false;  % Skip - use existing configs
+            config.run_data_analysis = true;
+            config.save_charts = contains(mode, 'save');
+            
+        case 'run_timing'
+            % Analysis mode: timing extraction + analysis
             config.run_tdms_conversion = false;
             config.run_concatenation = false;
             config.run_timing_extraction = true;
@@ -120,9 +128,14 @@ if ~isfield(config, 'cleanup_dirs')
     config.cleanup_dirs = false;         % DEFAULT: Don't clean existing directories
 end
 
-%% Workspace Organization
-fprintf('\n=== WORKSPACE ORGANIZATION ===\n');
-workspace_info = organize_workspace(config.base_input, config.cleanup_dirs);
+%% Workspace Organization (only for prep modes)
+if config.run_tdms_conversion || config.run_concatenation || config.run_timing_extraction
+    fprintf('\n=== WORKSPACE ORGANIZATION ===\n');
+    workspace_info = organize_workspace(config.base_input, config.cleanup_dirs);
+else
+    fprintf('\n=== ANALYSIS MODE: Skipping workspace organization ===\n');
+    workspace_info = struct('input_folders', {{}});
+end
 
 fprintf('Processing stages enabled:\n');
 if config.run_tdms_conversion
@@ -325,13 +338,23 @@ if config.run_timing_extraction
 
 timing_config = struct();
 
-% Use organized workspace info to find input folders
-if exist('workspace_info', 'var') && isfield(workspace_info, 'input_folders')
+% Use organized workspace info to find input folders (only during prep)
+if exist('workspace_info', 'var') && isfield(workspace_info, 'input_folders') && ~isempty(workspace_info.input_folders)
     input_folders = workspace_info.input_folders;
 else
-    % Fallback: scan for input folders
+    % Fallback: scan for input folders manually during prep
     fprintf('⚠ Workspace info not available, scanning for input folders...\n');
-    input_folders = config.test_directories;
+    all_items = dir(config.base_input);
+    input_folders = {};
+    for i = 1:length(all_items)
+        if all_items(i).isdir && ~startsWith(all_items(i).name, '.') && ~startsWith(all_items(i).name, '_')
+            % Check if directory contains TDMS files
+            tdms_files = dir(fullfile(config.base_input, all_items(i).name, '*.tdms'));
+            if ~isempty(tdms_files)
+                input_folders{end+1} = all_items(i).name;
+            end
+        end
+    end
 end
 
 for i = 1:length(input_folders)
@@ -619,7 +642,43 @@ if config.run_data_analysis
     end
     
     try
+        % Initialize timing config for analysis mode
+        if ~config.run_timing_extraction
+            timing_config = struct();  % Clear any previous timing config
+            fprintf('Analysis mode: Starting with empty timing config\n');
+        end
+        
         % Determine test labels from available timing data
+        available_tests = fieldnames(timing_config);
+        
+        % Also check _active directory for additional datasets
+        active_dir = fullfile(config.base_input, '_active');
+        if exist(active_dir, 'dir')
+            active_datasets = dir(active_dir);
+            active_datasets = active_datasets([active_datasets.isdir] & ~startsWith({active_datasets.name}, '.'));
+            
+            for i = 1:length(active_datasets)
+                dataset_name = active_datasets(i).name;
+                config_file = fullfile(active_dir, dataset_name, sprintf('timing_%s.mat', dataset_name));
+                
+                if exist(config_file, 'file')
+                    % Load this config
+                    loaded_config = load(config_file, 'test_config');
+                    
+                    % Use full dataset name as test label for maximum flexibility
+                    test_label = dataset_name;
+                    fprintf('Using dataset name as test label: %s\n', test_label);
+                    
+                    % Override timing config if not already present or if this is more specific
+                    if ~isfield(timing_config, test_label) || contains(dataset_name, 'Full')
+                        timing_config.(test_label) = loaded_config.test_config;
+                        timing_config.(test_label).dataset_name = dataset_name;
+                        fprintf('✓ Found additional dataset: %s -> test %s\n', dataset_name, test_label);
+                    end
+                end
+            end
+        end
+        
         available_tests = fieldnames(timing_config);
         if isempty(available_tests)
             fprintf('⚠ No timing data available for analysis\n');
@@ -627,6 +686,16 @@ if config.run_data_analysis
             das_results = struct();
         else
             fprintf('Analyzing tests: %s\n', strjoin(available_tests, ', '));
+            
+            % Debug: Show what datasets are mapped to what tests
+            for i = 1:length(available_tests)
+                test = available_tests{i};
+                if isfield(timing_config.(test), 'dataset_name')
+                    fprintf('  Test %s -> Dataset: %s\n', test, timing_config.(test).dataset_name);
+                else
+                    fprintf('  Test %s -> No dataset mapping\n', test);
+                end
+            end
             
             % Analyze head data
             fprintf('Running head data analysis...\n');

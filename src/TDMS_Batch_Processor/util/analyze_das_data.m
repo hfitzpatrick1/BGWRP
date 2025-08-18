@@ -38,19 +38,28 @@ for i = 1:length(test_labels)
     if isfield(timing_config, test_label)
         test_timing = timing_config.(test_label);
         
-        % Need to find the source folder name for this test
-        source_folder = find_source_folder_for_test(test_label, config);
-        
-        if ~isempty(source_folder)
-            % Look for concatenated DAS data file in dynamic structure
-            das_filename = sprintf('Dataset_%s_1Hz.mat', source_folder);
-            das_filepath_concatenated = fullfile(config.base_input, '_concatenated', source_folder, das_filename);
-            das_filepath_active = fullfile(config.base_input, '_active', source_folder, das_filename);
+        % Check if timing config has dataset_name (from _active scan)
+        if isfield(test_timing, 'dataset_name')
+            dataset_name = test_timing.dataset_name;
+            das_filename = sprintf('%s_1Hz.mat', dataset_name);
+            das_filepath_concatenated = fullfile(config.base_input, '_concatenated', dataset_name, das_filename);
+            das_filepath_active = fullfile(config.base_input, '_active', dataset_name, das_filename);
+            fprintf('  Looking for dataset-specific file: %s\n', das_filename);
         else
-            % Fallback to old naming scheme
-            das_filename = sprintf('Dataset_%s_1Hz.mat', test_label);
-            das_filepath_concatenated = fullfile(config.base_input, '_concatenated', das_filename);
-            das_filepath_active = fullfile(config.base_input, '_active', das_filename);
+            % Fallback: find source folder name for this test
+            source_folder = find_source_folder_for_test(test_label, config);
+            
+            if ~isempty(source_folder)
+                % Look for concatenated DAS data file in dynamic structure
+                das_filename = sprintf('Dataset_%s_1Hz.mat', source_folder);
+                das_filepath_concatenated = fullfile(config.base_input, '_concatenated', source_folder, das_filename);
+                das_filepath_active = fullfile(config.base_input, '_active', source_folder, das_filename);
+            else
+                % Fallback to old naming scheme
+                das_filename = sprintf('Dataset_%s_1Hz.mat', test_label);
+                das_filepath_concatenated = fullfile(config.base_input, '_concatenated', das_filename);
+                das_filepath_active = fullfile(config.base_input, '_active', das_filename);
+            end
         end
         
         if exist(das_filepath_concatenated, 'file')
