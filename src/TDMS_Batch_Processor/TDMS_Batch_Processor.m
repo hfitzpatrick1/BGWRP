@@ -375,15 +375,28 @@ for i = 1:length(input_folders)
     
     % Look for TDMS files in original input folder first
     tdms_directory = fullfile(config.base_input, folder_name);
+    fprintf('  🔍 Checking primary directory: %s\n', tdms_directory);
     if ~exist(tdms_directory, 'dir')
         % Try organized workspace location
         tdms_directory = fullfile(config.base_input, '_tdms_to_mat', folder_name);
+        fprintf('  🔍 Primary not found, trying workspace: %s\n', tdms_directory);
+    else
+        fprintf('  ✓ Primary directory exists\n');
     end
     
     if exist(tdms_directory, 'dir')
         % Find first TDMS file to extract start time
+        fprintf('  📁 Scanning directory: %s\n', tdms_directory);
         tdms_files = dir(fullfile(tdms_directory, '*.tdms'));
+        fprintf('  📊 Found %d TDMS files in directory\n', length(tdms_files));
+        
         if ~isempty(tdms_files)
+            % Sort files by name to ensure chronological order
+            [~, sort_idx] = sort({tdms_files.name});
+            tdms_files = tdms_files(sort_idx);
+            fprintf('  📋 Files sorted chronologically\n');
+            fprintf('  🕐 First file: %s\n', tdms_files(1).name);
+            fprintf('  🕐 Last file: %s\n', tdms_files(end).name);
             first_file = tdms_files(1).name;
             
             % Extract timestamp from filename
@@ -411,9 +424,11 @@ for i = 1:length(input_folders)
                     timing_config.(test_label).num_files = length(tdms_files);
                     
                     fprintf('  ✓ Start time: %s (from %s)\n', start_time, first_file);
+                    fprintf('  📊 Total files detected: %d\n', length(tdms_files));
                     
                     % Calculate end time (approximate)
                     last_file = tdms_files(end).name;
+                    fprintf('  🕐 Processing last file: %s\n', last_file);
                     last_timestamp_match = regexp(last_file, 'UTC_(\d{8}_\d{6}\.\d{3})', 'tokens');
                     if ~isempty(last_timestamp_match)
                         last_timestamp_str = last_timestamp_match{1}{1};
@@ -430,6 +445,7 @@ for i = 1:length(input_folders)
                         timing_config.(test_label).duration_minutes = minutes(end_time - start_time);
                         
                         fprintf('  ✓ End time: %s (%.1f minutes)\n', end_time, timing_config.(test_label).duration_minutes);
+                        fprintf('  📏 Duration calculation: %s to %s = %.1f minutes\n', start_time, end_time, timing_config.(test_label).duration_minutes);
                     end
                     
                 catch
@@ -708,7 +724,7 @@ if config.run_data_analysis
         
         % Generate plots
         fprintf('Generating analysis plots...\n');
-        plot_results = generate_analysis_plots(head_results, das_results, config);
+        plot_results = generate_plots(head_results, das_results, config);
         
         fprintf('✓ Data analysis completed successfully\n');
         
