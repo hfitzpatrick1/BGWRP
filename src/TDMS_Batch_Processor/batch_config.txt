@@ -12,3 +12,17 @@ base_input=E:\PM_07 Step Test\MATLAB\recovery_extract\
 
 # Optional: Override decimation factor
 # decimation_factor=100
+
+# Waterfall Plot Configuration
+# Display bounds for all waterfall plots (min_depth,max_depth in feet)
+waterfall_display_bounds=100,665
+
+# Zone Filtering (per dataset) - filters data to specific depth ranges
+# Format: dataset_name=min_depth,max_depth (in feet)
+# Using exact parameters from PM07_Recovery_Analysis.m
+waterfall_zone_PT01c_Recovery=260,310
+waterfall_zone_PT01c_Full=260,310
+# PT-01a parameters from original script
+# waterfall_zone_PT01a_Recovery=450,510
+# PT-01b parameters from original script  
+# waterfall_zone_PT01b_Recovery=350,400

@@ -60,6 +60,34 @@ while ~feof(fid)
                 config.test_labels = cellfun(@strtrim, config.test_labels, 'UniformOutput', false);
             elseif strcmp(key, 'decimation_factor')
                 config.decimation_factor = str2double(value);
+            elseif strcmp(key, 'waterfall_display_bounds')
+                % Parse waterfall display bounds: min,max
+                bounds_values = strsplit(value, ',');
+                if length(bounds_values) == 2
+                    config.waterfall_display_bounds.min_depth = str2double(strtrim(bounds_values{1}));
+                    config.waterfall_display_bounds.max_depth = str2double(strtrim(bounds_values{2}));
+                    fprintf('  Waterfall display bounds: %.0f-%.0f ft\n', ...
+                        config.waterfall_display_bounds.min_depth, ...
+                        config.waterfall_display_bounds.max_depth);
+                else
+                    fprintf('Invalid waterfall display bounds format: %s (expected: min,max)\n', value);
+                end
+            elseif startsWith(key, 'waterfall_zone_')
+                % Parse waterfall zone filtering: waterfall_zone_DATASET=min,max
+                dataset_name = key(16:end); % Remove 'waterfall_zone_' prefix
+                zone_values = strsplit(value, ',');
+                if length(zone_values) == 2
+                    if ~isfield(config, 'waterfall_zones')
+                        config.waterfall_zones = struct();
+                    end
+                    config.waterfall_zones.(dataset_name).min_depth = str2double(strtrim(zone_values{1}));
+                    config.waterfall_zones.(dataset_name).max_depth = str2double(strtrim(zone_values{2}));
+                    fprintf('  Waterfall zone for %s: %.0f-%.0f ft\n', dataset_name, ...
+                        config.waterfall_zones.(dataset_name).min_depth, ...
+                        config.waterfall_zones.(dataset_name).max_depth);
+                else
+                    fprintf('Invalid waterfall zone format for %s: %s (expected: min,max)\n', dataset_name, value);
+                end
             else
                 fprintf('Unknown config key: %s\n', key);
             end

@@ -62,10 +62,10 @@ for i = 1:length(test_labels)
     head_figure = plot_head_analysis(head_results, test_label, i, plot_results);
     
     % Plot Type 2: DAS Strain Rate with Depth Analysis
-    das_depth_figure = plot_das_depth_analysis(das_results, test_label, i, plot_results);
+    das_depth_figure = plot_das_depth_analysis(das_results, test_label, i, plot_results, config);
     
     % Plot Type 3: DAS Waterfall Plot
-    waterfall_figure = plot_das_waterfall(das_results, test_label, i, plot_results);
+    waterfall_figure = plot_das_waterfall(das_results, test_label, i, plot_results, config);
     
     % Plot Type 4: Combined Head + DAS Comparison
     combined_figure = plot_combined_analysis(head_results, das_results, test_label, i, plot_results);
