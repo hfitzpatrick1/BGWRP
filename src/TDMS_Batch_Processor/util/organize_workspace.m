@@ -1,4 +1,4 @@
-function workspace_info = organize_workspace(base_path)
+function workspace_info = organize_workspace(base_path, cleanup_dirs)
 %ORGANIZE_WORKSPACE Intelligent workspace organization for batch processing
 %
 % Scans root directory for data folders and organizes them into processing subdirectories
@@ -12,6 +12,10 @@ function workspace_info = organize_workspace(base_path)
 
 fprintf('=== ORGANIZING WORKSPACE ===\n');
 fprintf('Base path: %s\n', base_path);
+
+if nargin < 2
+    cleanup_dirs = false;  % Default: don't cleanup existing directories
+end
 
 workspace_info = struct();
 workspace_info.base_path = base_path;
@@ -63,12 +67,18 @@ for i = 1:length(processing_dirs)
     dir_path = fullfile(base_path, dir_name);
     
     if exist(dir_path, 'dir')
-        fprintf('  Cleaning existing directory: %s\n', dir_name);
-        rmdir(dir_path, 's');
+        if cleanup_dirs
+            fprintf('  Cleaning existing directory: %s\n', dir_name);
+            rmdir(dir_path, 's');
+            mkdir(dir_path);
+            fprintf('  ✓ Created: %s\n', dir_name);
+        else
+            fprintf('  ✓ Using existing: %s\n', dir_name);
+        end
+    else
+        mkdir(dir_path);
+        fprintf('  ✓ Created: %s\n', dir_name);
     end
-    
-    mkdir(dir_path);
-    fprintf('  ✓ Created: %s\n', dir_name);
     
     workspace_info.processing_dirs.(dir_name(2:end)) = dir_path; % Remove _ prefix for field name
 end

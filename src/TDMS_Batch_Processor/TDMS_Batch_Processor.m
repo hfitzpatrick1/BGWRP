@@ -32,21 +32,23 @@ if exist('mode', 'var') && ischar(mode)
     switch base_mode
         case 'prep'
             if length(mode_parts) > 1
-                % Specific prep stage
+                % Specific prep stage - don't cleanup existing dirs
                 prep_stage = mode_parts{2};
                 config.run_tdms_conversion = strcmp(prep_stage, 'tdms');
                 config.run_concatenation = strcmp(prep_stage, 'concat');
-                config.run_timing_extraction = false;
+                config.run_timing_extraction = strcmp(prep_stage, 'timing');
                 config.run_data_analysis = false;
                 config.save_charts = false;
+                config.cleanup_dirs = false;  % Don't clean when running specific stages
                 fprintf('Prep stage: %s\n', prep_stage);
             else
-                % Full prep: TDMS conversion + concatenation only
+                % Full prep: TDMS conversion + concatenation with cleanup
                 config.run_tdms_conversion = true;
                 config.run_concatenation = true;
                 config.run_timing_extraction = false;
                 config.run_data_analysis = false;
                 config.save_charts = false;
+                config.cleanup_dirs = true;   % Clean dirs for full prep
             end
             
         case 'run'
@@ -114,10 +116,13 @@ end
 if ~isfield(config, 'chart_output_dir')
     config.chart_output_dir = '';        % DEFAULT: Use base_input/analysis_charts
 end
+if ~isfield(config, 'cleanup_dirs')
+    config.cleanup_dirs = false;         % DEFAULT: Don't clean existing directories
+end
 
 %% Workspace Organization
 fprintf('\n=== WORKSPACE ORGANIZATION ===\n');
-workspace_info = organize_workspace(config.base_input);
+workspace_info = organize_workspace(config.base_input, config.cleanup_dirs);
 
 fprintf('Processing stages enabled:\n');
 if config.run_tdms_conversion
@@ -164,12 +169,12 @@ if config.run_tdms_conversion
         
         % Set parameters for Silixa script (store in config to avoid clearing)
         % Read TDMS files from original input directory
-        config.silixa.directory = fullfile(config.base_input, current_folder, '\');
+        config.silixa.directory = [fullfile(config.base_input, current_folder) '\'];
         config.silixa.filesearch = '*.tdms';
         config.silixa.fileindex = [];
         config.silixa.save_data = 1;
         % Write MAT files to _tdms_to_mat directory  
-        config.silixa.save_directory = fullfile(config.base_input, '_tdms_to_mat', current_folder);
+        config.silixa.save_directory = [fullfile(config.base_input, '_tdms_to_mat', current_folder) '\'];
         
         % Extract for script compatibility
         directory = config.silixa.directory;
@@ -262,10 +267,29 @@ for i = 1:length(folders_to_process)
     end
     
     % Check MAT files
-    files = dir([mat_directory filesearch]);
+    search_pattern = fullfile(mat_directory, filesearch);
+    fprintf('DEBUG: Search pattern: %s\n', search_pattern);
+    files = dir(search_pattern);
     fprintf('Found %d MAT files to concatenate\n', length(files));
-    if length(files) == 0
+    
+    % List the files found
+    if length(files) > 0
+        for j = 1:min(3, length(files))  % Show first 3 files
+            fprintf('  File %d: %s\n', j, files(j).name);
+        end
+        if length(files) > 3
+            fprintf('  ... and %d more files\n', length(files) - 3);
+        end
+    else
         fprintf('⚠ No MAT files found, skipping\n');
+        % List what IS in the directory
+        all_files = dir(mat_directory);
+        fprintf('DEBUG: Directory contents (%d items):\n', length(all_files));
+        for j = 1:min(5, length(all_files))
+            if ~all_files(j).isdir
+                fprintf('  %s\n', all_files(j).name);
+            end
+        end
         continue;
     end
     
@@ -394,15 +418,74 @@ end
     %% Step 4: Save timing configuration
     fprintf('\n=== STEP 4: SAVING CONFIGURATION ===\n');
 
-    % Save to _active directory for analysis to find
+    % Create _configs directory
+    configs_dir = fullfile(config.base_input, '_configs');
+    if ~exist(configs_dir, 'dir')
+        mkdir(configs_dir);
+        fprintf('Created configs directory: %s\n', configs_dir);
+    end
+
+    % Save individual config files per dataset
+    config_fields = fieldnames(timing_config);
+    for i = 1:length(config_fields)
+        test_label = config_fields{i};
+        
+        % Determine source folder name for this test
+        source_folder = '';
+        if exist('workspace_info', 'var') && isfield(workspace_info, 'input_folders')
+            for j = 1:length(workspace_info.input_folders)
+                folder_name = workspace_info.input_folders{j};
+                if contains(folder_name, test_label) || ...
+                   (strcmp(test_label, 'a') && contains(folder_name, 'PT01a')) || ...
+                   (strcmp(test_label, 'b') && contains(folder_name, 'PT01b')) || ...
+                   (strcmp(test_label, 'c') && contains(folder_name, 'PT01c'))
+                    source_folder = folder_name;
+                    break;
+                end
+            end
+        end
+        
+        if isempty(source_folder)
+            source_folder = sprintf('test_%s', test_label);
+        end
+        
+        % Save MAT file
+        mat_filename = sprintf('timing_%s.mat', source_folder);
+        mat_filepath = fullfile(configs_dir, mat_filename);
+        test_config = timing_config.(test_label);
+        save(mat_filepath, 'test_config');
+        fprintf('✓ Saved MAT config: %s\n', mat_filename);
+        
+        % Save human-readable TXT file
+        txt_filename = sprintf('timing_%s.txt', source_folder);
+        txt_filepath = fullfile(configs_dir, txt_filename);
+        
+        fid = fopen(txt_filepath, 'w');
+        fprintf(fid, 'TIMING CONFIGURATION: %s\n', source_folder);
+        fprintf(fid, '=====================================\n');
+        fprintf(fid, 'Start Time: %s\n', test_config.start);
+        if isfield(test_config, 'end')
+            fprintf(fid, 'End Time:   %s\n', test_config.end);
+            fprintf(fid, 'Duration:   %.1f minutes\n', test_config.duration_minutes);
+        end
+        fprintf(fid, 'Files:      %d\n', test_config.num_files);
+        fprintf(fid, 'Source:     %s\n', test_config.source);
+        fprintf(fid, 'Generated:  %s\n', datetime('now'));
+        if isfield(test_config, 'first_file')
+            fprintf(fid, '\nFirst File: %s\n', test_config.first_file);
+        end
+        fclose(fid);
+        fprintf('✓ Saved TXT config: %s\n', txt_filename);
+    end
+    
+    % Also save to _active for analysis compatibility
     active_dir = fullfile(config.base_input, '_active');
     if ~exist(active_dir, 'dir')
         mkdir(active_dir);
     end
-
-    config_file = fullfile(active_dir, 'Batch_Timing_Config.mat');
-    save(config_file, 'timing_config');
-    fprintf('✓ Timing configuration saved: %s\n', config_file);
+    legacy_config_file = fullfile(active_dir, 'Batch_Timing_Config.mat');
+    save(legacy_config_file, 'timing_config');
+    fprintf('✓ Legacy config saved: %s\n', legacy_config_file);
 
     % Display configuration summary
     fprintf('\n=== EXTRACTED TIMING CONFIGURATION ===\n');
