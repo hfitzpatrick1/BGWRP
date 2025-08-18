@@ -18,7 +18,7 @@ fprintf('Added util directory to path: %s\n', util_dir);
 
 %% Configuration Setup
 % Load config from file first
-file_config = load_batch_config();
+file_config = get_batch_config();
 
 % Handle shorthand mode parameter
 if exist('mode', 'var') && ischar(mode)
@@ -496,33 +496,11 @@ end
             source_folder = sprintf('test_%s', test_label);
         end
         
-        % Save MAT file
-        mat_filename = sprintf('timing_%s.mat', source_folder);
-        mat_filepath = fullfile(configs_dir, mat_filename);
+        % Save as MATLAB function instead of MAT/TXT files
         test_config = timing_config.(test_label);
-        save(mat_filepath, 'test_config');
-        fprintf('✓ Saved MAT config: %s\n', mat_filename);
+        save_timing_config_as_function(test_config, source_folder, configs_dir);
         
-        % Save human-readable TXT file
-        txt_filename = sprintf('timing_%s.txt', source_folder);
-        txt_filepath = fullfile(configs_dir, txt_filename);
-        
-        fid = fopen(txt_filepath, 'w');
-        fprintf(fid, 'TIMING CONFIGURATION: %s\n', source_folder);
-        fprintf(fid, '=====================================\n');
-        fprintf(fid, 'Start Time: %s\n', test_config.start);
-        if isfield(test_config, 'end')
-            fprintf(fid, 'End Time:   %s\n', test_config.end);
-            fprintf(fid, 'Duration:   %.1f minutes\n', test_config.duration_minutes);
-        end
-        fprintf(fid, 'Files:      %d\n', test_config.num_files);
-        fprintf(fid, 'Source:     %s\n', test_config.source);
-        fprintf(fid, 'Generated:  %s\n', datetime('now'));
-        if isfield(test_config, 'first_file')
-            fprintf(fid, '\nFirst File: %s\n', test_config.first_file);
-        end
-        fclose(fid);
-        fprintf('✓ Saved TXT config: %s\n', txt_filename);
+        % Configuration now saved as MATLAB function only
         
         % Also copy to _active/<source_folder>/ for dataset-specific analysis
         if ~isempty(source_folder)
@@ -531,13 +509,14 @@ end
                 mkdir(active_dataset_dir);
             end
             
-            % Copy MAT config
-            active_mat_file = fullfile(active_dataset_dir, mat_filename);
-            copyfile(mat_filepath, active_mat_file);
+            % Copy the MATLAB timing function
+            func_filename = sprintf('get_timing_%s.m', source_folder);
+            active_func_filepath = fullfile(active_dataset_dir, func_filename);
+            source_func_filepath = fullfile(configs_dir, func_filename);
             
-            % Copy TXT config  
-            active_txt_file = fullfile(active_dataset_dir, txt_filename);
-            copyfile(txt_filepath, active_txt_file);
+            if exist(source_func_filepath, 'file')
+                copyfile(source_func_filepath, active_func_filepath);
+            end
             
             fprintf('✓ Copied configs to _active/%s/\n', source_folder);
         end
@@ -584,11 +563,22 @@ if config.run_data_analysis
             
             for i = 1:length(dataset_dirs)
                 dataset_name = dataset_dirs(i).name;
-                config_file = fullfile(active_base, dataset_name, sprintf('timing_%s.mat', dataset_name));
+                func_name = sprintf('get_timing_%s', dataset_name);
+                func_file = fullfile(active_base, dataset_name, sprintf('%s.m', func_name));
                 
-                if exist(config_file, 'file')
-                    fprintf('Loading config: %s\n', config_file);
-                    loaded_config = load(config_file, 'test_config');
+                if exist(func_file, 'file')
+                    fprintf('Loading timing function: %s\n', func_name);
+                    % Add the directory to path temporarily
+                    dataset_dir = fullfile(active_base, dataset_name);
+                    addpath(dataset_dir);
+                    try
+                        loaded_config.test_config = feval(func_name);
+                    catch ME
+                        fprintf('Error calling %s: %s\n', func_name, ME.message);
+                        rmpath(dataset_dir);
+                        continue;
+                    end
+                    rmpath(dataset_dir);
                     
                     % Determine test label from dataset name
                     if contains(dataset_name, 'PT01a') || contains(dataset_name, 'a')
@@ -675,11 +665,22 @@ if config.run_data_analysis
             
             for i = 1:length(active_datasets)
                 dataset_name = active_datasets(i).name;
-                config_file = fullfile(active_dir, dataset_name, sprintf('timing_%s.mat', dataset_name));
+                func_name = sprintf('get_timing_%s', dataset_name);
+                func_file = fullfile(active_dir, dataset_name, sprintf('%s.m', func_name));
                 
-                if exist(config_file, 'file')
-                    % Load this config
-                    loaded_config = load(config_file, 'test_config');
+                if exist(func_file, 'file')
+                    % Load this config using MATLAB function
+                    fprintf('Loading timing function: %s\n', func_name);
+                    dataset_dir = fullfile(active_dir, dataset_name);
+                    addpath(dataset_dir);
+                    try
+                        loaded_config.test_config = feval(func_name);
+                    catch ME
+                        fprintf('Error calling %s: %s\n', func_name, ME.message);
+                        rmpath(dataset_dir);
+                        continue;
+                    end
+                    rmpath(dataset_dir);
                     
                     % Use full dataset name as test label for maximum flexibility
                     test_label = dataset_name;
