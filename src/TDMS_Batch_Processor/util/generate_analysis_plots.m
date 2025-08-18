@@ -123,35 +123,147 @@ if ~isempty(test_labels)
     end
 end
 
-%% Individual detailed plots for each test
+%% Individual detailed plots for each test (4 figure types per test)
 for i = 1:length(test_labels)
     test_label = test_labels{i};
     
-    % Create detailed DAS waterfall plot
+    %% Figure Type 1: Detailed Head Data Plot
+    if isfield(head_results, test_label) && isfield(head_results.(test_label), 'zones')
+        figure(100 + i); % Start at 101, 102, etc.
+        set(gcf, 'Position', [100 + i*50, 100, 1000, 600]);
+        
+        subplot(2,1,1)
+        % Plot raw head data for all zones
+        hold on;
+        zones = fieldnames(head_results.(test_label).zones);
+        colors = lines(length(zones));
+        
+        for j = 1:length(zones)
+            zone_name = zones{j};
+            zone_data = head_results.(test_label).zones.(zone_name);
+            
+            if isfield(zone_data, 'Date') && isfield(zone_data, 'Drawdownft')
+                plot(zone_data.Date, zone_data.Drawdownft, ...
+                    'Color', colors(j,:), 'LineWidth', 2, ...
+                    'DisplayName', sprintf('%s (%.1f ft)', zone_name, zone_data.Depthft));
+            end
+        end
+        
+        title(sprintf('Test %s: Raw Head Data', upper(test_label)));
+        xlabel('Time');
+        ylabel('Drawdown (ft)');
+        legend('Location', 'best');
+        grid on;
+        
+        subplot(2,1,2)
+        % Plot recovery rates
+        hold on;
+        for j = 1:length(zones)
+            zone_name = zones{j};
+            zone_data = head_results.(test_label).zones.(zone_name);
+            
+            if isfield(zone_data, 'recovery_time') && isfield(zone_data, 'recovery_rate_ms')
+                if ~isempty(zone_data.recovery_time) && ~isempty(zone_data.recovery_rate_ms)
+                    plot(zone_data.recovery_time, zone_data.recovery_rate_ms * 1000, ...
+                        'Color', colors(j,:), 'LineWidth', 2, ...
+                        'DisplayName', sprintf('%s (%.1f ft)', zone_name, zone_data.Depthft));
+                end
+            end
+        end
+        
+        title(sprintf('Test %s: Head Recovery Rates', upper(test_label)));
+        xlabel('Time');
+        ylabel('Recovery Rate (mm/s)');
+        legend('Location', 'best');
+        grid on;
+        
+        if plot_results.save_enabled
+            head_filename = sprintf('test_%s_head_analysis.png', test_label);
+            head_filepath = fullfile(plot_results.save_dir, head_filename);
+            saveas(gcf, head_filepath);
+            fprintf('✓ Saved head analysis: %s\n', head_filename);
+            plot_results.figures_created{end+1} = head_filename;
+        end
+    end
+    
+    %% Figure Type 2: DAS Strain Rate with Depth Analysis
     if isfield(das_results, test_label) && ~isfield(das_results.(test_label), 'error')
         das_data = das_results.(test_label);
-        if isfield(das_data, 'smoothed_data') && isfield(das_data, 'depth_ft')
-            figure(10 + i);
-            set(gcf, 'Position', [200 + i*50, 200, 800, 600]);
+        
+        figure(200 + i); % Start at 201, 202, etc.
+        set(gcf, 'Position', [150 + i*50, 150, 1200, 800]);
+        
+        subplot(2,1,1)
+        % Plot strain rate vs depth (pcolor-style)
+        if isfield(das_data, 'smoothed_data') && isfield(das_data, 'depth_ft') && isfield(das_data, 'time_array')
+            % Create depth vs time plot
+            time_subset = das_data.time_array(1:10:end); % Subsample for plotting
+            data_subset = das_data.smoothed_data(1:10:end, :);
             
-            % Create waterfall plot of DAS data
-            imagesc(das_data.smoothed_data');
+            [T, D] = meshgrid(datenum(time_subset), das_data.depth_ft);
+            v = pcolor(T, D, data_subset');
+            set(v, 'EdgeColor', 'none');
             colormap('jet');
             colorbar;
-            title(sprintf('Test %s: DAS Data Waterfall', upper(test_label)));
-            xlabel('Time Sample');
-            ylabel('Channel');
+            
+            % Set reasonable color limits
+            data_range = prctile(data_subset(:), [5, 95]);
+            if diff(data_range) > 0
+                clim(data_range);
+            end
+            
+            title(sprintf('Test %s: DAS Strain Rate vs Depth', upper(test_label)));
+            xlabel('Time');
+            ylabel('Depth (ft)');
+            datetick('x', 'HH:MM', 'keepticks');
             
             % Mark pumping zone
             if isfield(das_data, 'pumping_zone')
                 hold on;
-                zone_channels = find(das_data.depth_ft >= das_data.pumping_zone.min_ft & ...
-                                   das_data.depth_ft <= das_data.pumping_zone.max_ft);
-                if ~isempty(zone_channels)
-                    plot([1, size(das_data.smoothed_data, 1)], [min(zone_channels), min(zone_channels)], 'r-', 'LineWidth', 2);
-                    plot([1, size(das_data.smoothed_data, 1)], [max(zone_channels), max(zone_channels)], 'r-', 'LineWidth', 2);
-                end
+                xlims = xlim;
+                plot(xlims, [das_data.pumping_zone.min_ft, das_data.pumping_zone.min_ft], 'r-', 'LineWidth', 3);
+                plot(xlims, [das_data.pumping_zone.max_ft, das_data.pumping_zone.max_ft], 'r-', 'LineWidth', 3);
+                text(xlims(1) + 0.02*diff(xlims), das_data.pumping_zone.mid_ft, ...
+                    sprintf('Pumping Zone\n%.0f-%.0f ft', das_data.pumping_zone.min_ft, das_data.pumping_zone.max_ft), ...
+                    'Color', 'red', 'FontWeight', 'bold', 'BackgroundColor', 'white');
             end
+        end
+        
+        subplot(2,1,2)
+        % Plot single channel strain rate time series
+        if isfield(das_data, 'analysis_time') && isfield(das_data, 'analysis_strain_rate')
+            plot(das_data.analysis_time, das_data.analysis_strain_rate, 'b-', 'LineWidth', 2);
+            title(sprintf('Test %s: Representative Channel Strain Rate (Ch %d, %.1f ft)', ...
+                upper(test_label), das_data.pumping_zone.channel_idx, das_data.pumping_zone.channel_depth_ft));
+            xlabel('Time');
+            ylabel('Strain Rate');
+            grid on;
+        end
+        
+        if plot_results.save_enabled
+            das_depth_filename = sprintf('test_%s_das_depth_analysis.png', test_label);
+            das_depth_filepath = fullfile(plot_results.save_dir, das_depth_filename);
+            saveas(gcf, das_depth_filepath);
+            fprintf('✓ Saved DAS depth analysis: %s\n', das_depth_filename);
+            plot_results.figures_created{end+1} = das_depth_filename;
+        end
+    end
+    
+    %% Figure Type 3: DAS Waterfall Plot (Simple)
+    if isfield(das_results, test_label) && ~isfield(das_results.(test_label), 'error')
+        das_data = das_results.(test_label);
+        if isfield(das_data, 'smoothed_data')
+            figure(300 + i); % Start at 301, 302, etc.
+            set(gcf, 'Position', [200 + i*50, 200, 800, 600]);
+            
+            % Simple waterfall plot
+            imagesc(das_data.smoothed_data');
+            clim([-2 2]); % Standard range from original
+            colormap('jet');
+            colorbar;
+            title(sprintf('Test %s: DAS Raw Data Waterfall', upper(test_label)));
+            xlabel('Time Sample');
+            ylabel('Channel Number');
             
             if plot_results.save_enabled
                 waterfall_filename = sprintf('test_%s_das_waterfall.png', test_label);
@@ -160,6 +272,65 @@ for i = 1:length(test_labels)
                 fprintf('✓ Saved DAS waterfall: %s\n', waterfall_filename);
                 plot_results.figures_created{end+1} = waterfall_filename;
             end
+        end
+    end
+    
+    %% Figure Type 4: Combined Head + DAS Comparison
+    if (isfield(head_results, test_label) && isfield(head_results.(test_label), 'zones')) && ...
+       (isfield(das_results, test_label) && ~isfield(das_results.(test_label), 'error'))
+        
+        figure(400 + i); % Start at 401, 402, etc.
+        set(gcf, 'Position', [250 + i*50, 250, 1200, 800]);
+        
+        subplot(3,1,1)
+        % Head recovery rates
+        hold on;
+        zones = fieldnames(head_results.(test_label).zones);
+        colors = lines(length(zones));
+        
+        for j = 1:length(zones)
+            zone_name = zones{j};
+            zone_data = head_results.(test_label).zones.(zone_name);
+            
+            if isfield(zone_data, 'recovery_time') && isfield(zone_data, 'recovery_rate_ms')
+                if ~isempty(zone_data.recovery_time) && ~isempty(zone_data.recovery_rate_ms)
+                    plot(zone_data.recovery_time, zone_data.recovery_rate_ms * 1000, ...
+                        'Color', colors(j,:), 'LineWidth', 2, ...
+                        'DisplayName', sprintf('%s (%.1f ft)', zone_name, zone_data.Depthft));
+                end
+            end
+        end
+        
+        title(sprintf('Test %s: Head Recovery Rates', upper(test_label)));
+        ylabel('Recovery Rate (mm/s)');
+        legend('Location', 'best');
+        grid on;
+        
+        subplot(3,1,2)
+        % DAS strain rate
+        das_data = das_results.(test_label);
+        if isfield(das_data, 'analysis_time') && isfield(das_data, 'analysis_strain_rate')
+            plot(das_data.analysis_time, das_data.analysis_strain_rate, 'b-', 'LineWidth', 2);
+            title(sprintf('DAS Strain Rate (Ch %d, %.1f ft)', ...
+                das_data.pumping_zone.channel_idx, das_data.pumping_zone.channel_depth_ft));
+            ylabel('Strain Rate');
+            grid on;
+        end
+        
+        subplot(3,1,3)
+        % Combined comparison plot (normalized)
+        % This would contain additional analysis combining both datasets
+        title('Combined Analysis');
+        xlabel('Time');
+        ylabel('Normalized Response');
+        grid on;
+        
+        if plot_results.save_enabled
+            combined_filename = sprintf('test_%s_combined_analysis.png', test_label);
+            combined_filepath = fullfile(plot_results.save_dir, combined_filename);
+            saveas(gcf, combined_filepath);
+            fprintf('✓ Saved combined analysis: %s\n', combined_filename);
+            plot_results.figures_created{end+1} = combined_filename;
         end
     end
 end
