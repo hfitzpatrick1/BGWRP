@@ -134,9 +134,24 @@ for i = 1:length(test_labels)
                             Date = head_data.Date;
                             Drawdownft = head_data.Drawdownft;
                             Depthft = head_data.Depthft;
-                            % Apply timing adjustment for test c
-                            if strcmp(test_label, 'c')
-                                Date = Date + seconds(head_timing_adjustment_c);
+                            
+                            % Apply dataset-specific timing adjustment
+                            timing_adjustment = 0;  % Default: no adjustment
+                            
+                            % Check if dataset has specific timing adjustment in config
+                            if isfield(test_timing, 'head_timing_adjustment')
+                                timing_adjustment = test_timing.head_timing_adjustment;
+                                fprintf('      Using dataset-specific timing adjustment: +%d seconds\n', timing_adjustment);
+                            else
+                                % Fallback: use legacy adjustment for PT-01c datasets
+                                if contains(upper(test_label), 'C') || contains(upper(test_label), 'PT01C')
+                                    timing_adjustment = head_timing_adjustment_c;  % Default 10 seconds
+                                    fprintf('      Using legacy PT-01c timing adjustment: +%d seconds\n', timing_adjustment);
+                                end
+                            end
+                            
+                            if timing_adjustment ~= 0
+                                Date = Date + seconds(timing_adjustment);
                             end
                             Date.TimeZone = 'UTC';
                             

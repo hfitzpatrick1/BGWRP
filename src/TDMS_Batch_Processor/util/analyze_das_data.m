@@ -132,28 +132,55 @@ for i = 1:length(test_labels)
             % Calculate depth array and channel parameters (from PM07_Recovery_Analysis.m)
             channels = 1:size(decdata, 2);
             
-            % Use test-specific calibration parameters
-            if strcmp(test_label, 'c')
-                C1 = 110;  % PT-01c uses different reference channel
+            % Use dataset-specific calibration parameters if available
+            if isfield(test_timing, 'C1')
+                C1 = test_timing.C1;
+                fprintf('  Using dataset-specific C1: %d\n', C1);
             else
-                C1 = das_params.default_C1;  % PT-01a and PT-01b use 513
+                % Fallback: Use test-type-specific calibration parameters
+                if contains(upper(test_label), 'C') || contains(upper(test_label), 'PT01C')
+                    C1 = 110;  % PT-01c uses different reference channel
+                    fprintf('  Using PT-01c calibration C1: %d\n', C1);
+                else
+                    C1 = das_params.default_C1;  % PT-01a and PT-01b use 513
+                    fprintf('  Using default calibration C1: %d\n', C1);
+                end
             end
             
-            depth_ft = ((channels - C1 - 1) * das_params.default_MperChan) / 0.3048;
+            % Use dataset-specific MperChan if available
+            if isfield(test_timing, 'MperChan')
+                MperChan = test_timing.MperChan;
+                fprintf('  Using dataset-specific MperChan: %.3f\n', MperChan);
+            else
+                MperChan = das_params.default_MperChan;
+                fprintf('  Using default MperChan: %.3f\n', MperChan);
+            end
+            
+            depth_ft = ((channels - C1 - 1) * MperChan) / 0.3048;
             das_results.(test_label).depth_ft = depth_ft;
             das_results.(test_label).C1 = C1;
-            das_results.(test_label).MperChan = das_params.default_MperChan;
+            das_results.(test_label).MperChan = MperChan;
             
-            % Define pumping zone for this test (from PM07_Recovery_Analysis.m)
-            switch test_label
-                case 'a'
+            % Define pumping zone - use dataset-specific if available, otherwise test-type defaults
+            if isfield(test_timing, 'pumping_zone_min_ft') && isfield(test_timing, 'pumping_zone_max_ft')
+                zone_min_ft = test_timing.pumping_zone_min_ft;
+                zone_max_ft = test_timing.pumping_zone_max_ft;
+                fprintf('  Using dataset-specific pumping zone: %.0f-%.0f ft\n', zone_min_ft, zone_max_ft);
+            else
+                % Fallback: Use test-type-specific pumping zones (from PM07_Recovery_Analysis.m)
+                if contains(upper(test_label), 'A') || contains(upper(test_label), 'PT01A')
                     zone_min_ft = 450; zone_max_ft = 510;
-                case 'b'
+                    fprintf('  Using PT-01a pumping zone: %.0f-%.0f ft\n', zone_min_ft, zone_max_ft);
+                elseif contains(upper(test_label), 'B') || contains(upper(test_label), 'PT01B')
                     zone_min_ft = 350; zone_max_ft = 400;
-                case 'c'
+                    fprintf('  Using PT-01b pumping zone: %.0f-%.0f ft\n', zone_min_ft, zone_max_ft);
+                elseif contains(upper(test_label), 'C') || contains(upper(test_label), 'PT01C')
                     zone_min_ft = 260; zone_max_ft = 310;
-                otherwise
+                    fprintf('  Using PT-01c pumping zone: %.0f-%.0f ft\n', zone_min_ft, zone_max_ft);
+                else
                     zone_min_ft = 300; zone_max_ft = 500;  % Default range
+                    fprintf('  Using default pumping zone: %.0f-%.0f ft\n', zone_min_ft, zone_max_ft);
+                end
             end
             
             % Find channel in middle of pumping zone
