@@ -23,6 +23,29 @@ analysis_results.timing = timing_config;
 smooth_window = 10;  % Moving average window
 head_timing_adjustment_c = 10;  % Adjustment for test c (can be parameterized)
 
+%% Recovery rate calculation function (from PM07_Recovery_Analysis.m)
+function [recovery_rate_ms, recovery_time, recovery_data] = calc_recovery_rate(Date, Drawdownft, recovery_start, recovery_end, smooth_window)
+    % Filter to recovery period
+    recovery_mask = Date >= recovery_start & Date <= recovery_end;
+    recovery_data.Date = Date(recovery_mask);
+    recovery_data.Drawdownft = Drawdownft(recovery_mask);
+    
+    if length(recovery_data.Date) < 2
+        recovery_rate_ms = [];
+        recovery_time = [];
+        return;
+    end
+    
+    % Calculate recovery rate (positive = recovery, negative = continued drawdown)
+    drawdown_smooth = movmean(recovery_data.Drawdownft, smooth_window);
+    recovery_rate = diff(drawdown_smooth) ./ seconds(diff(recovery_data.Date));
+    recovery_rate_ms = recovery_rate * 0.3048;  % Convert to m/s (ft/min * 0.3048 m/ft / 60 s/min)
+    recovery_time = recovery_data.Date(1:end-1);
+    
+    % Note: Positive rate means water level is rising (recovery)
+    % Negative rate means water level is still falling
+end
+
 %% Load and analyze data for each test
 for i = 1:length(test_labels)
     test_label = test_labels{i};
@@ -45,26 +68,106 @@ for i = 1:length(test_labels)
         analysis_results.(test_label).timing.end = analysis_end;
         analysis_results.(test_label).timing.duration_minutes = analysis_duration;
         
-        % Look for head data files in project data directory
-        head_data_dir = 'C:\Coding\BGWRP\data\head';
-        head_files = dir(fullfile(head_data_dir, sprintf('head_%s_z*.mat', test_label)));
+        % Look for head data files in multiple possible locations
+        possible_dirs = {
+            fullfile(config.base_input, '..', '..', 'BGWRP', 'data', 'head'),  % Relative to project
+            'C:\Coding\BGWRP\data\head',  % Absolute fallback
+            fullfile(config.base_input, 'head_data'),  % In data directory
+            fullfile(config.base_input, '..', 'head')  % Sibling to recovery_extract
+        };
         
-        fprintf('  Looking for head data files: head_%s_z*.mat in %s\n', test_label, head_data_dir);
-        fprintf('  Found %d head data files\n', length(head_files));
+        head_files = [];
+        head_data_dir = '';
         
-        if length(head_files) > 0
+        for dir_idx = 1:length(possible_dirs)
+            test_dir = possible_dirs{dir_idx};
+            if exist(test_dir, 'dir')
+                test_files = dir(fullfile(test_dir, sprintf('head_%s_z*.mat', test_label)));
+                if ~isempty(test_files)
+                    head_files = test_files;
+                    head_data_dir = test_dir;
+                    break;
+                end
+            end
+        end
+        
+        fprintf('  Looking for head data files: head_%s_z*.mat\n', test_label);
+        if ~isempty(head_files)
+            fprintf('  Found %d head data files in: %s\n', length(head_files), head_data_dir);
+            
+            % Actually load and process the head data
             for j = 1:length(head_files)
                 head_file = head_files(j);
                 fprintf('    Loading: %s\n', head_file.name);
-                % Load head data here
+                
+                try
+                    head_file_path = fullfile(head_data_dir, head_file.name);
+                    % Load variables into a structure to avoid workspace conflicts
+                    head_data = load(head_file_path);
+                    
+                    % Extract zone name (z2, z3, etc.)
+                    zone_match = regexp(head_file.name, 'head_[abc]_(z\d+)\.mat', 'tokens');
+                    if ~isempty(zone_match)
+                        zone_name = zone_match{1}{1};
+                        
+                        % Store and process head data
+                        if isfield(head_data, 'Date') && isfield(head_data, 'Drawdownft') && isfield(head_data, 'Depthft')
+                            Date = head_data.Date;
+                            Drawdownft = head_data.Drawdownft;
+                            Depthft = head_data.Depthft;
+                            % Apply timing adjustment for test c
+                            if strcmp(test_label, 'c')
+                                Date = Date + seconds(head_timing_adjustment_c);
+                            end
+                            Date.TimeZone = 'UTC';
+                            
+                            % Store raw data
+                            analysis_results.(test_label).zones.(zone_name).Date = Date;
+                            analysis_results.(test_label).zones.(zone_name).Drawdownft = Drawdownft;
+                            analysis_results.(test_label).zones.(zone_name).Depthft = mean(Depthft, 'omitnan');
+                            analysis_results.(test_label).zones.(zone_name).n_points = length(Date);
+                            analysis_results.(test_label).zones.(zone_name).file = head_file.name;
+                            
+                            % Calculate recovery rates using extracted timing
+                            [recovery_rate_ms, recovery_time, recovery_data] = calc_recovery_rate(...
+                                Date, Drawdownft, analysis_start, analysis_end, smooth_window);
+                            
+                            analysis_results.(test_label).zones.(zone_name).recovery_rate_ms = recovery_rate_ms;
+                            analysis_results.(test_label).zones.(zone_name).recovery_time = recovery_time;
+                            analysis_results.(test_label).zones.(zone_name).recovery_data = recovery_data;
+                            
+                            if ~isempty(recovery_rate_ms)
+                                max_recovery_rate = max(recovery_rate_ms);
+                                min_recovery_rate = min(recovery_rate_ms);
+                                avg_recovery_rate = mean(recovery_rate_ms);
+                                
+                                analysis_results.(test_label).zones.(zone_name).stats.avg = avg_recovery_rate;
+                                analysis_results.(test_label).zones.(zone_name).stats.max = max_recovery_rate;
+                                analysis_results.(test_label).zones.(zone_name).stats.min = min_recovery_rate;
+                                
+                                fprintf('      Zone %s (%.1f ft): Avg=%.6f m/s, Max=%.6f m/s, Min=%.6f m/s\n', ...
+                                    zone_name, analysis_results.(test_label).zones.(zone_name).Depthft, ...
+                                    avg_recovery_rate, max_recovery_rate, min_recovery_rate);
+                            else
+                                fprintf('      Zone %s (%.1f ft): NO DATA IN RECOVERY WINDOW\n', ...
+                                    zone_name, analysis_results.(test_label).zones.(zone_name).Depthft);
+                            end
+                        else
+                            fprintf('      Missing required variables in %s\n', head_file.name);
+                        end
+                    end
+                    
+                catch ME
+                    fprintf('      Error loading %s: %s\n', head_file.name, ME.message);
+                end
             end
         else
-            fprintf('  No head data files found\n');
+            fprintf('  No head data files found in any location\n');
+            fprintf('  Searched locations:\n');
+            for dir_idx = 1:length(possible_dirs)
+                fprintf('    %s\n', possible_dirs{dir_idx});
+            end
         end
-        
-        % Initialize results structure for this test
-        analysis_results.(test_label).zones = struct();
-        analysis_results.(test_label).summary = struct();
         
     else
         fprintf('  WARNING: No timing data found for test %s\n', test_label);

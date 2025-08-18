@@ -256,9 +256,13 @@ for i = 1:length(folders_to_process)
     filesearch = '*.mat';
     r = local_decimation_factor;  % Use config decimation factor
     
-    % Output to _concatenated directory
-    outname = sprintf('Dataset_%s_1Hz.mat', test_label);
-    output_file = fullfile(local_base_input, '_concatenated', outname);
+    % Output to _concatenated/<current_folder> directory  
+    outname = sprintf('Dataset_%s_1Hz.mat', current_folder);
+    output_dir = fullfile(local_base_input, '_concatenated', current_folder);
+    if ~exist(output_dir, 'dir')
+        mkdir(output_dir);
+    end
+    output_file = fullfile(output_dir, outname);
     
     % Verify MAT directory exists
     if ~exist(mat_directory, 'dir')
@@ -299,10 +303,14 @@ for i = 1:length(folders_to_process)
     if success
         fprintf('✓ Concatenation completed: %s\n', outname);
         
-        % Copy to _active directory for analysis
-        active_output = fullfile(local_base_input, '_active', outname);
+        % Copy to _active/<current_folder> directory for analysis
+        active_dataset_dir = fullfile(local_base_input, '_active', current_folder);
+        if ~exist(active_dataset_dir, 'dir')
+            mkdir(active_dataset_dir);
+        end
+        active_output = fullfile(active_dataset_dir, outname);
         copyfile(output_file, active_output);
-        fprintf('✓ Copied to _active: %s\n', outname);
+        fprintf('✓ Copied to _active/%s: %s\n', current_folder, outname);
     else
         fprintf('✗ Concatenation failed for %s\n', current_folder);
     end
@@ -476,16 +484,27 @@ end
         end
         fclose(fid);
         fprintf('✓ Saved TXT config: %s\n', txt_filename);
+        
+        % Also copy to _active/<source_folder>/ for dataset-specific analysis
+        if ~isempty(source_folder)
+            active_dataset_dir = fullfile(config.base_input, '_active', source_folder);
+            if ~exist(active_dataset_dir, 'dir')
+                mkdir(active_dataset_dir);
+            end
+            
+            % Copy MAT config
+            active_mat_file = fullfile(active_dataset_dir, mat_filename);
+            copyfile(mat_filepath, active_mat_file);
+            
+            % Copy TXT config  
+            active_txt_file = fullfile(active_dataset_dir, txt_filename);
+            copyfile(txt_filepath, active_txt_file);
+            
+            fprintf('✓ Copied configs to _active/%s/\n', source_folder);
+        end
     end
     
-    % Also save to _active for analysis compatibility
-    active_dir = fullfile(config.base_input, '_active');
-    if ~exist(active_dir, 'dir')
-        mkdir(active_dir);
-    end
-    legacy_config_file = fullfile(active_dir, 'Batch_Timing_Config.mat');
-    save(legacy_config_file, 'timing_config');
-    fprintf('✓ Legacy config saved: %s\n', legacy_config_file);
+    % No longer saving legacy combined config - using individual dataset configs
 
     % Display configuration summary
     fprintf('\n=== EXTRACTED TIMING CONFIGURATION ===\n');
@@ -516,12 +535,40 @@ if config.run_data_analysis
     if ~exist('timing_config', 'var') || isempty(timing_config)
         fprintf('⚠ No timing configuration available. Looking for saved config...\n');
         
-        % Try to load from _active directory
-        active_config_file = fullfile(config.base_input, '_active', 'Batch_Timing_Config.mat');
-        if exist(active_config_file, 'file')
-            fprintf('Loading timing config from: %s\n', active_config_file);
-            load(active_config_file, 'timing_config');
-        else
+        % Load timing configs from individual dataset directories
+        timing_config = struct();
+        active_base = fullfile(config.base_input, '_active');
+        
+        if exist(active_base, 'dir')
+            dataset_dirs = dir(active_base);
+            dataset_dirs = dataset_dirs([dataset_dirs.isdir] & ~startsWith({dataset_dirs.name}, '.'));
+            
+            for i = 1:length(dataset_dirs)
+                dataset_name = dataset_dirs(i).name;
+                config_file = fullfile(active_base, dataset_name, sprintf('timing_%s.mat', dataset_name));
+                
+                if exist(config_file, 'file')
+                    fprintf('Loading config: %s\n', config_file);
+                    loaded_config = load(config_file, 'test_config');
+                    
+                    % Determine test label from dataset name
+                    if contains(dataset_name, 'PT01a') || contains(dataset_name, 'a')
+                        test_label = 'a';
+                    elseif contains(dataset_name, 'PT01b') || contains(dataset_name, 'b')
+                        test_label = 'b';
+                    elseif contains(dataset_name, 'PT01c') || contains(dataset_name, 'c')
+                        test_label = 'c';
+                    else
+                        test_label = lower(dataset_name(end)); % fallback
+                    end
+                    
+                    timing_config.(test_label) = loaded_config.test_config;
+                    fprintf('✓ Loaded timing for test %s from %s\n', test_label, dataset_name);
+                end
+            end
+        end
+        
+        if isempty(fieldnames(timing_config))
             fprintf('No saved timing config found. Generating timing config...\n');
             
             % Generate timing config if not available
@@ -572,13 +619,23 @@ if config.run_data_analysis
     end
     
     try
-        % Analyze head data
-        fprintf('Running head data analysis...\n');
-        head_results = analyze_head_data(timing_config, config.test_labels, config);
-        
-        % Analyze DAS data
-        fprintf('Running DAS data analysis...\n');
-        das_results = analyze_das_data(timing_config, config.test_labels, config);
+        % Determine test labels from available timing data
+        available_tests = fieldnames(timing_config);
+        if isempty(available_tests)
+            fprintf('⚠ No timing data available for analysis\n');
+            head_results = struct();
+            das_results = struct();
+        else
+            fprintf('Analyzing tests: %s\n', strjoin(available_tests, ', '));
+            
+            % Analyze head data
+            fprintf('Running head data analysis...\n');
+            head_results = analyze_head_data(timing_config, available_tests, config);
+            
+            % Analyze DAS data
+            fprintf('Running DAS data analysis...\n');
+            das_results = analyze_das_data(timing_config, available_tests, config);
+        end
         
         % Generate plots
         fprintf('Generating analysis plots...\n');
@@ -609,7 +666,7 @@ for i = 1:length(config.test_labels)
     end
 end
 if config.run_timing_extraction
-    fprintf('  ✓ Batch_Timing_Config.mat\n');
+    fprintf('  ✓ Individual dataset timing configs\n');
 end
 if config.run_data_analysis && exist('plot_results', 'var')
     fprintf('  ✓ Data analysis completed\n');

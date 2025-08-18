@@ -92,8 +92,12 @@ for i = 1:length(input_folders)
     % Create subdirectories in processing folders
     for j = 1:length(processing_dirs)
         subdir_path = fullfile(base_path, processing_dirs{j}, folder_name);
-        mkdir(subdir_path);
-        fprintf('  Created: %s/%s\n', processing_dirs{j}, folder_name);
+        if ~exist(subdir_path, 'dir')
+            mkdir(subdir_path);
+            fprintf('  Created: %s/%s\n', processing_dirs{j}, folder_name);
+        else
+            fprintf('  ✓ Using existing: %s/%s\n', processing_dirs{j}, folder_name);
+        end
     end
 end
 
