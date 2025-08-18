@@ -38,9 +38,9 @@ for i = 1:length(test_labels)
     if isfield(timing_config, test_label)
         test_timing = timing_config.(test_label);
         
-        % Look for actual 1Hz DAS data file in test-specific mat directory
-        das_filename = sprintf('PM07_01%s_1Hz.mat', test_label);
-        das_filepath = fullfile(config.base_input, sprintf('%s_Recovery_mat', config.test_directories{i}), das_filename);
+        % Look for concatenated DAS data file in _active directory
+        das_filename = sprintf('Dataset_%s_1Hz.mat', test_label);
+        das_filepath = fullfile(config.base_input, '_active', das_filename);
         
         if exist(das_filepath, 'file')
             fprintf('  Loading DAS data: %s\n', das_filename);

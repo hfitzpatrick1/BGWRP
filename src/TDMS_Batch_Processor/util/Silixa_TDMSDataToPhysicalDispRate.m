@@ -114,18 +114,13 @@ for nn = f_ind
         if save_data
             fprintf('Saving MAT File...')
             
-            % Extract test name from input directory path
-            [~, input_dir_name, ~] = fileparts(directory(1:end-1)); % Remove trailing slash and get folder name
-            test_subdir = [input_dir_name '_mat\'];
-            
-            % Create subdirectory if it doesn't exist
-            full_save_dir = [save_directory test_subdir];
-            if ~exist(full_save_dir, 'dir')
-                mkdir(full_save_dir);
-                fprintf('Created subdirectory: %s\n', full_save_dir);
+            % Write to the specified save directory
+            if ~exist(save_directory, 'dir')
+                mkdir(save_directory);
+                fprintf('Created output directory: %s\n', save_directory);
             end
             
-            output_filename = [full_save_dir filename(1:end-4) 'mat'];
+            output_filename = fullfile(save_directory, [filename(1:end-4) 'mat']);
             save(output_filename,'data',...
                'fs_f','spatial_samp','spatial_res',...
                 'data_units','-v7.3')
