@@ -70,23 +70,25 @@ for i = 1:length(test_labels)
         
         % Look for head data files in multiple possible locations
         possible_dirs = {
-            fullfile(config.base_input, '..', '..', 'BGWRP', 'data', 'head'),  % Relative to project
-            'C:\Coding\BGWRP\data\head',  % Absolute fallback
-            fullfile(config.base_input, 'head_data'),  % In data directory
+            fullfile(config.base_input, '..', '..', 'BGWRP', 'data', 'head');  % Relative to project
+            'C:\Coding\BGWRP\data\head';  % Absolute fallback
+            fullfile(config.base_input, 'head_data');  % In data directory
             fullfile(config.base_input, '..', 'head')  % Sibling to recovery_extract
         };
         
         % Determine head file pattern from test label FIRST
+        head_pattern = '';  % Initialize to prevent undefined variable error
+        
         if length(test_label) == 1 && ismember(test_label, {'a', 'b', 'c'})
             % Traditional single-letter test labels
             head_pattern = sprintf('head_%s_z*.mat', test_label);
         else
             % Dynamic dataset names - extract test identifier
-            if contains(test_label, 'PT01a') || contains(test_label, '_a_') || endsWith(test_label, '_a')
+            if contains(upper(test_label), 'PT01A') || contains(test_label, '_a_') || endsWith(test_label, '_a')
                 head_pattern = 'head_a_z*.mat';
-            elseif contains(test_label, 'PT01b') || contains(test_label, '_b_') || endsWith(test_label, '_b')
+            elseif contains(upper(test_label), 'PT01B') || contains(test_label, '_b_') || endsWith(test_label, '_b')
                 head_pattern = 'head_b_z*.mat';
-            elseif contains(test_label, 'PT01c') || contains(test_label, 'c')
+            elseif contains(upper(test_label), 'PT01C') || contains(upper(test_label), 'C')
                 head_pattern = 'head_c_z*.mat';
             else
                 fprintf('  WARNING: Cannot determine head file pattern for test label: %s\n', test_label);

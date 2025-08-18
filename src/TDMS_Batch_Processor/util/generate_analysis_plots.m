@@ -325,6 +325,10 @@ for i = 1:length(test_labels)
         zones = fieldnames(head_results.(test_label).zones);
         head_colors = lines(length(zones));
         
+        % Initialize variables to prevent undefined errors
+        head_normalized_first = [];
+        zone_data_first = [];
+        
         % Plot normalized head recovery rates
         for j = 1:length(zones)
             zone_name = zones{j};
@@ -335,8 +339,14 @@ for i = 1:length(test_labels)
                     % Normalize head data to 0-1 range
                     head_data = zone_data.recovery_rate_ms * 1000; % Convert to mm/s
                     head_normalized = (head_data - min(head_data)) / (max(head_data) - min(head_data));
-                    if any(isnan(head_normalized))
+                    if any(isnan(head_normalized)) || (max(head_data) - min(head_data)) == 0
                         head_normalized = zeros(size(head_data)); % Handle case where all values are the same
+                    end
+                    
+                    % Store first zone's data for correlation analysis
+                    if j == 1
+                        head_normalized_first = head_normalized;
+                        zone_data_first = zone_data;
                     end
                     
                     plot(zone_data.recovery_time, head_normalized, '--', ...
@@ -348,11 +358,13 @@ for i = 1:length(test_labels)
         
         % Plot normalized DAS strain rate
         das_data = das_results.(test_label);
+        das_normalized = [];
         if isfield(das_data, 'analysis_time') && isfield(das_data, 'analysis_strain_rate')
             % Normalize DAS data to 0-1 range
             das_strain = das_data.analysis_strain_rate;
-            das_normalized = (das_strain - min(das_strain)) / (max(das_strain) - min(das_strain));
-            if any(isnan(das_normalized))
+            if max(das_strain) - min(das_strain) > 0
+                das_normalized = (das_strain - min(das_strain)) / (max(das_strain) - min(das_strain));
+            else
                 das_normalized = zeros(size(das_strain)); % Handle case where all values are the same
             end
             
@@ -361,25 +373,29 @@ for i = 1:length(test_labels)
         end
         
         % Calculate and display cross-correlation if both datasets exist
-        if exist('head_normalized', 'var') && exist('das_normalized', 'var') && length(zones) >= 1
-            % Use first zone for correlation analysis
-            zone_data = head_results.(test_label).zones.(zones{1});
-            if isfield(zone_data, 'recovery_time') && ~isempty(zone_data.recovery_time)
+        if ~isempty(head_normalized_first) && ~isempty(das_normalized) && ~isempty(zone_data_first)
+            if isfield(zone_data_first, 'recovery_time') && ~isempty(zone_data_first.recovery_time)
                 % Interpolate to common time grid for correlation
                 common_time = das_data.analysis_time;
-                if length(zone_data.recovery_time) > 1 && length(common_time) > 1
-                    head_interp = interp1(zone_data.recovery_time, head_normalized, common_time, 'linear', 'extrap');
-                    
-                    % Calculate correlation coefficient
-                    valid_idx = ~isnan(head_interp) & ~isnan(das_normalized);
-                    if sum(valid_idx) > 10 % Need enough points for meaningful correlation
-                        corr_coef = corrcoef(head_interp(valid_idx), das_normalized(valid_idx));
-                        correlation = corr_coef(1,2);
+                if length(zone_data_first.recovery_time) > 1 && length(common_time) > 1
+                    try
+                        head_interp = interp1(zone_data_first.recovery_time, head_normalized_first, common_time, 'linear', 'extrap');
                         
-                        % Add correlation text
-                        text(0.02, 0.95, sprintf('Correlation: %.3f', correlation), ...
-                            'Units', 'normalized', 'VerticalAlignment', 'top', ...
-                            'BackgroundColor', 'white', 'FontWeight', 'bold');
+                        % Calculate correlation coefficient
+                        valid_idx = ~isnan(head_interp) & ~isnan(das_normalized) & isfinite(head_interp) & isfinite(das_normalized);
+                        if sum(valid_idx) > 10 % Need enough points for meaningful correlation
+                            corr_coef = corrcoef(head_interp(valid_idx), das_normalized(valid_idx));
+                            if size(corr_coef, 1) >= 2 && size(corr_coef, 2) >= 2
+                                correlation = corr_coef(1,2);
+                                
+                                % Add correlation text
+                                text(0.02, 0.95, sprintf('Correlation: %.3f', correlation), ...
+                                    'Units', 'normalized', 'VerticalAlignment', 'top', ...
+                                    'BackgroundColor', 'white', 'FontWeight', 'bold');
+                            end
+                        end
+                    catch ME
+                        fprintf('Warning: Correlation calculation failed: %s\n', ME.message);
                     end
                 end
             end
