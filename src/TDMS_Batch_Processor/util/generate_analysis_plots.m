@@ -63,6 +63,10 @@ if ~isempty(test_labels)
             das_data = das_results.(test_label);
             if isfield(das_data, 'analysis_time') && isfield(das_data, 'analysis_strain_rate')
                 plot(das_data.analysis_time, das_data.analysis_strain_rate, 'b-', 'LineWidth', 2);
+                
+                % Set explicit time limits to analysis window
+                xlim([min(das_data.analysis_time), max(das_data.analysis_time)]);
+                
                 title(sprintf('Test %s: DAS Strain Rate (Ch %d, %.1f ft)', ...
                     upper(test_label), das_data.pumping_zone.channel_idx, das_data.pumping_zone.channel_depth_ft));
                 xlabel('Time');
@@ -194,11 +198,27 @@ for i = 1:length(test_labels)
         set(gcf, 'Position', [150 + i*50, 150, 1200, 800]);
         
         subplot(2,1,1)
-        % Plot strain rate vs depth (pcolor-style)
-        if isfield(das_data, 'smoothed_data') && isfield(das_data, 'depth_ft') && isfield(das_data, 'time_array')
-            % Create depth vs time plot
-            time_subset = das_data.time_array(1:10:end); % Subsample for plotting
-            data_subset = das_data.smoothed_data(1:10:end, :);
+        % Plot strain rate vs depth (pcolor-style) - USE ANALYSIS WINDOW ONLY
+        if isfield(das_data, 'smoothed_data') && isfield(das_data, 'depth_ft') && isfield(das_data, 'analysis_time')
+            % Filter to analysis window only
+            analysis_start = min(das_data.analysis_time);
+            analysis_end = max(das_data.analysis_time);
+            
+            % Find the indices for analysis window in full data
+            if isfield(das_data, 'time_array')
+                analysis_mask = das_data.time_array >= analysis_start & das_data.time_array <= analysis_end;
+                time_filtered = das_data.time_array(analysis_mask);
+                data_filtered = das_data.smoothed_data(analysis_mask, :);
+            else
+                % Fallback: use analysis data directly
+                time_filtered = das_data.analysis_time;
+                data_filtered = das_data.smoothed_data; % Assume already filtered
+            end
+            
+            % Subsample for plotting performance
+            subsample_factor = max(1, floor(length(time_filtered) / 1000)); % Limit to ~1000 points
+            time_subset = time_filtered(1:subsample_factor:end);
+            data_subset = data_filtered(1:subsample_factor:end, :);
             
             [T, D] = meshgrid(datenum(time_subset), das_data.depth_ft);
             v = pcolor(T, D, data_subset');
@@ -212,7 +232,10 @@ for i = 1:length(test_labels)
                 clim(data_range);
             end
             
-            title(sprintf('Test %s: DAS Strain Rate vs Depth', upper(test_label)));
+            % Set explicit time limits to analysis window
+            xlim([datenum(analysis_start), datenum(analysis_end)]);
+            
+            title(sprintf('Test %s: DAS Strain Rate vs Depth (Analysis Window)', upper(test_label)));
             xlabel('Time');
             ylabel('Depth (ft)');
             datetick('x', 'HH:MM', 'keepticks');
@@ -233,6 +256,10 @@ for i = 1:length(test_labels)
         % Plot single channel strain rate time series
         if isfield(das_data, 'analysis_time') && isfield(das_data, 'analysis_strain_rate')
             plot(das_data.analysis_time, das_data.analysis_strain_rate, 'b-', 'LineWidth', 2);
+            
+            % Set explicit time limits to analysis window
+            xlim([min(das_data.analysis_time), max(das_data.analysis_time)]);
+            
             title(sprintf('Test %s: Representative Channel Strain Rate (Ch %d, %.1f ft)', ...
                 upper(test_label), das_data.pumping_zone.channel_idx, das_data.pumping_zone.channel_depth_ft));
             xlabel('Time');
@@ -249,20 +276,33 @@ for i = 1:length(test_labels)
         end
     end
     
-    %% Figure Type 3: DAS Waterfall Plot (Simple)
+    %% Figure Type 3: DAS Waterfall Plot (Analysis Window Only)
     if isfield(das_results, test_label) && ~isfield(das_results.(test_label), 'error')
         das_data = das_results.(test_label);
-        if isfield(das_data, 'smoothed_data')
+        if isfield(das_data, 'smoothed_data') && isfield(das_data, 'analysis_time')
             figure(300 + i); % Start at 301, 302, etc.
             set(gcf, 'Position', [200 + i*50, 200, 800, 600]);
             
-            % Simple waterfall plot
-            imagesc(das_data.smoothed_data');
+            % Filter to analysis window only
+            analysis_start = min(das_data.analysis_time);
+            analysis_end = max(das_data.analysis_time);
+            
+            if isfield(das_data, 'time_array')
+                % Filter full data to analysis window
+                analysis_mask = das_data.time_array >= analysis_start & das_data.time_array <= analysis_end;
+                waterfall_data = das_data.smoothed_data(analysis_mask, :);
+            else
+                % Use pre-filtered data (shouldn't happen but safe fallback)
+                waterfall_data = das_data.smoothed_data;
+            end
+            
+            % Waterfall plot with filtered data
+            imagesc(waterfall_data');
             clim([-2 2]); % Standard range from original
             colormap('jet');
             colorbar;
-            title(sprintf('Test %s: DAS Raw Data Waterfall', upper(test_label)));
-            xlabel('Time Sample');
+            title(sprintf('Test %s: DAS Waterfall (Analysis Window)', upper(test_label)));
+            xlabel('Time Sample (Analysis Window)');
             ylabel('Channel Number');
             
             if plot_results.save_enabled
@@ -311,6 +351,10 @@ for i = 1:length(test_labels)
         das_data = das_results.(test_label);
         if isfield(das_data, 'analysis_time') && isfield(das_data, 'analysis_strain_rate')
             plot(das_data.analysis_time, das_data.analysis_strain_rate, 'b-', 'LineWidth', 2);
+            
+            % Set explicit time limits to analysis window
+            xlim([min(das_data.analysis_time), max(das_data.analysis_time)]);
+            
             title(sprintf('DAS Strain Rate (Ch %d, %.1f ft)', ...
                 das_data.pumping_zone.channel_idx, das_data.pumping_zone.channel_depth_ft));
             ylabel('Strain Rate');

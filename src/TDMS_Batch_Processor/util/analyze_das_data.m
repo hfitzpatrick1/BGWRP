@@ -137,13 +137,20 @@ for i = 1:length(test_labels)
                 C1 = test_timing.C1;
                 fprintf('  Using dataset-specific C1: %d\n', C1);
             else
-                % Fallback: Use test-type-specific calibration parameters
-                if contains(upper(test_label), 'C') || contains(upper(test_label), 'PT01C')
+                % Use dataset name to determine calibration parameters
+                dataset_name = '';
+                if isfield(test_timing, 'dataset_name')
+                    dataset_name = upper(test_timing.dataset_name);
+                else
+                    dataset_name = upper(test_label);
+                end
+                
+                if contains(dataset_name, 'PT01C') || contains(dataset_name, '_C_') || endsWith(dataset_name, '_C')
                     C1 = 110;  % PT-01c uses different reference channel
-                    fprintf('  Using PT-01c calibration C1: %d\n', C1);
+                    fprintf('  Using PT-01c calibration C1: %d (from dataset: %s)\n', C1, dataset_name);
                 else
                     C1 = das_params.default_C1;  % PT-01a and PT-01b use 513
-                    fprintf('  Using default calibration C1: %d\n', C1);
+                    fprintf('  Using default calibration C1: %d (from dataset: %s)\n', C1, dataset_name);
                 end
             end
             
@@ -161,25 +168,33 @@ for i = 1:length(test_labels)
             das_results.(test_label).C1 = C1;
             das_results.(test_label).MperChan = MperChan;
             
-            % Define pumping zone - use dataset-specific if available, otherwise test-type defaults
+            % Define pumping zone - use dataset-specific if available, otherwise derive from source
             if isfield(test_timing, 'pumping_zone_min_ft') && isfield(test_timing, 'pumping_zone_max_ft')
                 zone_min_ft = test_timing.pumping_zone_min_ft;
                 zone_max_ft = test_timing.pumping_zone_max_ft;
                 fprintf('  Using dataset-specific pumping zone: %.0f-%.0f ft\n', zone_min_ft, zone_max_ft);
             else
-                % Fallback: Use test-type-specific pumping zones (from PM07_Recovery_Analysis.m)
-                if contains(upper(test_label), 'A') || contains(upper(test_label), 'PT01A')
+                % Use dataset name to determine test type directly
+                dataset_name = '';
+                if isfield(test_timing, 'dataset_name')
+                    dataset_name = upper(test_timing.dataset_name);
+                else
+                    dataset_name = upper(test_label);
+                end
+                
+                % Map based on actual dataset name patterns
+                if contains(dataset_name, 'PT01A') || contains(dataset_name, '_A_') || endsWith(dataset_name, '_A')
                     zone_min_ft = 450; zone_max_ft = 510;
-                    fprintf('  Using PT-01a pumping zone: %.0f-%.0f ft\n', zone_min_ft, zone_max_ft);
-                elseif contains(upper(test_label), 'B') || contains(upper(test_label), 'PT01B')
+                    fprintf('  Using PT-01a pumping zone: %.0f-%.0f ft (from dataset: %s)\n', zone_min_ft, zone_max_ft, dataset_name);
+                elseif contains(dataset_name, 'PT01B') || contains(dataset_name, '_B_') || endsWith(dataset_name, '_B')
                     zone_min_ft = 350; zone_max_ft = 400;
-                    fprintf('  Using PT-01b pumping zone: %.0f-%.0f ft\n', zone_min_ft, zone_max_ft);
-                elseif contains(upper(test_label), 'C') || contains(upper(test_label), 'PT01C')
+                    fprintf('  Using PT-01b pumping zone: %.0f-%.0f ft (from dataset: %s)\n', zone_min_ft, zone_max_ft, dataset_name);
+                elseif contains(dataset_name, 'PT01C') || contains(dataset_name, '_C_') || endsWith(dataset_name, '_C')
                     zone_min_ft = 260; zone_max_ft = 310;
-                    fprintf('  Using PT-01c pumping zone: %.0f-%.0f ft\n', zone_min_ft, zone_max_ft);
+                    fprintf('  Using PT-01c pumping zone: %.0f-%.0f ft (from dataset: %s)\n', zone_min_ft, zone_max_ft, dataset_name);
                 else
                     zone_min_ft = 300; zone_max_ft = 500;  % Default range
-                    fprintf('  Using default pumping zone: %.0f-%.0f ft\n', zone_min_ft, zone_max_ft);
+                    fprintf('  Using default pumping zone: %.0f-%.0f ft (unknown dataset: %s)\n', zone_min_ft, zone_max_ft, dataset_name);
                 end
             end
             

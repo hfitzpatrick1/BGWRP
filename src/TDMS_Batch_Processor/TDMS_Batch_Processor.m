@@ -726,12 +726,46 @@ end
 %% Final Summary
 fprintf('\n=== BATCH PROCESSING COMPLETE ===\n');
 fprintf('Final outputs:\n');
-for i = 1:length(config.test_labels)
-    final_file = sprintf('Dataset_%s_1Hz.mat', config.test_labels{i});
-    if exist([config.base_input final_file], 'file')
-        fprintf('  ✓ %s\n', final_file);
+
+% Check for actual datasets in _active directory instead of hardcoded legacy names
+active_dir = fullfile(config.base_input, '_active');
+if exist(active_dir, 'dir')
+    dataset_dirs = dir(active_dir);
+    dataset_dirs = dataset_dirs([dataset_dirs.isdir] & ~startsWith({dataset_dirs.name}, '.'));
+    
+    if ~isempty(dataset_dirs)
+        fprintf('Active datasets:\n');
+        for i = 1:length(dataset_dirs)
+            dataset_name = dataset_dirs(i).name;
+            data_file = sprintf('%s_1Hz.mat', dataset_name);
+            timing_file = sprintf('timing_%s.txt', dataset_name);
+            
+            data_path = fullfile(active_dir, dataset_name, data_file);
+            timing_path = fullfile(active_dir, dataset_name, timing_file);
+            
+            if exist(data_path, 'file') && exist(timing_path, 'file')
+                fprintf('  ✓ %s (complete with timing config)\n', dataset_name);
+            elseif exist(data_path, 'file')
+                fprintf('  ✓ %s (data only, missing timing)\n', dataset_name);
+            else
+                fprintf('  ✗ %s (incomplete)\n', dataset_name);
+            end
+        end
     else
-        fprintf('  ✗ %s (not created)\n', final_file);
+        fprintf('  ⚠ No datasets found in _active directory\n');
+    end
+else
+    fprintf('  ⚠ _active directory not found\n');
+    
+    % Fallback: check legacy locations (only if _active doesn't exist)
+    fprintf('Legacy file check:\n');
+    for i = 1:length(config.test_labels)
+        final_file = sprintf('Dataset_%s_1Hz.mat', config.test_labels{i});
+        if exist(fullfile(config.base_input, final_file), 'file')
+            fprintf('  ✓ %s (legacy location)\n', final_file);
+        else
+            fprintf('  ✗ %s (not created)\n', final_file);
+        end
     end
 end
 if config.run_timing_extraction
