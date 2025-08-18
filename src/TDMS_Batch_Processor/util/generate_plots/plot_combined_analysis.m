@@ -1,4 +1,4 @@
-function figure_handle = plot_combined_analysis(head_results, das_results, test_label, test_index, plot_config)
+function figure_handle = plot_combined_analysis(head_results, das_results, test_label, test_index, plot_config, config)
 %PLOT_COMBINED_ANALYSIS Create combined head+DAS comparison plot (Figure Type 4)
 %
 % Inputs:
@@ -7,6 +7,7 @@ function figure_handle = plot_combined_analysis(head_results, das_results, test_
 %   test_label   - Test label string
 %   test_index   - Index for figure numbering
 %   plot_config  - Plot configuration structure
+%   config       - Batch processor configuration (for analysis windows)
 %
 % Outputs:
 %   figure_handle - Handle to created figure, or [] if no data

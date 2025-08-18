@@ -55,9 +55,23 @@ for i = 1:length(test_labels)
     if isfield(timing_config, test_label)
         test_timing = timing_config.(test_label);
         
-        % Define analysis window (using extracted timing)
-        analysis_start = test_timing.start;
-        analysis_end = test_timing.end;
+        % Define analysis window - prioritize batch config analysis_windows over extracted timing
+        if isfield(config, 'analysis_windows') && isfield(config.analysis_windows, test_timing.dataset_name)
+            % Use configured analysis window from batch config
+            analysis_start = config.analysis_windows.(test_timing.dataset_name).start;
+            analysis_end = config.analysis_windows.(test_timing.dataset_name).end;
+            fprintf('Using configured analysis window from batch config\n');
+        elseif isfield(config, 'analysis_windows') && isfield(config.analysis_windows, test_label)
+            % Try test label as fallback
+            analysis_start = config.analysis_windows.(test_label).start;
+            analysis_end = config.analysis_windows.(test_label).end;
+            fprintf('Using configured analysis window from batch config\n');
+        else
+            % Fallback to extracted timing
+            analysis_start = test_timing.start;
+            analysis_end = test_timing.end;
+            fprintf('Using extracted timing (no analysis window configured)\n');
+        end
         analysis_duration = minutes(analysis_end - analysis_start);
         
         fprintf('Analysis window: %s to %s (%.1f minutes)\n', ...

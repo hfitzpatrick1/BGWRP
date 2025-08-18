@@ -212,9 +212,23 @@ for i = 1:length(test_labels)
             strain_rate = smoothed_data(:, channel_idx);
             das_results.(test_label).strain_rate = strain_rate;
             
-            % Filter to analysis window
-            analysis_start = test_timing.start;
-            analysis_end = test_timing.end;
+            % Filter to analysis window - prioritize batch config analysis_windows over extracted timing
+            if isfield(config, 'analysis_windows') && isfield(config.analysis_windows, test_timing.dataset_name)
+                % Use configured analysis window from batch config
+                analysis_start = config.analysis_windows.(test_timing.dataset_name).start;
+                analysis_end = config.analysis_windows.(test_timing.dataset_name).end;
+                fprintf('    Using configured analysis window from batch config\n');
+            elseif isfield(config, 'analysis_windows') && isfield(config.analysis_windows, test_label)
+                % Try test label as fallback
+                analysis_start = config.analysis_windows.(test_label).start;
+                analysis_end = config.analysis_windows.(test_label).end;
+                fprintf('    Using configured analysis window from batch config\n');
+            else
+                % Fallback to extracted timing
+                analysis_start = test_timing.start;
+                analysis_end = test_timing.end;
+                fprintf('    Using extracted timing (no analysis window configured)\n');
+            end
             analysis_mask = time_array >= analysis_start & time_array <= analysis_end;
             
             das_results.(test_label).analysis_time = time_array(analysis_mask);

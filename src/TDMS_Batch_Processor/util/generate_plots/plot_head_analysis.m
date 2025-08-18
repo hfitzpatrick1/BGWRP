@@ -1,4 +1,4 @@
-function figure_handle = plot_head_analysis(head_results, test_label, test_index, plot_config)
+function figure_handle = plot_head_analysis(head_results, test_label, test_index, plot_config, config)
 %PLOT_HEAD_ANALYSIS Create detailed head data analysis plot (Figure Type 1)
 %
 % Inputs:
@@ -6,6 +6,7 @@ function figure_handle = plot_head_analysis(head_results, test_label, test_index
 %   test_label   - Test label string
 %   test_index   - Index for figure numbering
 %   plot_config  - Plot configuration structure
+%   config       - Batch processor configuration (for analysis windows)
 %
 % Outputs:
 %   figure_handle - Handle to created figure, or [] if no data

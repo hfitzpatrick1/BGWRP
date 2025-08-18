@@ -19,6 +19,25 @@ config.base_input = 'E:\PM_07 Step Test\MATLAB\recovery_extract\';
 config.waterfall_display_bounds.min_depth = 100;
 config.waterfall_display_bounds.max_depth = 665;
 
+%% Analysis Time Windows (per dataset)
+% Universal time windows used for BOTH analysis filtering AND plot display
+% Format: datetime objects in UTC timezone
+
+% PT-01c Recovery Analysis Window (from original PM07_Recovery_Analysis.m)
+config.analysis_windows.PT01c_Recovery.start = datetime(2023,10,24,19,14,00,00,'TimeZone','UTC');
+config.analysis_windows.PT01c_Recovery.end = datetime(2023,10,24,19,18,00,00,'TimeZone','UTC');
+
+config.analysis_windows.PT01c_Full.start = datetime(2023,10,24,19,14,00,00,'TimeZone','UTC');
+config.analysis_windows.PT01c_Full.end = datetime(2023,10,24,19,18,00,00,'TimeZone','UTC');
+
+% PT-01a Recovery Analysis Window (uncomment to use)
+% config.analysis_windows.PT01a_Recovery.start = datetime(2023,11,7,20,44,00,00,'TimeZone','UTC');
+% config.analysis_windows.PT01a_Recovery.end = datetime(2023,11,7,20,48,00,00,'TimeZone','UTC');
+
+% PT-01b Recovery Analysis Window (uncomment to use)
+% config.analysis_windows.PT01b_Recovery.start = datetime(2023,10,31,19,29,00,00,'TimeZone','UTC');
+% config.analysis_windows.PT01b_Recovery.end = datetime(2023,10,31,19,33,00,00,'TimeZone','UTC');
+
 %% Zone Filtering Configuration (per dataset)
 % Using exact parameters from PM07_Recovery_Analysis.m
 

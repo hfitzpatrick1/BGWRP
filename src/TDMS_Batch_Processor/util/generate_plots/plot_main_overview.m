@@ -1,4 +1,4 @@
-function main_figure_handle = plot_main_overview(head_results, das_results, test_labels, plot_config)
+function main_figure_handle = plot_main_overview(head_results, das_results, test_labels, plot_config, config)
 %PLOT_MAIN_OVERVIEW Create main analysis overview figure (Figure 1)
 %
 % Inputs:
@@ -6,6 +6,7 @@ function main_figure_handle = plot_main_overview(head_results, das_results, test
 %   das_results  - Results from analyze_das_data
 %   test_labels  - Cell array of test labels
 %   plot_config  - Plot configuration structure
+%   config       - Batch processor configuration (for analysis windows)
 %
 % Outputs:
 %   main_figure_handle - Handle to created figure

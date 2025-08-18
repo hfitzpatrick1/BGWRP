@@ -51,7 +51,7 @@ end
 
 %% Create main overview plot
 fprintf('\n--- Creating main overview plot ---\n');
-main_figure = plot_main_overview(head_results, das_results, test_labels, plot_results);
+main_figure = plot_main_overview(head_results, das_results, test_labels, plot_results, config);
 
 %% Create individual detailed plots for each test
 for i = 1:length(test_labels)
@@ -59,7 +59,7 @@ for i = 1:length(test_labels)
     fprintf('\n--- Generating detailed plots for test %s ---\n', upper(test_label));
     
     % Plot Type 1: Detailed Head Data Plot
-    head_figure = plot_head_analysis(head_results, test_label, i, plot_results);
+    head_figure = plot_head_analysis(head_results, test_label, i, plot_results, config);
     
     % Plot Type 2: DAS Strain Rate with Depth Analysis
     das_depth_figure = plot_das_depth_analysis(das_results, test_label, i, plot_results, config);
@@ -68,7 +68,7 @@ for i = 1:length(test_labels)
     waterfall_figure = plot_das_waterfall(das_results, test_label, i, plot_results, config);
     
     % Plot Type 4: Combined Head + DAS Comparison
-    combined_figure = plot_combined_analysis(head_results, das_results, test_label, i, plot_results);
+    combined_figure = plot_combined_analysis(head_results, das_results, test_label, i, plot_results, config);
     
     % Store figure handles (optional)
     if ~isfield(plot_results, 'figures')
