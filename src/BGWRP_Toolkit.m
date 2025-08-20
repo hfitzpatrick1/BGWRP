@@ -357,7 +357,8 @@ if config.run_tdms_conversion
     
     % Run TDMS conversion
     try
-        run(fullfile(script_dir, 'prepare', 'Silixa_TDMSDataToPhysicalDispRate.m'));
+        silixa_script = fullfile(script_dir, 'prepare', 'Silixa_TDMSDataToPhysicalDispRate.m');
+        run(silixa_script);
         fprintf('✓ TDMS conversion completed for %s\n', current_folder);
     catch ME
         fprintf('✗ TDMS conversion failed for %s: %s\n', current_folder, ME.message);
