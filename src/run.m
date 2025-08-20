@@ -12,9 +12,9 @@ fprintf('=== TDMS BATCH PROCESSING PIPELINE ===\n');
 
 %% Setup paths
 script_dir = fileparts(mfilename('fullpath'));
-util_dir = fullfile(script_dir, 'util');
-addpath(util_dir);
-fprintf('Added util directory to path: %s\n', util_dir);
+% Add all subdirectories to path
+addpath(genpath(script_dir));
+fprintf('Added all subdirectories to path: %s\n', script_dir);
 
 %% Configuration Setup
 % Load config from file first
@@ -342,7 +342,7 @@ if config.run_tdms_conversion
     
     % Run TDMS conversion
     try
-        run(fullfile(util_dir, 'Silixa_TDMSDataToPhysicalDispRate.m'));
+        run(fullfile(script_dir, 'prepare', 'Silixa_TDMSDataToPhysicalDispRate.m'));
         fprintf('✓ TDMS conversion completed for %s\n', current_folder);
     catch ME
         fprintf('✗ TDMS conversion failed for %s: %s\n', current_folder, ME.message);

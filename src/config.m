@@ -7,7 +7,7 @@ function config = get_batch_config()
 %   config - Configuration structure
 
 %% Base Configuration
-config.base_input = 'E:\PM_07 Step Test\MATLAB\recovery_extract\';
+config.base_input = 'C:\Coding\BGWRP\data\_BATCH\';
 
 %% Optional Overrides (uncomment to use)
 % config.test_directories = {'PT01a_Recovery', 'PT01b_Recovery', 'PT01c_Recovery'};
