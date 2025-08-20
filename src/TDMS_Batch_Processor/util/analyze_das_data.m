@@ -97,6 +97,8 @@ for i = 1:length(test_labels)
         
         % Check if this is a phase correction method
         phase_methods = {'phase_align', 'smooth_transition', 'local_detrend'};
+        amplitude_methods = {'rms_normalize', 'adaptive_normalize', 'percentile_normalize'};
+        
         if any(strcmp(filter_method, phase_methods))
             % Use phase boundary correction with timing information
             options = struct();
@@ -106,6 +108,17 @@ for i = 1:length(test_labels)
             options.test_channels = 450:470;
             
             data1Hz = phase_boundary_correction(data1Hz, test_timing, options);
+            
+        elseif any(strcmp(filter_method, amplitude_methods))
+            % Use amplitude normalization correction
+            options = struct();
+            options.method = filter_method;
+            options.reference_method = 'median';
+            options.test_channels = 450:470;
+            options.smoothing = contains(filter_method, 'adaptive');
+            
+            data1Hz = amplitude_normalization_correction(data1Hz, test_timing, options);
+            
         else
             % Use standard filtering
             data1Hz = filter_concatenation_artifacts(data1Hz, filter_method);

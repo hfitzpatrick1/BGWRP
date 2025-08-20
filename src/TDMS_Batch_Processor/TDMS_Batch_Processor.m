@@ -156,6 +156,39 @@ if exist('mode', 'var') && ischar(mode)
             config.filter_method = 'local_detrend';
             fprintf('Phase correction mode: local_detrend\n');
             
+        case 'run_rms_normalize'
+            % Analysis mode with RMS amplitude normalization
+            config.run_tdms_conversion = false;
+            config.run_concatenation = false;
+            config.run_timing_extraction = false;
+            config.run_data_analysis = true;
+            config.save_charts = contains(mode, 'save');
+            config.apply_concatenation_filter = true;
+            config.filter_method = 'rms_normalize';
+            fprintf('Amplitude correction mode: rms_normalize\n');
+            
+        case 'run_adaptive_normalize'
+            % Analysis mode with adaptive amplitude normalization
+            config.run_tdms_conversion = false;
+            config.run_concatenation = false;
+            config.run_timing_extraction = false;
+            config.run_data_analysis = true;
+            config.save_charts = contains(mode, 'save');
+            config.apply_concatenation_filter = true;
+            config.filter_method = 'adaptive_normalize';
+            fprintf('Amplitude correction mode: adaptive_normalize\n');
+            
+        case 'run_percentile_normalize'
+            % Analysis mode with percentile-based normalization
+            config.run_tdms_conversion = false;
+            config.run_concatenation = false;
+            config.run_timing_extraction = false;
+            config.run_data_analysis = true;
+            config.save_charts = contains(mode, 'save');
+            config.apply_concatenation_filter = true;
+            config.filter_method = 'percentile_normalize';
+            fprintf('Amplitude correction mode: percentile_normalize\n');
+            
         case 'run_timing'
             % Analysis mode: timing extraction + analysis
             config.run_tdms_conversion = false;
