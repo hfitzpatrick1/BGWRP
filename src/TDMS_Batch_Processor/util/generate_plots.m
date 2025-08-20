@@ -1,4 +1,4 @@
-function plot_results = generate_plots(~, das_results, config)
+function plot_results = generate_plots(head_results, das_results, config)
 %GENERATE_PLOTS Create analysis plots using simplified approach
 %
 % Creates essential plots based on PM07_PT01c_Simple.m approach
@@ -60,16 +60,41 @@ for i = 1:length(test_labels)
     
     das_data = das_results.(test_label);
     
-    % Create waterfall plot (based on simple script Figure 2)
-    fig_num = 100 + i;
-    figure(fig_num); 
-    clf;
-    
     % Get analysis window for plotting
     analysis_start = das_data.analysis_time(1);
     analysis_end = das_data.analysis_time(end);
     
-    % Plot waterfall
+    % Get head data if available
+    head_data = [];
+    if isfield(head_results, test_label) && ~isfield(head_results.(test_label), 'error')
+        head_data = head_results.(test_label);
+    end
+    
+    %% Figure 1: Raw Data Waterfall (from simple script)
+    fig1_num = 100 + i*3 - 2;
+    figure(fig1_num);
+    clf;
+    imagesc(das_data.smoothed_data');  % Use smoothed data like simple script
+    clim([-2 2]);
+    colormap('jet');
+    colorbar;
+    title(sprintf('Raw Data - Test %s', upper(test_label)));
+    xlabel('Sample');
+    ylabel('Channel Number');
+    
+    if plot_results.save_enabled
+        filename = sprintf('test_%s_raw_data.png', test_label);
+        filepath = fullfile(save_dir, filename);
+        saveas(gcf, filepath);
+        plot_results.figures_created{end+1} = filename;
+        fprintf('  Saved: %s\n', filename);
+    end
+    
+    %% Figure 2: Displacement Rate (from simple script Figure 2)
+    fig2_num = 100 + i*3 - 1;
+    figure(fig2_num);
+    clf;
+    
     subplot(2,1,1);
     v = pcolor(das_data.time_array, das_data.depth_ft, das_data.smoothed_data');
     set(v, 'EdgeColor', 'none');
@@ -82,34 +107,133 @@ for i = 1:length(test_labels)
     set(gca,'layer','top');
     ylabel('Depth (ft)');
     axis ij;
-    ylim([100 700]);  % From simple script
+    ylim([100 700]);
     xlim([analysis_start analysis_end]);
     xlabel('Date Time UTC');
-    title(sprintf('DAS Waterfall - Test %s', upper(test_label)));
+    title(sprintf('DAS Displacement Rate - Test %s', upper(test_label)));
     
-    % Plot strain rate at representative channel
     subplot(2,1,2);
-    plot(das_data.time_array, das_data.smoothed_data(:, das_data.pumping_zone.channel_idx));
-    xlim([analysis_start analysis_end]);
-    ylabel('Displacement Rate (nm/s)');
-    xlabel('Date Time UTC');
+    if ~isempty(head_data)
+        % Plot head data if available (like simple script)
+        zone_names = fieldnames(head_data.zones);
+        if ~isempty(zone_names)
+            zone_data = head_data.zones.(zone_names{1}); % Use first zone
+            yyaxis left;
+            plot(zone_data.Date, zone_data.Drawdownft);
+            xlim([analysis_start analysis_end]);
+            xlabel('Date Time UTC');
+            ylabel('Head (ft)');
+            
+            yyaxis right;
+            plot(das_data.time_array, das_data.smoothed_data(:, das_data.pumping_zone.channel_idx));
+            ylabel('Displacement Rate (nm/s)');
+        else
+            % No head data, just plot DAS
+            plot(das_data.time_array, das_data.smoothed_data(:, das_data.pumping_zone.channel_idx));
+            xlim([analysis_start analysis_end]);
+            ylabel('Displacement Rate (nm/s)');
+            xlabel('Date Time UTC');
+        end
+    else
+        % No head data, just plot DAS
+        plot(das_data.time_array, das_data.smoothed_data(:, das_data.pumping_zone.channel_idx));
+        xlim([analysis_start analysis_end]);
+        ylabel('Displacement Rate (nm/s)');
+        xlabel('Date Time UTC');
+    end
     title(sprintf('Representative Channel (%.0f ft)', das_data.pumping_zone.channel_depth_ft));
     grid on;
     
-    % Save if enabled
     if plot_results.save_enabled
-        filename = sprintf('test_%s_das_analysis.png', test_label);
+        filename = sprintf('test_%s_displacement_rate.png', test_label);
         filepath = fullfile(save_dir, filename);
         saveas(gcf, filepath);
         plot_results.figures_created{end+1} = filename;
         fprintf('  Saved: %s\n', filename);
     end
     
-    % Store figure handle
+    %% Figure 3: Strain (integrated data) - from simple script Figure 3
+    fig3_num = 100 + i*3;
+    figure(fig3_num);
+    clf;
+    
+    % Calculate integrated data (like simple script)
+    data_length = size(das_data.smoothed_data, 1);
+    integration_start = max(1, round(data_length * 0.1));  % Start at 10% into data
+    subdata1Hz = das_data.smoothed_data(integration_start:end, :);
+    intdata = cumtrapz(subdata1Hz, 1);
+    iTdas = das_data.time_array(integration_start:end);
+    
+    % Detrend integrated data
+    dintdata = zeros(size(intdata));
+    for nn = 1:size(intdata, 2)
+        dintdata(:, nn) = detrend(intdata(:, nn), 2);
+    end
+    
+    subplot(2,1,1);
+    v = pcolor(iTdas, das_data.depth_ft, dintdata'/10);  % Divide by 10 like simple script
+    set(v, 'EdgeColor', 'none');
+    set(gca, 'clim', [-2 0]);
+    colormap('jet');
+    c7 = colorbar; 
+    c7.Location = "northoutside";
+    c7.Ruler.TickLabelFormat = '%g nm/m';
+    grid on; 
+    set(gca,'layer','top');
+    ylabel('Depth (ft)');
+    axis ij;
+    ylim([100 700]);
+    xlim([analysis_start analysis_end]);
+    xlabel('Date Time UTC');
+    title(sprintf('DAS Strain - Test %s', upper(test_label)));
+    
+    subplot(2,1,2);
+    if ~isempty(head_data)
+        % Plot head data if available
+        zone_names = fieldnames(head_data.zones);
+        if ~isempty(zone_names)
+            zone_data = head_data.zones.(zone_names{1}); % Use first zone
+            yyaxis left;
+            plot(zone_data.Date, zone_data.Drawdownft);
+            xlim([analysis_start analysis_end]);
+            xlabel('Date Time UTC');
+            ylabel('Head (ft)');
+            
+            yyaxis right;
+            plot(iTdas, dintdata(:, das_data.pumping_zone.channel_idx)/10);
+            ylabel('Strain (nm/m)');
+        else
+            % No head data, just plot strain
+            plot(iTdas, dintdata(:, das_data.pumping_zone.channel_idx)/10);
+            xlim([analysis_start analysis_end]);
+            ylabel('Strain (nm/m)');
+            xlabel('Date Time UTC');
+        end
+    else
+        % No head data, just plot strain
+        plot(iTdas, dintdata(:, das_data.pumping_zone.channel_idx)/10);
+        xlim([analysis_start analysis_end]);
+        ylabel('Strain (nm/m)');
+        xlabel('Date Time UTC');
+    end
+    title(sprintf('Representative Channel Strain (%.0f ft)', das_data.pumping_zone.channel_depth_ft));
+    grid on;
+    
+    if plot_results.save_enabled
+        filename = sprintf('test_%s_strain.png', test_label);
+        filepath = fullfile(save_dir, filename);
+        saveas(gcf, filepath);
+        plot_results.figures_created{end+1} = filename;
+        fprintf('  Saved: %s\n', filename);
+    end
+    
+    % Store figure handles
     if ~isfield(plot_results, 'figures')
         plot_results.figures = struct();
     end
-    plot_results.figures.(test_label).das_waterfall = fig_num;
+    plot_results.figures.(test_label).raw_data = fig1_num;
+    plot_results.figures.(test_label).displacement_rate = fig2_num;
+    plot_results.figures.(test_label).strain = fig3_num;
 end
 
 %% Summary

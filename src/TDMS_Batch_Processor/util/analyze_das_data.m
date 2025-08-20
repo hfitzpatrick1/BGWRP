@@ -48,21 +48,30 @@ for i = 1:length(test_labels)
         continue;
     end
     
-    test_timing = timing_config.(test_label);
+        test_timing = timing_config.(test_label);
     
-    % Simple file discovery - check common locations
+    % Simple file discovery - find any MAT file in the dataset directory
     dataset_name = test_timing.dataset_name;
-    possible_files = {
-        fullfile(config.base_input, '_active', dataset_name, sprintf('Dataset_%s_1Hz.mat', dataset_name));
-        fullfile(config.base_input, '_concatenated', dataset_name, sprintf('Dataset_%s_1Hz.mat', dataset_name));
-        fullfile(config.base_input, '_active', dataset_name, sprintf('%s_1Hz.mat', dataset_name));
+    dataset_dirs = {
+        fullfile(config.base_input, '_active', dataset_name);
+        fullfile(config.base_input, '_concatenated', dataset_name);
     };
     
     das_filepath = '';
-    for j = 1:length(possible_files)
-        if exist(possible_files{j}, 'file')
-            das_filepath = possible_files{j};
-            break;
+    for dir_idx = 1:length(dataset_dirs)
+        dataset_dir = dataset_dirs{dir_idx};
+        if exist(dataset_dir, 'dir')
+            mat_files = dir(fullfile(dataset_dir, '*.mat'));
+            % Filter out timing config files
+            data_files = mat_files(~contains({mat_files.name}, 'get_timing'));
+            
+            if length(data_files) == 1
+                das_filepath = fullfile(dataset_dir, data_files(1).name);
+                fprintf('  Found data file: %s\n', data_files(1).name);
+                break;
+            elseif length(data_files) > 1
+                error('Multiple data MAT files found in %s - cannot determine which to use', dataset_dir);
+            end
         end
     end
     
@@ -98,27 +107,27 @@ for i = 1:length(test_labels)
     depth_ft = ((channels - C1 - 1) * MperChan) / 0.3048;
     
     % Create time array
-    data_start = test_timing.start;
+            data_start = test_timing.start;
     n_samples = size(data1Hz, 1);
-    time_array = data_start + seconds(0:n_samples-1);
-    
+            time_array = data_start + seconds(0:n_samples-1);
+            
     % Apply smoothing (from simple script approach)
     smoothed_data = movmean(data1Hz, smooth_window, 1);
     
     % Find representative channel in pumping zone
-    zone_mid_ft = (zone_min_ft + zone_max_ft) / 2;
-    [~, channel_idx] = min(abs(depth_ft - zone_mid_ft));
-    
+            zone_mid_ft = (zone_min_ft + zone_max_ft) / 2;
+            [~, channel_idx] = min(abs(depth_ft - zone_mid_ft));
+            
     % Get analysis window from config
     if isfield(config, 'analysis_windows') && isfield(config.analysis_windows, dataset_name)
         analysis_start = config.analysis_windows.(dataset_name).start;
         analysis_end = config.analysis_windows.(dataset_name).end;
     else
-        analysis_start = test_timing.start;
-        analysis_end = test_timing.end;
-    end
-    analysis_mask = time_array >= analysis_start & time_array <= analysis_end;
-    
+                analysis_start = test_timing.start;
+                analysis_end = test_timing.end;
+            end
+            analysis_mask = time_array >= analysis_start & time_array <= analysis_end;
+            
     % Store essential results (simplified structure)
     das_results.(test_label).data_file = das_filepath;
     das_results.(test_label).time_array = time_array;
@@ -130,12 +139,12 @@ for i = 1:length(test_labels)
     das_results.(test_label).pumping_zone.max_ft = zone_max_ft;
     das_results.(test_label).pumping_zone.channel_idx = channel_idx;
     das_results.(test_label).pumping_zone.channel_depth_ft = depth_ft(channel_idx);
-    das_results.(test_label).analysis_time = time_array(analysis_mask);
+            das_results.(test_label).analysis_time = time_array(analysis_mask);
     das_results.(test_label).analysis_strain_rate = smoothed_data(analysis_mask, channel_idx);
-    
+            
     fprintf('  ✓ DAS analysis completed for %s\n', test_type);
     fprintf('    Representative channel: %d at %.1f ft\n', channel_idx, depth_ft(channel_idx));
-    fprintf('    Analysis window: %d data points\n', sum(analysis_mask));
+            fprintf('    Analysis window: %d data points\n', sum(analysis_mask));
 end
 
 fprintf('\n=== DAS DATA ANALYSIS COMPLETE ===\n');
