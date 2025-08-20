@@ -17,8 +17,10 @@ addpath(genpath(script_dir));
 fprintf('Added all subdirectories to path: %s\n', script_dir);
 
 %% Configuration Setup
-% Load config from file first
+% Load config from file first (clear cache to ensure fresh config)
+clear config
 file_config = config();
+
 
 % Handle shorthand mode parameter
 if exist('mode', 'var') && ischar(mode)
@@ -239,6 +241,7 @@ if exist('mode', 'var') && ischar(mode)
     end
     
     fprintf('Mode "%s" configured\n', mode);
+    fprintf('DEBUG: After mode config, config.dynamic_bounds = %s\n', string(config.dynamic_bounds));
 else
     % Use file config as base
     config = file_config;

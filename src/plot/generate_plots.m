@@ -81,6 +81,7 @@ for i = 1:length(test_labels)
     set(v, 'EdgeColor', 'none');
     
     % Set color bounds - dynamic or fixed
+    fprintf('DEBUG: config.dynamic_bounds = %s\n', string(config.dynamic_bounds));
     if isfield(config, 'dynamic_bounds') && config.dynamic_bounds
         % Dynamic bounds using percentiles to remove outliers from analysis window
         analysis_mask = das_data.time_array >= analysis_start & das_data.time_array <= analysis_end;
