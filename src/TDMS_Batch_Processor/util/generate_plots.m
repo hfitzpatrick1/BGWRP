@@ -190,12 +190,31 @@ for i = 1:length(test_labels)
     figure(fig3_num);
     clf;
     
-    % Calculate integrated data (like simple script)
-    data_length = size(das_data.smoothed_data, 1);
-    integration_start = max(1, round(data_length * 0.1));  % Start at 10% into data
-    subdata1Hz = das_data.smoothed_data(integration_start:end, :);
+    % Calculate integrated data using absolute time-based integration
+    % Start integration 10 minutes before analysis window for consistent baseline
+    integration_reference_time = analysis_start - minutes(10);
+    
+    % Find the integration start index in the actual data
+    integration_start_idx = find(das_data.time_array >= integration_reference_time, 1);
+    
+    if isempty(integration_start_idx)
+        % Analysis window is outside dataset bounds - use beginning of dataset
+        integration_start_idx = 1;
+        fprintf('    WARNING: Analysis window outside dataset - using dataset start for integration\n');
+    else
+        fprintf('    Integration starting at: %s (10 min before analysis)\n', integration_reference_time);
+    end
+    
+    % Check if analysis window is actually available in the dataset
+    analysis_end_idx = find(das_data.time_array <= analysis_end, 1, 'last');
+    if isempty(analysis_end_idx) || das_data.time_array(end) < analysis_start
+        error('Analysis window (%s to %s) is completely outside dataset bounds (%s to %s)', ...
+            analysis_start, analysis_end, das_data.time_array(1), das_data.time_array(end));
+    end
+    
+    subdata1Hz = das_data.smoothed_data(integration_start_idx:end, :);
     intdata = cumtrapz(subdata1Hz, 1);
-    iTdas = das_data.time_array(integration_start:end);
+    iTdas = das_data.time_array(integration_start_idx:end);
     
     % Detrend integrated data
     dintdata = zeros(size(intdata));
