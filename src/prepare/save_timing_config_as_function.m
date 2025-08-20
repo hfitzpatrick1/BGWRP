@@ -29,7 +29,7 @@ fprintf(fid, '%%   timing_config - Timing configuration structure\n\n');
 
 % Write configuration data
 fprintf(fid, '%% Dataset Information\n');
-fprintf(fid, 'timing_config.dataset_name = ''%s'';\n', source_folder);
+% Note: dataset_name removed - directory name is authority
 fprintf(fid, 'timing_config.source = ''%s'';\n', test_config.source);
 fprintf(fid, 'timing_config.num_files = %d;\n', test_config.num_files);
 

@@ -73,6 +73,12 @@ if exist('mode', 'var') && ischar(mode)
             config.run_timing_extraction = false;  % Skip - use existing configs
             config.run_data_analysis = true;
             config.save_charts = contains(mode, 'save');
+            % Reset filtering options to defaults
+            config.apply_concatenation_filter = false;
+            config.filter_method = 'none';
+            % Reset diagnostic options to defaults
+            config.run_boundary_diagnostic = false;
+            config.run_enhanced_diagnostic = false;
             
         case 'run_detrend'
             % Analysis mode with detrend filtering
@@ -83,6 +89,9 @@ if exist('mode', 'var') && ischar(mode)
             config.save_charts = contains(mode, 'save');
             config.apply_concatenation_filter = true;
             config.filter_method = 'detrend';
+            % Reset diagnostic options to defaults
+            config.run_boundary_diagnostic = false;
+            config.run_enhanced_diagnostic = false;
             fprintf('Filter mode: detrend\n');
             
         case 'run_highpass'
@@ -126,6 +135,11 @@ if exist('mode', 'var') && ischar(mode)
             config.run_data_analysis = false;
             config.save_charts = false;
             config.run_boundary_diagnostic = true;
+            % Reset filtering options to defaults
+            config.apply_concatenation_filter = false;
+            config.filter_method = 'none';
+            % Reset other diagnostic options
+            config.run_enhanced_diagnostic = false;
             fprintf('Diagnostic mode: file boundaries\n');
             
         case 'diagnostic_enhanced'
@@ -821,7 +835,7 @@ if config.run_data_analysis
                     test_label = dataset_name;
                     
                     timing_config.(test_label) = loaded_config.test_config;
-                    timing_config.(test_label).dataset_name = dataset_name;
+                    % Note: dataset_name removed - directory name is authority
                     fprintf('✓ Loaded timing for test %s from %s (data: %s)\n', test_label, m_files(1).name, mat_files(1).name);
                 elseif length(m_files) == 0
                     fprintf('⚠ No .m file found in %s\n', dataset_name);
@@ -903,13 +917,17 @@ if config.run_data_analysis
             
             for i = 1:length(active_datasets)
                 dataset_name = active_datasets(i).name;
-                func_name = sprintf('get_timing_%s', dataset_name);
-                func_file = fullfile(active_dir, dataset_name, sprintf('%s.m', func_name));
+                dataset_dir = fullfile(active_dir, dataset_name);
                 
-                if exist(func_file, 'file')
+                % Find any .m file (timing config) in the directory
+                m_files = dir(fullfile(dataset_dir, 'get_timing_*.m'));
+                
+                if ~isempty(m_files)
+                    % Use the first timing config file found
+                    [~, func_name, ~] = fileparts(m_files(1).name);
+                    
                     % Load this config using MATLAB function
-                    fprintf('Loading timing function: %s\n', func_name);
-                    dataset_dir = fullfile(active_dir, dataset_name);
+                    fprintf('Loading timing function: %s from directory %s\n', func_name, dataset_name);
                     addpath(dataset_dir);
                     try
                         loaded_config.test_config = feval(func_name);
@@ -920,16 +938,15 @@ if config.run_data_analysis
                     end
                     rmpath(dataset_dir);
                     
-                    % Use full dataset name as test label for maximum flexibility
+                    % Use directory name as test label (parent directory is authority)
                     test_label = dataset_name;
-                    fprintf('Using dataset name as test label: %s\n', test_label);
+                    fprintf('Using dataset directory name as test label: %s\n', test_label);
                     
-                    % Override timing config if not already present or if this is more specific
-                    if ~isfield(timing_config, test_label) || contains(dataset_name, 'Full')
-                        timing_config.(test_label) = loaded_config.test_config;
-                        timing_config.(test_label).dataset_name = dataset_name;
-                        fprintf('✓ Found additional dataset: %s -> test %s\n', dataset_name, test_label);
-                    end
+                    % Add to timing config
+                    timing_config.(test_label) = loaded_config.test_config;
+                    fprintf('✓ Found dataset: %s\n', dataset_name);
+                else
+                    fprintf('⚠ No timing config file found in %s\n', dataset_name);
                 end
             end
         end
@@ -945,11 +962,7 @@ if config.run_data_analysis
             % Debug: Show what datasets are mapped to what tests
             for i = 1:length(available_tests)
                 test = available_tests{i};
-                if isfield(timing_config.(test), 'dataset_name')
-                    fprintf('  Test %s -> Dataset: %s\n', test, timing_config.(test).dataset_name);
-                else
-                    fprintf('  Test %s -> No dataset mapping\n', test);
-                end
+                fprintf('  Test %s -> Directory: %s\n', test, test);
             end
             
             % Analyze head data

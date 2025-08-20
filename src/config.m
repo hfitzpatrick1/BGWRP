@@ -64,7 +64,7 @@ config.save_charts = true;
 % config.chart_output_dir = ''; % Leave empty to use default location
 
 %% Plotting Configuration
-config.dynamic_bounds = true;  % Enable intelligent waterfall color bounds based on data
+config.dynamic_bounds = false;  % Enable intelligent waterfall color bounds based on data
 
 %% Filtering Configuration
 config.apply_concatenation_filter = false;  % Apply post-processing filter to remove file boundary artifacts

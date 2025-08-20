@@ -60,12 +60,10 @@ for i = 1:length(test_labels)
     end
     
     test_timing = timing_config.(test_label);
-    dataset_name = test_timing.dataset_name;
-    
-    % Get analysis window from config
-    if isfield(config, 'analysis_windows') && isfield(config.analysis_windows, dataset_name)
-        analysis_start = config.analysis_windows.(dataset_name).start;
-        analysis_end = config.analysis_windows.(dataset_name).end;
+    % Get analysis window from config  
+    if isfield(config, 'analysis_windows') && isfield(config.analysis_windows, test_label)
+        analysis_start = config.analysis_windows.(test_label).start;
+        analysis_end = config.analysis_windows.(test_label).end;
     else
         analysis_start = test_timing.start;
         analysis_end = test_timing.end;
@@ -82,9 +80,9 @@ for i = 1:length(test_labels)
     
     % Simple head file pattern determination
     test_type = 'c';  % Default PT01c
-    if contains(upper(dataset_name), 'PT01A')
+    if contains(upper(test_label), 'PT01A')
         test_type = 'a';
-    elseif contains(upper(dataset_name), 'PT01B')
+    elseif contains(upper(test_label), 'PT01B')
         test_type = 'b';
     end
     

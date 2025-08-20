@@ -51,10 +51,10 @@ for i = 1:length(test_labels)
         test_timing = timing_config.(test_label);
     
     % Simple file discovery - find any MAT file in the dataset directory
-    dataset_name = test_timing.dataset_name;
+    % Use test_label (directory name) as authority, not config dataset_name
     dataset_dirs = {
-        fullfile(config.base_input, '_active', dataset_name);
-        fullfile(config.base_input, '_concatenated', dataset_name);
+        fullfile(config.base_input, '_active', test_label);
+        fullfile(config.base_input, '_concatenated', test_label);
     };
     
     das_filepath = '';
@@ -76,7 +76,7 @@ for i = 1:length(test_labels)
     end
     
     if isempty(das_filepath)
-        fprintf('  ⚠ DAS data file not found for %s\n', dataset_name);
+        fprintf('  ⚠ DAS data file not found for %s\n', test_label);
         das_results.(test_label).error = 'das_file_not_found';
         continue;
     end
@@ -125,11 +125,11 @@ for i = 1:length(test_labels)
         end
     end
     
-    % Get calibration parameters - simple lookup based on dataset name
+    % Get calibration parameters - simple lookup based on test label
     test_type = 'PT01c';  % Default
-    if contains(upper(dataset_name), 'PT01A')
+    if contains(upper(test_label), 'PT01A')
         test_type = 'PT01a';
-    elseif contains(upper(dataset_name), 'PT01B')
+    elseif contains(upper(test_label), 'PT01B')
         test_type = 'PT01b';
     end
     
@@ -157,9 +157,9 @@ for i = 1:length(test_labels)
             [~, channel_idx] = min(abs(depth_ft - zone_mid_ft));
             
     % Get analysis window from config
-    if isfield(config, 'analysis_windows') && isfield(config.analysis_windows, dataset_name)
-        analysis_start = config.analysis_windows.(dataset_name).start;
-        analysis_end = config.analysis_windows.(dataset_name).end;
+    if isfield(config, 'analysis_windows') && isfield(config.analysis_windows, test_label)
+        analysis_start = config.analysis_windows.(test_label).start;
+        analysis_end = config.analysis_windows.(test_label).end;
     else
                 analysis_start = test_timing.start;
                 analysis_end = test_timing.end;
