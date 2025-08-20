@@ -103,6 +103,16 @@ if exist('mode', 'var') && ischar(mode)
             config.filter_method = 'overlap_smooth';
             fprintf('Filter mode: overlap_smooth\n');
             
+        case 'diagnostic_boundaries'
+            % Diagnostic mode: analyze file boundary discontinuities
+            config.run_tdms_conversion = false;
+            config.run_concatenation = false;
+            config.run_timing_extraction = false;
+            config.run_data_analysis = false;
+            config.save_charts = false;
+            config.run_boundary_diagnostic = true;
+            fprintf('Diagnostic mode: file boundaries\n');
+            
         case 'run_timing'
             % Analysis mode: timing extraction + analysis
             config.run_tdms_conversion = false;
@@ -587,6 +597,49 @@ end
 
 else
     fprintf('\n=== STEP 3: SKIPPED (Timing extraction disabled) ===\n');
+end
+
+%% Step 4: Boundary Diagnostic
+if isfield(config, 'run_boundary_diagnostic') && config.run_boundary_diagnostic
+    fprintf('\n=== STEP 4: FILE BOUNDARY DIAGNOSTIC ===\n');
+    
+    % Load timing configs for diagnostic
+    timing_config = struct();
+    active_base = fullfile(config.base_input, '_active');
+    
+    if exist(active_base, 'dir')
+        dataset_dirs = dir(active_base);
+        dataset_dirs = dataset_dirs([dataset_dirs.isdir] & ~startsWith({dataset_dirs.name}, '.'));
+        
+        for i = 1:length(dataset_dirs)
+            dataset_name = dataset_dirs(i).name;
+            dataset_dir = fullfile(active_base, dataset_name);
+            
+            % Find .mat file
+            mat_files = dir(fullfile(dataset_dir, '*.mat'));
+            m_files = dir(fullfile(dataset_dir, '*.m'));
+            
+            if length(m_files) == 1 && length(mat_files) == 1
+                % Load timing config
+                [~, func_name, ~] = fileparts(m_files(1).name);
+                addpath(dataset_dir);
+                try
+                    loaded_config = feval(func_name);
+                    timing_config.(dataset_name) = loaded_config;
+                    
+                    % Run boundary diagnostic
+                    data_filepath = fullfile(dataset_dir, mat_files(1).name);
+                    diagnose_file_boundaries(dataset_name, data_filepath, loaded_config);
+                    
+                catch ME
+                    fprintf('Error in diagnostic for %s: %s\n', dataset_name, ME.message);
+                end
+                rmpath(dataset_dir);
+            end
+        end
+    end
+    
+    fprintf('\n=== BOUNDARY DIAGNOSTIC COMPLETE ===\n');
 end
 
 %% Step 5: Data Analysis
