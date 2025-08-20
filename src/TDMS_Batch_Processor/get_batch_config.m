@@ -60,6 +60,9 @@ config.waterfall_zones.PT01c_Full.max_depth = 310;
 config.save_charts = true;
 % config.chart_output_dir = ''; % Leave empty to use default location
 
+%% Plotting Configuration
+config.dynamic_bounds = true;  % Enable intelligent waterfall color bounds based on data
+
 fprintf('✓ Batch configuration loaded\n');
 
 end

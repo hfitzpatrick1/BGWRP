@@ -76,7 +76,21 @@ for i = 1:length(test_labels)
     figure(fig1_num);
     clf;
     imagesc(das_data.smoothed_data');  % Use smoothed data like simple script
-    clim([-2 2]);
+    
+    % Set color bounds - dynamic or fixed
+    if isfield(config, 'dynamic_bounds') && config.dynamic_bounds
+        % Dynamic bounds using percentiles to remove outliers
+        raw_data = das_data.smoothed_data';
+        lower_bound = prctile(raw_data(:), 5);
+        upper_bound = prctile(raw_data(:), 95);
+        clim([lower_bound upper_bound]);
+        fprintf('    Dynamic raw data bounds: [%.3f, %.3f]\n', lower_bound, upper_bound);
+    else
+        % Fixed bounds from simple script
+        clim([-2 2]);
+        fprintf('    Fixed raw data bounds: [-2, 2]\n');
+    end
+    
     colormap('jet');
     colorbar;
     title(sprintf('Raw Data - Test %s', upper(test_label)));
@@ -100,7 +114,23 @@ for i = 1:length(test_labels)
     subplot(2,1,1);
     v = pcolor(das_data.time_array, das_data.depth_ft, das_data.smoothed_data');
     set(v, 'EdgeColor', 'none');
-    set(gca, 'clim', [-0.25 0.15]);
+    
+    % Set displacement rate bounds - dynamic or fixed
+    if isfield(config, 'dynamic_bounds') && config.dynamic_bounds
+        % Dynamic bounds - focus on pumping zone during analysis window
+        analysis_mask = das_data.time_array >= analysis_start & das_data.time_array <= analysis_end;
+        zone_mask = das_data.depth_ft >= das_data.pumping_zone.min_ft & das_data.depth_ft <= das_data.pumping_zone.max_ft;
+        zone_data = das_data.smoothed_data(analysis_mask, zone_mask);
+        lower_bound = prctile(zone_data(:), 10);
+        upper_bound = prctile(zone_data(:), 90);
+        set(gca, 'clim', [lower_bound upper_bound]);
+        fprintf('    Dynamic displacement rate bounds: [%.3f, %.3f] nm/s\n', lower_bound, upper_bound);
+    else
+        % Fixed bounds from simple script
+        set(gca, 'clim', [-0.25 0.15]);
+        fprintf('    Fixed displacement rate bounds: [-0.25, 0.15] nm/s\n');
+    end
+    
     colormap('jet');
     c7 = colorbar; 
     c7.Location = "northoutside";
@@ -176,7 +206,27 @@ for i = 1:length(test_labels)
     subplot(2,1,1);
     v = pcolor(iTdas, das_data.depth_ft, dintdata'/10);  % Divide by 10 like simple script
     set(v, 'EdgeColor', 'none');
-    set(gca, 'clim', [-2 0]);
+    
+    % Set strain bounds - dynamic or fixed
+    if isfield(config, 'dynamic_bounds') && config.dynamic_bounds
+        % Dynamic bounds - symmetric around zero, focus on pumping zone
+        zone_mask = das_data.depth_ft >= das_data.pumping_zone.min_ft & das_data.depth_ft <= das_data.pumping_zone.max_ft;
+        zone_strain = dintdata(:, zone_mask)/10;
+        max_abs = prctile(abs(zone_strain(:)), 95);
+        % Keep symmetric bounds but ensure they make sense for strain (typically negative)
+        if mean(zone_strain(:)) < 0
+            strain_bounds = [-max_abs, max_abs*0.2];  % Allow some positive but emphasize negative
+        else
+            strain_bounds = [-max_abs, max_abs];  % Symmetric if data is mixed
+        end
+        set(gca, 'clim', strain_bounds);
+        fprintf('    Dynamic strain bounds: [%.3f, %.3f] nm/m\n', strain_bounds(1), strain_bounds(2));
+    else
+        % Fixed bounds from simple script
+        set(gca, 'clim', [-2 0]);
+        fprintf('    Fixed strain bounds: [-2, 0] nm/m\n');
+    end
+    
     colormap('jet');
     c7 = colorbar; 
     c7.Location = "northoutside";
