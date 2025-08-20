@@ -72,6 +72,7 @@ for i = 1:length(test_labels)
     
     %% Figure 1: Raw Data Waterfall (from simple script)
     fig1_num = 100 + i*3 - 2;
+    fprintf('  Creating Figure %d: Raw Data Waterfall\n', fig1_num);
     figure(fig1_num);
     clf;
     imagesc(das_data.smoothed_data');  % Use smoothed data like simple script
@@ -92,6 +93,7 @@ for i = 1:length(test_labels)
     
     %% Figure 2: Displacement Rate (from simple script Figure 2)
     fig2_num = 100 + i*3 - 1;
+    fprintf('  Creating Figure %d: Displacement Rate\n', fig2_num);
     figure(fig2_num);
     clf;
     
@@ -154,6 +156,7 @@ for i = 1:length(test_labels)
     
     %% Figure 3: Strain (integrated data) - from simple script Figure 3
     fig3_num = 100 + i*3;
+    fprintf('  Creating Figure %d: Strain\n', fig3_num);
     figure(fig3_num);
     clf;
     
