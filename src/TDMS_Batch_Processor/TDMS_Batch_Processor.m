@@ -563,13 +563,18 @@ if config.run_data_analysis
             
             for i = 1:length(dataset_dirs)
                 dataset_name = dataset_dirs(i).name;
-                func_name = sprintf('get_timing_%s', dataset_name);
-                func_file = fullfile(active_base, dataset_name, sprintf('%s.m', func_name));
+                dataset_dir = fullfile(active_base, dataset_name);
                 
-                if exist(func_file, 'file')
-                    fprintf('Loading timing function: %s\n', func_name);
+                % Find any .m file (timing config) and any .mat file (data) in directory
+                m_files = dir(fullfile(dataset_dir, '*.m'));
+                mat_files = dir(fullfile(dataset_dir, '*.mat'));
+                
+                if length(m_files) == 1 && length(mat_files) == 1
+                    % Extract function name from .m file
+                    [~, func_name, ~] = fileparts(m_files(1).name);
+                    
+                    fprintf('Loading timing function: %s from %s\n', func_name, m_files(1).name);
                     % Add the directory to path temporarily
-                    dataset_dir = fullfile(active_base, dataset_name);
                     addpath(dataset_dir);
                     try
                         loaded_config.test_config = feval(func_name);
@@ -580,19 +585,20 @@ if config.run_data_analysis
                     end
                     rmpath(dataset_dir);
                     
-                    % Determine test label from dataset name
-                    if contains(dataset_name, 'PT01a') || contains(dataset_name, 'a')
-                        test_label = 'a';
-                    elseif contains(dataset_name, 'PT01b') || contains(dataset_name, 'b')
-                        test_label = 'b';
-                    elseif contains(dataset_name, 'PT01c') || contains(dataset_name, 'c')
-                        test_label = 'c';
-                    else
-                        test_label = lower(dataset_name(end)); % fallback
-                    end
+                    % Use full directory name as test label (authority for naming)
+                    test_label = dataset_name;
                     
                     timing_config.(test_label) = loaded_config.test_config;
-                    fprintf('✓ Loaded timing for test %s from %s\n', test_label, dataset_name);
+                    timing_config.(test_label).dataset_name = dataset_name;
+                    fprintf('✓ Loaded timing for test %s from %s (data: %s)\n', test_label, m_files(1).name, mat_files(1).name);
+                elseif length(m_files) == 0
+                    fprintf('⚠ No .m file found in %s\n', dataset_name);
+                elseif length(mat_files) == 0
+                    fprintf('⚠ No .mat file found in %s\n', dataset_name);
+                elseif length(m_files) > 1
+                    fprintf('⚠ Multiple .m files found in %s - cannot determine config\n', dataset_name);
+                elseif length(mat_files) > 1
+                    fprintf('⚠ Multiple .mat files found in %s - cannot determine data file\n', dataset_name);
                 end
             end
         end

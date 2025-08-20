@@ -70,19 +70,24 @@ for i = 1:length(test_labels)
         head_data = head_results.(test_label);
     end
     
-    %% Figure 1: Raw Data Waterfall (from simple script)
+    %% Figure 1: Raw Data Waterfall (standardized with time filtering)
     fig1_num = 100 + i*3 - 2;
     fprintf('  Creating Figure %d: Raw Data Waterfall\n', fig1_num);
     figure(fig1_num);
     clf;
-    imagesc(das_data.smoothed_data');  % Use smoothed data like simple script
+    
+    % Use pcolor with time arrays like other plots (consistent approach)
+    v = pcolor(das_data.time_array, das_data.depth_ft, das_data.smoothed_data');
+    set(v, 'EdgeColor', 'none');
     
     % Set color bounds - dynamic or fixed
     if isfield(config, 'dynamic_bounds') && config.dynamic_bounds
-        % Dynamic bounds using percentiles to remove outliers
-        raw_data = das_data.smoothed_data';
-        lower_bound = prctile(raw_data(:), 5);
-        upper_bound = prctile(raw_data(:), 95);
+        % Dynamic bounds using percentiles to remove outliers from analysis window
+        analysis_mask = das_data.time_array >= analysis_start & das_data.time_array <= analysis_end;
+        zone_mask = das_data.depth_ft >= das_data.pumping_zone.min_ft & das_data.depth_ft <= das_data.pumping_zone.max_ft;
+        zone_data = das_data.smoothed_data(analysis_mask, zone_mask);
+        lower_bound = prctile(zone_data(:), 5);
+        upper_bound = prctile(zone_data(:), 95);
         clim([lower_bound upper_bound]);
         fprintf('    Dynamic raw data bounds: [%.3f, %.3f]\n', lower_bound, upper_bound);
     else
@@ -92,10 +97,17 @@ for i = 1:length(test_labels)
     end
     
     colormap('jet');
-    colorbar;
+    c1 = colorbar;
+    c1.Location = "northoutside";
+    c1.Ruler.TickLabelFormat = '%g nm/s';
+    grid on; 
+    set(gca,'layer','top');
+    ylabel('Depth (ft)');
+    axis ij;
+    ylim([100 700]);  % Consistent depth range
+    xlim([analysis_start analysis_end]);  % Filter to analysis window
+    xlabel('Date Time UTC');
     title(sprintf('Raw Data - Test %s', upper(test_label)));
-    xlabel('Sample');
-    ylabel('Channel Number');
     
     if plot_results.save_enabled
         filename = sprintf('test_%s_raw_data.png', test_label);
