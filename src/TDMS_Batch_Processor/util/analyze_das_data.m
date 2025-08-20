@@ -94,7 +94,22 @@ for i = 1:length(test_labels)
         if isfield(config, 'filter_method')
             filter_method = config.filter_method;
         end
-        data1Hz = filter_concatenation_artifacts(data1Hz, filter_method);
+        
+        % Check if this is a phase correction method
+        phase_methods = {'phase_align', 'smooth_transition', 'local_detrend'};
+        if any(strcmp(filter_method, phase_methods))
+            % Use phase boundary correction with timing information
+            options = struct();
+            options.method = filter_method;
+            options.diagnostic_threshold = 0.01;
+            options.correction_window = 10;
+            options.test_channels = 450:470;
+            
+            data1Hz = phase_boundary_correction(data1Hz, test_timing, options);
+        else
+            % Use standard filtering
+            data1Hz = filter_concatenation_artifacts(data1Hz, filter_method);
+        end
     end
     
     % Get calibration parameters - simple lookup based on dataset name

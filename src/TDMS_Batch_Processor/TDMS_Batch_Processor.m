@@ -113,6 +113,39 @@ if exist('mode', 'var') && ischar(mode)
             config.run_boundary_diagnostic = true;
             fprintf('Diagnostic mode: file boundaries\n');
             
+        case 'run_phase_align'
+            % Analysis mode with phase alignment correction
+            config.run_tdms_conversion = false;
+            config.run_concatenation = false;
+            config.run_timing_extraction = false;
+            config.run_data_analysis = true;
+            config.save_charts = contains(mode, 'save');
+            config.apply_concatenation_filter = true;
+            config.filter_method = 'phase_align';
+            fprintf('Phase correction mode: phase_align\n');
+            
+        case 'run_smooth_transition'
+            % Analysis mode with smooth transition correction
+            config.run_tdms_conversion = false;
+            config.run_concatenation = false;
+            config.run_timing_extraction = false;
+            config.run_data_analysis = true;
+            config.save_charts = contains(mode, 'save');
+            config.apply_concatenation_filter = true;
+            config.filter_method = 'smooth_transition';
+            fprintf('Phase correction mode: smooth_transition\n');
+            
+        case 'run_local_detrend'
+            % Analysis mode with local detrending correction
+            config.run_tdms_conversion = false;
+            config.run_concatenation = false;
+            config.run_timing_extraction = false;
+            config.run_data_analysis = true;
+            config.save_charts = contains(mode, 'save');
+            config.apply_concatenation_filter = true;
+            config.filter_method = 'local_detrend';
+            fprintf('Phase correction mode: local_detrend\n');
+            
         case 'run_timing'
             % Analysis mode: timing extraction + analysis
             config.run_tdms_conversion = false;

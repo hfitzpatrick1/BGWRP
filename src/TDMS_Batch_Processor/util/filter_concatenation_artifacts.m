@@ -6,7 +6,8 @@ function filtered_data = filter_concatenation_artifacts(data, method)
 %
 % Inputs:
 %   data   - DAS data matrix [time x channels]
-%   method - Filter method ('none', 'detrend', 'highpass', 'median', 'overlap_smooth')
+%   method - Filter method ('none', 'detrend', 'highpass', 'median', 'overlap_smooth', 
+%            'phase_align', 'smooth_transition', 'local_detrend')
 %
 % Outputs:
 %   filtered_data - Filtered DAS data matrix
