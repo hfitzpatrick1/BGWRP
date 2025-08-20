@@ -78,13 +78,29 @@ if isfield(das_results, test_label) && ~isfield(das_results.(test_label), 'error
         v = pcolor(T, D, data_subset');
         set(v, 'EdgeColor', 'none');
         colormap('jet');
-        colorbar;
         
-        % Set reasonable color limits
-        data_range = prctile(data_subset(:), [5, 95]);
-        if diff(data_range) > 0
-            clim(data_range);
+        % Determine dataset-specific color range (from PM07_Recovery_Analysis.m)
+        if contains(upper(dataset_name), 'PT01A') || contains(upper(test_label), 'A')
+            color_range = [0.35 0.55];  % PT-01a range
+            fprintf('  🎨 Using PT-01a color range: [%.2f %.2f]\n', color_range(1), color_range(2));
+        elseif contains(upper(dataset_name), 'PT01B') || contains(upper(test_label), 'B')
+            color_range = [-1.0 -0.8];  % PT-01b range
+            fprintf('  🎨 Using PT-01b color range: [%.2f %.2f]\n', color_range(1), color_range(2));
+        elseif contains(upper(dataset_name), 'PT01C') || contains(upper(test_label), 'C')
+            color_range = [-0.2 0.1];   % PT-01c range
+            fprintf('  🎨 Using PT-01c color range: [%.2f %.2f]\n', color_range(1), color_range(2));
+        else
+            % Fallback to percentile-based range for unknown datasets
+            color_range = prctile(data_subset(:), [5, 95]);
+            if diff(color_range) <= 0
+                color_range = [-2 2];  % Default range
+            end
+            fprintf('  🎨 Using data-based color range: [%.2f %.2f]\n', color_range(1), color_range(2));
         end
+        
+        c = colorbar;
+        c.Ruler.TickLabelFormat = '%g nm/s';
+        clim(color_range);
         
         % Set explicit time limits to analysis window
         xlim([datenum(analysis_start), datenum(analysis_end)]);

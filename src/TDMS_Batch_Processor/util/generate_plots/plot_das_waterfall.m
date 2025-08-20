@@ -79,11 +79,27 @@ if isfield(das_results, test_label) && ~isfield(das_results.(test_label), 'error
             end
         end
         
+        % Determine dataset-specific color range (from PM07_Recovery_Analysis.m)
+        if contains(upper(dataset_name), 'PT01A') || contains(upper(test_label), 'A')
+            color_range = [0.35 0.55];  % PT-01a range
+            fprintf('  🎨 Using PT-01a color range: [%.2f %.2f]\n', color_range(1), color_range(2));
+        elseif contains(upper(dataset_name), 'PT01B') || contains(upper(test_label), 'B')
+            color_range = [-1.0 -0.8];  % PT-01b range
+            fprintf('  🎨 Using PT-01b color range: [%.2f %.2f]\n', color_range(1), color_range(2));
+        elseif contains(upper(dataset_name), 'PT01C') || contains(upper(test_label), 'C')
+            color_range = [-0.2 0.1];   % PT-01c range
+            fprintf('  🎨 Using PT-01c color range: [%.2f %.2f]\n', color_range(1), color_range(2));
+        else
+            color_range = [-2 2];       % Default range
+            fprintf('  🎨 Using default color range: [%.0f %.0f]\n', color_range(1), color_range(2));
+        end
+        
         % Waterfall plot with (potentially filtered) data
         imagesc(plot_data');
-        clim([-2 2]); % Standard range from original
+        clim(color_range); % Use dataset-specific color range
         colormap('jet');
-        colorbar;
+        c = colorbar;
+        c.Ruler.TickLabelFormat = '%g nm/s';
         
         % Update title and labels
         if ~isempty(dataset_name) && isfield(config, 'waterfall_zones') && isfield(config.waterfall_zones, dataset_name)

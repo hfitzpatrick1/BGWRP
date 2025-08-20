@@ -8,7 +8,7 @@
 % Default values provided for standalone operation
 
 if ~exist('directory', 'var')
-    directory       =   'D:\PM_07 Step Test\MATLAB\PT01c_Recovery\';
+    directory       =   'E:\PM_07 Step Test\MATLAB\2 hr TDMS raw\c\';
 end
 if ~exist('filesearch', 'var')
     filesearch      =   '*.tdms'; % String to search for files, can be filename or *.tdms to find all tdms in a folder
@@ -20,7 +20,7 @@ if ~exist('save_data', 'var')
     save_data       =   1; % save data, toggle (1 = Yes, 0 = No)
 end
 if ~exist('save_directory', 'var')
-    save_directory  =  'D:\PM_07 Step Test\MATLAB\mat\';
+    save_directory  =  'E:\PM_07 Step Test\MATLAB\Last 2 hours\c';
 end
 
 %% Enhanced Error Handling and Validation
