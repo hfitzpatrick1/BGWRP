@@ -1,7 +1,7 @@
-function plot_results = generate_plots(head_results, das_results, config)
-%GENERATE_PLOTS Create analysis plots using modular helper functions
+function plot_results = generate_plots(~, das_results, config)
+%GENERATE_PLOTS Create analysis plots using simplified approach
 %
-% This function uses individual plot helper functions for better maintainability.
+% Creates essential plots based on PM07_PT01c_Simple.m approach
 %
 % Inputs:
 %   head_results - Results from analyze_head_data
@@ -11,11 +11,7 @@ function plot_results = generate_plots(head_results, das_results, config)
 % Outputs:
 %   plot_results - Structure containing plot metadata
 
-fprintf('=== GENERATING ANALYSIS PLOTS (MODULAR) ===\n');
-
-% Add plot helper functions to path
-plot_helper_dir = fullfile(fileparts(mfilename('fullpath')), 'generate_plots');
-addpath(plot_helper_dir);
+fprintf('=== GENERATING ANALYSIS PLOTS (SIMPLIFIED) ===\n');
 
 % Initialize results
 plot_results = struct();
@@ -28,7 +24,7 @@ if isfield(config, 'save_charts') && config.save_charts
     if isfield(config, 'chart_output_dir') && ~isempty(config.chart_output_dir)
         save_dir = config.chart_output_dir;
     else
-        save_dir = fullfile(config.base_input, 'analysis_charts');
+        save_dir = fullfile(config.base_input, '_analysis_charts');
     end
     if ~exist(save_dir, 'dir')
         mkdir(save_dir);
@@ -42,47 +38,83 @@ end
 
 %% Get available test labels from results
 test_labels = {};
-if isfield(head_results, 'tests')
-    test_labels = head_results.tests;
-elseif ~isempty(fieldnames(head_results))
-    test_labels = fieldnames(head_results);
+if isfield(das_results, 'tests')
+    test_labels = das_results.tests;
+elseif ~isempty(fieldnames(das_results))
+    test_labels = fieldnames(das_results);
     test_labels = test_labels(~strcmp(test_labels, 'tests') & ~strcmp(test_labels, 'timing'));
 end
 
-%% Create main overview plot
-fprintf('\n--- Creating main overview plot ---\n');
-main_figure = plot_main_overview(head_results, das_results, test_labels, plot_results, config);
+fprintf('Creating plots for tests: %s\n', strjoin(test_labels, ', '));
 
-%% Create individual detailed plots for each test
+%% Create simplified plots for each test (based on PM07_PT01c_Simple.m)
 for i = 1:length(test_labels)
     test_label = test_labels{i};
-    fprintf('\n--- Generating detailed plots for test %s ---\n', upper(test_label));
+    fprintf('\n--- Creating plots for test %s ---\n', upper(test_label));
     
-    % Plot Type 1: Detailed Head Data Plot
-    head_figure = plot_head_analysis(head_results, test_label, i, plot_results, config);
+    % Skip if no DAS data
+    if ~isfield(das_results, test_label) || isfield(das_results.(test_label), 'error')
+        fprintf('  Skipping %s: No DAS data available\n', test_label);
+        continue;
+    end
     
-    % Plot Type 2: DAS Strain Rate with Depth Analysis
-    das_depth_figure = plot_das_depth_analysis(das_results, test_label, i, plot_results, config);
+    das_data = das_results.(test_label);
     
-    % Plot Type 3: DAS Waterfall Plot
-    waterfall_figure = plot_das_waterfall(das_results, test_label, i, plot_results, config);
+    % Create waterfall plot (based on simple script Figure 2)
+    fig_num = 100 + i;
+    figure(fig_num); 
+    clf;
     
-    % Plot Type 4: Combined Head + DAS Comparison
-    combined_figure = plot_combined_analysis(head_results, das_results, test_label, i, plot_results, config);
+    % Get analysis window for plotting
+    analysis_start = das_data.analysis_time(1);
+    analysis_end = das_data.analysis_time(end);
     
-    % Store figure handles (optional)
+    % Plot waterfall
+    subplot(2,1,1);
+    v = pcolor(das_data.time_array, das_data.depth_ft, das_data.smoothed_data');
+    set(v, 'EdgeColor', 'none');
+    set(gca, 'clim', [-0.25 0.15]);
+    colormap('jet');
+    c7 = colorbar; 
+    c7.Location = "northoutside";
+    c7.Ruler.TickLabelFormat = '%g nm/s';
+    grid on; 
+    set(gca,'layer','top');
+    ylabel('Depth (ft)');
+    axis ij;
+    ylim([100 700]);  % From simple script
+    xlim([analysis_start analysis_end]);
+    xlabel('Date Time UTC');
+    title(sprintf('DAS Waterfall - Test %s', upper(test_label)));
+    
+    % Plot strain rate at representative channel
+    subplot(2,1,2);
+    plot(das_data.time_array, das_data.smoothed_data(:, das_data.pumping_zone.channel_idx));
+    xlim([analysis_start analysis_end]);
+    ylabel('Displacement Rate (nm/s)');
+    xlabel('Date Time UTC');
+    title(sprintf('Representative Channel (%.0f ft)', das_data.pumping_zone.channel_depth_ft));
+    grid on;
+    
+    % Save if enabled
+    if plot_results.save_enabled
+        filename = sprintf('test_%s_das_analysis.png', test_label);
+        filepath = fullfile(save_dir, filename);
+        saveas(gcf, filepath);
+        plot_results.figures_created{end+1} = filename;
+        fprintf('  Saved: %s\n', filename);
+    end
+    
+    % Store figure handle
     if ~isfield(plot_results, 'figures')
         plot_results.figures = struct();
     end
-    plot_results.figures.(test_label).head = head_figure;
-    plot_results.figures.(test_label).das_depth = das_depth_figure;
-    plot_results.figures.(test_label).waterfall = waterfall_figure;
-    plot_results.figures.(test_label).combined = combined_figure;
+    plot_results.figures.(test_label).das_waterfall = fig_num;
 end
 
 %% Summary
 fprintf('\n=== PLOT GENERATION COMPLETE ===\n');
-fprintf('Figures created: %d\n', length(plot_results.figures_created));
+fprintf('Figures created: %d\n', length(test_labels));
 
 if plot_results.save_enabled && ~isempty(plot_results.figures_created)
     fprintf('Charts saved to: %s\n', plot_results.save_dir);
@@ -92,8 +124,5 @@ if plot_results.save_enabled && ~isempty(plot_results.figures_created)
 else
     fprintf('Charts displayed but not saved (save_charts disabled)\n');
 end
-
-% Clean up path
-rmpath(plot_helper_dir);
 
 end
