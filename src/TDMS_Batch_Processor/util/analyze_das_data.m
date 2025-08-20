@@ -87,6 +87,16 @@ for i = 1:length(test_labels)
     load(das_filepath, 'decdata');
     data1Hz = decdata;  % Use naming from simple script
     
+    % Apply concatenation artifact filtering if enabled
+    if isfield(config, 'apply_concatenation_filter') && config.apply_concatenation_filter
+        fprintf('  Applying concatenation artifact filter...\n');
+        filter_method = 'detrend';  % Default
+        if isfield(config, 'filter_method')
+            filter_method = config.filter_method;
+        end
+        data1Hz = filter_concatenation_artifacts(data1Hz, filter_method);
+    end
+    
     % Get calibration parameters - simple lookup based on dataset name
     test_type = 'PT01c';  % Default
     if contains(upper(dataset_name), 'PT01A')

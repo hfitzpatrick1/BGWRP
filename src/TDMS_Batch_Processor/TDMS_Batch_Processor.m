@@ -58,6 +58,11 @@ if exist('mode', 'var') && ischar(mode)
             config.run_timing_extraction = false;  % Skip - use existing configs
             config.run_data_analysis = true;
             config.save_charts = contains(mode, 'save');
+            % Check for filtering suffix
+            if contains(mode, 'filtered')
+                config.apply_concatenation_filter = true;
+                fprintf('Filtering enabled for mode: %s\n', mode);
+            end
             
         case 'run_timing'
             % Analysis mode: timing extraction + analysis

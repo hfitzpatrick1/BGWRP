@@ -66,6 +66,10 @@ config.save_charts = true;
 %% Plotting Configuration
 config.dynamic_bounds = true;  % Enable intelligent waterfall color bounds based on data
 
+%% Filtering Configuration
+config.apply_concatenation_filter = false;  % Apply post-processing filter to remove file boundary artifacts
+config.filter_method = 'detrend';  % Filter method: 'detrend', 'overlap_smooth', 'none'
+
 fprintf('✓ Batch configuration loaded\n');
 
 end
