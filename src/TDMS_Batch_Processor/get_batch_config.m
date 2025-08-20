@@ -68,7 +68,7 @@ config.dynamic_bounds = true;  % Enable intelligent waterfall color bounds based
 
 %% Filtering Configuration
 config.apply_concatenation_filter = false;  % Apply post-processing filter to remove file boundary artifacts
-config.filter_method = 'detrend';  % Filter method: 'detrend', 'overlap_smooth', 'none'
+config.filter_method = 'detrend';  % Filter method: 'none', 'detrend', 'highpass', 'median', 'overlap_smooth'
 
 fprintf('✓ Batch configuration loaded\n');
 

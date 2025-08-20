@@ -6,7 +6,7 @@ function filtered_data = filter_concatenation_artifacts(data, method)
 %
 % Inputs:
 %   data   - DAS data matrix [time x channels]
-%   method - Filter method ('detrend', 'overlap_smooth', 'none')
+%   method - Filter method ('none', 'detrend', 'highpass', 'median', 'overlap_smooth')
 %
 % Outputs:
 %   filtered_data - Filtered DAS data matrix
@@ -26,6 +26,37 @@ switch lower(method)
                 fprintf('      Detrending channel %d of %d\n', ch, size(data, 2));
             end
             filtered_data(:, ch) = detrend(data(:, ch), 'linear');
+        end
+        
+    case 'highpass'
+        % High-pass filter to remove low-frequency concatenation artifacts
+        filtered_data = zeros(size(data));
+        cutoff_freq = 0.01;  % 0.01 Hz cutoff frequency
+        sample_rate = 1;     % 1 Hz sampling rate
+        
+        for ch = 1:size(data, 2)
+            if mod(ch, 100) == 0
+                fprintf('      High-pass filtering channel %d of %d\n', ch, size(data, 2));
+            end
+            try
+                filtered_data(:, ch) = highpass(data(:, ch), cutoff_freq, sample_rate);
+            catch
+                % Fallback if highpass function not available
+                fprintf('      Warning: highpass function not available, using detrend\n');
+                filtered_data(:, ch) = detrend(data(:, ch), 'linear');
+            end
+        end
+        
+    case 'median'
+        % Median filter to remove impulsive artifacts
+        filtered_data = zeros(size(data));
+        filter_length = 5;  % 5-sample median filter
+        
+        for ch = 1:size(data, 2)
+            if mod(ch, 100) == 0
+                fprintf('      Median filtering channel %d of %d\n', ch, size(data, 2));
+            end
+            filtered_data(:, ch) = medfilt1(data(:, ch), filter_length);
         end
         
     case 'overlap_smooth'

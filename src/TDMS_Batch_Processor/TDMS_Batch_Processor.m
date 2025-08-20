@@ -29,7 +29,7 @@ if exist('mode', 'var') && ischar(mode)
     mode_parts = strsplit(lower(mode), '_');
     base_mode = mode_parts{1};
     
-    switch base_mode
+    switch lower(mode)
         case 'prep'
             if length(mode_parts) > 1
                 % Specific prep stage - don't cleanup existing dirs
@@ -58,11 +58,50 @@ if exist('mode', 'var') && ischar(mode)
             config.run_timing_extraction = false;  % Skip - use existing configs
             config.run_data_analysis = true;
             config.save_charts = contains(mode, 'save');
-            % Check for filtering suffix
-            if contains(mode, 'filtered')
-                config.apply_concatenation_filter = true;
-                fprintf('Filtering enabled for mode: %s\n', mode);
-            end
+            
+        case 'run_detrend'
+            % Analysis mode with detrend filtering
+            config.run_tdms_conversion = false;
+            config.run_concatenation = false;
+            config.run_timing_extraction = false;
+            config.run_data_analysis = true;
+            config.save_charts = contains(mode, 'save');
+            config.apply_concatenation_filter = true;
+            config.filter_method = 'detrend';
+            fprintf('Filter mode: detrend\n');
+            
+        case 'run_highpass'
+            % Analysis mode with highpass filtering
+            config.run_tdms_conversion = false;
+            config.run_concatenation = false;
+            config.run_timing_extraction = false;
+            config.run_data_analysis = true;
+            config.save_charts = contains(mode, 'save');
+            config.apply_concatenation_filter = true;
+            config.filter_method = 'highpass';
+            fprintf('Filter mode: highpass\n');
+            
+        case 'run_median'
+            % Analysis mode with median filtering
+            config.run_tdms_conversion = false;
+            config.run_concatenation = false;
+            config.run_timing_extraction = false;
+            config.run_data_analysis = true;
+            config.save_charts = contains(mode, 'save');
+            config.apply_concatenation_filter = true;
+            config.filter_method = 'median';
+            fprintf('Filter mode: median\n');
+            
+        case 'run_smooth'
+            % Analysis mode with boundary smoothing
+            config.run_tdms_conversion = false;
+            config.run_concatenation = false;
+            config.run_timing_extraction = false;
+            config.run_data_analysis = true;
+            config.save_charts = contains(mode, 'save');
+            config.apply_concatenation_filter = true;
+            config.filter_method = 'overlap_smooth';
+            fprintf('Filter mode: overlap_smooth\n');
             
         case 'run_timing'
             % Analysis mode: timing extraction + analysis
