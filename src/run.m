@@ -18,7 +18,7 @@ fprintf('Added all subdirectories to path: %s\n', script_dir);
 
 %% Configuration Setup
 % Load config from file first
-file_config = get_batch_config();
+file_config = config();
 
 % Handle shorthand mode parameter
 if exist('mode', 'var') && ischar(mode)
@@ -31,25 +31,40 @@ if exist('mode', 'var') && ischar(mode)
     
     switch lower(mode)
         case 'prep'
-            if length(mode_parts) > 1
-                % Specific prep stage - don't cleanup existing dirs
-                prep_stage = mode_parts{2};
-                config.run_tdms_conversion = strcmp(prep_stage, 'tdms');
-                config.run_concatenation = strcmp(prep_stage, 'concat');
-                config.run_timing_extraction = strcmp(prep_stage, 'timing');
-                config.run_data_analysis = false;
-                config.save_charts = false;
-                config.cleanup_dirs = false;  % Don't clean when running specific stages
-                fprintf('Prep stage: %s\n', prep_stage);
-            else
-                % Full prep: TDMS conversion + concatenation + timing extraction with cleanup
-                config.run_tdms_conversion = true;
-                config.run_concatenation = true;
-                config.run_timing_extraction = true;  % Include timing as part of prep
-                config.run_data_analysis = false;
-                config.save_charts = false;
-                config.cleanup_dirs = true;   % Clean dirs for full prep
-            end
+            % Full prep: TDMS conversion + concatenation + timing extraction with cleanup
+            config.run_tdms_conversion = true;
+            config.run_concatenation = true;
+            config.run_timing_extraction = true;
+            config.run_data_analysis = false;
+            config.save_charts = false;
+            config.cleanup_dirs = true;
+            
+        case 'prep_tdms'
+            % TDMS conversion only
+            config.run_tdms_conversion = true;
+            config.run_concatenation = false;
+            config.run_timing_extraction = false;
+            config.run_data_analysis = false;
+            config.save_charts = false;
+            config.cleanup_dirs = false;
+            
+        case 'prep_concat'
+            % Concatenation only
+            config.run_tdms_conversion = false;
+            config.run_concatenation = true;
+            config.run_timing_extraction = false;
+            config.run_data_analysis = false;
+            config.save_charts = false;
+            config.cleanup_dirs = false;
+            
+        case 'prep_timing'
+            % Timing extraction only
+            config.run_tdms_conversion = false;
+            config.run_concatenation = false;
+            config.run_timing_extraction = true;
+            config.run_data_analysis = false;
+            config.save_charts = false;
+            config.cleanup_dirs = false;
             
         case 'run'
             % Analysis mode: analysis-only (no timing extraction)
@@ -206,7 +221,7 @@ if exist('mode', 'var') && ischar(mode)
             config.save_charts = contains(mode, 'save');
             
         otherwise
-            error('Unknown mode: %s. Valid modes: prep, prep_tdms, prep_concat, run, run_save, all, all_save', mode);
+            error('Unknown mode: %s. Valid modes: prep, prep_tdms, prep_concat, prep_timing, run, run_save, all, all_save', mode);
     end
     
     fprintf('Mode "%s" configured\n', mode);

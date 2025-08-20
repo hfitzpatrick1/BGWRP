@@ -1,5 +1,5 @@
-function config = get_batch_config()
-%GET_BATCH_CONFIG Return batch processor configuration
+function config = config()
+%CONFIG Return batch processor configuration
 %
 % Returns a structure containing all batch processing configuration
 %

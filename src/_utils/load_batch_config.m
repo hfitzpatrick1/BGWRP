@@ -9,7 +9,7 @@ function config = load_batch_config()
 fprintf('Loading batch configuration...\n');
 
 % Get configuration from MATLAB function
-config = get_batch_config();
+config = config();
 
 % Validate required fields
 if ~isfield(config, 'base_input') || isempty(config.base_input)
