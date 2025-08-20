@@ -42,10 +42,10 @@ if exist('mode', 'var') && ischar(mode)
                 config.cleanup_dirs = false;  % Don't clean when running specific stages
                 fprintf('Prep stage: %s\n', prep_stage);
             else
-                % Full prep: TDMS conversion + concatenation with cleanup
+                % Full prep: TDMS conversion + concatenation + timing extraction with cleanup
                 config.run_tdms_conversion = true;
                 config.run_concatenation = true;
-                config.run_timing_extraction = false;
+                config.run_timing_extraction = true;  % Include timing as part of prep
                 config.run_data_analysis = false;
                 config.save_charts = false;
                 config.cleanup_dirs = true;   % Clean dirs for full prep
