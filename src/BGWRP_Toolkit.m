@@ -241,7 +241,7 @@ if exist('mode', 'var') && ischar(mode)
     end
     
     fprintf('Mode "%s" configured\n', mode);
-    fprintf('DEBUG: After mode config, config.dynamic_bounds = %s\n', string(config.dynamic_bounds));
+
 else
     % Use file config as base
     config = file_config;
