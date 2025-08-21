@@ -154,6 +154,16 @@ if exist('mode', 'var') && ischar(mode)
             config.run_enhanced_diagnostic = true;
             fprintf('Enhanced diagnostic mode\n');
             
+        case 'diagnostic_tdms'
+            % TDMS metadata diagnostic mode: analyze raw file metadata
+            config.run_tdms_conversion = false;
+            config.run_concatenation = false;
+            config.run_timing_extraction = false;
+            config.run_data_analysis = false;
+            config.save_charts = false;
+            config.run_tdms_metadata_diagnostic = true;
+            fprintf('Diagnostic mode: TDMS metadata analysis\n');
+            
         case 'run_phase_align'
             % Analysis mode with phase alignment correction
             config.run_tdms_conversion = false;
@@ -237,7 +247,7 @@ if exist('mode', 'var') && ischar(mode)
             config.save_charts = contains(mode, 'save');
             
         otherwise
-            error('Unknown mode: %s. Valid modes: prep, prep_tdms, prep_concat, prep_timing, run, run_save, all, all_save', mode);
+            error('Unknown mode: %s. Valid modes: prep, prep_tdms, prep_concat, prep_timing, run, run_save, all, all_save, diagnostic_boundaries, diagnostic_enhanced, diagnostic_tdms', mode);
     end
     
     fprintf('Mode "%s" configured\n', mode);
@@ -792,6 +802,50 @@ if isfield(config, 'run_enhanced_diagnostic') && config.run_enhanced_diagnostic
     end
     
     fprintf('\n=== ENHANCED DIAGNOSTIC COMPLETE ===\n');
+end
+
+%% Step 4c: TDMS Metadata Diagnostic
+if isfield(config, 'run_tdms_metadata_diagnostic') && config.run_tdms_metadata_diagnostic
+    fprintf('\n=== STEP 4C: TDMS METADATA DIAGNOSTIC ===\n');
+    
+    % Use the same directory discovery logic as Step 1 TDMS conversion
+    if exist('workspace_info', 'var') && isfield(workspace_info, 'input_folders')
+        folders_to_process = workspace_info.input_folders;
+    else
+        folders_to_process = config.test_directories;
+    end
+    
+    for i = 1:length(folders_to_process)
+        current_folder = folders_to_process{i};
+        fprintf('\n--- Processing %s ---\n', current_folder);
+        
+        % Read TDMS files from original input directory (same as Step 1)
+        tdms_directory = fullfile(config.base_input, current_folder);
+        
+        % Verify input directory exists
+        if ~exist(tdms_directory, 'dir')
+            fprintf('⚠ Directory not found: %s\n', tdms_directory);
+            continue;
+        end
+        
+        % Check files
+        files = dir(fullfile(tdms_directory, '*.tdms'));
+        fprintf('Found %d TDMS files\n', length(files));
+        if length(files) == 0
+            fprintf('⚠ No TDMS files found, skipping\n');
+            continue;
+        end
+        
+        % Run TDMS metadata diagnostic
+        try
+            diagnose_tdms_metadata(current_folder, tdms_directory);
+            fprintf('✓ TDMS metadata diagnostic completed for %s\n', current_folder);
+        catch ME
+            fprintf('✗ TDMS metadata diagnostic failed for %s: %s\n', current_folder, ME.message);
+        end
+    end
+    
+    fprintf('\n=== TDMS METADATA DIAGNOSTIC COMPLETE ===\n');
 end
 
 %% Step 5: Data Analysis
