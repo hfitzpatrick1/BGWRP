@@ -158,7 +158,7 @@ subplot(2,1,1)
     %xl.Line = 'center';
     xlim([StartPlot EndPlot])
     xlabel('Date Time UTC')
-    %title('5 sec Moving Mean Displacement Rate Test 1c')
+    title('5 sec Moving Mean Displacement Rate Test 1c')
  subplot(2,1,2)
    yyaxis left
     plot(Thead,hft)
@@ -188,7 +188,7 @@ subplot(2,1,1)
     %xl.Line = 'center';
     xlim([StartPlot EndPlot])
     xlabel('Date Time UTC')
-    %title('5 sec Moving Mean Displacement Rate Test 1c')
+    title('5 sec Moving Mean Displacement Rate Test 1c')
  subplot(2,1,2)
    yyaxis left
     plot(Thead,hft)

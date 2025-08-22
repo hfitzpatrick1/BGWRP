@@ -116,7 +116,7 @@ for nn = 1:size(intdata,2)
 end
 %% Plot raw data as waterfall
 
- figure(1)
+ figure(4)
 imagesc(data1Hz')
 clim([-2 2])
 colormap('jet')
@@ -147,11 +147,11 @@ Thead.TimeZone = 'America/Los_Angeles';
 StartPlot=datetime(2023,11,7,20,44,00,00,'TimeZone','UTC');
 EndPlot=datetime(2023,11,7,20,49,00,00,'TimeZone','UTC');
 
-figure(2)
+figure(5)
 subplot(2,1,1)
  v = pcolor(Tdas,depthft, mdata');
     set(v, 'EdgeColor', 'none')
-    set(gca, 'clim', [-0.25 0.3]);
+    set(gca, 'clim', [-0.15 0.15]);
     colormap('jet');
     c7=colorbar; c7.Location="northoutside";
     c7.Ruler.TickLabelFormat='%g nm/s'; %c7.Limits=[0,15000];
@@ -160,7 +160,6 @@ subplot(2,1,1)
     axis ij
     %xlim([TestStart TestEnd]);
     ylim([100 700])
-    xline([Start50 Start80  Start110 Start140 StartRec],'--w',{'50 gpm','80 gpm','110 gpm','140 gpm','Recovery'},LineWidth=2)
     %xl.Line = 'center';
     xlim([StartPlot EndPlot])
     xlabel('Date Time UTC')
@@ -177,11 +176,11 @@ subplot(2,1,1)
     
     
     %% Plot Strain
-figure(3)
+figure(6)
 subplot(2,1,1)
  v = pcolor(iTdas,depthft, intdata'/10);
     set(v, 'EdgeColor', 'none')
-    set(gca, 'clim', [-0.2 1.0]);
+    set(gca, 'clim', [-0.25 0.25]);
     colormap('jet');
     c7=colorbar; c7.Location="northoutside";
     c7.Ruler.TickLabelFormat='%g nm/m'; %c7.Limits=[0,15000];
