@@ -92,7 +92,7 @@ switch lower(data_type)
         if isfield(das_data, 'analysis_strain_rate') && isfield(das_data, 'analysis_time')
             strain_rate = das_data.analysis_strain_rate(zone_mask);
             time_vec = das_data.analysis_time;
-            dt = mean(diff(time_vec)) * 24 * 3600;
+            dt = seconds(mean(diff(time_vec)));
             data = cumsum(strain_rate * dt, 1);
         else
             error('Cannot calculate strain: missing analysis_strain_rate or analysis_time');

@@ -56,7 +56,7 @@ for i = 1:length(das_data_array)
                 
                 % Integration for strain calculation
                 if ~isempty(strain_rate) && ~isempty(time_vec)
-                    dt = mean(diff(time_vec)) * 24 * 3600; % Convert to seconds
+                    dt = seconds(mean(diff(time_vec))); % Convert duration to seconds
                     data = cumsum(strain_rate * dt, 1);
                 else
                     warning('Cannot calculate strain for %s', dataset_names{i});
