@@ -12,7 +12,12 @@ config.base_input = 'C:\Coding\BGWRP\data\_BATCH\';
 %% Optional Overrides (uncomment to use)
 % config.test_directories = {'PT01a_Recovery', 'PT01b_Recovery', 'PT01c_Recovery'};
 % config.test_labels = {'a', 'b', 'c'};
-% config.decimation_factor = 100;
+
+%% Decimation Configuration
+config.decimation_factor = 100;  % Default: 100x decimation (100Hz → 1Hz)
+% config.decimation_factor = 10;   % Light decimation (100Hz → 10Hz)  
+% config.decimation_factor = 1;    % No decimation (preserve 100Hz)
+% config.decimation_factor = 5;    % Medium decimation (100Hz → 20Hz)
 
 %% Waterfall Plot Configuration
 % Display bounds for all waterfall plots [min_depth, max_depth] in feet

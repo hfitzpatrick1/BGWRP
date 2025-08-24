@@ -68,6 +68,16 @@ if exist('mode', 'var') && ischar(mode)
             config.save_charts = false;
             config.cleanup_dirs = false;
             
+        case 'prep_no_decim'
+            % Full prep with no decimation (preserve 100Hz)
+            config.run_tdms_conversion = true;
+            config.run_concatenation = true;
+            config.run_timing_extraction = true;
+            config.run_data_analysis = false;
+            config.save_charts = false;
+            config.cleanup_dirs = true;
+            config.decimation_factor = 1;  % Override: no decimation
+            
         case {'run', 'analyze'}
             % Analysis mode: analysis-only (no timing extraction)
             config.run_tdms_conversion = false;
@@ -247,7 +257,7 @@ if exist('mode', 'var') && ischar(mode)
             config.save_charts = contains(mode, 'save');
             
         otherwise
-            error('Unknown mode: %s. Valid modes: prep, prep_tdms, prep_concat, prep_timing, analyze, analyze_save, all, all_save, diagnostic_boundaries, diagnostic_enhanced, diagnostic_tdms', mode);
+            error('Unknown mode: %s. Valid modes: prep, prep_no_decim, prep_tdms, prep_concat, prep_timing, analyze, analyze_save, all, all_save, diagnostic_boundaries, diagnostic_enhanced, diagnostic_tdms', mode);
     end
     
     fprintf('Mode "%s" configured\n', mode);
@@ -483,8 +493,8 @@ for i = 1:length(folders_to_process)
         continue;
     end
     
-    % Run concatenation using modern function
-    success = concatenate_and_downsample(mat_directory, output_file, local_decimation_factor);
+    % Run concatenation using configurable function
+    success = concatenate_configurable(mat_directory, output_file, local_decimation_factor);
     
     if success
         fprintf('✓ Concatenation completed: %s\n', outname);
