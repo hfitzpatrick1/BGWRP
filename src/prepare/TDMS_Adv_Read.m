@@ -236,9 +236,10 @@ for i = 1:n_chunks
     %copy to data
     data(index:index+size(buffer,1)-1,:) = single(buffer);
     index = index+size(buffer,1);
-	msg = sprintf('%3.2f (percent)\n', i/n_chunks*100);
-    fprintf([clearLine,msg]);
-    clearLine  =   repmat(sprintf('\b'),1,length(msg));
+    % Progress logging disabled for cleaner output
+    % msg = sprintf('%3.2f (percent)\n', i/n_chunks*100);
+    % fprintf([clearLine,msg]);
+    % clearLine  =   repmat(sprintf('\b'),1,length(msg));
 end
 %% Close File
 fclose(fid);

@@ -37,7 +37,9 @@ try
     
     % Load and concatenate all files
     for nn = 1:length(files)
-        fprintf('Loading file %d of %d: %s\n', nn, length(files), files(nn).name);
+        if mod(nn, 5) == 1 || nn == length(files)  % Show every 5th file + last
+            fprintf('Loading file %d of %d: %s\n', nn, length(files), files(nn).name);
+        end
         
         % Load data
         filename = files(nn).name;
@@ -65,7 +67,9 @@ try
             file_data = loaded_data.(largest_field);
         end
         
-        fprintf('  Data size: [%d x %d]\n', size(file_data, 1), size(file_data, 2));
+        if mod(nn, 5) == 1 || nn == length(files)  % Show details for same files
+            fprintf('  Data size: [%d x %d]\n', size(file_data, 1), size(file_data, 2));
+        end
         
         % Check channel consistency
         if isempty(expected_channels)
@@ -79,7 +83,9 @@ try
         % Concatenate data
         rawdata = [rawdata; file_data];
         
-        fprintf('  Concatenated size: [%d x %d]\n', size(rawdata, 1), size(rawdata, 2));
+        if mod(nn, 5) == 1 || nn == length(files)  % Show progress for same files
+            fprintf('  Concatenated size: [%d x %d]\n', size(rawdata, 1), size(rawdata, 2));
+        end
     end
     
     % Final validation

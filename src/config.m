@@ -69,13 +69,13 @@ config.save_charts = true;
 % config.chart_output_dir = ''; % Leave empty to use default location
 
 %% Plotting Configuration
-config.dynamic_bounds = true;  % Enable intelligent waterfall color bounds based on data
+config.dynamic_bounds = false;  % Enable intelligent waterfall color bounds based on data
 
 % Dynamic bounds mode: 'percentile', 'std_dev', 'robust', 'hybrid', 'minmax'
 config.dynamic_bounds_mode = 'std_dev';
 
 % Related dataset grouping for consistent bounds across similar tests
-config.use_related_bounds = true;  % Calculate bounds across all datasets being analyzed
+config.use_related_bounds = false;  % Calculate bounds across all datasets being analyzed
 % When true: PT01a, PT01b, PT01c will all use the same color scale for comparison
 % When false: Each dataset gets its own optimized color scale
 

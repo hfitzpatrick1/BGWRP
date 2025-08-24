@@ -78,6 +78,15 @@ if exist('mode', 'var') && ischar(mode)
             config.cleanup_dirs = true;
             config.decimation_factor = 1;  % Override: no decimation
             
+        case 'prep_purge'
+            % Full prep with purge mode (delete all previous data)
+            config.run_tdms_conversion = true;
+            config.run_concatenation = true;
+            config.run_timing_extraction = true;
+            config.run_data_analysis = false;
+            config.save_charts = false;
+            config.cleanup_dirs = true;  % This triggers purge mode via selective_mode
+            
         case {'run', 'analyze'}
             % Analysis mode: analysis-only (no timing extraction)
             config.run_tdms_conversion = false;
@@ -257,7 +266,7 @@ if exist('mode', 'var') && ischar(mode)
             config.save_charts = contains(mode, 'save');
             
         otherwise
-            error('Unknown mode: %s. Valid modes: prep, prep_no_decim, prep_tdms, prep_concat, prep_timing, analyze, analyze_save, all, all_save, diagnostic_boundaries, diagnostic_enhanced, diagnostic_tdms', mode);
+            error('Unknown mode: %s. Valid modes: prep, prep_no_decim, prep_purge, prep_tdms, prep_concat, prep_timing, analyze, analyze_save, all, all_save, diagnostic_boundaries, diagnostic_enhanced, diagnostic_tdms', mode);
     end
     
     fprintf('Mode "%s" configured\n', mode);
@@ -313,7 +322,14 @@ end
 %% Workspace Organization (only for prep modes)
 if config.run_tdms_conversion || config.run_concatenation || config.run_timing_extraction
     fprintf('\n=== WORKSPACE ORGANIZATION ===\n');
-    workspace_info = organize_workspace(config.base_input, config.cleanup_dirs);
+    % Determine selective mode from current mode
+    if contains(mode, 'purge')
+        selective_mode = 'purge';
+    else
+        selective_mode = 'selective';
+    end
+    
+    workspace_info = organize_workspace(config.base_input, config.cleanup_dirs, selective_mode);
 else
     fprintf('\n=== ANALYSIS MODE: Skipping workspace organization ===\n');
     workspace_info = struct('input_folders', {{}});
@@ -1126,4 +1142,11 @@ if config.run_data_analysis && exist('plot_results', 'var')
         fprintf('  ✓ Charts saved: %d files\n', length(plot_results.figures_created));
     end
 end
+
+%% Archive processed directories (selective mode only)
+if exist('workspace_info', 'var') && isfield(workspace_info, 'archive_function') && ~isempty(workspace_info.archive_function)
+    fprintf('\n=== ARCHIVING PROCESSED DIRECTORIES ===\n');
+    workspace_info.archive_function();
+end
+
 fprintf('\nReady for analysis!\n');

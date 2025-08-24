@@ -56,7 +56,7 @@ try
     
     % Decimate each channel
     for n = 1:size(input_data, 2)
-        if mod(n, 100) == 0
+        if mod(n, 500) == 0 || n == size(input_data, 2)  % Show every 500th + last
             fprintf('  Channel %d of %d\n', n, size(input_data, 2));
         end
         

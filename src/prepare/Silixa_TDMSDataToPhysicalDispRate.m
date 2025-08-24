@@ -63,14 +63,10 @@ successful_files = 0;
 failed_files    = 0;
 
 for nn = f_ind
-    clc
     cnt             =   cnt + 1;
     filename        =   files(nn).name;
-    fprintf('Processing File %i of %i: %s\n',cnt,length(f_ind), filename);
     
     try
-        %% Read file header
-        fprintf('Loading Header...')
         full_path = [directory filename];
         
         if ~exist(full_path, 'file')
@@ -86,7 +82,7 @@ for nn = f_ind
         spatial_samp    =   fileinfo.Properties{ssind,2}; % spatial sampling distance
         srind           =   strcmp(fileinfo.Properties(:,1),'GaugeLength');
         spatial_res     =   fileinfo.Properties{srind,2}; % Spatial resolution
-        fprintf('Done (Ch:%d, Samp:%d)\n', n_ch, n_samp)
+        % Header loaded silently
         
         %% Entire file selected
         ch_ind2         =   1:n_ch;
@@ -97,22 +93,17 @@ for nn = f_ind
         arg.t_stop      =   samp_ind2(end);
         
         %% Load Data
-        fprintf('Loading Data...')
         arg.loading     =   'data';
         data            =   TDMS_Adv_Read(full_path,arg);
         adc_scalar      =   1/8192;
         data            =   data*adc_scalar;
-        fprintf('Done (Size:[%dx%d])\n', size(data,1), size(data,2))
         
         %% Convert to displacement rate in (nanometers/sample)
-        fprintf('Converting to Physical Displacement Rate...')
         data                  =   116*data;
         data_units            =   'nm/sample';
-        fprintf('Done\n')
         
         %% Save data if required
         if save_data
-            fprintf('Saving MAT File...')
             
             % Write to the specified save directory
             if ~exist(save_directory, 'dir')
@@ -127,13 +118,14 @@ for nn = f_ind
             
             % Verify file was created
             if exist(output_filename, 'file')
-                fprintf('Done\n')
                 successful_files = successful_files + 1;
+                fprintf('✓ %s -> MAT (%dx%d)\n', filename, size(data,1), size(data,2));
             else
                 error('File was not created: %s', output_filename);
             end
         else
             successful_files = successful_files + 1;
+            fprintf('✓ %s processed (%dx%d)\n', filename, size(data,1), size(data,2));
         end
         
     catch ME
