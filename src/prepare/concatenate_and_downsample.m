@@ -31,12 +31,13 @@ try
     fprintf('Found %d MAT files to process\n', length(files));
     
     % Initialize variables
-    decdata = [];
+    rawdata = [];
     lastNC = [];
     
-    % Process each file
+    % STEP 1: Load and concatenate all raw data first
+    fprintf('=== STEP 1: LOADING AND CONCATENATING RAW DATA ===\n');
     for nn = 1:length(files)
-        fprintf('Processing file %d of %d: %s\n', nn, length(files), files(nn).name);
+        fprintf('Loading file %d of %d: %s\n', nn, length(files), files(nn).name);
         
         % Extract timestamp for sorting (optional - files should already be sorted)
         filename = files(nn).name;
@@ -82,21 +83,32 @@ try
             continue;
         end
         
-        % Decimate each channel
-        decmat = zeros(ceil(size(data2, 1) / decimation_factor), size(data2, 2));
-        for n = 1:size(data2, 2)
-            if mod(n, 100) == 0
-                fprintf('    Decimating channel %d of %d\n', n, size(data2, 2));
-            end
-            decmat(:, n) = decimate(data2(:, n), decimation_factor);
-        end
+        % Concatenate raw data (no decimation yet)
+        rawdata = [rawdata; data2];
         
-        % Concatenate
-        decdata = [decdata; decmat];
-        
-        fprintf('  Decimated size: [%d x %d], Total size: [%d x %d]\n', ...
-            size(decmat, 1), size(decmat, 2), size(decdata, 1), size(decdata, 2));
+        fprintf('  Raw concatenated size: [%d x %d]\n', size(rawdata, 1), size(rawdata, 2));
     end
+    
+    % STEP 2: Decimate the entire concatenated dataset
+    fprintf('\n=== STEP 2: DECIMATING ENTIRE DATASET ===\n');
+    fprintf('Full raw dataset size: [%d x %d]\n', size(rawdata, 1), size(rawdata, 2));
+    fprintf('Decimating by factor %d...\n', decimation_factor);
+    
+    % Initialize decimated data array
+    decdata = zeros(ceil(size(rawdata, 1) / decimation_factor), size(rawdata, 2));
+    
+    % Decimate each channel of the full concatenated dataset
+    for n = 1:size(rawdata, 2)
+        if mod(n, 100) == 0
+            fprintf('  Decimating channel %d of %d\n', n, size(rawdata, 2));
+        end
+        decdata(:, n) = decimate(rawdata(:, n), decimation_factor);
+    end
+    
+    fprintf('Final decimated size: [%d x %d]\n', size(decdata, 1), size(decdata, 2));
+    
+    % Clear raw data to free memory
+    clear rawdata;
     
     % Save result
     fprintf('Saving concatenated data: %s\n', output_filename);
