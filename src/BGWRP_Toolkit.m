@@ -493,8 +493,8 @@ for i = 1:length(folders_to_process)
         continue;
     end
     
-    % Run concatenation using configurable function
-    success = concatenate_configurable(mat_directory, output_file, local_decimation_factor);
+    % Run MAT data processing (concatenation + downsampling)
+    success = process_mat_data(mat_directory, output_file, local_decimation_factor);
     
     if success
         fprintf('✓ Concatenation completed: %s\n', outname);
@@ -681,7 +681,7 @@ end
         
         % Save as MATLAB function instead of MAT/TXT files
         test_config = timing_config.(test_label);
-        save_timing_config_as_function(test_config, source_folder, configs_dir);
+        save_timing_config(test_config, source_folder, configs_dir);
         
         % Configuration now saved as MATLAB function only
         
