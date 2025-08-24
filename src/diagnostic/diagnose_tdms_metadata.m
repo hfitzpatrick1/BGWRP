@@ -262,39 +262,109 @@ metadata_table = struct2table(vertcat(metadata_cell{:}));
 end
 
 function analyze_amplitude_parameters(metadata_table)
-%Analyze parameters that could affect amplitude scaling
+%Analyze parameters that vary between files (potential scaling sources)
 
-fprintf('Analyzing amplitude-related parameters...\n');
+fprintf('Analyzing metadata for variations between files...\n');
 
-% Check for variation in key numeric parameters
-numeric_fields = {};
+% Separate analysis for numeric and non-numeric fields
+varying_fields = {};
+constant_fields = {};
+
+fprintf('\n=== FIELDS THAT VARY BETWEEN FILES ===\n');
+
 for i = 1:width(metadata_table)
     field_name = metadata_table.Properties.VariableNames{i};
-    if isnumeric(metadata_table{:, i}) && ~all(isnan(metadata_table{:, i}))
-        numeric_fields{end+1} = field_name;
+    values = metadata_table{:, i};
+    
+    % Skip filename and file_index (expected to vary)
+    if strcmp(field_name, 'filename') || strcmp(field_name, 'file_index')
+        continue;
+    end
+    
+    has_variation = false;
+    
+    if isnumeric(values)
+        % Numeric field analysis
+        valid_values = values(~isnan(values));
+        if length(valid_values) > 1
+            if length(unique(valid_values)) > 1
+                % Ensure values are double for calculations
+                valid_values = double(valid_values);
+                mean_val = mean(valid_values);
+                if abs(mean_val) > eps  % Avoid division by zero
+                    variation_pct = (std(valid_values) / abs(mean_val)) * 100;
+                else
+                    variation_pct = 0;
+                end
+                fprintf('  📊 %s: mean=%.6f, std=%.6f, variation=%.2f%%\n', ...
+                    field_name, mean(valid_values), std(valid_values), variation_pct);
+                
+                % Show actual values if small number of files
+                if length(valid_values) <= 10
+                    fprintf('       Values: [%s]\n', num2str(valid_values', '%.6f '));
+                end
+                
+                has_variation = true;
+                varying_fields{end+1} = field_name;
+            else
+                constant_fields{end+1} = field_name;
+            end
+        end
+    else
+        % Non-numeric field analysis (strings, etc.)
+        if iscell(values)
+            unique_values = unique(values);
+        else
+            unique_values = unique(string(values));
+        end
+        
+        if length(unique_values) > 1
+            fprintf('  📝 %s: %d different values\n', field_name, length(unique_values));
+            % Show actual values if reasonable number
+            if length(unique_values) <= 5
+                if iscell(values)
+                    fprintf('       Values: %s\n', strjoin(unique_values, ', '));
+                else
+                    fprintf('       Values: %s\n', strjoin(string(unique_values), ', '));
+                end
+            end
+            has_variation = true;
+            varying_fields{end+1} = field_name;
+        else
+            constant_fields{end+1} = field_name;
+        end
     end
 end
 
-fprintf('Found %d numeric metadata fields:\n', length(numeric_fields));
+fprintf('\n=== SUMMARY ===\n');
+fprintf('Fields that VARY between files: %d\n', length(varying_fields));
+if ~isempty(varying_fields)
+    fprintf('  Variable fields: %s\n', strjoin(varying_fields, ', '));
+end
 
-for i = 1:length(numeric_fields)
-    field_name = numeric_fields{i};
-    values = metadata_table{:, field_name};
-    
-    % Remove NaN values
-    valid_values = values(~isnan(values));
-    
-    if length(valid_values) > 1
-        variation_pct = (std(valid_values) / mean(valid_values)) * 100;
-        fprintf('  %s: mean=%.6f, std=%.6f, variation=%.2f%%\n', ...
-            field_name, mean(valid_values), std(valid_values), variation_pct);
-        
-        if variation_pct > 1  % More than 1% variation
-            fprintf('    → HIGH VARIATION detected in %s\n', field_name);
+fprintf('Fields that are CONSTANT: %d\n', length(constant_fields));
+fprintf('  (Use -verbose flag to see constant fields)\n');
+
+% Highlight critical scaling-related fields that vary
+scaling_keywords = {'calibration', 'gain', 'scale', 'factor', 'unit', 'voltage', 'amplitude', 'offset'};
+critical_varying_fields = {};
+
+for i = 1:length(varying_fields)
+    field_name_lower = lower(varying_fields{i});
+    for j = 1:length(scaling_keywords)
+        if contains(field_name_lower, scaling_keywords{j})
+            critical_varying_fields{end+1} = varying_fields{i};
+            break;
         end
-    else
-        fprintf('  %s: constant value=%.6f\n', field_name, valid_values(1));
     end
+end
+
+if ~isempty(critical_varying_fields)
+    fprintf('\n⚠️  CRITICAL: Scaling-related fields that vary:\n');
+    for i = 1:length(critical_varying_fields)
+        fprintf('    → %s\n', critical_varying_fields{i});
+    end
+    fprintf('   These are likely candidates for fixing amplitude variations!\n');
 end
 
 end
