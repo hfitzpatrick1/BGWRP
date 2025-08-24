@@ -111,8 +111,13 @@ fprintf('\n--- STAGE 3: SCALING ANALYSIS ---\n');
 % Check for parameters that should inform adaptive scaling
 identify_scaling_parameters(metadata_table);
 
-%% Stage 4: Recommendations
-fprintf('\n--- STAGE 4: RECOMMENDATIONS ---\n');
+%% Stage 4: Data Quality Analysis
+fprintf('\n--- STAGE 4: DATA QUALITY ANALYSIS ---\n');
+
+analyze_data_quality_issues(metadata_table);
+
+%% Stage 5: Recommendations  
+fprintf('\n--- STAGE 5: RECOMMENDATIONS ---\n');
 
 generate_scaling_recommendations(metadata_table, extraction_method);
 
@@ -365,6 +370,168 @@ if ~isempty(critical_varying_fields)
         fprintf('    → %s\n', critical_varying_fields{i});
     end
     fprintf('   These are likely candidates for fixing amplitude variations!\n');
+end
+
+end
+
+function analyze_data_quality_issues(metadata_table)
+%Analyze data quality and processing order implications
+
+fprintf('Analyzing data quality and processing order issues...\n');
+
+%% 1. Native Sampling Rate Analysis
+fprintf('\n=== NATIVE SAMPLING RATE ANALYSIS ===\n');
+
+% Extract sampling frequency information
+if any(strcmp('SamplingFrequency_Hz_', metadata_table.Properties.VariableNames))
+    fs_values = metadata_table.SamplingFrequency_Hz_;
+    unique_fs = unique(fs_values);
+    fprintf('Sampling Frequency: %.1f Hz', unique_fs(1));
+    if length(unique_fs) > 1
+        fprintf(' (VARIES: %s)', num2str(unique_fs'));
+    end
+    fprintf('\n');
+else
+    fprintf('⚠ No SamplingFrequency_Hz found in metadata\n');
+    unique_fs = 100; % Assume based on typical values
+end
+
+% Check for decimation information in TDMS
+if any(strcmp('decimated', metadata_table.Properties.VariableNames))
+    decimated_values = metadata_table.decimated;
+    if any(decimated_values)
+        fprintf('⚠ TDMS files are already decimated (pre-processing occurred)\n');
+        fprintf('  This may indicate aliasing artifacts already present\n');
+    else
+        fprintf('✓ TDMS files contain non-decimated data\n');
+    end
+end
+
+% Check for original acquisition rate hints
+if any(strcmp('PreciseSamplingFrequency_Hz_', metadata_table.Properties.VariableNames))
+    precise_fs = unique(metadata_table.PreciseSamplingFrequency_Hz_);
+    if precise_fs ~= unique_fs
+        fprintf('⚠ Precise sampling frequency differs: %.6f Hz\n', precise_fs(1));
+        fprintf('  May indicate clock drift or resampling\n');
+    end
+end
+
+%% 2. Data Type and Precision Analysis  
+fprintf('\n=== DATA TYPE AND PRECISION ANALYSIS ===\n');
+
+if any(strcmp('data_type', metadata_table.Properties.VariableNames))
+    data_types = metadata_table.data_type;
+    unique_types = unique(data_types);
+    fprintf('TDMS Data Type: %d', unique_types(1));
+    
+    % Interpret data type codes
+    switch unique_types(1)
+        case 2
+            fprintf(' (16-bit signed integer)\n');
+            bit_depth = 16;
+            is_integer = true;
+        case 9  
+            fprintf(' (32-bit floating point)\n');
+            bit_depth = 32;
+            is_integer = false;
+        otherwise
+            fprintf(' (unknown type)\n');
+            bit_depth = 16; % Assume worst case
+            is_integer = true;
+    end
+    
+    if is_integer
+        fprintf('✓ Integer data preserves maximum dynamic range\n');
+        fprintf('  Recommendation: Keep as integer until final scaling step\n');
+    else
+        fprintf('⚠ Floating point data may have reduced precision\n');
+        fprintf('  Data may have been processed/scaled before TDMS storage\n');
+    end
+else
+    fprintf('⚠ No data type information found\n');
+    bit_depth = 16;
+    is_integer = true;
+end
+
+%% 3. Processing Order Impact Analysis
+fprintf('\n=== PROCESSING ORDER IMPACT ANALYSIS ===\n');
+
+% Calculate theoretical dynamic range
+if is_integer
+    max_range = 2^(bit_depth-1);
+    fprintf('Theoretical dynamic range: ±%d counts (%.1f dB)\n', max_range, 20*log10(max_range));
+else
+    fprintf('Floating point data - dynamic range depends on original source\n');
+end
+
+% Analyze current scaling approach impact
+fprintf('\nCurrent pipeline analysis:\n');
+fprintf('1. TDMS → MAT: Apply adc_scalar (1/8192) + physical scaling (×116)\n');
+fprintf('2. MAT → Concatenated: Load, concatenate, decimate\n');
+
+if is_integer
+    fprintf('\n⚠ POTENTIAL ISSUE: Early floating point conversion\n');
+    fprintf('  Converting to float in step 1 may introduce quantization noise\n');
+    fprintf('  Better: Keep integer precision until after decimation\n');
+end
+
+% Check for file size implications
+if any(strcmp('channel_length', metadata_table.Properties.VariableNames))
+    samples_per_file = unique(metadata_table.channel_length);
+    if any(strcmp('num_channels', metadata_table.Properties.VariableNames))
+        num_channels = unique(metadata_table.num_channels);
+        
+        fprintf('\nMemory analysis:\n');
+        fprintf('  Samples per file: %d\n', samples_per_file(1));
+        fprintf('  Channels: %d\n', num_channels(1));
+        
+        if is_integer
+            bytes_per_sample = bit_depth / 8;
+        else
+            bytes_per_sample = 4; % Single precision
+        end
+        
+        file_size_mb = (samples_per_file(1) * num_channels(1) * bytes_per_sample) / (1024^2);
+        fprintf('  Raw file size: %.1f MB\n', file_size_mb);
+        
+        % Estimate concatenation memory requirements
+        num_files = height(metadata_table);
+        total_raw_mb = file_size_mb * num_files;
+        fprintf('  Total raw concatenation memory: %.1f MB\n', total_raw_mb);
+        
+        if total_raw_mb > 1000
+            fprintf('  ⚠ Large memory requirement for direct concatenation\n');
+        else
+            fprintf('  ✓ Reasonable memory requirement for optimal processing\n');
+        end
+    end
+end
+
+%% 4. Anti-Aliasing Analysis
+fprintf('\n=== ANTI-ALIASING ANALYSIS ===\n');
+
+if exist('unique_fs', 'var')
+    nyquist_freq = unique_fs(1) / 2;
+    fprintf('Current Nyquist frequency: %.1f Hz\n', nyquist_freq);
+    
+    % Check if this looks like already-decimated data
+    if unique_fs(1) <= 200
+        fprintf('⚠ Low sampling rate suggests pre-decimation occurred\n');
+        fprintf('  Original acquisition may have been at higher rate\n');
+        fprintf('  Check for aliasing artifacts in frequency domain\n');
+    else
+        fprintf('✓ Sampling rate suggests minimal pre-decimation\n');
+    end
+    
+    % Decimation impact analysis
+    decimation_factor = 100; % From current pipeline
+    final_nyquist = nyquist_freq / decimation_factor;
+    fprintf('After 100x decimation: Nyquist = %.3f Hz\n', final_nyquist);
+    
+    if final_nyquist < 0.1
+        fprintf('⚠ Very low final Nyquist frequency\n');
+        fprintf('  Consider whether 100x decimation is appropriate\n');
+    end
 end
 
 end
