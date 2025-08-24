@@ -72,7 +72,7 @@ config.save_charts = true;
 config.dynamic_bounds = true;  % Enable intelligent waterfall color bounds based on data
 
 % Dynamic bounds mode: 'percentile', 'std_dev', 'robust', 'hybrid', 'minmax'
-config.dynamic_bounds_mode = 'percentile';
+config.dynamic_bounds_mode = 'std_dev';
 
 % Related dataset grouping for consistent bounds across similar tests
 config.use_related_bounds = true;  % Calculate bounds across all datasets being analyzed
