@@ -49,21 +49,14 @@ for i = 1:length(das_data_array)
             end
             
         case 'strain'
-            % For strain, we need to calculate it from displacement rate
-            if isfield(das_data, 'analysis_strain_rate') && isfield(das_data, 'analysis_time')
-                strain_rate = das_data.analysis_strain_rate;
-                time_vec = das_data.analysis_time;
-                
-                % Integration for strain calculation
-                if ~isempty(strain_rate) && ~isempty(time_vec)
-                    dt = seconds(mean(diff(time_vec))); % Convert duration to seconds
-                    data = cumsum(strain_rate * dt, 1);
-                else
-                    warning('Cannot calculate strain for %s', dataset_names{i});
-                    continue;
-                end
+            % For strain unified bounds, use a simplified approach since we can't 
+            % replicate the exact integration + detrending done during plotting
+            warning('Strain unified bounds use simplified calculation - may differ from individual bounds');
+            if isfield(das_data, 'smoothed_data')
+                % Use a simple proxy: integrated raw data (without detrending)
+                data = cumsum(das_data.smoothed_data, 1) / 10;  % Similar scaling to plotting
             else
-                warning('No strain calculation data found for %s', dataset_names{i});
+                warning('No smoothed_data found for strain bounds calculation for %s', dataset_names{i});
                 continue;
             end
             

@@ -286,16 +286,42 @@ for i = 1:length(test_labels)
     v = pcolor(iTdas, das_data.depth_ft, dintdata'/10);  % Divide by 10 like simple script
     set(v, 'EdgeColor', 'none');
     
-    % Set strain bounds using new utility functions
+    % Set strain bounds using actual plotted data (dintdata/10)
     if ~isempty(unified_bounds) && isfield(unified_bounds, 'strain')
         % Use pre-calculated unified bounds
         strain_bounds = unified_bounds.strain;
         set(gca, 'clim', strain_bounds);
         fprintf('    Unified strain bounds: [%.6f, %.6f] nm/m\n', strain_bounds(1), strain_bounds(2));
     else
-        % Calculate individual bounds for this dataset  
-        strain_bounds = get_plot_bounds(das_data, 'strain', config);
-        set(gca, 'clim', strain_bounds);
+        % Calculate individual bounds from actual plotted strain data
+        if isfield(config, 'dynamic_bounds') && config.dynamic_bounds
+            % Focus on pumping zone for strain bounds
+            zone_mask = das_data.depth_ft >= das_data.pumping_zone.min_ft & das_data.depth_ft <= das_data.pumping_zone.max_ft;
+            strain_data = dintdata(:, zone_mask) / 10;  % Same as plotted data
+            
+            % Get bounds mode from config
+            if isfield(config, 'dynamic_bounds_mode')
+                mode = config.dynamic_bounds_mode;
+            else
+                mode = 'percentile';
+            end
+            
+            strain_bounds = calculate_dynamic_bounds(strain_data, mode, 'Percentiles', [2, 98]);
+            
+            % Ensure reasonable bounds (strain is usually negative)
+            if strain_bounds(2) - strain_bounds(1) < 0.01  % Very small range
+                strain_center = mean(strain_bounds);
+                strain_bounds = [strain_center - 0.1, strain_center + 0.1];
+            end
+            
+            set(gca, 'clim', strain_bounds);
+            fprintf('    Individual strain bounds: [%.6f, %.6f] nm/m\n', strain_bounds(1), strain_bounds(2));
+        else
+            % Fixed bounds
+            strain_bounds = [-2, 0];
+            set(gca, 'clim', strain_bounds);
+            fprintf('    Fixed strain bounds: [-2, 0] nm/m\n');
+        end
     end
     
     colormap('jet');
