@@ -68,7 +68,7 @@ if exist('mode', 'var') && ischar(mode)
             config.save_charts = false;
             config.cleanup_dirs = false;
             
-        case 'run'
+        case {'run', 'analyze'}
             % Analysis mode: analysis-only (no timing extraction)
             config.run_tdms_conversion = false;
             config.run_concatenation = false;
@@ -230,7 +230,7 @@ if exist('mode', 'var') && ischar(mode)
             config.filter_method = 'percentile_normalize';
             fprintf('Amplitude correction mode: percentile_normalize\n');
             
-        case 'run_timing'
+        case {'run_timing', 'analyze_timing'}
             % Analysis mode: timing extraction + analysis
             config.run_tdms_conversion = false;
             config.run_concatenation = false;
@@ -247,7 +247,7 @@ if exist('mode', 'var') && ischar(mode)
             config.save_charts = contains(mode, 'save');
             
         otherwise
-            error('Unknown mode: %s. Valid modes: prep, prep_tdms, prep_concat, prep_timing, run, run_save, all, all_save, diagnostic_boundaries, diagnostic_enhanced, diagnostic_tdms', mode);
+            error('Unknown mode: %s. Valid modes: prep, prep_tdms, prep_concat, prep_timing, analyze, analyze_save, all, all_save, diagnostic_boundaries, diagnostic_enhanced, diagnostic_tdms', mode);
     end
     
     fprintf('Mode "%s" configured\n', mode);
