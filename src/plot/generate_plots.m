@@ -73,8 +73,39 @@ for i = 1:length(test_labels)
     %% Figure 1: Raw Data Waterfall (standardized with time filtering)
     fig1_num = 100 + i*3 - 2;
     fprintf('  Creating Figure %d: Raw Data Waterfall\n', fig1_num);
+    
+    % DEBUG: Check data availability and dimensions
+    fprintf('    DEBUG: das_data fields: %s\n', strjoin(fieldnames(das_data), ', '));
+    if isfield(das_data, 'smoothed_data')
+        fprintf('    DEBUG: smoothed_data size: [%d x %d]\n', size(das_data.smoothed_data, 1), size(das_data.smoothed_data, 2));
+        fprintf('    DEBUG: smoothed_data range: [%.3f, %.3f]\n', min(das_data.smoothed_data(:)), max(das_data.smoothed_data(:)));
+    else
+        fprintf('    ERROR: smoothed_data field missing!\n');
+    end
+    
+    if isfield(das_data, 'time_array')
+        fprintf('    DEBUG: time_array size: %d elements\n', length(das_data.time_array));
+        fprintf('    DEBUG: time_array range: %s to %s\n', das_data.time_array(1), das_data.time_array(end));
+    else
+        fprintf('    ERROR: time_array field missing!\n');
+    end
+    
+    if isfield(das_data, 'depth_ft')
+        fprintf('    DEBUG: depth_ft size: %d elements\n', length(das_data.depth_ft));
+        fprintf('    DEBUG: depth_ft range: [%.1f, %.1f] ft\n', min(das_data.depth_ft), max(das_data.depth_ft));
+    else
+        fprintf('    ERROR: depth_ft field missing!\n');
+    end
+    
     figure(fig1_num);
     clf;
+    
+    % Check if required data exists before plotting
+    if ~isfield(das_data, 'smoothed_data') || ~isfield(das_data, 'time_array') || ~isfield(das_data, 'depth_ft')
+        fprintf('    ERROR: Missing required data fields for waterfall plot!\n');
+        text(0.5, 0.5, 'Missing Data Fields', 'HorizontalAlignment', 'center');
+        return;
+    end
     
     % Use pcolor with time arrays like other plots (consistent approach)
     v = pcolor(das_data.time_array, das_data.depth_ft, das_data.smoothed_data');

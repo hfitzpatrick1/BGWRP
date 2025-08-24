@@ -115,13 +115,17 @@ try
             finaldata(:, n) = decimate(rawdata(:, n), decimation_factor);
         end
         
+        % DEBUG: Check final decimated data quality
         fprintf('Final decimated size: [%d x %d]\n', size(finaldata, 1), size(finaldata, 2));
+        fprintf('DEBUG: Final data range: [%.6f, %.6f]\n', min(finaldata(:)), max(finaldata(:)));
+        final_nan_count = sum(isnan(finaldata(:)));
+        fprintf('DEBUG: NaN values in final data: %d out of %d (%.1f%%)\n', final_nan_count, numel(finaldata), (final_nan_count/numel(finaldata))*100);
     end
     
     % Clear raw data to free memory
     clear rawdata;
     
-    % Save result with appropriate variable name
+    % Save result with appropriate variable name (clean save - only data variable)
     if decimation_factor == 1
         % Save as full-resolution data
         fulldata = finaldata;

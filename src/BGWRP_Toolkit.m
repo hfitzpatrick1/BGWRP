@@ -752,25 +752,25 @@ if isfield(config, 'run_boundary_diagnostic') && config.run_boundary_diagnostic
         fprintf('Processing dataset: %s\n', dataset_name);
         
         % Find .mat file and timing config file
-        mat_files = dir(fullfile(dataset_dir, '*.mat'));
+            mat_files = dir(fullfile(dataset_dir, '*.mat'));
         m_files = dir(fullfile(dataset_dir, 'get_timing_*.m'));
-        
-        if length(m_files) == 1 && length(mat_files) == 1
-            % Load timing config
-            [~, func_name, ~] = fileparts(m_files(1).name);
-            addpath(dataset_dir);
-            try
-                loaded_config = feval(func_name);
-                timing_config.(dataset_name) = loaded_config;
-                
-                % Run boundary diagnostic
-                data_filepath = fullfile(dataset_dir, mat_files(1).name);
-                diagnose_file_boundaries(dataset_name, data_filepath, loaded_config);
-                
-            catch ME
-                fprintf('Error in diagnostic for %s: %s\n', dataset_name, ME.message);
-            end
-            rmpath(dataset_dir);
+            
+            if length(m_files) == 1 && length(mat_files) == 1
+                % Load timing config
+                [~, func_name, ~] = fileparts(m_files(1).name);
+                addpath(dataset_dir);
+                try
+                    loaded_config = feval(func_name);
+                    timing_config.(dataset_name) = loaded_config;
+                    
+                    % Run boundary diagnostic
+                    data_filepath = fullfile(dataset_dir, mat_files(1).name);
+                    diagnose_file_boundaries(dataset_name, data_filepath, loaded_config);
+                    
+                catch ME
+                    fprintf('Error in diagnostic for %s: %s\n', dataset_name, ME.message);
+                end
+                rmpath(dataset_dir);
         else
             fprintf('⚠ Skipping %s: Expected 1 MAT file and 1 timing config, found %d MAT, %d timing configs\n', ...
                 dataset_name, length(mat_files), length(m_files));
@@ -804,25 +804,25 @@ if isfield(config, 'run_enhanced_diagnostic') && config.run_enhanced_diagnostic
         fprintf('Processing dataset: %s\n', dataset_name);
         
         % Find .mat file and timing config file
-        mat_files = dir(fullfile(dataset_dir, '*.mat'));
+            mat_files = dir(fullfile(dataset_dir, '*.mat'));
         m_files = dir(fullfile(dataset_dir, 'get_timing_*.m'));
-        
-        if length(m_files) == 1 && length(mat_files) == 1
-            % Load timing config
-            [~, func_name, ~] = fileparts(m_files(1).name);
-            addpath(dataset_dir);
-            try
-                loaded_config = feval(func_name);
-                timing_config.(dataset_name) = loaded_config;
-                
-                % Run enhanced boundary diagnostic
-                data_filepath = fullfile(dataset_dir, mat_files(1).name);
-                diagnose_boundaries_enhanced(dataset_name, data_filepath, loaded_config);
-                
-            catch ME
-                fprintf('Error in enhanced diagnostic for %s: %s\n', dataset_name, ME.message);
-            end
-            rmpath(dataset_dir);
+            
+            if length(m_files) == 1 && length(mat_files) == 1
+                % Load timing config
+                [~, func_name, ~] = fileparts(m_files(1).name);
+                addpath(dataset_dir);
+                try
+                    loaded_config = feval(func_name);
+                    timing_config.(dataset_name) = loaded_config;
+                    
+                    % Run enhanced boundary diagnostic
+                    data_filepath = fullfile(dataset_dir, mat_files(1).name);
+                    diagnose_boundaries_enhanced(dataset_name, data_filepath, loaded_config);
+                    
+                catch ME
+                    fprintf('Error in enhanced diagnostic for %s: %s\n', dataset_name, ME.message);
+                end
+                rmpath(dataset_dir);
         else
             fprintf('⚠ Skipping %s: Expected 1 MAT file and 1 timing config, found %d MAT, %d timing configs\n', ...
                 dataset_name, length(mat_files), length(m_files));

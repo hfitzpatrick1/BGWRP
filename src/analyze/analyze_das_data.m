@@ -95,6 +95,11 @@ for i = 1:length(test_labels)
         error('No valid data variable found. Expected ''decdata'' or ''fulldata''');
     end
     
+    % DEBUG: Check data quality immediately after loading
+    fprintf('  DEBUG: Raw loaded data range: [%.3f, %.3f]\n', min(data1Hz(:)), max(data1Hz(:)));
+    nan_count = sum(isnan(data1Hz(:)));
+    fprintf('  DEBUG: NaN values in loaded data: %d out of %d (%.1f%%)\n', nan_count, numel(data1Hz), (nan_count/numel(data1Hz))*100);
+    
     % Apply concatenation artifact filtering if enabled
     if isfield(config, 'apply_concatenation_filter') && config.apply_concatenation_filter
         fprintf('  Applying concatenation artifact filter...\n');
@@ -159,6 +164,11 @@ for i = 1:length(test_labels)
             
     % Apply smoothing (from simple script approach)
     smoothed_data = movmean(data1Hz, smooth_window, 1);
+    
+    % DEBUG: Check data after smoothing
+    fprintf('  DEBUG: After smoothing data range: [%.3f, %.3f]\n', min(smoothed_data(:)), max(smoothed_data(:)));
+    nan_count_smooth = sum(isnan(smoothed_data(:)));
+    fprintf('  DEBUG: NaN values after smoothing: %d out of %d (%.1f%%)\n', nan_count_smooth, numel(smoothed_data), (nan_count_smooth/numel(smoothed_data))*100);
     
     % Find representative channel in pumping zone
             zone_mid_ft = (zone_min_ft + zone_max_ft) / 2;

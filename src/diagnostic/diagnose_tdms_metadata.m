@@ -446,8 +446,8 @@ if any(strcmp('data_type', metadata_table.Properties.VariableNames))
     else
         fprintf('⚠ Floating point data may have reduced precision\n');
         fprintf('  Data may have been processed/scaled before TDMS storage\n');
-    end
-else
+        end
+    else
     fprintf('⚠ No data type information found\n');
     bit_depth = 16;
     is_integer = true;
