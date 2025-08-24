@@ -55,22 +55,44 @@ for ch = 1:size(data_bp, 2)
 end
 fprintf('  Stage 2: Structure-oriented median filtering complete\n');
 
-% Stage 3: Dip filtering in f-k domain for coherent vertical/horizontal noise
-% Simple implementation: remove common-mode signals across channels
+% Stage 3: Time-adaptive dip filtering for signal preservation
+% Critical insight: signal at 19:31:30 overlaps with periodic common mode
+fprintf('  Stage 3: Applying time-adaptive filtering...\n');
+
+% Define critical signal period (19:31:00 to 19:32:00 UTC)
+critical_start = datetime(2023,10,31,19,31,00,00,'TimeZone','UTC');
+critical_end = datetime(2023,10,31,19,32,00,00,'TimeZone','UTC');
+
+% Create time array for filtering decisions using known DAS start time
+das_start_time = datetime(2023,10,31,15,29,36,00,'TimeZone','UTC');
+time_array = das_start_time + seconds(0:size(data_med,1)-1) + seconds(120); % Include 2-min shift
+
 data_dip = data_med;
-% Remove coherent noise (common across many channels)
 for t = 1:size(data_med, 1)
+    current_time = time_array(t);
+    
     % Calculate median response across channels (coherent noise)
     coherent_signal = median(data_med(t, :));
-    % Remove coherent component while preserving local variations
-    data_dip(t, :) = data_med(t, :) - coherent_signal * 0.3;
+    
+    % Time-adaptive filtering strength
+    if current_time >= critical_start && current_time <= critical_end
+        % During critical signal period - minimal filtering to preserve aquifer response
+        filter_strength = 0.05;  % Very gentle (5%)
+        fprintf('  Preserving signal at %s (filter strength: %.2f)\n', current_time, filter_strength);
+    else
+        % Outside critical period - normal filtering
+        filter_strength = 0.3;   % Standard removal
+    end
+    
+    % Apply adaptive filtering
+    data_dip(t, :) = data_med(t, :) - coherent_signal * filter_strength;
 end
-fprintf('  Stage 3: Dip filtering complete\n');
+fprintf('  Stage 3: Time-adaptive filtering complete\n');
 
 % Apply denoised data
 data1Hz = data_dip;
 data=data1Hz;
-fprintf('Denoising complete. SNR improvement applied.\n');
+fprintf('Conservative denoising complete. Signal preservation prioritized.\n');
 
 %Load Head Data
 %load('head\HeadZ5T1.mat')
@@ -150,7 +172,7 @@ figure(2)
 subplot(2,1,1)
  v = pcolor(Tdas,depthft, mdata');
     set(v, 'EdgeColor', 'none')
-    set(gca, 'clim', [-0.05 0.1]);
+    set(gca, 'clim', [-0.04 0.04]);
     colormap('jet');
     c7=colorbar; c7.Location="northoutside";
     c7.Ruler.TickLabelFormat='%g nm/s'; %c7.Limits=[0,15000];

@@ -10,7 +10,7 @@
 
 %% Setup
 script_dir = fileparts(mfilename('fullpath'));
-project_dir = fileparts(script_dir);
+project_dir = fileparts(fileparts(script_dir));  % Go up two levels from _ref/Hannah_2024_08/ to BGWRP/
 data_dir = fullfile(project_dir, 'data');
 
 %% Define recovery time windows (from original analysis files)
