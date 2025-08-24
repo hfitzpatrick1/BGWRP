@@ -14,8 +14,8 @@ config.base_input = 'C:\Coding\BGWRP\data\_BATCH\';
 % config.test_labels = {'a', 'b', 'c'};
 
 %% Decimation Configuration
-config.decimation_factor = 10;   % Light decimation (100Hz → 10Hz)  
-% config.decimation_factor = 100;  % Heavy decimation (100Hz → 1Hz)
+% config.decimation_factor = 10;   % Light decimation (100Hz → 10Hz)  
+config.decimation_factor = 100;  % Heavy decimation (100Hz → 1Hz)
 % config.decimation_factor = 1;    % No decimation (preserve 100Hz)
 % config.decimation_factor = 5;    % Medium decimation (100Hz → 20Hz)
 
@@ -69,7 +69,7 @@ config.save_charts = true;
 % config.chart_output_dir = ''; % Leave empty to use default location
 
 %% Plotting Configuration
-config.dynamic_bounds = false;  % Enable intelligent waterfall color bounds based on data
+config.dynamic_bounds = true;  % Enable intelligent waterfall color bounds based on data
 
 %% Filtering Configuration
 config.apply_concatenation_filter = false;  % Apply post-processing filter to remove file boundary artifacts
