@@ -47,6 +47,31 @@ end
 
 fprintf('Creating plots for tests: %s\n', strjoin(test_labels, ', '));
 
+%% Pre-calculate unified bounds if using related bounds
+unified_bounds = struct();
+if isfield(config, 'use_related_bounds') && config.use_related_bounds && length(test_labels) > 1
+    fprintf('Calculating unified bounds across %d related datasets...\n', length(test_labels));
+    
+    % Collect all DAS data for unified bounds calculation
+    das_data_array = {};
+    for j = 1:length(test_labels)
+        test_label = test_labels{j};
+        if isfield(das_results, test_label) && ~isfield(das_results.(test_label), 'error')
+            das_data_array{end+1} = das_results.(test_label);
+        end
+    end
+    
+    % Calculate unified bounds for each data type
+    if ~isempty(das_data_array)
+        unified_bounds.raw = get_plot_bounds(das_data_array, 'raw', config);
+        unified_bounds.displacement = get_plot_bounds(das_data_array, 'displacement', config);
+        unified_bounds.strain = get_plot_bounds(das_data_array, 'strain', config);
+        fprintf('✓ Unified bounds calculated\n');
+    end
+else
+    fprintf('Using individual bounds for each dataset\n');
+end
+
 %% Create simplified plots for each test (based on PM07_PT01c_Simple.m)
 for i = 1:length(test_labels)
     test_label = test_labels{i};
@@ -111,21 +136,16 @@ for i = 1:length(test_labels)
     v = pcolor(das_data.time_array, das_data.depth_ft, das_data.smoothed_data');
     set(v, 'EdgeColor', 'none');
     
-    % Set color bounds - dynamic or fixed
-
-    if isfield(config, 'dynamic_bounds') && config.dynamic_bounds
-        % Dynamic bounds using percentiles to remove outliers from analysis window
-        analysis_mask = das_data.time_array >= analysis_start & das_data.time_array <= analysis_end;
-        zone_mask = das_data.depth_ft >= das_data.pumping_zone.min_ft & das_data.depth_ft <= das_data.pumping_zone.max_ft;
-        zone_data = das_data.smoothed_data(analysis_mask, zone_mask);
-        lower_bound = prctile(zone_data(:), 5);
-        upper_bound = prctile(zone_data(:), 95);
-        clim([lower_bound upper_bound]);
-        fprintf('    Dynamic raw data bounds: [%.3f, %.3f]\n', lower_bound, upper_bound);
+    % Set color bounds using new utility functions
+    if ~isempty(unified_bounds) && isfield(unified_bounds, 'raw')
+        % Use pre-calculated unified bounds
+        raw_bounds = unified_bounds.raw;
+        clim(raw_bounds);
+        fprintf('    Unified raw data bounds: [%.6f, %.6f]\n', raw_bounds(1), raw_bounds(2));
     else
-        % Fixed bounds from simple script
-        clim([-2 2]);
-        fprintf('    Fixed raw data bounds: [-2, 2]\n');
+        % Calculate individual bounds for this dataset
+        raw_bounds = get_plot_bounds(das_data, 'raw', config);
+        clim(raw_bounds);
     end
     
     colormap('jet');
@@ -159,20 +179,16 @@ for i = 1:length(test_labels)
     v = pcolor(das_data.time_array, das_data.depth_ft, das_data.smoothed_data');
     set(v, 'EdgeColor', 'none');
     
-    % Set displacement rate bounds - dynamic or fixed
-    if isfield(config, 'dynamic_bounds') && config.dynamic_bounds
-        % Dynamic bounds - focus on pumping zone during analysis window
-        analysis_mask = das_data.time_array >= analysis_start & das_data.time_array <= analysis_end;
-        zone_mask = das_data.depth_ft >= das_data.pumping_zone.min_ft & das_data.depth_ft <= das_data.pumping_zone.max_ft;
-        zone_data = das_data.smoothed_data(analysis_mask, zone_mask);
-        lower_bound = prctile(zone_data(:), 10);
-        upper_bound = prctile(zone_data(:), 90);
-        set(gca, 'clim', [lower_bound upper_bound]);
-        fprintf('    Dynamic displacement rate bounds: [%.3f, %.3f] nm/s\n', lower_bound, upper_bound);
+    % Set displacement rate bounds using new utility functions
+    if ~isempty(unified_bounds) && isfield(unified_bounds, 'displacement')
+        % Use pre-calculated unified bounds
+        disp_bounds = unified_bounds.displacement;
+        set(gca, 'clim', disp_bounds);
+        fprintf('    Unified displacement rate bounds: [%.6f, %.6f] nm/s\n', disp_bounds(1), disp_bounds(2));
     else
-        % Fixed bounds from simple script
-        set(gca, 'clim', [-0.25 0.15]);
-        fprintf('    Fixed displacement rate bounds: [-0.25, 0.15] nm/s\n');
+        % Calculate individual bounds for this dataset
+        disp_bounds = get_plot_bounds(das_data, 'displacement', config);
+        set(gca, 'clim', disp_bounds);
     end
     
     colormap('jet');
@@ -270,24 +286,16 @@ for i = 1:length(test_labels)
     v = pcolor(iTdas, das_data.depth_ft, dintdata'/10);  % Divide by 10 like simple script
     set(v, 'EdgeColor', 'none');
     
-    % Set strain bounds - dynamic or fixed
-    if isfield(config, 'dynamic_bounds') && config.dynamic_bounds
-        % Dynamic bounds - symmetric around zero, focus on pumping zone
-        zone_mask = das_data.depth_ft >= das_data.pumping_zone.min_ft & das_data.depth_ft <= das_data.pumping_zone.max_ft;
-        zone_strain = dintdata(:, zone_mask)/10;
-        max_abs = prctile(abs(zone_strain(:)), 95);
-        % Keep symmetric bounds but ensure they make sense for strain (typically negative)
-        if mean(zone_strain(:)) < 0
-            strain_bounds = [-max_abs, max_abs*0.2];  % Allow some positive but emphasize negative
-        else
-            strain_bounds = [-max_abs, max_abs];  % Symmetric if data is mixed
-        end
+    % Set strain bounds using new utility functions
+    if ~isempty(unified_bounds) && isfield(unified_bounds, 'strain')
+        % Use pre-calculated unified bounds
+        strain_bounds = unified_bounds.strain;
         set(gca, 'clim', strain_bounds);
-        fprintf('    Dynamic strain bounds: [%.3f, %.3f] nm/m\n', strain_bounds(1), strain_bounds(2));
+        fprintf('    Unified strain bounds: [%.6f, %.6f] nm/m\n', strain_bounds(1), strain_bounds(2));
     else
-        % Fixed bounds from simple script
-        set(gca, 'clim', [-2 0]);
-        fprintf('    Fixed strain bounds: [-2, 0] nm/m\n');
+        % Calculate individual bounds for this dataset  
+        strain_bounds = get_plot_bounds(das_data, 'strain', config);
+        set(gca, 'clim', strain_bounds);
     end
     
     colormap('jet');

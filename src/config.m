@@ -71,6 +71,14 @@ config.save_charts = true;
 %% Plotting Configuration
 config.dynamic_bounds = true;  % Enable intelligent waterfall color bounds based on data
 
+% Dynamic bounds mode: 'percentile', 'std_dev', 'robust', 'hybrid', 'minmax'
+config.dynamic_bounds_mode = 'percentile';
+
+% Related dataset grouping for consistent bounds across similar tests
+config.use_related_bounds = true;  % Calculate bounds across all datasets being analyzed
+% When true: PT01a, PT01b, PT01c will all use the same color scale for comparison
+% When false: Each dataset gets its own optimized color scale
+
 %% Filtering Configuration
 config.apply_concatenation_filter = false;  % Apply post-processing filter to remove file boundary artifacts
 config.filter_method = 'detrend';  % Filter method: 'none', 'detrend', 'highpass', 'median', 'overlap_smooth'
