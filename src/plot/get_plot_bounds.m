@@ -19,9 +19,13 @@ end
 
 % Check configuration for bounds calculation method
 if ~isfield(config, 'dynamic_bounds') || ~config.dynamic_bounds
-    % Use fixed bounds
-    bounds = get_fixed_bounds(data_type);
-    fprintf('    Fixed %s bounds: [%.3f, %.3f]\n', data_type, bounds(1), bounds(2));
+    % Use fixed bounds (manual or traditional)
+    bounds = get_fixed_bounds(data_type, config);
+    if isfield(config, 'manual_bounds')
+        fprintf('    Manual %s bounds: [%.3f, %.3f]\n', data_type, bounds(1), bounds(2));
+    else
+        fprintf('    Fixed %s bounds: [%.3f, %.3f]\n', data_type, bounds(1), bounds(2));
+    end
     return;
 end
 
@@ -38,8 +42,31 @@ end
 
 end
 
-function bounds = get_fixed_bounds(data_type)
-%GET_FIXED_BOUNDS Return traditional fixed bounds
+function bounds = get_fixed_bounds(data_type, config)
+%GET_FIXED_BOUNDS Return fixed bounds (manual or traditional)
+
+% Check if manual bounds are configured
+if nargin > 1 && isfield(config, 'manual_bounds')
+    switch lower(data_type)
+        case 'raw'
+            if isfield(config.manual_bounds, 'raw')
+                bounds = [config.manual_bounds.raw.min, config.manual_bounds.raw.max];
+                return;
+            end
+        case 'displacement'
+            if isfield(config.manual_bounds, 'displacement')
+                bounds = [config.manual_bounds.displacement.min, config.manual_bounds.displacement.max];
+                return;
+            end
+        case 'strain'
+            if isfield(config.manual_bounds, 'strain')
+                bounds = [config.manual_bounds.strain.min, config.manual_bounds.strain.max];
+                return;
+            end
+    end
+end
+
+% Fall back to traditional fixed bounds
 switch lower(data_type)
     case 'raw'
         bounds = [-2, 2];

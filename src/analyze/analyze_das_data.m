@@ -36,6 +36,12 @@ calibration.PT01b.MperChan = 0.25;
 calibration.PT01b.zone_min_ft = 350;
 calibration.PT01b.zone_max_ft = 400;
 
+% Dynamic default for any dataset name
+calibration.dynamic_default.C1 = 200;
+calibration.dynamic_default.MperChan = 0.25;
+calibration.dynamic_default.zone_min_ft = 200;
+calibration.dynamic_default.zone_max_ft = 400;
+
 %% Analyze DAS data for each test
 for i = 1:length(test_labels)
     test_label = test_labels{i};
@@ -138,20 +144,30 @@ for i = 1:length(test_labels)
         end
     end
     
-    % Get calibration parameters - simple lookup based on test label
-    test_type = 'PT01c';  % Default
-    if contains(upper(test_label), 'PT01A')
-        test_type = 'PT01a';
-    elseif contains(upper(test_label), 'PT01B')
-        test_type = 'PT01b';
+    % Get calibration parameters - try dataset-specific, fallback to dynamic default
+    if isfield(calibration, test_label)
+        cal_params = calibration.(test_label);
+        fprintf('  Using dataset-specific calibration for %s\n', test_label);
+    elseif contains(upper(test_label), 'PT01A')
+        cal_params = calibration.PT01a;
+        fprintf('  Using PT01a calibration for %s\n', test_label);
+    elseif contains(upper(test_label), 'PT01B') 
+        cal_params = calibration.PT01b;
+        fprintf('  Using PT01b calibration for %s\n', test_label);
+    elseif contains(upper(test_label), 'PT01C')
+        cal_params = calibration.PT01c;
+        fprintf('  Using PT01c calibration for %s\n', test_label);
+    else
+        cal_params = calibration.dynamic_default;
+        fprintf('  Using dynamic_default calibration for %s\n', test_label);
     end
     
-    C1 = calibration.(test_type).C1;
-    MperChan = calibration.(test_type).MperChan;
-    zone_min_ft = calibration.(test_type).zone_min_ft;
-    zone_max_ft = calibration.(test_type).zone_max_ft;
+    C1 = cal_params.C1;
+    MperChan = cal_params.MperChan;
+    zone_min_ft = cal_params.zone_min_ft;
+    zone_max_ft = cal_params.zone_max_ft;
     
-    fprintf('  Using %s calibration: C1=%d, MperChan=%.3f\n', test_type, C1, MperChan);
+    fprintf('  Calibration: C1=%d, MperChan=%.3f\n', C1, MperChan);
     
     % Calculate depth array (from simple script)
     channels = 1:size(data1Hz, 2);
@@ -198,7 +214,7 @@ for i = 1:length(test_labels)
             das_results.(test_label).analysis_time = time_array(analysis_mask);
     das_results.(test_label).analysis_strain_rate = smoothed_data(analysis_mask, channel_idx);
             
-    fprintf('  ✓ DAS analysis completed for %s\n', test_type);
+    fprintf('  ✓ DAS analysis completed for %s\n', test_label);
     fprintf('    Representative channel: %d at %.1f ft\n', channel_idx, depth_ft(channel_idx));
             fprintf('    Analysis window: %d data points\n', sum(analysis_mask));
 end

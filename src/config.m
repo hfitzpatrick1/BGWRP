@@ -15,7 +15,7 @@ config.base_input = 'C:\Coding\BGWRP\data\_BATCH\';
 
 %% Decimation Configuration
 % config.decimation_factor = 10;   % Light decimation (100Hz → 10Hz)  
-config.decimation_factor = 100;  % Heavy decimation (100Hz → 1Hz)
+config.decimation_factor = 10;  % Heavy decimation (100Hz → 1Hz)
 % config.decimation_factor = 1;    % No decimation (preserve 100Hz)
 % config.decimation_factor = 5;    % Medium decimation (100Hz → 20Hz)
 
@@ -28,41 +28,35 @@ config.waterfall_display_bounds.max_depth = 665;
 % Universal time windows used for BOTH analysis filtering AND plot display
 % Format: datetime objects in UTC timezone
 
-% PT-01c Recovery Analysis Window (from original PM07_Recovery_Analysis.m)
-config.analysis_windows.PT01c_Recovery.start = datetime(2023,10,24,19,14,00,00,'TimeZone','UTC');
-config.analysis_windows.PT01c_Recovery.end = datetime(2023,10,24,19,18,00,00,'TimeZone','UTC');
+% Current datasets based on actual files in _active directory:
+% PT01a_Recovery_short, PT01b_Recovery_short, PT01c_Recovery_short
 
-config.analysis_windows.PT01c_Full.start = datetime(2023,10,24,19,14,00,00,'TimeZone','UTC');
-config.analysis_windows.PT01c_Full.end = datetime(2023,10,24,19,18,00,00,'TimeZone','UTC');
+% PT-01a Recovery Analysis Window
+config.analysis_windows.PT01a_Recovery_short.start = datetime(2023,11,7,20,44,00,00,'TimeZone','UTC');
+config.analysis_windows.PT01a_Recovery_short.end = datetime(2023,11,7,20,48,00,00,'TimeZone','UTC');
 
-config.analysis_windows.PT01c_Full_New.start = datetime(2023,10,24,19,14,00,00,'TimeZone','UTC');
-config.analysis_windows.PT01c_Full_New.end = datetime(2023,10,24,19,18,00,00,'TimeZone','UTC');
+% PT-01b Recovery Analysis Window  
+config.analysis_windows.PT01b_Recovery_short.start = datetime(2023,10,31,19,29,00,00,'TimeZone','UTC');
+config.analysis_windows.PT01b_Recovery_short.end = datetime(2023,10,31,19,33,00,00,'TimeZone','UTC');
 
-% PT-01a Recovery Analysis Window (uncomment to use)
-% config.analysis_windows.PT01a_Recovery.start = datetime(2023,11,7,20,44,00,00,'TimeZone','UTC');
-% config.analysis_windows.PT01a_Recovery.end = datetime(2023,11,7,20,48,00,00,'TimeZone','UTC');
-
-% PT-01b Recovery Analysis Window (uncomment to use)
-% config.analysis_windows.PT01b_Recovery.start = datetime(2023,10,31,19,29,00,00,'TimeZone','UTC');
-% config.analysis_windows.PT01b_Recovery.end = datetime(2023,10,31,19,33,00,00,'TimeZone','UTC');
+% PT-01c Recovery Analysis Window
+config.analysis_windows.PT01c_Recovery_short.start = datetime(2023,10,24,19,14,00,00,'TimeZone','UTC');
+config.analysis_windows.PT01c_Recovery_short.end = datetime(2023,10,24,19,18,00,00,'TimeZone','UTC');
 
 %% Zone Filtering Configuration (per dataset)
-% Using exact parameters from PM07_Recovery_Analysis.m
+% Updated for actual dataset names and calibrated for data ranges
 
-% PT-01c configurations
-config.waterfall_zones.PT01c_Recovery.min_depth = 260;
-config.waterfall_zones.PT01c_Recovery.max_depth = 310;
+% PT-01a configurations (data range: [-30.2, 41.5])
+config.waterfall_zones.PT01a_Recovery_short.min_depth = 450;
+config.waterfall_zones.PT01a_Recovery_short.max_depth = 510;
 
-config.waterfall_zones.PT01c_Full.min_depth = 260;
-config.waterfall_zones.PT01c_Full.max_depth = 310;
+% PT-01b configurations (data range: [-29.9, 30.3])  
+config.waterfall_zones.PT01b_Recovery_short.min_depth = 350;
+config.waterfall_zones.PT01b_Recovery_short.max_depth = 400;
 
-% PT-01a configurations (uncomment to use)
-% config.waterfall_zones.PT01a_Recovery.min_depth = 450;
-% config.waterfall_zones.PT01a_Recovery.max_depth = 510;
-
-% PT-01b configurations (uncomment to use)
-% config.waterfall_zones.PT01b_Recovery.min_depth = 350;
-% config.waterfall_zones.PT01b_Recovery.max_depth = 400;
+% PT-01c configurations (data range: [-26.3, 25.2])
+config.waterfall_zones.PT01c_Recovery_short.min_depth = 260;
+config.waterfall_zones.PT01c_Recovery_short.max_depth = 310;
 
 %% Chart Saving Configuration
 config.save_charts = true;
@@ -78,6 +72,21 @@ config.dynamic_bounds_mode = 'std_dev';
 config.use_related_bounds = false;  % Calculate bounds across all datasets being analyzed
 % When true: PT01a, PT01b, PT01c will all use the same color scale for comparison
 % When false: Each dataset gets its own optimized color scale
+
+%% Manual Plot Bounds (used when dynamic_bounds = false)
+% Based on discovered data ranges: PT01a [-30.2, 41.5], PT01b [-29.9, 30.3], PT01c [-26.3, 25.2]
+
+% Raw data bounds (conservative range covering all datasets)
+config.manual_bounds.raw.min = -35;
+config.manual_bounds.raw.max = 45;
+
+% Displacement rate bounds (more focused)
+config.manual_bounds.displacement.min = -0.35;
+config.manual_bounds.displacement.max = 0.25;
+
+% Strain bounds (typically negative accumulation)
+config.manual_bounds.strain.min = -3;
+config.manual_bounds.strain.max = 1;
 
 %% Filtering Configuration
 config.apply_concatenation_filter = false;  % Apply post-processing filter to remove file boundary artifacts

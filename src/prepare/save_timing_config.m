@@ -72,41 +72,15 @@ function write_dataset_parameters(fid, source_folder)
 %WRITE_DATASET_PARAMETERS Write dataset-specific parameters
 
 fprintf(fid, '\n%% Dataset-Specific Parameters\n');
+fprintf(fid, '%% Auto-detected parameters for: %s\n', source_folder);
 
-% Determine dataset type from folder name
-folder_upper = upper(source_folder);
+% Use dynamic defaults - no hardcoded naming patterns
+fprintf(fid, 'timing_config.head_timing_adjustment = 0;   %% seconds\n');
+fprintf(fid, 'timing_config.das_timing_adjustment = 0;    %% seconds\n');
+fprintf(fid, 'timing_config.C1 = 200;  %% Dynamic default\n');
+fprintf(fid, 'timing_config.pumping_zone_min_ft = 200;\n');
+fprintf(fid, 'timing_config.pumping_zone_max_ft = 400;\n');
 
-if contains(folder_upper, 'PT01C') || contains(folder_upper, '_C')
-    fprintf(fid, '%% PT-01c specific parameters\n');
-    fprintf(fid, 'timing_config.head_timing_adjustment = 10;  %% seconds\n');
-    fprintf(fid, 'timing_config.das_timing_adjustment = 90;   %% seconds\n');
-    fprintf(fid, 'timing_config.C1 = 110;\n');
-    fprintf(fid, 'timing_config.pumping_zone_min_ft = 260;\n');
-    fprintf(fid, 'timing_config.pumping_zone_max_ft = 310;\n');
-    
-elseif contains(folder_upper, 'PT01A') || contains(folder_upper, '_A')
-    fprintf(fid, '%% PT-01a specific parameters\n');
-    fprintf(fid, 'timing_config.head_timing_adjustment = 0;   %% seconds\n');
-    fprintf(fid, 'timing_config.das_timing_adjustment = 0;    %% seconds\n');
-    fprintf(fid, 'timing_config.C1 = 513;\n');
-    fprintf(fid, 'timing_config.pumping_zone_min_ft = 450;\n');
-    fprintf(fid, 'timing_config.pumping_zone_max_ft = 510;\n');
-    
-elseif contains(folder_upper, 'PT01B') || contains(folder_upper, '_B')
-    fprintf(fid, '%% PT-01b specific parameters\n');
-    fprintf(fid, 'timing_config.head_timing_adjustment = 0;   %% seconds\n');
-    fprintf(fid, 'timing_config.das_timing_adjustment = 120;  %% seconds\n');
-    fprintf(fid, 'timing_config.C1 = 513;\n');
-    fprintf(fid, 'timing_config.pumping_zone_min_ft = 350;\n');
-    fprintf(fid, 'timing_config.pumping_zone_max_ft = 400;\n');
-    
-else
-    fprintf(fid, '%% Default parameters (test dataset)\n');
-    fprintf(fid, 'timing_config.head_timing_adjustment = 0;   %% seconds\n');
-    fprintf(fid, 'timing_config.das_timing_adjustment = 0;    %% seconds\n');
-    fprintf(fid, 'timing_config.C1 = 140;  %% Updated for test_c dataset\n');
-    fprintf(fid, 'timing_config.pumping_zone_min_ft = 260;\n');
-    fprintf(fid, 'timing_config.pumping_zone_max_ft = 310;\n');
-end
+fprintf(fid, '\n%% Note: Adjust parameters in config.m if needed\n');
 
 end

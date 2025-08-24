@@ -559,16 +559,8 @@ end
 for i = 1:length(input_folders)
     folder_name = input_folders{i};
     
-    % Determine test label from folder name
-    if contains(folder_name, 'PT01a') || contains(folder_name, 'a')
-        test_label = 'a';
-    elseif contains(folder_name, 'PT01b') || contains(folder_name, 'b')
-        test_label = 'b';
-    elseif contains(folder_name, 'PT01c') || contains(folder_name, 'c')
-        test_label = 'c';
-    else
-        test_label = sprintf('test%d', i);
-    end
+    % Use actual folder name as test label - no hardcoded patterns
+    test_label = folder_name;
     
     fprintf('Extracting timing for folder %s (label: %s)...\n', folder_name, test_label);
     
@@ -681,10 +673,7 @@ end
         if exist('workspace_info', 'var') && isfield(workspace_info, 'input_folders')
             for j = 1:length(workspace_info.input_folders)
                 folder_name = workspace_info.input_folders{j};
-                if contains(folder_name, test_label) || ...
-                   (strcmp(test_label, 'a') && contains(folder_name, 'PT01a')) || ...
-                   (strcmp(test_label, 'b') && contains(folder_name, 'PT01b')) || ...
-                   (strcmp(test_label, 'c') && contains(folder_name, 'PT01c'))
+                if strcmp(test_label, folder_name)
                     source_folder = folder_name;
                     break;
                 end
@@ -692,7 +681,7 @@ end
         end
         
         if isempty(source_folder)
-            source_folder = sprintf('test_%s', test_label);
+            source_folder = test_label;  % Use test_label directly (which is now the folder name)
         end
         
         % Save as MATLAB function instead of MAT/TXT files
@@ -1102,8 +1091,8 @@ if exist(active_dir, 'dir')
         fprintf('Active datasets:\n');
         for i = 1:length(dataset_dirs)
             dataset_name = dataset_dirs(i).name;
-            data_file = sprintf('%s_1Hz.mat', dataset_name);
-            timing_file = sprintf('timing_%s.txt', dataset_name);
+            data_file = sprintf('Dataset_%s_1Hz.mat', dataset_name);
+            timing_file = sprintf('get_timing_%s.m', dataset_name);
             
             data_path = fullfile(active_dir, dataset_name, data_file);
             timing_path = fullfile(active_dir, dataset_name, timing_file);
@@ -1149,4 +1138,8 @@ if exist('workspace_info', 'var') && isfield(workspace_info, 'archive_function')
     workspace_info.archive_function();
 end
 
-fprintf('\nReady for analysis!\n');
+if strcmp(mode, 'analyze') || strcmp(mode, 'analyze_timing')
+    fprintf('\nAnalysis complete!\n');
+else
+    fprintf('\nReady for analysis!\n');
+end

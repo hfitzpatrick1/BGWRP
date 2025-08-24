@@ -136,6 +136,25 @@ for i = 1:length(test_labels)
     v = pcolor(das_data.time_array, das_data.depth_ft, das_data.smoothed_data');
     set(v, 'EdgeColor', 'none');
     
+    % Overlay head data if available
+    if ~isempty(head_data) && isfield(head_data, 'zones')
+        hold on;
+        zone_names = fieldnames(head_data.zones);
+        for z = 1:length(zone_names)
+            zone_data = head_data.zones.(zone_names{z});
+            if isfield(zone_data, 'Depthft') && isfield(zone_data, 'avg_recovery_rate') && ~isnan(zone_data.avg_recovery_rate)
+                % Plot head data as colored markers
+                depth_ft = zone_data.Depthft;
+                recovery_rate = zone_data.avg_recovery_rate * 1000; % Convert to similar scale
+                scatter(das_data.time_array(end-50), depth_ft, 100, recovery_rate, 'filled', 'MarkerEdgeColor', 'black');
+                % Add label
+                text(das_data.time_array(end-40), depth_ft, sprintf('%.1e', zone_data.avg_recovery_rate), ...
+                     'FontSize', 8, 'Color', 'white', 'HorizontalAlignment', 'left');
+            end
+        end
+        hold off;
+    end
+    
     % Set color bounds using new utility functions
     if ~isempty(unified_bounds) && isfield(unified_bounds, 'raw')
         % Use pre-calculated unified bounds

@@ -78,16 +78,23 @@ for i = 1:length(test_labels)
     analysis_results.(test_label).timing.end = analysis_end;
     analysis_results.(test_label).timing.duration_minutes = analysis_duration;
     
-    % Simple head file pattern determination
-    test_type = 'c';  % Default PT01c
-    if contains(upper(test_label), 'PT01A')
-        test_type = 'a';
-    elseif contains(upper(test_label), 'PT01B')
-        test_type = 'b';
-    end
+    % Dynamic head file pattern - try multiple patterns for this dataset
+    possible_patterns = {
+        sprintf('head_%s_z*.mat', lower(test_label)),  % head_test_z*.mat
+        'head_*_z*.mat',                               % head_a_z*.mat, head_b_z*.mat, etc.
+        'head_z*.mat'                                  % generic head_z*.mat
+    };
     
-    head_pattern = sprintf('head_%s_z*.mat', test_type);
-    head_files = dir(fullfile(head_data_dir, head_pattern));
+    head_files = [];
+    head_pattern = '';
+    for p = 1:length(possible_patterns)
+        temp_files = dir(fullfile(head_data_dir, possible_patterns{p}));
+        if ~isempty(temp_files)
+            head_files = temp_files;
+            head_pattern = possible_patterns{p};
+            break;
+        end
+    end
     
     fprintf('  Looking for head data files: %s\n', head_pattern);
     if ~isempty(head_files)
@@ -113,11 +120,9 @@ for i = 1:length(test_labels)
                         Drawdownft = head_data.Drawdownft;
                         Depthft = head_data.Depthft;
                         
-                        % Apply timing adjustment for PT01c (simplified approach)
-                        if strcmp(test_type, 'c')
-                            Date = Date + seconds(10);  % Fixed 10 second adjustment for PT01c
-                            fprintf('      Applied PT01c timing adjustment: +10 seconds\n');
-                        end
+                        % Apply timing adjustment based on dataset (if configured)
+                        % Note: No hardcoded adjustments - should be configured per dataset
+                        % if needed in config.m or timing configuration files
                         Date.TimeZone = 'UTC';
                         
                         % Store raw data
