@@ -83,9 +83,17 @@ for i = 1:length(test_labels)
     
     fprintf('  Loading DAS data: %s\n', das_filepath);
     
-    % Load DAS data (following PM07_PT01c_Simple.m approach)
-    load(das_filepath, 'decdata');
-    data1Hz = decdata;  % Use naming from simple script
+    % Load DAS data (handle both decimated and full-resolution data)
+    loaded_data = load(das_filepath);
+    if isfield(loaded_data, 'decdata')
+        data1Hz = loaded_data.decdata;
+        fprintf('  Loaded decimated data: [%d x %d]\n', size(data1Hz, 1), size(data1Hz, 2));
+    elseif isfield(loaded_data, 'fulldata')
+        data1Hz = loaded_data.fulldata;
+        fprintf('  Loaded full-resolution data: [%d x %d]\n', size(data1Hz, 1), size(data1Hz, 2));
+    else
+        error('No valid data variable found. Expected ''decdata'' or ''fulldata''');
+    end
     
     % Apply concatenation artifact filtering if enabled
     if isfield(config, 'apply_concatenation_filter') && config.apply_concatenation_filter
