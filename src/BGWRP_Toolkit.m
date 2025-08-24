@@ -722,39 +722,48 @@ end
 if isfield(config, 'run_boundary_diagnostic') && config.run_boundary_diagnostic
     fprintf('\n=== STEP 4: FILE BOUNDARY DIAGNOSTIC ===\n');
     
+    % Use unified dataset discovery for active (processed) datasets
+    try
+        dataset_info = discover_datasets(config.base_input, 'active');
+        fprintf('Discovered %d processed datasets for boundary diagnostic\n', length(dataset_info.datasets));
+    catch ME
+        fprintf('✗ Active dataset discovery failed: %s\n', ME.message);
+        fprintf('Cannot proceed with boundary diagnostic\n');
+        return;
+    end
+    
     % Load timing configs for diagnostic
     timing_config = struct();
-    active_base = fullfile(config.base_input, '_active');
     
-    if exist(active_base, 'dir')
-        dataset_dirs = dir(active_base);
-        dataset_dirs = dataset_dirs([dataset_dirs.isdir] & ~startsWith({dataset_dirs.name}, '.'));
+    for i = 1:length(dataset_info.datasets)
+        dataset_name = dataset_info.datasets{i};
+        dataset_dir = dataset_info.paths{i};
         
-        for i = 1:length(dataset_dirs)
-            dataset_name = dataset_dirs(i).name;
-            dataset_dir = fullfile(active_base, dataset_name);
-            
-            % Find .mat file
-            mat_files = dir(fullfile(dataset_dir, '*.mat'));
-            m_files = dir(fullfile(dataset_dir, '*.m'));
-            
-            if length(m_files) == 1 && length(mat_files) == 1
-                % Load timing config
-                [~, func_name, ~] = fileparts(m_files(1).name);
-                addpath(dataset_dir);
-                try
-                    loaded_config = feval(func_name);
-                    timing_config.(dataset_name) = loaded_config;
-                    
-                    % Run boundary diagnostic
-                    data_filepath = fullfile(dataset_dir, mat_files(1).name);
-                    diagnose_file_boundaries(dataset_name, data_filepath, loaded_config);
-                    
-                catch ME
-                    fprintf('Error in diagnostic for %s: %s\n', dataset_name, ME.message);
-                end
-                rmpath(dataset_dir);
+        fprintf('Processing dataset: %s\n', dataset_name);
+        
+        % Find .mat file and timing config file
+        mat_files = dir(fullfile(dataset_dir, '*.mat'));
+        m_files = dir(fullfile(dataset_dir, 'get_timing_*.m'));
+        
+        if length(m_files) == 1 && length(mat_files) == 1
+            % Load timing config
+            [~, func_name, ~] = fileparts(m_files(1).name);
+            addpath(dataset_dir);
+            try
+                loaded_config = feval(func_name);
+                timing_config.(dataset_name) = loaded_config;
+                
+                % Run boundary diagnostic
+                data_filepath = fullfile(dataset_dir, mat_files(1).name);
+                diagnose_file_boundaries(dataset_name, data_filepath, loaded_config);
+                
+            catch ME
+                fprintf('Error in diagnostic for %s: %s\n', dataset_name, ME.message);
             end
+            rmpath(dataset_dir);
+        else
+            fprintf('⚠ Skipping %s: Expected 1 MAT file and 1 timing config, found %d MAT, %d timing configs\n', ...
+                dataset_name, length(mat_files), length(m_files));
         end
     end
     
@@ -765,39 +774,48 @@ end
 if isfield(config, 'run_enhanced_diagnostic') && config.run_enhanced_diagnostic
     fprintf('\n=== STEP 4B: ENHANCED BOUNDARY DIAGNOSTIC ===\n');
     
+    % Use unified dataset discovery for active (processed) datasets
+    try
+        dataset_info = discover_datasets(config.base_input, 'active');
+        fprintf('Discovered %d processed datasets for enhanced diagnostic\n', length(dataset_info.datasets));
+    catch ME
+        fprintf('✗ Active dataset discovery failed: %s\n', ME.message);
+        fprintf('Cannot proceed with enhanced diagnostic\n');
+        return;
+    end
+    
     % Load timing configs for enhanced diagnostic
     timing_config = struct();
-    active_base = fullfile(config.base_input, '_active');
     
-    if exist(active_base, 'dir')
-        dataset_dirs = dir(active_base);
-        dataset_dirs = dataset_dirs([dataset_dirs.isdir] & ~startsWith({dataset_dirs.name}, '.'));
+    for i = 1:length(dataset_info.datasets)
+        dataset_name = dataset_info.datasets{i};
+        dataset_dir = dataset_info.paths{i};
         
-        for i = 1:length(dataset_dirs)
-            dataset_name = dataset_dirs(i).name;
-            dataset_dir = fullfile(active_base, dataset_name);
-            
-            % Find .mat file
-            mat_files = dir(fullfile(dataset_dir, '*.mat'));
-            m_files = dir(fullfile(dataset_dir, '*.m'));
-            
-            if length(m_files) == 1 && length(mat_files) == 1
-                % Load timing config
-                [~, func_name, ~] = fileparts(m_files(1).name);
-                addpath(dataset_dir);
-                try
-                    loaded_config = feval(func_name);
-                    timing_config.(dataset_name) = loaded_config;
-                    
-                    % Run enhanced boundary diagnostic
-                    data_filepath = fullfile(dataset_dir, mat_files(1).name);
-                    diagnose_boundaries_enhanced(dataset_name, data_filepath, loaded_config);
-                    
-                catch ME
-                    fprintf('Error in enhanced diagnostic for %s: %s\n', dataset_name, ME.message);
-                end
-                rmpath(dataset_dir);
+        fprintf('Processing dataset: %s\n', dataset_name);
+        
+        % Find .mat file and timing config file
+        mat_files = dir(fullfile(dataset_dir, '*.mat'));
+        m_files = dir(fullfile(dataset_dir, 'get_timing_*.m'));
+        
+        if length(m_files) == 1 && length(mat_files) == 1
+            % Load timing config
+            [~, func_name, ~] = fileparts(m_files(1).name);
+            addpath(dataset_dir);
+            try
+                loaded_config = feval(func_name);
+                timing_config.(dataset_name) = loaded_config;
+                
+                % Run enhanced boundary diagnostic
+                data_filepath = fullfile(dataset_dir, mat_files(1).name);
+                diagnose_boundaries_enhanced(dataset_name, data_filepath, loaded_config);
+                
+            catch ME
+                fprintf('Error in enhanced diagnostic for %s: %s\n', dataset_name, ME.message);
             end
+            rmpath(dataset_dir);
+        else
+            fprintf('⚠ Skipping %s: Expected 1 MAT file and 1 timing config, found %d MAT, %d timing configs\n', ...
+                dataset_name, length(mat_files), length(m_files));
         end
     end
     
@@ -808,31 +826,27 @@ end
 if isfield(config, 'run_tdms_metadata_diagnostic') && config.run_tdms_metadata_diagnostic
     fprintf('\n=== STEP 4C: TDMS METADATA DIAGNOSTIC ===\n');
     
-    % Use the same directory discovery logic as Step 1 TDMS conversion
-    if exist('workspace_info', 'var') && isfield(workspace_info, 'input_folders')
-        folders_to_process = workspace_info.input_folders;
-    else
-        folders_to_process = config.test_directories;
+    % Use unified dataset discovery for consistent behavior
+    try
+        dataset_info = discover_datasets(config.base_input, 'raw');
+        folders_to_process = dataset_info.datasets;
+        fprintf('Discovered %d datasets for TDMS diagnostic\n', length(folders_to_process));
+    catch ME
+        fprintf('✗ Dataset discovery failed: %s\n', ME.message);
+        fprintf('Cannot proceed with TDMS diagnostic\n');
+        folders_to_process = {};
     end
     
     for i = 1:length(folders_to_process)
         current_folder = folders_to_process{i};
         fprintf('\n--- Processing %s ---\n', current_folder);
         
-        % Read TDMS files from original input directory (same as Step 1)
-        tdms_directory = fullfile(config.base_input, current_folder);
+        % Get directory path from discovery results
+        tdms_directory = dataset_info.paths{i};
         
-        % Verify input directory exists
-        if ~exist(tdms_directory, 'dir')
-            fprintf('⚠ Directory not found: %s\n', tdms_directory);
-            continue;
-        end
-        
-        % Check files
-        files = dir(fullfile(tdms_directory, '*.tdms'));
-        fprintf('Found %d TDMS files\n', length(files));
-        if length(files) == 0
-            fprintf('⚠ No TDMS files found, skipping\n');
+        % Check if this dataset has TDMS files
+        if strcmp(dataset_info.types{i}, 'mat')
+            fprintf('⚠ Skipping %s: Only MAT files found, no TDMS metadata available\n', current_folder);
             continue;
         end
         
