@@ -135,9 +135,8 @@ for i = 1:length(test_labels)
         return;
     end
     
-    % Use pcolor with time arrays like other plots (consistent approach)
-    v = pcolor(das_data.time_array, das_data.depth_ft, das_data.smoothed_data');
-    set(v, 'EdgeColor', 'none');
+    % Apply configurable plotting method to test pixelation sources
+    v = apply_plot_config(das_data.time_array, das_data.depth_ft, das_data.smoothed_data', config, 'waterfall');
     
     % Overlay head data if available
     if ~isempty(head_data) && isfield(head_data, 'zones')
@@ -170,7 +169,16 @@ for i = 1:length(test_labels)
         clim(raw_bounds);
     end
     
-    colormap('jet');
+    % Colormap is set by apply_plot_config, but ensure consistency for colorbar
+    if isfield(config, 'colormap_name') && isfield(config, 'colormap_resolution')
+        if config.colormap_resolution == 256
+            colormap(config.colormap_name);
+        else
+            colormap(feval(config.colormap_name, config.colormap_resolution));
+        end
+    else
+        colormap('jet'); % Fallback
+    end
     c1 = colorbar;
     c1.Location = "northoutside";
     c1.Ruler.TickLabelFormat = '%g nm/s';
@@ -198,8 +206,8 @@ for i = 1:length(test_labels)
     clf;
     
     subplot(2,1,1);
-    v = pcolor(das_data.time_array, das_data.depth_ft, das_data.smoothed_data');
-    set(v, 'EdgeColor', 'none');
+    % Apply configurable plotting method to test pixelation sources
+    v = apply_plot_config(das_data.time_array, das_data.depth_ft, das_data.smoothed_data', config, 'waterfall');
     
     % Set displacement rate bounds using new utility functions
     if ~isempty(unified_bounds) && isfield(unified_bounds, 'displacement')
@@ -213,7 +221,16 @@ for i = 1:length(test_labels)
         set(gca, 'clim', disp_bounds);
     end
     
-    colormap('jet');
+    % Colormap is set by apply_plot_config, but ensure consistency for colorbar
+    if isfield(config, 'colormap_name') && isfield(config, 'colormap_resolution')
+        if config.colormap_resolution == 256
+            colormap(config.colormap_name);
+        else
+            colormap(feval(config.colormap_name, config.colormap_resolution));
+        end
+    else
+        colormap('jet'); % Fallback
+    end
     c7 = colorbar; 
     c7.Location = "northoutside";
     c7.Ruler.TickLabelFormat = '%g nm/s';
@@ -352,8 +369,8 @@ for i = 1:length(test_labels)
     end
     
     subplot(2,1,1);
-    v = pcolor(iTdas, das_data.depth_ft, dintdata'/10);  % Divide by 10 like simple script
-    set(v, 'EdgeColor', 'none');
+    % Apply configurable plotting method to test pixelation sources
+    v = apply_plot_config(iTdas, das_data.depth_ft, dintdata'/10, config, 'waterfall');
     
     % Set strain bounds using actual plotted data (dintdata/10)
     if ~isempty(unified_bounds) && isfield(unified_bounds, 'strain')
@@ -393,7 +410,16 @@ for i = 1:length(test_labels)
         end
     end
     
-    colormap('jet');
+    % Colormap is set by apply_plot_config, but ensure consistency for colorbar
+    if isfield(config, 'colormap_name') && isfield(config, 'colormap_resolution')
+        if config.colormap_resolution == 256
+            colormap(config.colormap_name);
+        else
+            colormap(feval(config.colormap_name, config.colormap_resolution));
+        end
+    else
+        colormap('jet'); % Fallback
+    end
     c7 = colorbar; 
     c7.Location = "northoutside";
     c7.Ruler.TickLabelFormat = '%g nm/m';

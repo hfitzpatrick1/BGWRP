@@ -19,7 +19,13 @@ das_results.tests = test_labels;
 das_results.timing = timing_config;
 
 %% Simple DAS parameters (based on PM07_PT01c_Simple.m approach)
-smooth_window = 10;
+% Configurable smoothing parameters
+default_smooth_window = 10;
+if isfield(config, 'smoothing_window_factor')
+    smooth_window = round(default_smooth_window * config.smoothing_window_factor);
+else
+    smooth_window = default_smooth_window;
+end
 
 % Simple calibration lookup table
 calibration = struct();
@@ -178,8 +184,34 @@ for i = 1:length(test_labels)
     n_samples = size(data1Hz, 1);
             time_array = data_start + seconds(0:n_samples-1);
             
-    % Apply smoothing (from simple script approach)
-    smoothed_data = movmean(data1Hz, smooth_window, 1);
+    % Apply configurable smoothing (from simple script approach)
+    if isfield(config, 'disable_analysis_smoothing') && config.disable_analysis_smoothing
+        fprintf('  Smoothing disabled by config\n');
+        smoothed_data = data1Hz;  % No smoothing
+    else
+        % Apply smoothing based on config
+        smoothing_method = 'movmean';
+        if isfield(config, 'smoothing_method')
+            smoothing_method = config.smoothing_method;
+        end
+        
+        switch lower(smoothing_method)
+            case 'movmean'
+                smoothed_data = movmean(data1Hz, smooth_window, 1);
+            case 'movmedian'
+                smoothed_data = movmedian(data1Hz, smooth_window, 1);
+            case 'gaussian'
+                % Gaussian smoothing
+                sigma = smooth_window / 3;  % Convert window to sigma
+                smoothed_data = imgaussfilt(data1Hz, sigma);
+            case 'none'
+                smoothed_data = data1Hz;  % No smoothing
+            otherwise
+                fprintf('  Warning: Unknown smoothing method %s, using movmean\n', smoothing_method);
+                smoothed_data = movmean(data1Hz, smooth_window, 1);
+        end
+        fprintf('  Applied %s smoothing (window: %d)\n', smoothing_method, smooth_window);
+    end
     
     % DEBUG: Check data after smoothing
     fprintf('  DEBUG: After smoothing data range: [%.3f, %.3f]\n', min(smoothed_data(:)), max(smoothed_data(:)));

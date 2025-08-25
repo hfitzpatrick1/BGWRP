@@ -14,8 +14,8 @@ config.base_input = 'C:\Coding\BGWRP\data\_BATCH\';
 % config.test_labels = {'a', 'b', 'c'};
 
 %% Decimation Configuration
-% config.decimation_factor = 10;   % Light decimation (100Hz → 10Hz)  
-config.decimation_factor = 100;  % Heavy decimation (100Hz → 1Hz)
+config.decimation_factor = 10;   % Light decimation (100Hz → 10Hz) - TEST GRID PATTERN
+% config.decimation_factor = 100;  % Heavy decimation (100Hz → 1Hz)
 % config.decimation_factor = 1;    % No decimation (preserve 100Hz)
 % config.decimation_factor = 5;    % Medium decimation (100Hz → 20Hz)
 
@@ -72,6 +72,58 @@ config.dynamic_bounds_mode = 'std_dev';
 config.use_related_bounds = false;  % Calculate bounds across all datasets being analyzed
 % When true: PT01a, PT01b, PT01c will all use the same color scale for comparison
 % When false: Each dataset gets its own optimized color scale
+
+%% Pixelation Testing Configuration
+% Systematic settings to isolate pixelation sources - change one at a time for testing
+
+% Visualization Method Testing (Priority 1 - Most Likely)
+config.plot_method = 'pcolor';          % 'pcolor', 'imagesc', 'surf', 'contourf'
+config.shading_method = 'interp';       % 'interp', 'flat', 'faceted'
+config.edge_display = 'none';           % 'none', 'black', 'white' (for surf method)
+
+% Colormap Testing (Priority 4 - Visual)
+config.colormap_name = 'jet';           % 'jet', 'turbo', 'parula', 'viridis', 'hot'
+config.colormap_resolution = 256;       % 64, 128, 256, 512, 1024 (color steps)
+
+% Data Smoothing Testing (Priority 2 - Processing)
+config.disable_analysis_smoothing = false;    % true = skip all smoothing in analyze_das_data.m
+config.smoothing_method = 'movmean';           % 'movmean', 'movmedian', 'gaussian', 'none'
+config.smoothing_window_factor = 1.0;         % 0.5, 1.0, 2.0 (multiplier for default window size)
+
+% Precision Testing (Priority 5 - Data Type)
+config.force_double_precision = false;        % true = force double precision throughout
+
+% Advanced Testing Options
+config.interpolation_method = 'linear';       % 'linear', 'nearest', 'cubic' (for imagesc/contourf)
+config.anti_aliasing = false;                  % false = disable anti-aliasing if supported
+
+%% Quick Test Configurations (uncomment ONE set to test)
+% Uncomment one of these sections for systematic pixelation testing:
+
+% TEST 1A: Replace pcolor with imagesc (most likely fix)
+% config.plot_method = 'imagesc';
+% config.shading_method = 'flat';
+
+% TEST 1B: Try surf method with sharp edges
+% config.plot_method = 'surf';
+% config.shading_method = 'flat';
+% config.edge_display = 'none';
+
+% TEST 1C: Sharp pcolor with no interpolation
+% config.plot_method = 'pcolor';
+% config.shading_method = 'flat';
+
+% TEST 2A: Disable all smoothing (test if smoothing causes pixelation)
+% config.disable_analysis_smoothing = true;
+
+% TEST 2B: Reduce smoothing window
+% config.smoothing_window_factor = 0.5;
+
+% TEST 3A: Fixed bounds instead of dynamic
+% config.dynamic_bounds = false;
+
+% TEST 4A: High resolution colormap (test if color quantization causes grid)
+config.colormap_resolution = 1024;
 
 %% Manual Plot Bounds (used when dynamic_bounds = false)
 % Based on discovered data ranges: PT01a [-30.2, 41.5], PT01b [-29.9, 30.3], PT01c [-26.3, 25.2]

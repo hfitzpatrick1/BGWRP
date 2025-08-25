@@ -97,9 +97,19 @@ if exist('mode', 'var') && ischar(mode)
             % Reset filtering options to defaults
             config.apply_concatenation_filter = false;
             config.filter_method = 'none';
-            % Reset diagnostic options to defaults
+            
+        case 'diagnostic_quantization'
+            % Quantization analysis diagnostic mode
+            config.run_tdms_conversion = false;
+            config.run_concatenation = false;
+            config.run_timing_extraction = false;
+            config.run_data_analysis = false;
+            config.save_charts = false;
+            config.run_quantization_analysis = true;
+            % Reset other diagnostic options to defaults
             config.run_boundary_diagnostic = false;
             config.run_enhanced_diagnostic = false;
+            fprintf('Diagnostic mode: quantization analysis\n');
             
         case 'run_detrend'
             % Analysis mode with detrend filtering
@@ -1204,6 +1214,46 @@ if config.run_data_analysis && exist('plot_results', 'var')
     if plot_results.save_enabled && ~isempty(plot_results.figures_created)
         fprintf('  ✓ Charts saved: %d files\n', length(plot_results.figures_created));
     end
+end
+
+%% Step 6: Quantization Analysis (if enabled)
+if isfield(config, 'run_quantization_analysis') && config.run_quantization_analysis
+    fprintf('\n=== STEP 6: QUANTIZATION ANALYSIS ===\n');
+    
+    % Look for processed datasets in _concatenated directory
+    concatenated_dir = fullfile(config.base_input, '_concatenated');
+    if exist(concatenated_dir, 'dir')
+        items = dir(concatenated_dir);
+        datasets = {};
+        for i = 1:length(items)
+            if items(i).isdir && ~startsWith(items(i).name, '.')
+                % Check if it has a 1Hz MAT file
+                mat_file = fullfile(concatenated_dir, items(i).name, sprintf('Dataset_%s_1Hz.mat', items(i).name));
+                if exist(mat_file, 'file')
+                    datasets{end+1} = items(i).name;
+                end
+            end
+        end
+        
+        if ~isempty(datasets)
+            fprintf('Found %d datasets with processed 1Hz data:\n', length(datasets));
+            for i = 1:length(datasets)
+                dataset_name = datasets{i};
+                fprintf('  %d. %s\n', i, dataset_name);
+                try
+                    analyze_quantization(dataset_name);
+                catch ME
+                    fprintf('✗ Quantization analysis failed for %s: %s\n', dataset_name, ME.message);
+                end
+            end
+        else
+            fprintf('No datasets with 1Hz data found in _concatenated directory\n');
+        end
+    else
+        fprintf('_concatenated directory not found: %s\n', concatenated_dir);
+    end
+    
+    fprintf('=== QUANTIZATION ANALYSIS COMPLETE ===\n');
 end
 
 %% Archive processed directories (selective mode only)
