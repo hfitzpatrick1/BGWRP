@@ -623,12 +623,12 @@ for i = 1:length(input_folders)
     
     fprintf('Extracting timing for folder %s (label: %s)...\n', folder_name, test_label);
     
-    % Look for TDMS files in original input folder first
-    tdms_directory = fullfile(config.base_input, folder_name);
+    % Look for TDMS files in original input folder _das subdirectory
+    tdms_directory = fullfile(config.base_input, folder_name, '_das');
     fprintf('  🔍 Checking primary directory: %s\n', tdms_directory);
     if ~exist(tdms_directory, 'dir')
         % Try organized workspace location
-        tdms_directory = fullfile(config.base_input, '_tdms_to_mat', folder_name);
+        tdms_directory = fullfile(config.base_input, '_tdms_to_mat', folder_name, '_das');
         fprintf('  🔍 Primary not found, trying workspace: %s\n', tdms_directory);
     else
         fprintf('  ✓ Primary directory exists\n');
@@ -749,23 +749,24 @@ end
         
         % Configuration now saved as MATLAB function only
         
-        % Also copy to _active/<source_folder>/ for dataset-specific analysis
+        % Also copy to _active/<source_folder>/_das_timing/ for dataset-specific analysis
         if ~isempty(source_folder)
             active_dataset_dir = fullfile(config.base_input, '_active', source_folder);
-            if ~exist(active_dataset_dir, 'dir')
-                mkdir(active_dataset_dir);
+            active_timing_dir = fullfile(active_dataset_dir, '_das_timing');
+            if ~exist(active_timing_dir, 'dir')
+                mkdir(active_timing_dir);
             end
             
-            % Copy the MATLAB timing function
+            % Copy the MATLAB timing function to _das_timing subdirectory
             func_filename = sprintf('get_timing_%s.m', source_folder);
-            active_func_filepath = fullfile(active_dataset_dir, func_filename);
+            active_func_filepath = fullfile(active_timing_dir, func_filename);
             source_func_filepath = fullfile(configs_dir, func_filename);
             
             if exist(source_func_filepath, 'file')
                 copyfile(source_func_filepath, active_func_filepath);
             end
             
-            fprintf('✓ Copied configs to _active/%s/\n', source_folder);
+            fprintf('✓ Copied configs to _active/%s/_das_timing/\n', source_folder);
         end
     end
     
@@ -956,25 +957,35 @@ if config.run_data_analysis
                 dataset_name = dataset_dirs(i).name;
                 dataset_dir = fullfile(active_base, dataset_name);
                 
-                % Find any .m file (timing config) and any .mat file (data) in directory
-                m_files = dir(fullfile(dataset_dir, '*.m'));
-                mat_files = dir(fullfile(dataset_dir, '*.mat'));
+                % Look for timing config in _das_timing subdirectory
+                timing_dir = fullfile(dataset_dir, '_das_timing');
+                m_files = [];
+                if exist(timing_dir, 'dir')
+                    m_files = dir(fullfile(timing_dir, '*.m'));
+                end
+                
+                % Look for DAS data in _das subdirectory
+                das_dir = fullfile(dataset_dir, '_das');
+                mat_files = [];
+                if exist(das_dir, 'dir')
+                    mat_files = dir(fullfile(das_dir, '*.mat'));
+                end
                 
                 if length(m_files) == 1 && length(mat_files) == 1
                     % Extract function name from .m file
                     [~, func_name, ~] = fileparts(m_files(1).name);
                     
                     fprintf('Loading timing function: %s from %s\n', func_name, m_files(1).name);
-                    % Add the directory to path temporarily
-                    addpath(dataset_dir);
+                    % Add the timing directory to path temporarily
+                    addpath(timing_dir);
                     try
                         loaded_config.test_config = feval(func_name);
                     catch ME
                         fprintf('Error calling %s: %s\n', func_name, ME.message);
-                        rmpath(dataset_dir);
+                        rmpath(timing_dir);
                         continue;
                     end
-                    rmpath(dataset_dir);
+                    rmpath(timing_dir);
                     
                     % Use full directory name as test label (authority for naming)
                     test_label = dataset_name;
@@ -1064,8 +1075,12 @@ if config.run_data_analysis
                 dataset_name = active_datasets(i).name;
                 dataset_dir = fullfile(active_dir, dataset_name);
                 
-                % Find any .m file (timing config) in the directory
-                m_files = dir(fullfile(dataset_dir, 'get_timing_*.m'));
+                % Find timing config in _das_timing subdirectory
+                timing_dir = fullfile(dataset_dir, '_das_timing');
+                m_files = [];
+                if exist(timing_dir, 'dir')
+                    m_files = dir(fullfile(timing_dir, 'get_timing_*.m'));
+                end
                 
                 if ~isempty(m_files)
                     % Use the first timing config file found
@@ -1073,15 +1088,15 @@ if config.run_data_analysis
                     
                     % Load this config using MATLAB function
                     fprintf('Loading timing function: %s from directory %s\n', func_name, dataset_name);
-                    addpath(dataset_dir);
+                    addpath(timing_dir);
                     try
                         loaded_config.test_config = feval(func_name);
                     catch ME
                         fprintf('Error calling %s: %s\n', func_name, ME.message);
-                        rmpath(dataset_dir);
+                        rmpath(timing_dir);
                         continue;
                     end
-                    rmpath(dataset_dir);
+                    rmpath(timing_dir);
                     
                     % Use directory name as test label (parent directory is authority)
                     test_label = dataset_name;

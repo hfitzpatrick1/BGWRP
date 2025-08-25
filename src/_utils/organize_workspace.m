@@ -51,13 +51,26 @@ for i = 1:length(all_items)
     if item.isdir && ~startsWith(item.name, '.') && ~startsWith(item.name, '_')
         folder_path = fullfile(base_path, item.name);
         
-        % Check for TDMS files
-        tdms_files = dir(fullfile(folder_path, '*.tdms'));
-        mat_files = dir(fullfile(folder_path, '*.mat'));
+        % Check for new structure: _das and _head subdirectories
+        das_dir = fullfile(folder_path, '_das');
+        head_dir = fullfile(folder_path, '_head');
+        
+        tdms_files = [];
+        mat_files = [];
+        
+        % Check _das subdirectory for TDMS files
+        if exist(das_dir, 'dir')
+            tdms_files = dir(fullfile(das_dir, '*.tdms'));
+        end
+        
+        % Check _head subdirectory for MAT files
+        if exist(head_dir, 'dir')
+            mat_files = dir(fullfile(head_dir, '*.mat'));
+        end
         
         if ~isempty(tdms_files) || ~isempty(mat_files)
             input_folders{end+1} = item.name;
-            fprintf('  Found input folder: %s (%d TDMS, %d MAT files)\n', ...
+            fprintf('  Found input folder: %s (%d TDMS in _das, %d MAT in _head)\n', ...
                 item.name, length(tdms_files), length(mat_files));
         end
     end
@@ -73,7 +86,7 @@ end
 %% Create processing directories
 fprintf('\nCreating processing directories...\n');
 
-processing_dirs = {'_tdms_to_mat', '_concatenated', '_active'};
+processing_dirs = {'_tdms_to_mat', '_combined_head', '_concatenated', '_active'};
 
 for i = 1:length(processing_dirs)
     dir_name = processing_dirs{i};
