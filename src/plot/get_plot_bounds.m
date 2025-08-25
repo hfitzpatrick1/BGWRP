@@ -110,14 +110,14 @@ switch lower(data_type)
         
     case 'displacement'
         if isfield(das_data, 'analysis_strain_rate')
-            data = das_data.analysis_strain_rate(zone_mask);
+            data = das_data.analysis_strain_rate;  % Already a 1D time series for representative channel
         else
             error('No analysis_strain_rate found in das_data structure');
         end
         
     case 'strain'
         if isfield(das_data, 'analysis_strain_rate') && isfield(das_data, 'analysis_time')
-            strain_rate = das_data.analysis_strain_rate(zone_mask);
+            strain_rate = das_data.analysis_strain_rate;  % Already a 1D time series for representative channel
             time_vec = das_data.analysis_time;
             dt = seconds(mean(diff(time_vec)));
             data = cumsum(strain_rate * dt, 1);
