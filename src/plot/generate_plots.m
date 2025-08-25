@@ -267,7 +267,7 @@ for i = 1:length(test_labels)
                         ylabel('Head (ft)');
                         
                         yyaxis right;
-                        plot(das_data.time_array, das_data.smoothed_data(:, das_data.pumping_zone.channel_idx));
+                        plot(das_data.time_array, das_data.smoothed_data(:, das_data.pumping_zone.channel_idx), 'Color', [0 0 0], 'LineStyle', '-', 'LineWidth', 1.2, 'DisplayName', 'DAS');
                         ylabel('Displacement Rate (nm/s)');
                         fprintf('    Plotted averaged head data from %d zones\n', length(zones_to_plot));
                     end
@@ -275,14 +275,24 @@ for i = 1:length(test_labels)
                     % Plot multiple zones or single zone
                     yyaxis left;
                     hold on;
-                    colors = lines(length(zones_to_plot));
+                    % Define consistent colors for zones z2, z3, z4, z5 across all datasets
+                    zone_colors = containers.Map({'z2', 'z3', 'z4', 'z5'}, ...
+                        {[0.8500 0.3250 0.0980], [0.9290 0.6940 0.1250], [0.4940 0.1840 0.5560], [0.4660 0.6740 0.1880]});
+                    
                     for z_idx = 1:length(zones_to_plot)
                         zone_name = zones_to_plot{z_idx};
                         zone_data = head_data.zones.(zone_name);
                         if isfield(zone_data, 'recovery_data') && ~isempty(zone_data.recovery_data) && ...
                            isfield(zone_data.recovery_data, 'Date') && length(zone_data.recovery_data.Date) > 1
+                            % Use consistent color and solid line style
+                            if zone_colors.isKey(zone_name)
+                                zone_color = zone_colors(zone_name);
+                            else
+                                zone_color = [0 0 0];
+                            end
                             plot(zone_data.recovery_data.Date, zone_data.recovery_data.Drawdownft, ...
-                                'Color', colors(z_idx,:), 'DisplayName', sprintf('Head %s', zone_name));
+                                'Color', zone_color, 'LineStyle', '-', 'LineWidth', 1.2, ...
+                                'DisplayName', sprintf('Head %s', zone_name));
                         end
                     end
                     hold off;
@@ -294,27 +304,27 @@ for i = 1:length(test_labels)
                     end
                     
                     yyaxis right;
-                    plot(das_data.time_array, das_data.smoothed_data(:, das_data.pumping_zone.channel_idx));
+                    plot(das_data.time_array, das_data.smoothed_data(:, das_data.pumping_zone.channel_idx), 'Color', [0 0 0], 'LineStyle', '-', 'LineWidth', 1.2, 'DisplayName', 'DAS');
                     ylabel('Displacement Rate (nm/s)');
                     fprintf('    Plotted head data from zones: %s\n', strjoin(zones_to_plot, ', '));
                 end
             else
                 % No valid head data, just plot DAS
-                plot(das_data.time_array, das_data.smoothed_data(:, das_data.pumping_zone.channel_idx));
+                plot(das_data.time_array, das_data.smoothed_data(:, das_data.pumping_zone.channel_idx), 'Color', [0 0 0], 'LineStyle', '-', 'LineWidth', 1.2, 'DisplayName', 'DAS');
                 xlim([analysis_start analysis_end]);
                 ylabel('Displacement Rate (nm/s)');
                 xlabel('Date Time UTC');
             end
         else
             % No head data, just plot DAS
-            plot(das_data.time_array, das_data.smoothed_data(:, das_data.pumping_zone.channel_idx));
+            plot(das_data.time_array, das_data.smoothed_data(:, das_data.pumping_zone.channel_idx), 'Color', [0 0 0], 'LineStyle', '-', 'LineWidth', 1.2, 'DisplayName', 'DAS');
             xlim([analysis_start analysis_end]);
             ylabel('Displacement Rate (nm/s)');
             xlabel('Date Time UTC');
         end
     else
         % No head data, just plot DAS
-        plot(das_data.time_array, das_data.smoothed_data(:, das_data.pumping_zone.channel_idx));
+        plot(das_data.time_array, das_data.smoothed_data(:, das_data.pumping_zone.channel_idx), 'Color', [0 0 0], 'LineStyle', '-', 'LineWidth', 1.2, 'DisplayName', 'DAS');
         xlim([analysis_start analysis_end]);
         ylabel('Displacement Rate (nm/s)');
         xlabel('Date Time UTC');
@@ -455,7 +465,7 @@ for i = 1:length(test_labels)
                         ylabel('Head (ft)');
                         
                         yyaxis right;
-                        plot(iTdas, dintdata(:, das_data.pumping_zone.channel_idx)/10);
+                        plot(iTdas, dintdata(:, das_data.pumping_zone.channel_idx)/10, 'Color', [0 0 0], 'LineStyle', '-', 'LineWidth', 1.2, 'DisplayName', 'DAS');
                         ylabel('Strain (nm/m)');
                         fprintf('    Plotted averaged head data from %d zones\n', length(zones_to_plot));
                     end
@@ -463,14 +473,24 @@ for i = 1:length(test_labels)
                     % Plot multiple zones or single zone
                     yyaxis left;
                     hold on;
-                    colors = lines(length(zones_to_plot));
+                    % Define consistent colors for zones z2, z3, z4, z5 across all datasets
+                    zone_colors = containers.Map({'z2', 'z3', 'z4', 'z5'}, ...
+                        {[0.8500 0.3250 0.0980], [0.9290 0.6940 0.1250], [0.4940 0.1840 0.5560], [0.4660 0.6740 0.1880]});
+                    
                     for z_idx = 1:length(zones_to_plot)
                         zone_name = zones_to_plot{z_idx};
                         zone_data = head_data.zones.(zone_name);
                         if isfield(zone_data, 'recovery_data') && ~isempty(zone_data.recovery_data) && ...
                            isfield(zone_data.recovery_data, 'Date') && length(zone_data.recovery_data.Date) > 1
+                            % Use consistent color and solid line style
+                            if zone_colors.isKey(zone_name)
+                                zone_color = zone_colors(zone_name);
+                            else
+                                zone_color = [0 0 0];
+                            end
                             plot(zone_data.recovery_data.Date, zone_data.recovery_data.Drawdownft, ...
-                                'Color', colors(z_idx,:), 'DisplayName', sprintf('Head %s', zone_name));
+                                'Color', zone_color, 'LineStyle', '-', 'LineWidth', 1.2, ...
+                                'DisplayName', sprintf('Head %s', zone_name));
                         end
                     end
                     hold off;
@@ -482,13 +502,13 @@ for i = 1:length(test_labels)
                     end
                     
                     yyaxis right;
-                    plot(iTdas, dintdata(:, das_data.pumping_zone.channel_idx)/10);
+                    plot(iTdas, dintdata(:, das_data.pumping_zone.channel_idx)/10, 'Color', [0 0 0], 'LineStyle', '-', 'LineWidth', 1.2, 'DisplayName', 'DAS');
                     ylabel('Strain (nm/m)');
                     fprintf('    Plotted head data from zones: %s\n', strjoin(zones_to_plot, ', '));
                 end
             else
                 % No valid head data, just plot strain
-                plot(iTdas, dintdata(:, das_data.pumping_zone.channel_idx)/10);
+                plot(iTdas, dintdata(:, das_data.pumping_zone.channel_idx)/10, 'Color', [0 0 0], 'LineStyle', '-', 'LineWidth', 1.2, 'DisplayName', 'DAS');
                 xlim([analysis_start analysis_end]);
                 ylabel('Strain (nm/m)');
                 xlabel('Date Time UTC');
@@ -496,14 +516,14 @@ for i = 1:length(test_labels)
             end
         else
             % No head data, just plot strain
-            plot(iTdas, dintdata(:, das_data.pumping_zone.channel_idx)/10);
+            plot(iTdas, dintdata(:, das_data.pumping_zone.channel_idx)/10, 'Color', [0 0 0], 'LineStyle', '-', 'LineWidth', 1.2, 'DisplayName', 'DAS');
             xlim([analysis_start analysis_end]);
             ylabel('Strain (nm/m)');
             xlabel('Date Time UTC');
         end
     else
         % No head data, just plot strain
-        plot(iTdas, dintdata(:, das_data.pumping_zone.channel_idx)/10);
+        plot(iTdas, dintdata(:, das_data.pumping_zone.channel_idx)/10, 'Color', [0 0 0], 'LineStyle', '-', 'LineWidth', 1.2, 'DisplayName', 'DAS');
         xlim([analysis_start analysis_end]);
         ylabel('Strain (nm/m)');
         xlabel('Date Time UTC');

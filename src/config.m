@@ -148,19 +148,19 @@ config.filter_method = 'detrend';  % Filter method: 'none', 'detrend', 'highpass
 % Specify which zone(s) to display for head data overlay in plots
 % Can be: 'all' (default), single zone string 'z3', or array {'z2', 'z3'}
 
-% Default behavior: show all available zones
-config.head_zones.default.zones = 'all';  % Show all zones as separate lines
+% Default behavior: show zones z2, z3, z4, z5 (exclude z1)
+config.head_zones.default.zones = {'z2', 'z3', 'z4', 'z5'};  % Exclude z1, show z2-z5
 config.head_zones.default.display_mode = 'multiple';  % 'single', 'multiple', 'average'
 
-% Dataset-specific overrides (uncomment and customize as needed)
-% config.head_zones.PT01a_Recovery_short.zones = 'z3';  % Single zone
-% config.head_zones.PT01a_Recovery_short.display_mode = 'single';
+% Dataset-specific overrides: Use consistent zones z2-z5 for all datasets
+config.head_zones.PT01a_Recovery_short.zones = {'z2', 'z3', 'z4', 'z5'};  % Exclude z1
+config.head_zones.PT01a_Recovery_short.display_mode = 'multiple';
 
-% config.head_zones.PT01b_Recovery_short.zones = {'z2', 'z3'};  % Multiple specific zones
-% config.head_zones.PT01b_Recovery_short.display_mode = 'multiple';
+config.head_zones.PT01b_Recovery_short.zones = {'z2', 'z3', 'z4', 'z5'};  % Exclude z1 
+config.head_zones.PT01b_Recovery_short.display_mode = 'multiple';
 
-% config.head_zones.PT01c_Recovery_short.zones = 'all';  % All available zones
-% config.head_zones.PT01c_Recovery_short.display_mode = 'average';  % Average all zones into single line
+config.head_zones.PT01c_Recovery_short.zones = {'z2', 'z3', 'z4', 'z5'};  % Already has z2-z5
+config.head_zones.PT01c_Recovery_short.display_mode = 'multiple';
 
 % config.head_zones.TEST.zones = 'z3';
 % config.head_zones.TEST.display_mode = 'single';
