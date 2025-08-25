@@ -232,54 +232,55 @@ for i = 1:length(test_labels)
         zone_names = fieldnames(head_data.zones);
         fprintf('    DEBUG DISPLACEMENT: Found %d zones: %s\n', length(zone_names), strjoin(zone_names, ', '));
         if ~isempty(zone_names)
-            % Find first zone with valid recovery data for plotting
-            zone_data = [];
-            for z_idx = 1:length(zone_names)
-                temp_zone = head_data.zones.(zone_names{z_idx});
-                zone_name = zone_names{z_idx};
-                fprintf('    DEBUG DISPLACEMENT: Zone %s fields: %s\n', zone_name, strjoin(fieldnames(temp_zone), ', '));
+            % Get zones to plot based on configuration
+            zones_to_plot = get_zones_to_plot(test_label, zone_names, head_data, config);
+            
+            if ~isempty(zones_to_plot)
+                % Get display mode
+                display_mode = get_head_display_mode(test_label, config);
                 
-                % Check each condition step by step
-                has_avg_rate = isfield(temp_zone, 'avg_recovery_rate') && ~isnan(temp_zone.avg_recovery_rate);
-                has_recovery_data = isfield(temp_zone, 'recovery_data') && ~isempty(temp_zone.recovery_data);
-                
-                if has_recovery_data
-                    fprintf('    DEBUG DISPLACEMENT: Zone %s recovery_data fields: %s\n', zone_name, strjoin(fieldnames(temp_zone.recovery_data), ', '));
-                    has_date_field = isfield(temp_zone.recovery_data, 'Date');
-                    has_drawdown_field = isfield(temp_zone.recovery_data, 'Drawdownft');
-                    if has_date_field
-                        date_length = length(temp_zone.recovery_data.Date);
-                        fprintf('    DEBUG DISPLACEMENT: Zone %s Date length: %d\n', zone_name, date_length);
-                    else
-                        date_length = 0;
+                if strcmp(display_mode, 'average')
+                    % Average multiple zones into single line
+                    averaged_data = average_zone_data(zones_to_plot, head_data);
+                    if ~isempty(averaged_data)
+                        yyaxis left;
+                        plot(averaged_data.Date, averaged_data.Drawdownft, 'DisplayName', 'Head (avg)');
+                        xlim([analysis_start analysis_end]);
+                        xlabel('Date Time UTC');
+                        ylabel('Head (ft)');
+                        
+                        yyaxis right;
+                        plot(das_data.time_array, das_data.smoothed_data(:, das_data.pumping_zone.channel_idx));
+                        ylabel('Displacement Rate (nm/s)');
+                        fprintf('    Plotted averaged head data from %d zones\n', length(zones_to_plot));
                     end
                 else
-                    has_date_field = false;
-                    has_drawdown_field = false;
-                    date_length = 0;
-                    fprintf('    DEBUG DISPLACEMENT: Zone %s has no recovery_data\n', zone_name);
+                    % Plot multiple zones or single zone
+                    yyaxis left;
+                    hold on;
+                    colors = lines(length(zones_to_plot));
+                    for z_idx = 1:length(zones_to_plot)
+                        zone_name = zones_to_plot{z_idx};
+                        zone_data = head_data.zones.(zone_name);
+                        if isfield(zone_data, 'recovery_data') && ~isempty(zone_data.recovery_data) && ...
+                           isfield(zone_data.recovery_data, 'Date') && length(zone_data.recovery_data.Date) > 1
+                            plot(zone_data.recovery_data.Date, zone_data.recovery_data.Drawdownft, ...
+                                'Color', colors(z_idx,:), 'DisplayName', sprintf('Head %s', zone_name));
+                        end
+                    end
+                    hold off;
+                    xlim([analysis_start analysis_end]);
+                    xlabel('Date Time UTC');
+                    ylabel('Head (ft)');
+                    if length(zones_to_plot) > 1
+                        legend('show');
+                    end
+                    
+                    yyaxis right;
+                    plot(das_data.time_array, das_data.smoothed_data(:, das_data.pumping_zone.channel_idx));
+                    ylabel('Displacement Rate (nm/s)');
+                    fprintf('    Plotted head data from zones: %s\n', strjoin(zones_to_plot, ', '));
                 end
-                
-                fprintf('    DEBUG DISPLACEMENT: Zone %s checks - avg_rate:%d, recovery_data:%d, date:%d, drawdown:%d, date_len:%d\n', ...
-                    zone_name, has_avg_rate, has_recovery_data, has_date_field, has_drawdown_field, date_length);
-                
-                if has_avg_rate && has_recovery_data && has_date_field && has_drawdown_field && date_length > 1
-                    zone_data = temp_zone;
-                    fprintf('    DEBUG DISPLACEMENT: *** SELECTED zone %s for plotting ***\n', zone_name);
-                    break;
-                end
-            end
-            
-            if ~isempty(zone_data)
-                yyaxis left;
-                plot(zone_data.recovery_data.Date, zone_data.recovery_data.Drawdownft);
-                xlim([analysis_start analysis_end]);
-                xlabel('Date Time UTC');
-                ylabel('Head (ft)');
-                
-                yyaxis right;
-                plot(das_data.time_array, das_data.smoothed_data(:, das_data.pumping_zone.channel_idx));
-                ylabel('Displacement Rate (nm/s)');
             else
                 % No valid head data, just plot DAS
                 plot(das_data.time_array, das_data.smoothed_data(:, das_data.pumping_zone.channel_idx));
@@ -410,35 +411,62 @@ for i = 1:length(test_labels)
         % Plot head data if available
         zone_names = fieldnames(head_data.zones);
         if ~isempty(zone_names)
-            % Find first zone with valid recovery data for plotting
-            zone_data = [];
-            for z_idx = 1:length(zone_names)
-                temp_zone = head_data.zones.(zone_names{z_idx});
-                if isfield(temp_zone, 'avg_recovery_rate') && ~isnan(temp_zone.avg_recovery_rate) && ...
-                   isfield(temp_zone, 'recovery_data') && ~isempty(temp_zone.recovery_data) && ...
-                   isfield(temp_zone.recovery_data, 'Date') && isfield(temp_zone.recovery_data, 'Drawdownft') && ...
-                   length(temp_zone.recovery_data.Date) > 1
-                    zone_data = temp_zone;
-                    break;
-                end
-            end
+            % Get zones to plot based on configuration
+            zones_to_plot = get_zones_to_plot(test_label, zone_names, head_data, config);
             
-            if ~isempty(zone_data)
-                yyaxis left;
-                plot(zone_data.recovery_data.Date, zone_data.recovery_data.Drawdownft);
-                xlim([analysis_start analysis_end]);
-                xlabel('Date Time UTC');
-                ylabel('Head (ft)');
+            if ~isempty(zones_to_plot)
+                % Get display mode
+                display_mode = get_head_display_mode(test_label, config);
                 
-                yyaxis right;
-                plot(iTdas, dintdata(:, das_data.pumping_zone.channel_idx)/10);
-                ylabel('Strain (nm/m)');
+                if strcmp(display_mode, 'average')
+                    % Average multiple zones into single line
+                    averaged_data = average_zone_data(zones_to_plot, head_data);
+                    if ~isempty(averaged_data)
+                        yyaxis left;
+                        plot(averaged_data.Date, averaged_data.Drawdownft, 'DisplayName', 'Head (avg)');
+                        xlim([analysis_start analysis_end]);
+                        xlabel('Date Time UTC');
+                        ylabel('Head (ft)');
+                        
+                        yyaxis right;
+                        plot(iTdas, dintdata(:, das_data.pumping_zone.channel_idx)/10);
+                        ylabel('Strain (nm/m)');
+                        fprintf('    Plotted averaged head data from %d zones\n', length(zones_to_plot));
+                    end
+                else
+                    % Plot multiple zones or single zone
+                    yyaxis left;
+                    hold on;
+                    colors = lines(length(zones_to_plot));
+                    for z_idx = 1:length(zones_to_plot)
+                        zone_name = zones_to_plot{z_idx};
+                        zone_data = head_data.zones.(zone_name);
+                        if isfield(zone_data, 'recovery_data') && ~isempty(zone_data.recovery_data) && ...
+                           isfield(zone_data.recovery_data, 'Date') && length(zone_data.recovery_data.Date) > 1
+                            plot(zone_data.recovery_data.Date, zone_data.recovery_data.Drawdownft, ...
+                                'Color', colors(z_idx,:), 'DisplayName', sprintf('Head %s', zone_name));
+                        end
+                    end
+                    hold off;
+                    xlim([analysis_start analysis_end]);
+                    xlabel('Date Time UTC');
+                    ylabel('Head (ft)');
+                    if length(zones_to_plot) > 1
+                        legend('show');
+                    end
+                    
+                    yyaxis right;
+                    plot(iTdas, dintdata(:, das_data.pumping_zone.channel_idx)/10);
+                    ylabel('Strain (nm/m)');
+                    fprintf('    Plotted head data from zones: %s\n', strjoin(zones_to_plot, ', '));
+                end
             else
                 % No valid head data, just plot strain
                 plot(iTdas, dintdata(:, das_data.pumping_zone.channel_idx)/10);
                 xlim([analysis_start analysis_end]);
                 ylabel('Strain (nm/m)');
                 xlabel('Date Time UTC');
+                fprintf('    No valid head data for plotting\n');
             end
         else
             % No head data, just plot strain

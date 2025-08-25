@@ -15,7 +15,7 @@ config.base_input = 'C:\Coding\BGWRP\data\_BATCH\';
 
 %% Decimation Configuration
 % config.decimation_factor = 10;   % Light decimation (100Hz → 10Hz)  
-config.decimation_factor = 10;  % Heavy decimation (100Hz → 1Hz)
+config.decimation_factor = 100;  % Heavy decimation (100Hz → 1Hz)
 % config.decimation_factor = 1;    % No decimation (preserve 100Hz)
 % config.decimation_factor = 5;    % Medium decimation (100Hz → 20Hz)
 
@@ -91,6 +91,27 @@ config.manual_bounds.strain.max = 1;
 %% Filtering Configuration
 config.apply_concatenation_filter = false;  % Apply post-processing filter to remove file boundary artifacts
 config.filter_method = 'detrend';  % Filter method: 'none', 'detrend', 'highpass', 'median', 'overlap_smooth'
+
+%% Head Data Zone Configuration (per dataset)
+% Specify which zone(s) to display for head data overlay in plots
+% Can be: 'all' (default), single zone string 'z3', or array {'z2', 'z3'}
+
+% Default behavior: show all available zones
+config.head_zones.default.zones = 'all';  % Show all zones as separate lines
+config.head_zones.default.display_mode = 'multiple';  % 'single', 'multiple', 'average'
+
+% Dataset-specific overrides (uncomment and customize as needed)
+% config.head_zones.PT01a_Recovery_short.zones = 'z3';  % Single zone
+% config.head_zones.PT01a_Recovery_short.display_mode = 'single';
+
+% config.head_zones.PT01b_Recovery_short.zones = {'z2', 'z3'};  % Multiple specific zones
+% config.head_zones.PT01b_Recovery_short.display_mode = 'multiple';
+
+% config.head_zones.PT01c_Recovery_short.zones = 'all';  % All available zones
+% config.head_zones.PT01c_Recovery_short.display_mode = 'average';  % Average all zones into single line
+
+% config.head_zones.TEST.zones = 'z3';
+% config.head_zones.TEST.display_mode = 'single';
 
 fprintf('✓ Batch configuration loaded\n');
 
