@@ -379,13 +379,13 @@ if config.run_tdms_conversion
         fprintf('\n--- Processing %s ---\n', current_folder);
         
         % Set parameters for Silixa script (store in config to avoid clearing)
-        % Read TDMS files from original input directory
-        config.silixa.directory = [fullfile(config.base_input, current_folder) '\'];
+        % Read TDMS files from original input directory _das subdirectory
+        config.silixa.directory = [fullfile(config.base_input, current_folder, '_das') '\'];
         config.silixa.filesearch = '*.tdms';
         config.silixa.fileindex = [];
         config.silixa.save_data = 1;
-        % Write MAT files to _tdms_to_mat directory  
-        config.silixa.save_directory = [fullfile(config.base_input, '_tdms_to_mat', current_folder) '\'];
+        % Write MAT files to _tdms_to_mat/_das directory  
+        config.silixa.save_directory = [fullfile(config.base_input, '_tdms_to_mat', current_folder, '_das') '\'];
         
         % Extract for script compatibility
         directory = config.silixa.directory;
@@ -421,7 +421,51 @@ else
     fprintf('\n=== STEP 1: SKIPPED (TDMS conversion disabled) ===\n');
 end
 
-%% Step 2: Concatenate and downsample individual MAT files
+%% Step 2: Process head data (combine zones into single files)
+if config.run_concatenation  % Run head processing if concatenation is enabled
+    fprintf('\n=== STEP 2A: HEAD DATA PROCESSING ===\n');
+    
+    % Use the same folders that were processed in TDMS conversion step
+    if exist('workspace_info', 'var') && isfield(workspace_info, 'input_folders')
+        folders_to_process = workspace_info.input_folders;
+    else
+        folders_to_process = config.test_directories;
+    end
+    
+    for i = 1:length(folders_to_process)
+        current_folder = folders_to_process{i};
+        fprintf('\n--- Processing head data for %s ---\n', current_folder);
+        
+        % Head data input directory (expect _head subdirectory)
+        head_input_dir = fullfile(config.base_input, current_folder, '_head');
+        
+        % Head data output directory 
+        head_output_dir = fullfile(config.base_input, '_combined_head', current_folder);
+        if ~exist(head_output_dir, 'dir')
+            mkdir(head_output_dir);
+        end
+        head_output_file = fullfile(head_output_dir, 'head_data.mat');
+        
+        % Check if head data directory exists
+        if ~exist(head_input_dir, 'dir')
+            fprintf('⚠ Head data directory not found: %s\n', head_input_dir);
+            continue;
+        end
+        
+        % Process head data
+        success = process_head_data(head_input_dir, head_output_file);
+        
+        if success
+            fprintf('✓ Head data processing completed: %s\n', current_folder);
+        else
+            fprintf('✗ Head data processing failed for %s\n', current_folder);
+        end
+    end
+else
+    fprintf('\n=== STEP 2A: SKIPPED (Head data processing disabled) ===\n');
+end
+
+%% Step 2B: Concatenate and downsample individual MAT files
 fprintf('DEBUG: config.run_concatenation = %d\n', config.run_concatenation);
 if config.run_concatenation
     fprintf('\n=== STEP 2: CONCATENATION AND DOWNSAMPLING ===\n');
@@ -460,9 +504,9 @@ for i = 1:length(folders_to_process)
     test_label = test_labels_to_use{i};
     fprintf('\n--- Concatenating %s ---\n', current_folder);
     
-    % Read from _tdms_to_mat subdirectory
-    mat_directory = fullfile(local_base_input, '_tdms_to_mat', current_folder);
-    fprintf('DEBUG: Looking for MAT files in: %s\n', mat_directory);
+    % Read from _tdms_to_mat/_das subdirectory (new structure)
+    mat_directory = fullfile(local_base_input, '_tdms_to_mat', current_folder, '_das');
+    fprintf('DEBUG: Looking for DAS MAT files in: %s\n', mat_directory);
     
     directory = mat_directory;  % ConcatDownsample expects 'directory' variable
     filesearch = '*.mat';
@@ -515,14 +559,29 @@ for i = 1:length(folders_to_process)
     if success
         fprintf('✓ Concatenation completed: %s\n', outname);
         
-        % Copy to _active/<current_folder> directory for analysis
+        % Copy DAS data to _active/<current_folder>/_das directory
         active_dataset_dir = fullfile(local_base_input, '_active', current_folder);
-        if ~exist(active_dataset_dir, 'dir')
-            mkdir(active_dataset_dir);
+        active_das_dir = fullfile(active_dataset_dir, '_das');
+        if ~exist(active_das_dir, 'dir')
+            mkdir(active_das_dir);
         end
-        active_output = fullfile(active_dataset_dir, outname);
-        copyfile(output_file, active_output);
-        fprintf('✓ Copied to _active/%s: %s\n', current_folder, outname);
+        active_das_output = fullfile(active_das_dir, outname);
+        copyfile(output_file, active_das_output);
+        fprintf('✓ Copied DAS data to _active/%s/_das: %s\n', current_folder, outname);
+        
+        % Copy head data if it exists to _active/<current_folder>/_head directory
+        head_source = fullfile(local_base_input, '_combined_head', current_folder, 'head_data.mat');
+        if exist(head_source, 'file')
+            active_head_dir = fullfile(active_dataset_dir, '_head');
+            if ~exist(active_head_dir, 'dir')
+                mkdir(active_head_dir);
+            end
+            active_head_output = fullfile(active_head_dir, 'head_data.mat');
+            copyfile(head_source, active_head_output);
+            fprintf('✓ Copied head data to _active/%s/_head: head_data.mat\n', current_folder);
+        else
+            fprintf('⚠ No head data found for %s\n', current_folder);
+        end
     else
         fprintf('✗ Concatenation failed for %s\n', current_folder);
     end

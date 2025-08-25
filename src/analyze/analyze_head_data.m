@@ -31,9 +31,15 @@ function [recovery_rate_ms, recovery_time, recovery_data] = calc_recovery_rate(D
     recovery_data.Date = Date(recovery_mask);
     recovery_data.Drawdownft = Drawdownft(recovery_mask);
     
+    % DEBUG: Add timing diagnostics
+    fprintf('        TIMING DEBUG: Head data range %s to %s\n', Date(1), Date(end));
+    fprintf('        TIMING DEBUG: Analysis window %s to %s\n', recovery_start, recovery_end);
+    fprintf('        TIMING DEBUG: Found %d points in recovery window out of %d total\n', length(recovery_data.Date), length(Date));
+    
     if length(recovery_data.Date) < 2
         recovery_rate_ms = [];
         recovery_time = [];
+        % KEEP recovery_data even when insufficient - don't clear it
         return;
     end
     
@@ -135,13 +141,17 @@ for i = 1:length(test_labels)
                         [recovery_rate_ms, recovery_time, recovery_data] = calc_recovery_rate(...
                             Date, Drawdownft, analysis_start, analysis_end, smooth_window);
                         
+                        fprintf('        STORAGE DEBUG: recovery_data Date length after calc: %d\n', length(recovery_data.Date));
+                        
                         analysis_results.(test_label).zones.(zone_name).recovery_rate_ms = recovery_rate_ms;
                         analysis_results.(test_label).zones.(zone_name).recovery_time = recovery_time;
                         analysis_results.(test_label).zones.(zone_name).recovery_data = recovery_data;
                         
+                        fprintf('        STORAGE DEBUG: stored recovery_data Date length: %d\n', length(analysis_results.(test_label).zones.(zone_name).recovery_data.Date));
+                        
                         if ~isempty(recovery_rate_ms)
                             avg_recovery_rate = mean(recovery_rate_ms);
-                            analysis_results.(test_label).zones.(zone_name).stats.avg = avg_recovery_rate;
+                            analysis_results.(test_label).zones.(zone_name).avg_recovery_rate = avg_recovery_rate;
                             
                             fprintf('      Zone %s (%.1f ft): Avg recovery rate = %.6f m/s\n', ...
                                 zone_name, analysis_results.(test_label).zones.(zone_name).Depthft, avg_recovery_rate);

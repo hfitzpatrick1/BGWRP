@@ -93,6 +93,9 @@ for i = 1:length(test_labels)
     head_data = [];
     if isfield(head_results, test_label) && ~isfield(head_results.(test_label), 'error')
         head_data = head_results.(test_label);
+        fprintf('    DEBUG: Found head data for %s with zones: %s\n', test_label, strjoin(fieldnames(head_data.zones), ', '));
+    else
+        fprintf('    DEBUG: No head data available for %s\n', test_label);
     end
     
     %% Figure 1: Raw Data Waterfall (standardized with time filtering)
@@ -227,17 +230,63 @@ for i = 1:length(test_labels)
     if ~isempty(head_data)
         % Plot head data if available (like simple script)
         zone_names = fieldnames(head_data.zones);
+        fprintf('    DEBUG DISPLACEMENT: Found %d zones: %s\n', length(zone_names), strjoin(zone_names, ', '));
         if ~isempty(zone_names)
-            zone_data = head_data.zones.(zone_names{1}); % Use first zone
-            yyaxis left;
-            plot(zone_data.Date, zone_data.Drawdownft);
-            xlim([analysis_start analysis_end]);
-            xlabel('Date Time UTC');
-            ylabel('Head (ft)');
+            % Find first zone with valid recovery data for plotting
+            zone_data = [];
+            for z_idx = 1:length(zone_names)
+                temp_zone = head_data.zones.(zone_names{z_idx});
+                zone_name = zone_names{z_idx};
+                fprintf('    DEBUG DISPLACEMENT: Zone %s fields: %s\n', zone_name, strjoin(fieldnames(temp_zone), ', '));
+                
+                % Check each condition step by step
+                has_avg_rate = isfield(temp_zone, 'avg_recovery_rate') && ~isnan(temp_zone.avg_recovery_rate);
+                has_recovery_data = isfield(temp_zone, 'recovery_data') && ~isempty(temp_zone.recovery_data);
+                
+                if has_recovery_data
+                    fprintf('    DEBUG DISPLACEMENT: Zone %s recovery_data fields: %s\n', zone_name, strjoin(fieldnames(temp_zone.recovery_data), ', '));
+                    has_date_field = isfield(temp_zone.recovery_data, 'Date');
+                    has_drawdown_field = isfield(temp_zone.recovery_data, 'Drawdownft');
+                    if has_date_field
+                        date_length = length(temp_zone.recovery_data.Date);
+                        fprintf('    DEBUG DISPLACEMENT: Zone %s Date length: %d\n', zone_name, date_length);
+                    else
+                        date_length = 0;
+                    end
+                else
+                    has_date_field = false;
+                    has_drawdown_field = false;
+                    date_length = 0;
+                    fprintf('    DEBUG DISPLACEMENT: Zone %s has no recovery_data\n', zone_name);
+                end
+                
+                fprintf('    DEBUG DISPLACEMENT: Zone %s checks - avg_rate:%d, recovery_data:%d, date:%d, drawdown:%d, date_len:%d\n', ...
+                    zone_name, has_avg_rate, has_recovery_data, has_date_field, has_drawdown_field, date_length);
+                
+                if has_avg_rate && has_recovery_data && has_date_field && has_drawdown_field && date_length > 1
+                    zone_data = temp_zone;
+                    fprintf('    DEBUG DISPLACEMENT: *** SELECTED zone %s for plotting ***\n', zone_name);
+                    break;
+                end
+            end
             
-            yyaxis right;
-            plot(das_data.time_array, das_data.smoothed_data(:, das_data.pumping_zone.channel_idx));
-            ylabel('Displacement Rate (nm/s)');
+            if ~isempty(zone_data)
+                yyaxis left;
+                plot(zone_data.recovery_data.Date, zone_data.recovery_data.Drawdownft);
+                xlim([analysis_start analysis_end]);
+                xlabel('Date Time UTC');
+                ylabel('Head (ft)');
+                
+                yyaxis right;
+                plot(das_data.time_array, das_data.smoothed_data(:, das_data.pumping_zone.channel_idx));
+                ylabel('Displacement Rate (nm/s)');
+            else
+                % No valid head data, just plot DAS
+                plot(das_data.time_array, das_data.smoothed_data(:, das_data.pumping_zone.channel_idx));
+                xlim([analysis_start analysis_end]);
+                ylabel('Displacement Rate (nm/s)');
+                xlabel('Date Time UTC');
+            end
         else
             % No head data, just plot DAS
             plot(das_data.time_array, das_data.smoothed_data(:, das_data.pumping_zone.channel_idx));
@@ -361,16 +410,36 @@ for i = 1:length(test_labels)
         % Plot head data if available
         zone_names = fieldnames(head_data.zones);
         if ~isempty(zone_names)
-            zone_data = head_data.zones.(zone_names{1}); % Use first zone
-            yyaxis left;
-            plot(zone_data.Date, zone_data.Drawdownft);
-            xlim([analysis_start analysis_end]);
-            xlabel('Date Time UTC');
-            ylabel('Head (ft)');
+            % Find first zone with valid recovery data for plotting
+            zone_data = [];
+            for z_idx = 1:length(zone_names)
+                temp_zone = head_data.zones.(zone_names{z_idx});
+                if isfield(temp_zone, 'avg_recovery_rate') && ~isnan(temp_zone.avg_recovery_rate) && ...
+                   isfield(temp_zone, 'recovery_data') && ~isempty(temp_zone.recovery_data) && ...
+                   isfield(temp_zone.recovery_data, 'Date') && isfield(temp_zone.recovery_data, 'Drawdownft') && ...
+                   length(temp_zone.recovery_data.Date) > 1
+                    zone_data = temp_zone;
+                    break;
+                end
+            end
             
-            yyaxis right;
-            plot(iTdas, dintdata(:, das_data.pumping_zone.channel_idx)/10);
-            ylabel('Strain (nm/m)');
+            if ~isempty(zone_data)
+                yyaxis left;
+                plot(zone_data.recovery_data.Date, zone_data.recovery_data.Drawdownft);
+                xlim([analysis_start analysis_end]);
+                xlabel('Date Time UTC');
+                ylabel('Head (ft)');
+                
+                yyaxis right;
+                plot(iTdas, dintdata(:, das_data.pumping_zone.channel_idx)/10);
+                ylabel('Strain (nm/m)');
+            else
+                % No valid head data, just plot strain
+                plot(iTdas, dintdata(:, das_data.pumping_zone.channel_idx)/10);
+                xlim([analysis_start analysis_end]);
+                ylabel('Strain (nm/m)');
+                xlabel('Date Time UTC');
+            end
         else
             % No head data, just plot strain
             plot(iTdas, dintdata(:, das_data.pumping_zone.channel_idx)/10);
