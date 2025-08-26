@@ -108,6 +108,24 @@ if exist('mode', 'var') && ischar(mode)
             config.tdms_scaling_method = 'double_precision';
             config.tdms_force_double = true;
             
+        case 'purge_inactive'
+            % Clean up intermediate directories that don't match _active content
+            config.run_tdms_conversion = false;
+            config.run_concatenation = false;
+            config.run_timing_extraction = false;
+            config.run_data_analysis = false;
+            config.save_charts = false;
+            config.run_purge_inactive = true;
+            
+        case 'purge_unraw'
+            % Archive non-underscore directories to _raw and purge intermediate processing
+            config.run_tdms_conversion = false;
+            config.run_concatenation = false;
+            config.run_timing_extraction = false;
+            config.run_data_analysis = false;
+            config.save_charts = false;
+            config.run_purge_unraw = true;
+            
         case {'run', 'analyze'}
             % Analysis mode: analysis-only (no timing extraction)
             config.run_tdms_conversion = false;
@@ -297,7 +315,7 @@ if exist('mode', 'var') && ischar(mode)
             config.save_charts = contains(mode, 'save');
             
         otherwise
-            error('Unknown mode: %s. Valid modes: prep, prep_no_decim, prep_purge, prep_tdms, prep_concat, prep_timing, analyze, analyze_save, all, all_save, diagnostic_boundaries, diagnostic_enhanced, diagnostic_tdms', mode);
+            error('Unknown mode: %s. Valid modes: prep, prep_single_step, prep_double_precision, prep_no_decim, prep_purge, prep_tdms, prep_concat, prep_timing, analyze, analyze_save, all, all_save, purge_inactive, purge_unraw, diagnostic_boundaries, diagnostic_enhanced, diagnostic_tdms', mode);
     end
     
     fprintf('Mode "%s" configured\n', mode);
@@ -1247,7 +1265,18 @@ if config.run_data_analysis && exist('plot_results', 'var')
     end
 end
 
-%% Step 6: Quantization Analysis (if enabled)
+%% Step 6: Purge Modes (if enabled)
+if isfield(config, 'run_purge_inactive') && config.run_purge_inactive
+    fprintf('\n=== PURGE INACTIVE MODE ===\n');
+    purge_inactive_directories(config.base_input);
+    fprintf('=== PURGE INACTIVE COMPLETE ===\n');
+elseif isfield(config, 'run_purge_unraw') && config.run_purge_unraw
+    fprintf('\n=== PURGE UNRAW MODE ===\n');
+    purge_unraw_directories(config.base_input);
+    fprintf('=== PURGE UNRAW COMPLETE ===\n');
+end
+
+%% Step 7: Quantization Analysis (if enabled)
 if isfield(config, 'run_quantization_analysis') && config.run_quantization_analysis
     fprintf('\n=== STEP 6: QUANTIZATION ANALYSIS ===\n');
     
