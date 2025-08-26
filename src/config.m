@@ -63,7 +63,7 @@ config.save_charts = true;
 % config.chart_output_dir = ''; % Leave empty to use default location
 
 %% Plotting Configuration
-config.dynamic_bounds = false;  % Enable intelligent waterfall color bounds based on data
+config.dynamic_bounds = true;  % Enable intelligent waterfall color bounds based on data
 
 % Dynamic bounds mode: 'percentile', 'std_dev', 'robust', 'hybrid', 'minmax'
 config.dynamic_bounds_mode = 'std_dev';
@@ -166,12 +166,12 @@ config.colormap_resolution = 1024;
 % Based on discovered data ranges: PT01a [-30.2, 41.5], PT01b [-29.9, 30.3], PT01c [-26.3, 25.2]
 
 % Raw data bounds (conservative range covering all datasets)
-config.manual_bounds.raw.min = -35;
-config.manual_bounds.raw.max = 45;
+config.manual_bounds.raw.min = -0.25;
+config.manual_bounds.raw.max = 0.15;
 
 % Displacement rate bounds (more focused)
-config.manual_bounds.displacement.min = -0.35;
-config.manual_bounds.displacement.max = 0.25;
+config.manual_bounds.displacement.min = -0.25;
+config.manual_bounds.displacement.max = 0.15;
 
 % Strain bounds (typically negative accumulation)
 config.manual_bounds.strain.min = -3;

@@ -129,21 +129,27 @@ switch lower(data_type)
         error('Unknown data type: %s', data_type);
 end
 
-% Get bounds mode from config
-if isfield(config, 'dynamic_bounds_mode')
-    mode = config.dynamic_bounds_mode;
+% Check if dynamic bounds are enabled
+if ~isfield(config, 'dynamic_bounds') || ~config.dynamic_bounds
+    % Use fixed bounds
+    bounds = get_fixed_bounds(data_type, config);
 else
-    mode = 'percentile';
-end
+    % Get bounds mode from config
+    if isfield(config, 'dynamic_bounds_mode')
+        mode = config.dynamic_bounds_mode;
+    else
+        mode = 'percentile';
+    end
 
-% Calculate bounds using appropriate parameters for data type
-switch lower(data_type)
-    case 'raw'
-        bounds = calculate_dynamic_bounds(data, mode, 'Percentiles', [5, 95]);
-    case 'displacement'
-        bounds = calculate_dynamic_bounds(data, mode, 'Percentiles', [10, 90]);
-    case 'strain'
-        bounds = calculate_dynamic_bounds(data, mode, 'Percentiles', [2, 98], 'Symmetric', true);
+    % Calculate bounds using appropriate parameters for data type
+    switch lower(data_type)
+        case 'raw'
+            bounds = calculate_dynamic_bounds(data, mode, 'Percentiles', [5, 95]);
+        case 'displacement'
+            bounds = calculate_dynamic_bounds(data, mode, 'Percentiles', [10, 90]);
+        case 'strain'
+            bounds = calculate_dynamic_bounds(data, mode, 'Percentiles', [2, 98], 'Symmetric', true);
+    end
 end
 
 end
