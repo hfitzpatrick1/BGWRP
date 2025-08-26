@@ -28,6 +28,7 @@ switch lower(data_source)
         
     case 'raw'
         [data, info] = load_raw_tdms_data(dataset_name);
+        fprintf('*** ANALYZING TRULY RAW ADC VALUES (no scaling applied) ***\n');
         
     case 'tdms_to_mat'
         [data, info] = load_tdms_to_mat_data(dataset_name);
@@ -196,16 +197,14 @@ try
     arg.loading = 'data';
     data = TDMS_Adv_Read(sample_file, arg);
     
-    % Apply exact same scaling as pipeline
-    adc_scalar = 1/8192;
-    data = data * adc_scalar;
-    data = 116 * data;  % Convert to nm/sample
-    
-    fprintf('Loaded and scaled: [%d x %d]\n', size(data));
+    % MODIFIED: Keep truly raw ADC values - NO SCALING
+    fprintf('Loaded RAW ADC values: [%d x %d]\n', size(data));
+    fprintf('Raw ADC range: [%.0f, %.0f] counts\n', min(data(:)), max(data(:)));
+    fprintf('Raw ADC data type: %s\n', class(data));
     
     info.sampling_rate = 100;  % 100Hz
     info.file_path = sample_file;
-    info.note = sprintf('Sample: %d samples x %d channels from file 1 of %d', size(data,1), size(data,2), length(tdms_files));
+    info.note = sprintf('RAW ADC: %d samples x %d channels from file 1 of %d (NO SCALING APPLIED)', size(data,1), size(data,2), length(tdms_files));
     
 catch ME
     error('Failed to load TDMS file: %s', ME.message);

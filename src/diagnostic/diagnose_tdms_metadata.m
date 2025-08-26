@@ -20,6 +20,7 @@ end
 if ~isfield(options, 'max_files'), options.max_files = 20; end
 if ~isfield(options, 'sample_interval'), options.sample_interval = 5; end % Analyze every 5th file
 if ~isfield(options, 'use_builtin'), options.use_builtin = true; end % Try MATLAB R2022a+ functions first
+if ~isfield(options, 'summary_only'), options.summary_only = false; end % Brief output mode
 
 fprintf('=== TDMS METADATA DIAGNOSTIC: %s ===\n', dataset_name);
 fprintf('Directory: %s\n', tdms_directory);

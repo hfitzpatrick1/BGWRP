@@ -927,12 +927,22 @@ if isfield(config, 'run_tdms_metadata_diagnostic') && config.run_tdms_metadata_d
         fprintf('\n--- Processing %s ---\n', current_folder);
         
         % Get directory path from discovery results
-        tdms_directory = dataset_info.paths{i};
+        dataset_base_path = dataset_info.paths{i};
         
         % Check if this dataset has TDMS files
         if strcmp(dataset_info.types{i}, 'mat')
             fprintf('⚠ Skipping %s: Only MAT files found, no TDMS metadata available\n', current_folder);
             continue;
+        end
+        
+        % Determine TDMS directory (check for _das subdirectory first)
+        das_subdir = fullfile(dataset_base_path, '_das');
+        if exist(das_subdir, 'dir')
+            tdms_directory = das_subdir;
+            fprintf('Using structured _das subdirectory: %s\n', tdms_directory);
+        else
+            tdms_directory = dataset_base_path;
+            fprintf('Using flat directory structure: %s\n', tdms_directory);
         end
         
         % Run TDMS metadata diagnostic

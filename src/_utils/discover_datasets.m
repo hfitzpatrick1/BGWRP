@@ -55,9 +55,12 @@ end
 % Determine scan directory based on mode
 switch lower(discovery_mode)
     case 'raw'
-        scan_directory = base_input;
+        scan_directory = fullfile(base_input, '_raw');
+        if ~exist(scan_directory, 'dir')
+            error('DISCOVERY ERROR: Raw directory does not exist: %s\nCheck that raw data has been archived to _raw directory', scan_directory);
+        end
         if options.verbose
-            fprintf('Scanning for raw data (TDMS/MAT files in subdirectories)\n');
+            fprintf('Scanning _raw directory for source datasets\n');
         end
         
     case 'active'
@@ -90,9 +93,24 @@ for i = 1:length(all_items)
     if item.isdir && ~startsWith(item.name, '.') && ~startsWith(item.name, '_')
         dataset_path = fullfile(scan_directory, item.name);
         
-        % Count files by type
-        tdms_files = dir(fullfile(dataset_path, '*.tdms'));
-        mat_files = dir(fullfile(dataset_path, '*.mat'));
+        % Count files by type - check subdirectories first for structured data
+        tdms_files = [];
+        mat_files = [];
+        
+        % Check for structured subdirectories (_das, _head)
+        das_subdir = fullfile(dataset_path, '_das');
+        if exist(das_subdir, 'dir')
+            tdms_files = dir(fullfile(das_subdir, '*.tdms'));
+            mat_files = [mat_files; dir(fullfile(das_subdir, '*.mat'))];
+        end
+        
+        % Also check for direct files in dataset directory (flat structure)
+        direct_tdms = dir(fullfile(dataset_path, '*.tdms'));
+        direct_mat = dir(fullfile(dataset_path, '*.mat'));
+        
+        % Combine results
+        tdms_files = [tdms_files; direct_tdms];
+        mat_files = [mat_files; direct_mat];
         
         % Determine dataset type
         if ~isempty(tdms_files) && ~isempty(mat_files)
