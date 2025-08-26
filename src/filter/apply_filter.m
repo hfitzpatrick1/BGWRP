@@ -24,6 +24,7 @@ function filtered_data = apply_filter(data, filter_type, config)
 %   'butterworth_bp'    - Butterworth bandpass filter
 %   'fk_dip'           - F-K domain dip filter
 %   'ensemble'         - Multi-channel ensemble averaging
+%   'dual_bandstop'    - Targeted grid pattern removal (0.15-0.33 & 0.395-0.473 Hz)
 %   'custom'           - Custom filter chain from config
 
 fprintf('  Applying filter: %s\n', filter_type);
@@ -72,6 +73,10 @@ switch lower(filter_type)
             warning('Ensemble filter requires depth_ft in config, skipping filtering');
             filtered_data = data;
         end
+        
+    case 'dual_bandstop'
+        % Targeted grid pattern removal
+        filtered_data = dual_bandstop_filter(data, config);
         
     case 'custom'
         filtered_data = apply_custom_filter_chain(data, config);

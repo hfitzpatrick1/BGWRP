@@ -194,6 +194,14 @@ config.ensemble_signal_weight = 0.7;      % Weight for original vs ensemble (0-1
 config.ensemble_min_channels = 5;         % Minimum channels per zone for reliable averaging
 config.ensemble_overlap_ratio = 0.3;      % Zone overlap for smooth transitions (0-0.5)
 
+%% Dual Bandstop Filter Configuration (Targeted Grid Removal)
+% Based on diagnostic analysis - removes specific grid pattern frequencies
+config.slow_grid_low = 0.15;              % Hz - Slow grid pattern lower bound
+config.slow_grid_high = 0.33;             % Hz - Slow grid pattern upper bound  
+config.fast_grid_low = 0.395;             % Hz - Fast grid pattern lower bound
+config.fast_grid_high = 0.473;            % Hz - Fast grid pattern upper bound
+config.bandstop_order = 4;                % Filter order for bandstop filters
+
 %% Head Data Zone Configuration (per dataset)
 % Specify which zone(s) to display for head data overlay in plots
 % Can be: 'all' (default), single zone string 'z3', or array {'z2', 'z3'}

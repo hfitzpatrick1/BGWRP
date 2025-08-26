@@ -272,6 +272,20 @@ if exist('mode', 'var') && ischar(mode)
             config.chen_denoising = false;
             fprintf('Running ensemble averaging (signal extraction approach)\n');
             
+        case 'run_filter_grid'
+            % Run targeted grid pattern removal
+            config.run_tdms_conversion = false;
+            config.run_concatenation = false;
+            config.run_timing_extraction = false;
+            config.run_data_analysis = true;
+            config.save_charts = false;
+            config.smoothing_method = 'dual_bandstop';
+            % Reset other filtering
+            config.apply_concatenation_filter = false;
+            config.filter_method = 'none';
+            config.chen_denoising = false;
+            fprintf('Running targeted grid pattern removal (dual bandstop)\n');
+            
         case 'run_smooth'
             % Analysis mode with boundary smoothing
             config.run_tdms_conversion = false;

@@ -21,7 +21,12 @@ if ~exist(concat_file, 'file')
 end
 
 fprintf('Loading data: %s\n', concat_file);
-load(concat_file);
+loaded = load(concat_file);
+if isfield(loaded, 'decdata')
+    data = loaded.decdata;
+else
+    error('Expected decdata field not found in file');
+end
 fprintf('Data size: [%d x %d]\n', size(data,1), size(data,2));
 
 % Get basic parameters
@@ -127,11 +132,7 @@ coherence_threshold = 0.7;
 coherent_regions = find(spatial_corr > coherence_threshold);
 
 fprintf('High spatial coherence (>%.1f): %d channel pairs\n', coherence_threshold, length(coherent_regions));
-fprintf('Coherent regions: ');
-if ~isempty(coherent_regions)
-    fprintf('%d-%d ', [coherent_regions'; coherent_regions'+1]);
-end
-fprintf('\n');
+fprintf('Coherent regions: %d total pairs (details suppressed)\n', length(coherent_regions));
 
 % Channel-to-channel variability
 subplot(1,2,2);

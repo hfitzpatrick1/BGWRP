@@ -238,6 +238,11 @@ for i = 1:length(test_labels)
                 fprintf('  Applying ensemble averaging (signal extraction)...\n');
                 config.depth_ft = depth_ft;  % Pass depth information to filter
                 smoothed_data = apply_filter(data1Hz, 'ensemble', config);
+            case 'dual_bandstop'
+                % Targeted grid pattern removal
+                fprintf('  Applying dual bandstop filter (grid pattern removal)...\n');
+                config.sampling_rate = 1.0;  % 1Hz decimated data
+                smoothed_data = apply_filter(data1Hz, 'dual_bandstop', config);
             case 'none'
                 smoothed_data = data1Hz;  % No smoothing
             otherwise
