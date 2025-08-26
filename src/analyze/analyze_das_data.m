@@ -195,28 +195,50 @@ for i = 1:length(test_labels)
             smoothing_method = config.smoothing_method;
         end
         
+        % Use new unified filter system
+        addpath(fullfile(fileparts(mfilename('fullpath')), '..', 'filter'));
+        
         switch lower(smoothing_method)
             case 'movmean'
-                smoothed_data = movmean(data1Hz, smooth_window, 1);
+                config.temporal_window = smooth_window;
+                smoothed_data = apply_filter(data1Hz, 'movmean', config);
             case 'movmedian'
-                smoothed_data = movmedian(data1Hz, smooth_window, 1);
+                config.temporal_window = smooth_window;
+                smoothed_data = apply_filter(data1Hz, 'movmedian', config);
             case 'gaussian'
-                % Gaussian smoothing
-                sigma = smooth_window / 3;  % Convert window to sigma
+                % Gaussian smoothing (legacy)
+                sigma = smooth_window / 3;
                 smoothed_data = imgaussfilt(data1Hz, sigma);
-            case 'chen'
-                % Chen et al. (2023) 3-stage denoising framework
-                fprintf('  Applying Chen et al. denoising framework...\n');
-                smoothed_data = apply_chen_denoising(data1Hz, config);
+            case 'chen_full'
+                % Complete Chen et al. (2023) 3-stage framework
+                fprintf('  Applying Chen et al. complete framework...\n');
+                smoothed_data = apply_filter(data1Hz, 'chen_full', config);
+            case 'chen_stage1'
+                % Chen Stage 1: Bandpass only
+                fprintf('  Applying Chen Stage 1 (bandpass)...\n');
+                smoothed_data = apply_filter(data1Hz, 'chen_stage1', config);
+            case 'chen_stage2'
+                % Chen Stage 2: SOMF only
+                fprintf('  Applying Chen Stage 2 (SOMF)...\n');
+                smoothed_data = apply_filter(data1Hz, 'chen_stage2', config);
+            case 'chen_stage3'
+                % Chen Stage 3: F-K filter only (KEY for grid patterns)
+                fprintf('  Applying Chen Stage 3 (F-K dip filter)...\n');
+                smoothed_data = apply_filter(data1Hz, 'chen_stage3', config);
             case 'spatial_median'
-                % Spatial median filter to remove vertical artifacts
+                % Spatial median filter
                 fprintf('  Applying spatial median filtering...\n');
-                smoothed_data = apply_spatial_median_filter(data1Hz, config);
+                smoothed_data = apply_filter(data1Hz, 'spatial_median', config);
+            case 'chen'
+                % Legacy Chen - redirect to complete framework
+                fprintf('  Applying Chen et al. complete framework (legacy)...\n');
+                smoothed_data = apply_filter(data1Hz, 'chen_full', config);
             case 'none'
                 smoothed_data = data1Hz;  % No smoothing
             otherwise
                 fprintf('  Warning: Unknown smoothing method %s, using movmean\n', smoothing_method);
-                smoothed_data = movmean(data1Hz, smooth_window, 1);
+                config.temporal_window = smooth_window;
+                smoothed_data = apply_filter(data1Hz, 'movmean', config);
         end
         fprintf('  Applied %s smoothing (window: %d)\n', smoothing_method, smooth_window);
     end

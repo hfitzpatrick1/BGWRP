@@ -90,18 +90,42 @@ config.disable_analysis_smoothing = false;    % true = skip all smoothing in ana
 config.smoothing_method = 'movmean';           % 'movmean', 'movmedian', 'gaussian', 'none', 'chen', 'spatial_median'
 config.smoothing_window_factor = 1.0;         % 0.5, 1.0, 2.0 (multiplier for default window size)
 
-% Chen et al. (2023) Denoising Framework Configuration
-config.chen_denoising = false;                % Enable Chen et al. 3-stage denoising
-config.chen_bandpass_low = 0.0005;           % Low frequency cutoff (Hz) - more gentle
-config.chen_bandpass_high = 0.45;             % High frequency cutoff (Hz) - wider band
-config.chen_bandpass_order = 2;               % Butterworth filter order - lower order
-config.chen_median_window = 3;                % Median filter window size (samples) - smaller window
-config.chen_median_weight = 0.3;              % Noise removal weight (0-1) - much gentler
-config.chen_coherent_removal = 0.1;           % Coherent noise removal factor (0-1) - much gentler
+%% Advanced Filtering Configuration
 
-% Spatial Median Filter Configuration
-config.spatial_median_channels = 21;           % Number of adjacent channels for spatial median (odd number)
-config.spatial_median_time = 3;                % Time window for temporal smoothing after spatial filtering
+% Chen et al. (2023) Complete Framework Configuration
+config.chen_denoising = false;                     % Enable Chen et al. 3-stage denoising
+config.chen_enable_stage1 = true;                  % Enable bandpass filtering
+config.chen_enable_stage2 = true;                  % Enable SOMF filtering  
+config.chen_enable_stage3 = true;                  % Enable F-K filtering
+config.chen_sampling_rate = 1.0;                   % Sampling rate Hz (for filter design)
+
+% Stage 1: Butterworth Bandpass Filter
+config.chen_bandpass_low = 0.001;                  % Low frequency cutoff (Hz)
+config.chen_bandpass_high = 0.4;                   % High frequency cutoff (Hz) 
+config.chen_bandpass_order = 6;                    % Butterworth filter order
+
+% Stage 2: Structure-Oriented Median Filter (SOMF)
+config.chen_somf_window = 17;                      % SOMF window size (samples)
+config.chen_somf_strength = 0.3;                   % Filter strength (0-1)
+config.chen_somf_preserve = 0.7;                   % Signal preservation (0-1)
+config.chen_somf_adaptive = true;                  % Use adaptive filtering
+config.chen_somf_spatial_enhance = true;           % Apply spatial coherence enhancement
+
+% Stage 3: F-K Domain Dip Filter (KEY for grid patterns)
+config.chen_fk_strength = 0.02;                    % Filter strength (0-1) - Chen paper default
+config.chen_fk_target_horizontal = true;           % Target horizontal noise (grid patterns)
+config.chen_fk_target_vertical = true;             % Target vertical noise
+config.chen_fk_preserve_signal = 0.8;              % Signal preservation (0-1)
+config.chen_fk_taper_width = 0.1;                  % Taper width for smooth filtering
+
+% Spatial Median Filter Configuration (Standalone)
+config.spatial_filter_channels = 21;               % Channel window size (odd number)
+config.spatial_filter_strength = 0.1;              % Filter strength (0-1)
+config.spatial_filter_temporal = 3;                % Temporal smoothing window
+config.spatial_filter_preserve = 0.9;              % Signal preservation (0-1)
+
+% Temporal Filter Configuration
+config.temporal_window = 10;                       % Window size for temporal filters
 
 % Precision Testing (Priority 5 - Data Type)
 config.force_double_precision = false;        % true = force double precision throughout

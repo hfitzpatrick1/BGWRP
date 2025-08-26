@@ -186,6 +186,78 @@ if exist('mode', 'var') && ischar(mode)
             config.filter_method = 'median';
             fprintf('Filter mode: median\n');
             
+        case 'run_filter_chen'
+            % Run Chen et al. complete denoising framework
+            config.run_tdms_conversion = false;
+            config.run_concatenation = false;
+            config.run_timing_extraction = false;
+            config.run_data_analysis = true;
+            config.save_charts = false;
+            config.chen_denoising = true;
+            config.smoothing_method = 'chen_full';
+            % Reset other filtering
+            config.apply_concatenation_filter = false;
+            config.filter_method = 'none';
+            fprintf('Running Chen et al. complete denoising framework\n');
+            
+        case 'run_filter_chen_fk'
+            % Run Chen Stage 3 F-K filter only (grid pattern focus)
+            config.run_tdms_conversion = false;
+            config.run_concatenation = false;
+            config.run_timing_extraction = false;
+            config.run_data_analysis = true;
+            config.save_charts = false;
+            config.smoothing_method = 'chen_stage3';
+            config.chen_fk_strength = 0.02;  % Chen paper default
+            % Reset other filtering
+            config.apply_concatenation_filter = false;
+            config.filter_method = 'none';
+            config.chen_denoising = false;
+            fprintf('Running Chen F-K dip filter (grid pattern removal)\n');
+            
+        case 'run_filter_spatial'
+            % Run spatial median filtering
+            config.run_tdms_conversion = false;
+            config.run_concatenation = false;
+            config.run_timing_extraction = false;
+            config.run_data_analysis = true;
+            config.save_charts = false;
+            config.smoothing_method = 'spatial_median';
+            % Reset other filtering
+            config.apply_concatenation_filter = false;
+            config.filter_method = 'none';
+            config.chen_denoising = false;
+            fprintf('Running spatial median filtering\n');
+            
+        case 'run_filter_temporal'
+            % Run temporal median filtering
+            config.run_tdms_conversion = false;
+            config.run_concatenation = false;
+            config.run_timing_extraction = false;
+            config.run_data_analysis = true;
+            config.save_charts = false;
+            config.smoothing_method = 'movmedian';
+            % Reset other filtering
+            config.apply_concatenation_filter = false;
+            config.filter_method = 'none';
+            config.chen_denoising = false;
+            fprintf('Running temporal median filtering\n');
+            
+        case 'run_filter_baseline'
+            % Run baseline (no filtering)
+            config.run_tdms_conversion = false;
+            config.run_concatenation = false;
+            config.run_timing_extraction = false;
+            config.run_data_analysis = true;
+            config.save_charts = false;
+            config.smoothing_method = 'none';
+            config.chen_denoising = false;
+            config.disable_analysis_smoothing = true;
+            % Reset other filtering
+            config.apply_concatenation_filter = false;
+            config.filter_method = 'none';
+            fprintf('Running baseline (no filtering)\n');
+            
         case 'run_smooth'
             % Analysis mode with boundary smoothing
             config.run_tdms_conversion = false;
