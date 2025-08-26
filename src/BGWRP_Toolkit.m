@@ -87,6 +87,27 @@ if exist('mode', 'var') && ischar(mode)
             config.save_charts = false;
             config.cleanup_dirs = true;  % This triggers purge mode via selective_mode
             
+        case 'prep_single_step'
+            % Full prep with single-step scaling (fixes grid artifacts)
+            config.run_tdms_conversion = true;
+            config.run_concatenation = true;
+            config.run_timing_extraction = true;
+            config.run_data_analysis = false;
+            config.save_charts = false;
+            config.cleanup_dirs = true;
+            config.tdms_scaling_method = 'single_step';
+            
+        case 'prep_double_precision'
+            % Full prep with double precision scaling
+            config.run_tdms_conversion = true;
+            config.run_concatenation = true;
+            config.run_timing_extraction = true;
+            config.run_data_analysis = false;
+            config.save_charts = false;
+            config.cleanup_dirs = true;
+            config.tdms_scaling_method = 'double_precision';
+            config.tdms_force_double = true;
+            
         case {'run', 'analyze'}
             % Analysis mode: analysis-only (no timing extraction)
             config.run_tdms_conversion = false;

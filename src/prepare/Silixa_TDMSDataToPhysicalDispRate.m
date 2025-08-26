@@ -95,12 +95,52 @@ for nn = f_ind
         %% Load Data
         arg.loading     =   'data';
         data            =   TDMS_Adv_Read(full_path,arg);
-        adc_scalar      =   1/8192;
-        data            =   data*adc_scalar;
         
         %% Convert to displacement rate in (nanometers/sample)
-        data                  =   116*data;
-        data_units            =   'nm/sample';
+        % Use configurable scaling method
+        if exist('config', 'var') && isfield(config, 'tdms_scaling_method')
+            scaling_method = config.tdms_scaling_method;
+            adc_factor = config.tdms_adc_factor;
+            physical_factor = config.tdms_physical_factor;
+            force_double = config.tdms_force_double;
+        else
+            % Default behavior (backward compatibility)
+            scaling_method = 'two_stage';
+            adc_factor = 1/8192;
+            physical_factor = 116;
+            force_double = false;
+        end
+        
+        switch scaling_method
+            case 'single_step'
+                % Single-step scaling (recommended for grid artifact fix)
+                if force_double
+                    data = double(data) * (physical_factor * adc_factor);
+                else
+                    data = data * (physical_factor * adc_factor);
+                end
+                fprintf('Applied single-step scaling: %g\n', physical_factor * adc_factor);
+                
+            case 'double_precision'
+                % Force double precision throughout
+                data = double(data) * double(adc_factor);
+                data = data * double(physical_factor);
+                fprintf('Applied double-precision scaling\n');
+                
+            case 'two_stage'
+                % Original two-stage method (may cause artifacts)
+                if force_double
+                    data = double(data);
+                end
+                data = data * adc_factor;
+                data = physical_factor * data;
+                fprintf('Applied two-stage scaling (legacy)\n');
+                
+            otherwise
+                error('Unknown scaling method: %s', scaling_method);
+        end
+        
+        data_units = 'nm/sample';
         
         %% Save data if required
         if save_data

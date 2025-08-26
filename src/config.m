@@ -153,6 +153,12 @@ config.manual_bounds.displacement.max = 0.25;
 config.manual_bounds.strain.min = -3;
 config.manual_bounds.strain.max = 1;
 
+%% TDMS Conversion Configuration
+config.tdms_scaling_method = 'two_stage';     % 'two_stage', 'single_step', 'double_precision'
+config.tdms_adc_factor = 1/8192;              % ADC normalization factor
+config.tdms_physical_factor = 116;            % Physical units conversion factor (nm/sample)
+config.tdms_force_double = false;             % Force double precision during conversion
+
 %% Filtering Configuration
 config.apply_concatenation_filter = false;  % Apply post-processing filter to remove file boundary artifacts
 config.filter_method = 'detrend';  % Filter method: 'none', 'detrend', 'highpass', 'median', 'overlap_smooth'
