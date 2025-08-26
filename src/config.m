@@ -87,7 +87,7 @@ config.colormap_resolution = 256;       % 64, 128, 256, 512, 1024 (color steps)
 
 % Data Smoothing Testing (Priority 2 - Processing)
 config.disable_analysis_smoothing = false;    % true = skip all smoothing in analyze_das_data.m
-config.smoothing_method = 'movmean';           % 'movmean', 'movmedian', 'gaussian', 'none', 'chen', 'spatial_median'
+config.smoothing_method = 'none';             % 'movmean', 'movmedian', 'gaussian', 'none', 'chen', 'spatial_median'
 config.smoothing_window_factor = 1.0;         % 0.5, 1.0, 2.0 (multiplier for default window size)
 
 %% Advanced Filtering Configuration
@@ -201,6 +201,13 @@ config.slow_grid_high = 0.33;             % Hz - Slow grid pattern upper bound
 config.fast_grid_low = 0.395;             % Hz - Fast grid pattern lower bound
 config.fast_grid_high = 0.473;            % Hz - Fast grid pattern upper bound
 config.bandstop_order = 4;                % Filter order for bandstop filters
+
+%% Moving Average Filter Configuration (Parameterized)
+% This is the same filter used in basic 'run' mode, now controllable
+config.movavg_window = 10;                % Window size for moving average (samples)
+config.movavg_method = 'mean';            % 'mean' or 'median'
+config.movavg_dimension = 1;              % 1=temporal, 2=spatial  
+config.movavg_endpoints = 'shrink';       % 'shrink', 'fill', 'discard'
 
 %% Head Data Zone Configuration (per dataset)
 % Specify which zone(s) to display for head data overlay in plots

@@ -25,6 +25,7 @@ function filtered_data = apply_filter(data, filter_type, config)
 %   'fk_dip'           - F-K domain dip filter
 %   'ensemble'         - Multi-channel ensemble averaging
 %   'dual_bandstop'    - Targeted grid pattern removal (0.15-0.33 & 0.395-0.473 Hz)
+
 %   'custom'           - Custom filter chain from config
 
 fprintf('  Applying filter: %s\n', filter_type);
@@ -35,9 +36,22 @@ switch lower(filter_type)
         fprintf('    No filtering applied\n');
         
     case 'movmean'
+        % Enhanced moving average with full parameterization
         window = get_config_param(config, 'temporal_window', 10);
-        filtered_data = movmean(data, window, 1);
-        fprintf('    Moving average: window=%d\n', window);
+        method = get_config_param(config, 'movavg_method', 'mean');
+        dimension = get_config_param(config, 'movavg_dimension', 1);
+        endpoints = get_config_param(config, 'movavg_endpoints', 'shrink');
+        
+        switch lower(method)
+            case 'mean'
+                filtered_data = movmean(data, window, dimension, 'Endpoints', endpoints);
+            case 'median'
+                filtered_data = movmedian(data, window, dimension, 'Endpoints', endpoints);
+            otherwise
+                filtered_data = movmean(data, window, dimension, 'Endpoints', endpoints);
+        end
+        
+        fprintf('    Moving %s: window=%d, dim=%d, endpoints=%s\n', method, window, dimension, endpoints);
         
     case 'movmedian'
         window = get_config_param(config, 'temporal_window', 10);
@@ -78,6 +92,7 @@ switch lower(filter_type)
         % Targeted grid pattern removal
         filtered_data = dual_bandstop_filter(data, config);
         
+
     case 'custom'
         filtered_data = apply_custom_filter_chain(data, config);
         

@@ -286,6 +286,20 @@ if exist('mode', 'var') && ischar(mode)
             config.chen_denoising = false;
             fprintf('Running targeted grid pattern removal (dual bandstop)\n');
             
+        case 'run_filter_movavg'
+            % Run parameterized moving average filter
+            config.run_tdms_conversion = false;
+            config.run_concatenation = false;
+            config.run_timing_extraction = false;
+            config.run_data_analysis = true;
+            config.save_charts = false;
+            config.smoothing_method = 'movmean';  % Use enhanced existing filter
+            % Reset other filtering
+            config.apply_concatenation_filter = false;
+            config.filter_method = 'none';
+            config.chen_denoising = false;
+            fprintf('Running parameterized moving average filter\n');
+            
         case 'run_smooth'
             % Analysis mode with boundary smoothing
             config.run_tdms_conversion = false;
