@@ -204,6 +204,14 @@ for i = 1:length(test_labels)
                 % Gaussian smoothing
                 sigma = smooth_window / 3;  % Convert window to sigma
                 smoothed_data = imgaussfilt(data1Hz, sigma);
+            case 'chen'
+                % Chen et al. (2023) 3-stage denoising framework
+                fprintf('  Applying Chen et al. denoising framework...\n');
+                smoothed_data = apply_chen_denoising(data1Hz, config);
+            case 'spatial_median'
+                % Spatial median filter to remove vertical artifacts
+                fprintf('  Applying spatial median filtering...\n');
+                smoothed_data = apply_spatial_median_filter(data1Hz, config);
             case 'none'
                 smoothed_data = data1Hz;  % No smoothing
             otherwise

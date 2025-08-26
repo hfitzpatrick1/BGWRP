@@ -87,8 +87,21 @@ config.colormap_resolution = 256;       % 64, 128, 256, 512, 1024 (color steps)
 
 % Data Smoothing Testing (Priority 2 - Processing)
 config.disable_analysis_smoothing = false;    % true = skip all smoothing in analyze_das_data.m
-config.smoothing_method = 'movmean';           % 'movmean', 'movmedian', 'gaussian', 'none'
+config.smoothing_method = 'movmean';           % 'movmean', 'movmedian', 'gaussian', 'none', 'chen', 'spatial_median'
 config.smoothing_window_factor = 1.0;         % 0.5, 1.0, 2.0 (multiplier for default window size)
+
+% Chen et al. (2023) Denoising Framework Configuration
+config.chen_denoising = false;                % Enable Chen et al. 3-stage denoising
+config.chen_bandpass_low = 0.0005;           % Low frequency cutoff (Hz) - more gentle
+config.chen_bandpass_high = 0.45;             % High frequency cutoff (Hz) - wider band
+config.chen_bandpass_order = 2;               % Butterworth filter order - lower order
+config.chen_median_window = 3;                % Median filter window size (samples) - smaller window
+config.chen_median_weight = 0.3;              % Noise removal weight (0-1) - much gentler
+config.chen_coherent_removal = 0.1;           % Coherent noise removal factor (0-1) - much gentler
+
+% Spatial Median Filter Configuration
+config.spatial_median_channels = 21;           % Number of adjacent channels for spatial median (odd number)
+config.spatial_median_time = 3;                % Time window for temporal smoothing after spatial filtering
 
 % Precision Testing (Priority 5 - Data Type)
 config.force_double_precision = false;        % true = force double precision throughout
