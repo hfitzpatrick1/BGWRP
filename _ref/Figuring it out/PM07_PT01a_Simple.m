@@ -21,8 +21,7 @@
 
 %Load DAS and transducer Data
 load('C:\Coding\BGWRP\data\DAS Data\PM07_01a_1Hz.mat');
-load('C:\Coding\BGWRP\data\head\head_a_z5.mat');
-
+load('C:\Coding\BGWRP\data\_BATCH\_active\PT01a_Recovery_short\_head\head_data.mat'); % Remove extra semicolon
 C1=513;  %starting channel for PT01a (from PT_01a_CC.m)
 MperChan=0.25;  %meters per channel (from PT_01a_CC.m)
 data1Hz = decdata;  % Use decdata from the file
@@ -137,9 +136,37 @@ StartRec= Start140+hours(1);
 %cmdata=data1Hz-mean(data1Hz(:,200:800),2);
 mdata=movmean(data1Hz,10,1);
 
+% Calculate depth properly for your data
+NC = size(data1Hz, 2);
+chan = 1:NC;
+depthm = (chan - C1 - 1) * MperChan;  % compute depth in meters
+depthft = depthm / 0.3048; % compute depth in ft
+
 % Head data is loaded directly as variables
 Thead = Date;
-hft = Depthft;
+
+% Extract the actual head measurements from the loaded data
+% The head_data.mat file should contain variables like 'head_z2', 'head_z3', etc.
+% or a combined 'head_data' variable
+if exist('head_z2', 'var')
+    hft = head_z2;  % Use zone 2 head data as representative
+elseif exist('head_data', 'var')
+    % If it's a combined structure, extract the head values
+    if isstruct(head_data)
+        field_names = fieldnames(head_data);
+        head_fields = field_names(contains(field_names, 'head'));
+        if ~isempty(head_fields)
+            hft = head_data.(head_fields{1});  % Use first head field
+        else
+            hft = head_data;  % Assume it's the head data directly
+        end
+    else
+        hft = head_data;  % Assume it's the head data directly
+    end
+else
+    warning('No head data found, using dummy data');
+    hft = zeros(size(Date));  % Create dummy head data
+end
 hm = hft * 0.3048;
 Thead.TimeZone = 'America/Los_Angeles';
 
@@ -165,6 +192,18 @@ subplot(2,1,1)
     xlabel('Date Time UTC')
     title('PT01a - 5 sec Moving Mean Displacement Rate')
  subplot(2,1,2)
+   % Make sure Thead and hft have compatible sizes
+   if length(Thead) ~= length(hft)
+       % Interpolate to match sizes
+       if length(Thead) > length(hft)
+           hft_interp = interp1(1:length(hft), hft, linspace(1, length(hft), length(Thead)));
+           hft = hft_interp;
+       else
+           Thead_interp = interp1(1:length(Thead), Thead, linspace(1, length(Thead), length(hft)));
+           Thead = Thead_interp;
+       end
+   end
+   
    yyaxis left
     plot(Thead,hft)
     xlim([StartPlot EndPlot])
@@ -195,6 +234,22 @@ subplot(2,1,1)
     xlabel('Date Time UTC')
     title('PT01a - Integrated Strain')
  subplot(2,1,2)
+   % Make sure Thead and hft have compatible sizes (second plot)
+   if length(Thead) ~= length(hft)
+       % Interpolate to match sizes
+       if length(Thead) > length(hft)
+           hft_interp = interp1(1:length(hft), hft, linspace(1, length(hft), length(Thead)));
+           hft = hft_interp;
+       else
+           Thead_interp = interp1(1:length(Thead), Thead, linspace(1, length(Thead), length(hft)));
+           Thead = Thead_interp;
+       end
+   end
+   
+   % Debug: Check what we're plotting
+   fprintf('Plotting head data: Thead size=%d, hft size=%d\n', length(Thead), length(hft));
+   fprintf('Head data range: [%.3f, %.3f] ft\n', min(hft), max(hft));
+   
    yyaxis left
     plot(Thead,hft)
     xlim([StartPlot EndPlot])
