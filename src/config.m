@@ -187,6 +187,13 @@ config.tdms_force_double = false;             % Force double precision during co
 config.apply_concatenation_filter = false;  % Apply post-processing filter to remove file boundary artifacts
 config.filter_method = 'detrend';  % Filter method: 'none', 'detrend', 'highpass', 'median', 'overlap_smooth'
 
+%% Ensemble Averaging Configuration (Signal Extraction)
+% Multi-channel ensemble averaging for grid pattern mitigation
+config.ensemble_zone_window = 50;         % Depth window for averaging (ft)
+config.ensemble_signal_weight = 0.7;      % Weight for original vs ensemble (0-1)
+config.ensemble_min_channels = 5;         % Minimum channels per zone for reliable averaging
+config.ensemble_overlap_ratio = 0.3;      % Zone overlap for smooth transitions (0-0.5)
+
 %% Head Data Zone Configuration (per dataset)
 % Specify which zone(s) to display for head data overlay in plots
 % Can be: 'all' (default), single zone string 'z3', or array {'z2', 'z3'}

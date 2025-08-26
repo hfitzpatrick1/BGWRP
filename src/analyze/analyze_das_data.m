@@ -233,6 +233,11 @@ for i = 1:length(test_labels)
                 % Legacy Chen - redirect to complete framework
                 fprintf('  Applying Chen et al. complete framework (legacy)...\n');
                 smoothed_data = apply_filter(data1Hz, 'chen_full', config);
+            case 'ensemble'
+                % Multi-channel ensemble averaging (signal extraction)
+                fprintf('  Applying ensemble averaging (signal extraction)...\n');
+                config.depth_ft = depth_ft;  % Pass depth information to filter
+                smoothed_data = apply_filter(data1Hz, 'ensemble', config);
             case 'none'
                 smoothed_data = data1Hz;  % No smoothing
             otherwise

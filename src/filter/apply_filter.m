@@ -23,6 +23,7 @@ function filtered_data = apply_filter(data, filter_type, config)
 %   'chen_stage3'       - Chen Stage 3: F-K dip filter
 %   'butterworth_bp'    - Butterworth bandpass filter
 %   'fk_dip'           - F-K domain dip filter
+%   'ensemble'         - Multi-channel ensemble averaging
 %   'custom'           - Custom filter chain from config
 
 fprintf('  Applying filter: %s\n', filter_type);
@@ -62,6 +63,15 @@ switch lower(filter_type)
         
     case 'fk_dip'
         filtered_data = fk_dip_filter(data, config);
+        
+    case 'ensemble'
+        % Ensemble averaging requires depth information
+        if isfield(config, 'depth_ft') && ~isempty(config.depth_ft)
+            filtered_data = ensemble_averaging(data, config.depth_ft, config);
+        else
+            warning('Ensemble filter requires depth_ft in config, skipping filtering');
+            filtered_data = data;
+        end
         
     case 'custom'
         filtered_data = apply_custom_filter_chain(data, config);
