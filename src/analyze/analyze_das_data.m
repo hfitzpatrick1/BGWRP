@@ -200,7 +200,12 @@ for i = 1:length(test_labels)
         
         switch lower(smoothing_method)
             case 'movmean'
-                config.temporal_window = smooth_window;
+                % Use config window if specified, otherwise use calculated smooth_window
+                if isfield(config, 'movavg_window') && ~isempty(config.movavg_window)
+                    config.temporal_window = config.movavg_window;
+                else
+                    config.temporal_window = smooth_window;
+                end
                 smoothed_data = apply_filter(data1Hz, 'movmean', config);
             case 'movmedian'
                 config.temporal_window = smooth_window;
