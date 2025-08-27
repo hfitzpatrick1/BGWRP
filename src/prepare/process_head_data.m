@@ -63,24 +63,88 @@ try
             end
             zone_name = zone_match{1}{1};
             
+            % Clean timestamp array - remove NaT values
+            valid_mask = ~isnat(head_data.Date);
+            if sum(valid_mask) == 0
+                fprintf('    ✗ Zone %s has no valid timestamps - skipping\n', zone_name);
+                continue;
+            end
+            
+            if sum(valid_mask) < length(head_data.Date)
+                fprintf('    ⚠ Zone %s has %d invalid timestamps, cleaning...\n', zone_name, sum(~valid_mask));
+                head_data.Date = head_data.Date(valid_mask);
+                head_data.Drawdownft = head_data.Drawdownft(valid_mask);
+                head_data.Depthft = head_data.Depthft(valid_mask);
+            end
+            
             % Validate/establish shared timestamp array
             if isempty(shared_date)
                 shared_date = head_data.Date;
                 fprintf('    ✓ Established shared timestamp array from %s (%d points)\n', zone_name, length(shared_date));
-            else
-                % Verify timestamps match (allowing for small differences)
-                if length(head_data.Date) ~= length(shared_date)
-                    fprintf('    ⚠ Zone %s has different number of timestamps (%d vs %d)\n', ...
-                        zone_name, length(head_data.Date), length(shared_date));
-                    continue;
-                end
                 
-                % Check if timestamps are close enough (within 1 second)
-                time_diff = abs(seconds(head_data.Date - shared_date));
-                max_diff = max(time_diff);
-                if max_diff > 1
-                    fprintf('    ⚠ Zone %s timestamps differ by up to %.1f seconds\n', zone_name, max_diff);
-                    continue;
+                % Clean shared timestamp array too
+                shared_valid_mask = ~isnat(shared_date);
+                if sum(shared_valid_mask) < length(shared_date)
+                    fprintf('    → Cleaning %d invalid timestamps from reference\n', sum(~shared_valid_mask));
+                    shared_date = shared_date(shared_valid_mask);
+                end
+            else
+                % Handle timestamp mismatches by finding overlapping period
+                if length(head_data.Date) ~= length(shared_date)
+                    fprintf('    ⚠ Zone %s has different number of timestamps (%d vs %d) - aligning...\n', ...
+                        zone_name, length(head_data.Date), length(shared_date));
+                    
+                    % DEBUG: Show actual time ranges
+                    fprintf('      Reference: %s to %s\n', shared_date(1), shared_date(end));
+                    fprintf('      Zone %s:   %s to %s\n', zone_name, head_data.Date(1), head_data.Date(end));
+                    
+                    % Find overlapping time window
+                    shared_start = max(shared_date(1), head_data.Date(1));
+                    shared_end = min(shared_date(end), head_data.Date(end));
+                    
+                    fprintf('      Overlap window: %s to %s\n', shared_start, shared_end);
+                    
+                    if shared_end <= shared_start
+                        fprintf('    ✗ Zone %s has no overlapping time period - skipping\n', zone_name);
+                        continue;
+                    end
+                    
+                    % Trim reference timestamps to overlap window
+                    ref_mask = shared_date >= shared_start & shared_date <= shared_end;
+                    zone_mask = head_data.Date >= shared_start & head_data.Date <= shared_end;
+                    
+                    if sum(ref_mask) < 10 || sum(zone_mask) < 10
+                        fprintf('    ✗ Zone %s overlap too small (%d points) - skipping\n', zone_name, min(sum(ref_mask), sum(zone_mask)));
+                        continue;
+                    end
+                    
+                    % Align zone data to reference timestamps using nearest neighbor
+                    zone_aligned_data = interp1(head_data.Date(zone_mask), head_data.Drawdownft(zone_mask), ...
+                        shared_date(ref_mask), 'linear', 'extrap');
+                    
+                    % Update shared_date to overlap window on first mismatch
+                    if length(shared_date) ~= sum(ref_mask)
+                        fprintf('    → Trimming reference timebase to overlap window (%d points)\n', sum(ref_mask));
+                        shared_date = shared_date(ref_mask);
+                    end
+                    
+                    % Use aligned data
+                    head_data.Drawdownft = zone_aligned_data;
+                    
+                    fprintf('    ✓ Zone %s aligned to reference timebase (%d points)\n', zone_name, length(shared_date));
+                else
+                    % Same length - check if timestamps are close enough (within 1 second)
+                    time_diff = abs(seconds(head_data.Date - shared_date));
+                    max_diff = max(time_diff);
+                    if max_diff > 1
+                        fprintf('    ⚠ Zone %s timestamps differ by up to %.1f seconds - aligning...\n', zone_name, max_diff);
+                        
+                        % Align data to reference timestamps
+                        aligned_data = interp1(head_data.Date, head_data.Drawdownft, shared_date, 'linear', 'extrap');
+                        head_data.Drawdownft = aligned_data;
+                        
+                        fprintf('    ✓ Zone %s realigned to reference timestamps\n', zone_name);
+                    end
                 end
             end
             
