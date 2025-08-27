@@ -11,7 +11,9 @@ function plot_results = generate_plots(head_results, das_results, config)
 % Outputs:
 %   plot_results - Structure containing plot metadata
 
-fprintf('=== GENERATING ANALYSIS PLOTS (SIMPLIFIED) ===\n');
+% Initialize chart logging
+init_chart_logging(config);
+chart_logger('=== GENERATING ANALYSIS PLOTS (SIMPLIFIED) ===');
 
 % Initialize results
 plot_results = struct();
@@ -28,12 +30,12 @@ if isfield(config, 'save_charts') && config.save_charts
     end
     if ~exist(save_dir, 'dir')
         mkdir(save_dir);
-        fprintf('Created chart output directory: %s\n', save_dir);
+        chart_logger('Created chart output directory: %s', save_dir);
     end
     plot_results.save_dir = save_dir;
-    fprintf('Chart saving enabled to: %s\n', save_dir);
+    chart_logger('Chart saving enabled to: %s', save_dir);
 else
-    fprintf('Chart saving disabled\n');
+    chart_logger('Chart saving disabled');
 end
 
 %% Get available test labels from results
@@ -45,12 +47,12 @@ elseif ~isempty(fieldnames(das_results))
     test_labels = test_labels(~strcmp(test_labels, 'tests') & ~strcmp(test_labels, 'timing'));
 end
 
-fprintf('Creating plots for tests: %s\n', strjoin(test_labels, ', '));
+chart_logger('Creating plots for tests: %s', strjoin(test_labels, ', '));
 
 %% Pre-calculate unified bounds if using related bounds
 unified_bounds = struct();
 if isfield(config, 'use_related_bounds') && config.use_related_bounds && length(test_labels) > 1
-    fprintf('Calculating unified bounds across %d related datasets...\n', length(test_labels));
+    chart_logger('Calculating unified bounds across %d related datasets...', length(test_labels));
     
     % Collect all DAS data for unified bounds calculation
     das_data_array = {};
@@ -66,20 +68,20 @@ if isfield(config, 'use_related_bounds') && config.use_related_bounds && length(
         unified_bounds.raw = get_plot_bounds(das_data_array, 'raw', config);
         unified_bounds.displacement = get_plot_bounds(das_data_array, 'displacement', config);
         unified_bounds.strain = get_plot_bounds(das_data_array, 'strain', config);
-        fprintf('✓ Unified bounds calculated\n');
+        chart_logger('✓ Unified bounds calculated');
     end
 else
-    fprintf('Using individual bounds for each dataset\n');
+    chart_logger('Using individual bounds for each dataset');
 end
 
 %% Create simplified plots for each test (based on PM07_PT01c_Simple.m)
 for i = 1:length(test_labels)
     test_label = test_labels{i};
-    fprintf('\n--- Creating plots for test %s ---\n', upper(test_label));
+    chart_logger('\n--- Creating plots for test %s ---', upper(test_label));
     
     % Skip if no DAS data
     if ~isfield(das_results, test_label) || isfield(das_results.(test_label), 'error')
-        fprintf('  Skipping %s: No DAS data available\n', test_label);
+        chart_logger('  Skipping %s: No DAS data available', test_label);
         continue;
     end
     
@@ -93,36 +95,36 @@ for i = 1:length(test_labels)
     head_data = [];
     if isfield(head_results, test_label) && ~isfield(head_results.(test_label), 'error')
         head_data = head_results.(test_label);
-        fprintf('    DEBUG: Found head data for %s with zones: %s\n', test_label, strjoin(fieldnames(head_data.zones), ', '));
+        chart_logger('    DEBUG: Found head data for %s with zones: %s', test_label, strjoin(fieldnames(head_data.zones), ', '));
     else
-        fprintf('    DEBUG: No head data available for %s\n', test_label);
+        chart_logger('    DEBUG: No head data available for %s', test_label);
     end
     
     %% Figure 1: Raw Data Waterfall (standardized with time filtering)
     fig1_num = 100 + i*3 - 2;
-    fprintf('  Creating Figure %d: Raw Data Waterfall\n', fig1_num);
+    chart_logger('  Creating Figure %d: Raw Data Waterfall', fig1_num);
     
     % DEBUG: Check data availability and dimensions
-    fprintf('    DEBUG: das_data fields: %s\n', strjoin(fieldnames(das_data), ', '));
+    chart_logger('    DEBUG: das_data fields: %s', strjoin(fieldnames(das_data), ', '));
     if isfield(das_data, 'smoothed_data')
-        fprintf('    DEBUG: smoothed_data size: [%d x %d]\n', size(das_data.smoothed_data, 1), size(das_data.smoothed_data, 2));
-        fprintf('    DEBUG: smoothed_data range: [%.3f, %.3f]\n', min(das_data.smoothed_data(:)), max(das_data.smoothed_data(:)));
+        chart_logger('    DEBUG: smoothed_data size: [%d x %d]', size(das_data.smoothed_data, 1), size(das_data.smoothed_data, 2));
+        chart_logger('    DEBUG: smoothed_data range: [%.3f, %.3f]', min(das_data.smoothed_data(:)), max(das_data.smoothed_data(:)));
     else
-        fprintf('    ERROR: smoothed_data field missing!\n');
+        chart_logger('    ERROR: smoothed_data field missing!');
     end
     
     if isfield(das_data, 'time_array')
-        fprintf('    DEBUG: time_array size: %d elements\n', length(das_data.time_array));
-        fprintf('    DEBUG: time_array range: %s to %s\n', das_data.time_array(1), das_data.time_array(end));
+        chart_logger('    DEBUG: time_array size: %d elements', length(das_data.time_array));
+        chart_logger('    DEBUG: time_array range: %s to %s', das_data.time_array(1), das_data.time_array(end));
     else
-        fprintf('    ERROR: time_array field missing!\n');
+        chart_logger('    ERROR: time_array field missing!');
     end
     
     if isfield(das_data, 'depth_ft')
-        fprintf('    DEBUG: depth_ft size: %d elements\n', length(das_data.depth_ft));
-        fprintf('    DEBUG: depth_ft range: [%.1f, %.1f] ft\n', min(das_data.depth_ft), max(das_data.depth_ft));
+        chart_logger('    DEBUG: depth_ft size: %d elements', length(das_data.depth_ft));
+        chart_logger('    DEBUG: depth_ft range: [%.1f, %.1f] ft', min(das_data.depth_ft), max(das_data.depth_ft));
     else
-        fprintf('    ERROR: depth_ft field missing!\n');
+        chart_logger('    ERROR: depth_ft field missing!');
     end
     
     figure(fig1_num);
@@ -130,7 +132,7 @@ for i = 1:length(test_labels)
     
     % Check if required data exists before plotting
     if ~isfield(das_data, 'smoothed_data') || ~isfield(das_data, 'time_array') || ~isfield(das_data, 'depth_ft')
-        fprintf('    ERROR: Missing required data fields for waterfall plot!\n');
+        chart_logger('    ERROR: Missing required data fields for waterfall plot!');
         text(0.5, 0.5, 'Missing Data Fields', 'HorizontalAlignment', 'center');
         return;
     end
@@ -162,7 +164,7 @@ for i = 1:length(test_labels)
         % Use pre-calculated unified bounds
         raw_bounds = unified_bounds.raw;
         clim(raw_bounds);
-        fprintf('    Unified raw data bounds: [%.6f, %.6f]\n', raw_bounds(1), raw_bounds(2));
+        chart_logger('    Unified raw data bounds: [%.6f, %.6f]', raw_bounds(1), raw_bounds(2));
     else
         % Calculate individual bounds for this dataset
         raw_bounds = get_plot_bounds(das_data, 'raw', config, test_label);
@@ -196,12 +198,12 @@ for i = 1:length(test_labels)
         filepath = fullfile(save_dir, filename);
         saveas(gcf, filepath);
         plot_results.figures_created{end+1} = filename;
-        fprintf('  Saved: %s\n', filename);
+        chart_logger('  Saved: %s', filename);
     end
     
     %% Figure 2: Displacement Rate (from simple script Figure 2)
     fig2_num = 100 + i*3 - 1;
-    fprintf('  Creating Figure %d: Displacement Rate\n', fig2_num);
+    chart_logger('  Creating Figure %d: Displacement Rate', fig2_num);
     figure(fig2_num);
     clf;
     
@@ -214,7 +216,7 @@ for i = 1:length(test_labels)
         % Use pre-calculated unified bounds
         disp_bounds = unified_bounds.displacement;
         set(gca, 'clim', disp_bounds);
-        fprintf('    Unified displacement rate bounds: [%.6f, %.6f] nm/s\n', disp_bounds(1), disp_bounds(2));
+        chart_logger('    Unified displacement rate bounds: [%.6f, %.6f] nm/s', disp_bounds(1), disp_bounds(2));
     else
         % Calculate individual bounds for this dataset
         disp_bounds = get_plot_bounds(das_data, 'displacement', config, test_label);
@@ -247,7 +249,7 @@ for i = 1:length(test_labels)
     if ~isempty(head_data)
         % Plot head data if available (like simple script)
         zone_names = fieldnames(head_data.zones);
-        fprintf('    DEBUG DISPLACEMENT: Found %d zones: %s\n', length(zone_names), strjoin(zone_names, ', '));
+        chart_logger('    DEBUG DISPLACEMENT: Found %d zones: %s', length(zone_names), strjoin(zone_names, ', '));
         if ~isempty(zone_names)
             % Get zones to plot based on configuration
             zones_to_plot = get_zones_to_plot(test_label, zone_names, head_data, config);
@@ -269,7 +271,7 @@ for i = 1:length(test_labels)
                         yyaxis right;
                         plot(das_data.time_array, das_data.smoothed_data(:, das_data.pumping_zone.channel_idx), 'Color', [0 0 0], 'LineStyle', '-', 'LineWidth', 1.2, 'DisplayName', 'DAS');
                         ylabel('Displacement Rate (nm/s)');
-                        fprintf('    Plotted averaged head data from %d zones\n', length(zones_to_plot));
+                        chart_logger('    Plotted averaged head data from %d zones', length(zones_to_plot));
                     end
                 else
                     % Plot multiple zones or single zone
@@ -306,7 +308,7 @@ for i = 1:length(test_labels)
                     yyaxis right;
                     plot(das_data.time_array, das_data.smoothed_data(:, das_data.pumping_zone.channel_idx), 'Color', [0 0 0], 'LineStyle', '-', 'LineWidth', 1.2, 'DisplayName', 'DAS');
                     ylabel('Displacement Rate (nm/s)');
-                    fprintf('    Plotted head data from zones: %s\n', strjoin(zones_to_plot, ', '));
+                    chart_logger('    Plotted head data from zones: %s', strjoin(zones_to_plot, ', '));
                 end
             else
                 % No valid head data, just plot DAS
@@ -337,12 +339,12 @@ for i = 1:length(test_labels)
         filepath = fullfile(save_dir, filename);
         saveas(gcf, filepath);
         plot_results.figures_created{end+1} = filename;
-        fprintf('  Saved: %s\n', filename);
+        chart_logger('  Saved: %s', filename);
     end
     
     %% Figure 3: Strain (integrated data) - from simple script Figure 3
     fig3_num = 100 + i*3;
-    fprintf('  Creating Figure %d: Strain\n', fig3_num);
+    chart_logger('  Creating Figure %d: Strain', fig3_num);
     figure(fig3_num);
     clf;
     
@@ -356,9 +358,9 @@ for i = 1:length(test_labels)
     if isempty(integration_start_idx)
         % Analysis window is outside dataset bounds - use beginning of dataset
         integration_start_idx = 1;
-        fprintf('    WARNING: Analysis window outside dataset - using dataset start for integration\n');
+        chart_logger('    WARNING: Analysis window outside dataset - using dataset start for integration');
     else
-        fprintf('    Integration starting at: %s (10 min before analysis)\n', integration_reference_time);
+        chart_logger('    Integration starting at: %s (10 min before analysis)', integration_reference_time);
     end
     
     % Check if analysis window is actually available in the dataset
@@ -387,7 +389,7 @@ for i = 1:length(test_labels)
         % Use pre-calculated unified bounds
         strain_bounds = unified_bounds.strain;
         set(gca, 'clim', strain_bounds);
-        fprintf('    Unified strain bounds: [%.6f, %.6f] nm/m\n', strain_bounds(1), strain_bounds(2));
+        chart_logger('    Unified strain bounds: [%.6f, %.6f] nm/m', strain_bounds(1), strain_bounds(2));
     else
         % Calculate individual bounds from actual plotted strain data
         if isfield(config, 'dynamic_bounds') && config.dynamic_bounds
@@ -411,12 +413,12 @@ for i = 1:length(test_labels)
             end
             
             set(gca, 'clim', strain_bounds);
-            fprintf('    Individual strain bounds: [%.6f, %.6f] nm/m\n', strain_bounds(1), strain_bounds(2));
+            chart_logger('    Individual strain bounds: [%.6f, %.6f] nm/m', strain_bounds(1), strain_bounds(2));
         else
             % Use manual bounds configuration via get_plot_bounds
             strain_bounds = get_plot_bounds(das_data, 'strain', config, test_label);
             set(gca, 'clim', strain_bounds);
-            fprintf('    Manual strain bounds: [%.3f, %.3f] nm/m\n', strain_bounds(1), strain_bounds(2));
+            chart_logger('    Manual strain bounds: [%.3f, %.3f] nm/m', strain_bounds(1), strain_bounds(2));
         end
     end
     
@@ -467,7 +469,7 @@ for i = 1:length(test_labels)
                         yyaxis right;
                         plot(iTdas, dintdata(:, das_data.pumping_zone.channel_idx)/10, 'Color', [0 0 0], 'LineStyle', '-', 'LineWidth', 1.2, 'DisplayName', 'DAS');
                         ylabel('Strain (nm/m)');
-                        fprintf('    Plotted averaged head data from %d zones\n', length(zones_to_plot));
+                        chart_logger('    Plotted averaged head data from %d zones', length(zones_to_plot));
                     end
                 else
                     % Plot multiple zones or single zone
@@ -504,7 +506,7 @@ for i = 1:length(test_labels)
                     yyaxis right;
                     plot(iTdas, dintdata(:, das_data.pumping_zone.channel_idx)/10, 'Color', [0 0 0], 'LineStyle', '-', 'LineWidth', 1.2, 'DisplayName', 'DAS');
                     ylabel('Strain (nm/m)');
-                    fprintf('    Plotted head data from zones: %s\n', strjoin(zones_to_plot, ', '));
+                    chart_logger('    Plotted head data from zones: %s', strjoin(zones_to_plot, ', '));
                 end
             else
                 % No valid head data, just plot strain
@@ -512,7 +514,7 @@ for i = 1:length(test_labels)
                 xlim([analysis_start analysis_end]);
                 ylabel('Strain (nm/m)');
                 xlabel('Date Time UTC');
-                fprintf('    No valid head data for plotting\n');
+                chart_logger('    No valid head data for plotting');
             end
         else
             % No head data, just plot strain
@@ -536,7 +538,7 @@ for i = 1:length(test_labels)
         filepath = fullfile(save_dir, filename);
         saveas(gcf, filepath);
         plot_results.figures_created{end+1} = filename;
-        fprintf('  Saved: %s\n', filename);
+        chart_logger('  Saved: %s', filename);
     end
     
     % Store figure handles
@@ -549,16 +551,19 @@ for i = 1:length(test_labels)
 end
 
 %% Summary
-fprintf('\n=== PLOT GENERATION COMPLETE ===\n');
-fprintf('Figures created: %d\n', length(test_labels));
+chart_logger('\n=== PLOT GENERATION COMPLETE ===');
+chart_logger('Figures created: %d', length(test_labels));
 
 if plot_results.save_enabled && ~isempty(plot_results.figures_created)
-    fprintf('Charts saved to: %s\n', plot_results.save_dir);
+    chart_logger('Charts saved to: %s', plot_results.save_dir);
     for i = 1:length(plot_results.figures_created)
-        fprintf('  - %s\n', plot_results.figures_created{i});
+        chart_logger('  - %s', plot_results.figures_created{i});
     end
 else
-    fprintf('Charts displayed but not saved (save_charts disabled)\n');
+    chart_logger('Charts displayed but not saved (save_charts disabled)');
 end
+
+% Close chart logging session
+chart_logger('close');
 
 end
