@@ -188,7 +188,10 @@ for i = 1:length(test_labels)
     set(gca,'layer','top');
     ylabel('Depth (ft)');
     axis ij;
-    ylim([100 700]);  % Consistent depth range
+    % Apply configurable depth axis bounds
+    depth_bounds = get_plot_bounds([], 'depth_axis', config, test_label);
+    ylim(depth_bounds);
+    chart_logger('    Applied depth axis bounds: [%.0f, %.0f] ft', depth_bounds(1), depth_bounds(2));
     xlim([analysis_start analysis_end]);  % Filter to analysis window
     xlabel('Date Time UTC');
     title(sprintf('Raw Data - Test %s', upper(test_label)));
@@ -240,7 +243,10 @@ for i = 1:length(test_labels)
     set(gca,'layer','top');
     ylabel('Depth (ft)');
     axis ij;
-    ylim([100 700]);
+    % Apply configurable depth axis bounds
+    depth_bounds = get_plot_bounds([], 'depth_axis', config, test_label);
+    ylim(depth_bounds);
+    chart_logger('    Applied depth axis bounds: [%.0f, %.0f] ft', depth_bounds(1), depth_bounds(2));
     xlim([analysis_start analysis_end]);
     xlabel('Date Time UTC');
     title(sprintf('DAS Displacement Rate - Test %s', upper(test_label)));
@@ -272,6 +278,9 @@ for i = 1:length(test_labels)
                         plot(das_data.time_array, das_data.smoothed_data(:, das_data.pumping_zone.channel_idx), 'Color', [0 0 0], 'LineStyle', '-', 'LineWidth', 1.2, 'DisplayName', 'DAS');
                         ylabel('Displacement Rate (nm/s)');
                         chart_logger('    Plotted averaged head data from %d zones', length(zones_to_plot));
+                        
+                        % Apply line chart Y-axis bounds
+                        apply_line_chart_bounds(config, test_label, 'displacement_rate');
                     end
                 else
                     % Plot multiple zones or single zone
@@ -309,6 +318,9 @@ for i = 1:length(test_labels)
                     plot(das_data.time_array, das_data.smoothed_data(:, das_data.pumping_zone.channel_idx), 'Color', [0 0 0], 'LineStyle', '-', 'LineWidth', 1.2, 'DisplayName', 'DAS');
                     ylabel('Displacement Rate (nm/s)');
                     chart_logger('    Plotted head data from zones: %s', strjoin(zones_to_plot, ', '));
+                    
+                    % Apply line chart Y-axis bounds
+                    apply_line_chart_bounds(config, test_label, 'displacement_rate');
                 end
             else
                 % No valid head data, just plot DAS
@@ -439,7 +451,10 @@ for i = 1:length(test_labels)
     set(gca,'layer','top');
     ylabel('Depth (ft)');
     axis ij;
-    ylim([100 700]);
+    % Apply configurable depth axis bounds
+    depth_bounds = get_plot_bounds([], 'depth_axis', config, test_label);
+    ylim(depth_bounds);
+    chart_logger('    Applied depth axis bounds: [%.0f, %.0f] ft', depth_bounds(1), depth_bounds(2));
     xlim([analysis_start analysis_end]);
     xlabel('Date Time UTC');
     title(sprintf('DAS Strain - Test %s', upper(test_label)));
@@ -470,6 +485,9 @@ for i = 1:length(test_labels)
                         plot(iTdas, dintdata(:, das_data.pumping_zone.channel_idx)/10, 'Color', [0 0 0], 'LineStyle', '-', 'LineWidth', 1.2, 'DisplayName', 'DAS');
                         ylabel('Strain (nm/m)');
                         chart_logger('    Plotted averaged head data from %d zones', length(zones_to_plot));
+                        
+                        % Apply line chart Y-axis bounds
+                        apply_line_chart_bounds(config, test_label, 'strain');
                     end
                 else
                     % Plot multiple zones or single zone
@@ -507,6 +525,9 @@ for i = 1:length(test_labels)
                     plot(iTdas, dintdata(:, das_data.pumping_zone.channel_idx)/10, 'Color', [0 0 0], 'LineStyle', '-', 'LineWidth', 1.2, 'DisplayName', 'DAS');
                     ylabel('Strain (nm/m)');
                     chart_logger('    Plotted head data from zones: %s', strjoin(zones_to_plot, ', '));
+                    
+                    % Apply line chart Y-axis bounds
+                    apply_line_chart_bounds(config, test_label, 'strain');
                 end
             else
                 % No valid head data, just plot strain
