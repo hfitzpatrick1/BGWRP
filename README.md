@@ -65,7 +65,8 @@ Edit `src/config.m` to set:
 - Analysis windows, waterfall bounds, filtering options
 - Decimation factors, calibration parameters
 - Chart output settings and file paths
-- Advanced filtering algorithm parameters
+- Advanced filtering algorithm parameters (Chen, spatial, temporal, ensemble)
+- MATLAB movmean filter parameters (`matlab_movmean_window`, etc.)
 
 ## Quick Start
 
@@ -96,6 +97,7 @@ cd('C:\Coding\BGWRP\src')
 | `run_filter_ensemble` | `mode = 'run_filter_ensemble'; BGWRP_Toolkit` | Multi-channel ensemble averaging |
 | `run_filter_grid` | `mode = 'run_filter_grid'; BGWRP_Toolkit` | Targeted grid pattern removal |
 | `run_filter_movavg` | `mode = 'run_filter_movavg'; BGWRP_Toolkit` | Parameterized moving average filter |
+| `run_filter_matlab_movmean` | `mode = 'run_filter_matlab_movmean'; BGWRP_Toolkit` | **NEW** MATLAB movmean filter (simple, direct) |
 | `run_filter_baseline` | `mode = 'run_filter_baseline'; BGWRP_Toolkit` | Baseline (no filtering) |
 | **Basic Filtering** |
 | `run_detrend` | `mode = 'run_detrend'; BGWRP_Toolkit` | Analysis with detrend filtering |
@@ -177,6 +179,7 @@ cd('C:\Coding\BGWRP\src')
 - **Spatial/Temporal Filtering**: Multi-dimensional noise reduction  
 - **Ensemble Averaging**: Multi-channel signal extraction
 - **Grid Pattern Removal**: Targeted artifact suppression
+- **MATLAB movmean Filter**: Direct MATLAB implementation for simple, fast smoothing
 - **Phase Alignment**: Correction for file boundary discontinuities
 
 ### Mode Isolation

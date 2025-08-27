@@ -53,6 +53,21 @@ switch lower(filter_type)
         
         fprintf('    Moving %s: window=%d, dim=%d, endpoints=%s\n', method, window, dimension, endpoints);
         
+    case 'matlab_movmean'
+        % Direct MATLAB movmean implementation (like PM07_PT01a_Simple.m)
+        window = get_config_param(config, 'matlab_movmean_window', 10);
+        dimension = get_config_param(config, 'matlab_movmean_dimension', 1);
+        endpoints = get_config_param(config, 'matlab_movmean_endpoints', 'shrink');
+        
+        % Use MATLAB's movmean with optional endpoint handling
+        if strcmp(endpoints, 'shrink')
+            filtered_data = movmean(data, window, dimension);
+        else
+            filtered_data = movmean(data, window, dimension, 'Endpoints', endpoints);
+        end
+        
+        fprintf('    MATLAB movmean: window=%d, dim=%d, endpoints=%s\n', window, dimension, endpoints);
+        
     case 'movmedian'
         window = get_config_param(config, 'temporal_window', 10);
         filtered_data = movmedian(data, window, 1);

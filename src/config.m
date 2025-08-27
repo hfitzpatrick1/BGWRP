@@ -87,7 +87,7 @@ config.colormap_resolution = 256;       % 64, 128, 256, 512, 1024 (color steps)
 
 % Data Smoothing Testing (Priority 2 - Processing)
 config.disable_analysis_smoothing = false;    % true = skip all smoothing in analyze_das_data.m
-config.smoothing_method = 'none';             % 'movmean', 'movmedian', 'gaussian', 'none', 'chen', 'spatial_median'
+config.smoothing_method = 'none';             % 'movmean', 'movmedian', 'gaussian', 'none', 'chen', 'spatial_median', 'matlab_movmean'
 config.smoothing_window_factor = 1.0;         % 0.5, 1.0, 2.0 (multiplier for default window size)
 
 %% Advanced Filtering Configuration
@@ -156,6 +156,10 @@ config.anti_aliasing = false;                  % false = disable anti-aliasing i
 % TEST 2B: Reduce smoothing window
 % config.smoothing_window_factor = 0.5;
 
+% TEST 2C: Use MATLAB movmean filter (like PM07_PT01a_Simple.m)
+% config.smoothing_method = 'matlab_movmean';
+% config.matlab_movmean_window = 10;
+
 % TEST 3A: Fixed bounds instead of dynamic
 % config.dynamic_bounds = false;
 
@@ -176,76 +180,76 @@ config.colormap_resolution = 1024;
 %   - depth_axis:              Depth Y-axis for all waterfall charts
 
 % ===== PT01a_Recovery_short bounds =====
-config.manual_bounds.PT01a_Recovery_short.raw_data.min = -0.30;
-config.manual_bounds.PT01a_Recovery_short.raw_data.max = 0.20;
-config.manual_bounds.PT01a_Recovery_short.displacement_rate.min = -0.25;
-config.manual_bounds.PT01a_Recovery_short.displacement_rate.max = 0.15;
-config.manual_bounds.PT01a_Recovery_short.strain.min = -3.0;
-config.manual_bounds.PT01a_Recovery_short.strain.max = 1.0;
+config.manual_bounds.PT01a_Recovery_short.raw_data.min = -0.5;
+config.manual_bounds.PT01a_Recovery_short.raw_data.max = 0.70;
+config.manual_bounds.PT01a_Recovery_short.displacement_rate.min = 0.07;
+config.manual_bounds.PT01a_Recovery_short.displacement_rate.max = 0.25;
+config.manual_bounds.PT01a_Recovery_short.strain.min = -0.20;
+config.manual_bounds.PT01a_Recovery_short.strain.max = 0.20;
 
 % Line chart Y-axis bounds (for subplot line charts paired with waterfall charts)
-config.manual_bounds.PT01a_Recovery_short.head_data.min = -2.0;           % Head drawdown ft (yyaxis left)
-config.manual_bounds.PT01a_Recovery_short.head_data.max = 0.5;
-config.manual_bounds.PT01a_Recovery_short.displacement_rate_line.min = -0.25;  % DAS displacement rate nm/s (yyaxis right)
-config.manual_bounds.PT01a_Recovery_short.displacement_rate_line.max = 0.15;
-config.manual_bounds.PT01a_Recovery_short.strain_line.min = -3.0;         % DAS strain nm/m (yyaxis right)
-config.manual_bounds.PT01a_Recovery_short.strain_line.max = 1.0;
+config.manual_bounds.PT01a_Recovery_short.head_data.min = 0.0;           % Head drawdown ft (yyaxis left)
+config.manual_bounds.PT01a_Recovery_short.head_data.max = 0.10;
+config.manual_bounds.PT01a_Recovery_short.displacement_rate_line.min = 0.07;  % DAS displacement rate nm/s (yyaxis right)
+config.manual_bounds.PT01a_Recovery_short.displacement_rate_line.max = 0.25;
+config.manual_bounds.PT01a_Recovery_short.strain_line.min = -0.20;         % DAS strain nm/m (yyaxis right)
+config.manual_bounds.PT01a_Recovery_short.strain_line.max = 0.20;
 config.manual_bounds.PT01a_Recovery_short.depth_axis.min = 100;           % Depth axis ft
-config.manual_bounds.PT01a_Recovery_short.depth_axis.max = 700;
+config.manual_bounds.PT01a_Recovery_short.depth_axis.max = 665;
 
 % ===== PT01b_Recovery_short bounds =====
-config.manual_bounds.PT01b_Recovery_short.raw_data.min = -0.25;
-config.manual_bounds.PT01b_Recovery_short.raw_data.max = 0.15;
-config.manual_bounds.PT01b_Recovery_short.displacement_rate.min = -0.20;
-config.manual_bounds.PT01b_Recovery_short.displacement_rate.max = 0.12;
-config.manual_bounds.PT01b_Recovery_short.strain.min = -2.5;
-config.manual_bounds.PT01b_Recovery_short.strain.max = 0.8;
+config.manual_bounds.PT01b_Recovery_short.raw_data.min = -0.3;
+config.manual_bounds.PT01b_Recovery_short.raw_data.max = 0.25;
+config.manual_bounds.PT01b_Recovery_short.displacement_rate.min = -0.19;
+config.manual_bounds.PT01b_Recovery_short.displacement_rate.max = -0.08;
+config.manual_bounds.PT01b_Recovery_short.strain.min = -0.2;
+config.manual_bounds.PT01b_Recovery_short.strain.max = 0.2;
 
 % Line chart Y-axis bounds (for subplot line charts paired with waterfall charts)
-config.manual_bounds.PT01b_Recovery_short.head_data.min = -1.8;           % Head drawdown ft (yyaxis left)
-config.manual_bounds.PT01b_Recovery_short.head_data.max = 0.4;
-config.manual_bounds.PT01b_Recovery_short.displacement_rate_line.min = -0.20;  % DAS displacement rate nm/s (yyaxis right)
-config.manual_bounds.PT01b_Recovery_short.displacement_rate_line.max = 0.12;
-config.manual_bounds.PT01b_Recovery_short.strain_line.min = -2.5;         % DAS strain nm/m (yyaxis right)
-config.manual_bounds.PT01b_Recovery_short.strain_line.max = 0.8;
+config.manual_bounds.PT01b_Recovery_short.head_data.min = -0.1;           % Head drawdown ft (yyaxis left)
+config.manual_bounds.PT01b_Recovery_short.head_data.max = -0.02;
+config.manual_bounds.PT01b_Recovery_short.displacement_rate_line.min = -0.19;  % DAS displacement rate nm/s (yyaxis right)
+config.manual_bounds.PT01b_Recovery_short.displacement_rate_line.max = -0.08;
+config.manual_bounds.PT01b_Recovery_short.strain_line.min = -0.2;         % DAS strain nm/m (yyaxis right)
+config.manual_bounds.PT01b_Recovery_short.strain_line.max = 0.2;
 config.manual_bounds.PT01b_Recovery_short.depth_axis.min = 100;           % Depth axis ft
-config.manual_bounds.PT01b_Recovery_short.depth_axis.max = 700;
+config.manual_bounds.PT01b_Recovery_short.depth_axis.max = 665;
 
 % ===== PT01c_Recovery_short bounds =====
-config.manual_bounds.PT01c_Recovery_short.raw_data.min = -0.22;
-config.manual_bounds.PT01c_Recovery_short.raw_data.max = 0.12;
-config.manual_bounds.PT01c_Recovery_short.displacement_rate.min = -0.18;
+config.manual_bounds.PT01c_Recovery_short.raw_data.min = -0.6;
+config.manual_bounds.PT01c_Recovery_short.raw_data.max = 0.4;
+config.manual_bounds.PT01c_Recovery_short.displacement_rate.min = -0.12;
 config.manual_bounds.PT01c_Recovery_short.displacement_rate.max = 0.10;
-config.manual_bounds.PT01c_Recovery_short.strain.min = -2.2;
-config.manual_bounds.PT01c_Recovery_short.strain.max = 0.6;
+config.manual_bounds.PT01c_Recovery_short.strain.min = -0.2;
+config.manual_bounds.PT01c_Recovery_short.strain.max = 0.2;
 
 % Line chart Y-axis bounds (for subplot line charts paired with waterfall charts)
-config.manual_bounds.PT01c_Recovery_short.head_data.min = -1.5;           % Head drawdown ft (yyaxis left)
-config.manual_bounds.PT01c_Recovery_short.head_data.max = 0.3;
-config.manual_bounds.PT01c_Recovery_short.displacement_rate_line.min = -0.18;  % DAS displacement rate nm/s (yyaxis right)
+config.manual_bounds.PT01c_Recovery_short.head_data.min = -0.16;           % Head drawdown ft (yyaxis left)
+config.manual_bounds.PT01c_Recovery_short.head_data.max = -0.06;
+config.manual_bounds.PT01c_Recovery_short.displacement_rate_line.min = -0.12;  % DAS displacement rate nm/s (yyaxis right)
 config.manual_bounds.PT01c_Recovery_short.displacement_rate_line.max = 0.10;
-config.manual_bounds.PT01c_Recovery_short.strain_line.min = -2.2;         % DAS strain nm/m (yyaxis right)
-config.manual_bounds.PT01c_Recovery_short.strain_line.max = 0.6;
+config.manual_bounds.PT01c_Recovery_short.strain_line.min = -0.2;         % DAS strain nm/m (yyaxis right)
+config.manual_bounds.PT01c_Recovery_short.strain_line.max = 0.2;
 config.manual_bounds.PT01c_Recovery_short.depth_axis.min = 100;           % Depth axis ft
-config.manual_bounds.PT01c_Recovery_short.depth_axis.max = 700;
+config.manual_bounds.PT01c_Recovery_short.depth_axis.max = 665;
 
 % ===== Global fallback bounds (used if dataset-specific bounds not found) =====
-config.manual_bounds.global.raw_data.min = -0.25;
-config.manual_bounds.global.raw_data.max = 0.15;
-config.manual_bounds.global.displacement_rate.min = -0.25;
-config.manual_bounds.global.displacement_rate.max = 0.15;
-config.manual_bounds.global.strain.min = -3;
-config.manual_bounds.global.strain.max = 1;
+%config.manual_bounds.global.raw_data.min = -0.25;
+%config.manual_bounds.global.raw_data.max = 0.15;
+%config.manual_bounds.global.displacement_rate.min = -0.25;
+%config.manual_bounds.global.displacement_rate.max = 0.15;
+%config.manual_bounds.global.strain.min = -3;
+%config.manual_bounds.global.strain.max = 1;
 
 % Global line chart Y-axis bounds (fallback when dataset-specific bounds not found)
-config.manual_bounds.global.head_data.min = -2.0;           % Head drawdown ft (yyaxis left)
-config.manual_bounds.global.head_data.max = 0.5;
-config.manual_bounds.global.displacement_rate_line.min = -0.25;  % DAS displacement rate nm/s (yyaxis right)
-config.manual_bounds.global.displacement_rate_line.max = 0.15;
-config.manual_bounds.global.strain_line.min = -3.0;         % DAS strain nm/m (yyaxis right)
-config.manual_bounds.global.strain_line.max = 1.0;
-config.manual_bounds.global.depth_axis.min = 100;           % Depth axis ft
-config.manual_bounds.global.depth_axis.max = 700;
+%config.manual_bounds.global.head_data.min = -2.0;           % Head drawdown ft (yyaxis left)
+%config.manual_bounds.global.head_data.max = 0.5;
+%config.manual_bounds.global.displacement_rate_line.min = -0.25;  % DAS displacement rate nm/s (yyaxis right)
+%config.manual_bounds.global.displacement_rate_line.max = 0.15;
+%config.manual_bounds.global.strain_line.min = -3.0;         % DAS strain nm/m (yyaxis right)
+%config.manual_bounds.global.strain_line.max = 1.0;
+%config.manual_bounds.global.depth_axis.min = 100;           % Depth axis ft
+%config.manual_bounds.global.depth_axis.max = 700;
 
 %% TDMS Conversion Configuration
 config.tdms_scaling_method = 'single_step';   % 'two_stage', 'single_step', 'double_precision'
@@ -266,8 +270,8 @@ config.ensemble_overlap_ratio = 0.3;      % Zone overlap for smooth transitions 
 
 %% Dual Bandstop Filter Configuration (Targeted Grid Removal)
 % Based on diagnostic analysis - removes specific grid pattern frequencies
-config.slow_grid_low = 0.15;              % Hz - Slow grid pattern lower bound
-config.slow_grid_high = 0.33;             % Hz - Slow grid pattern upper bound  
+config.slow_grid_low = 0.30;              % Hz - Slow grid pattern lower bound (target 0.35 Hz)
+config.slow_grid_high = 0.40;             % Hz - Slow grid pattern upper bound (target 0.35 Hz)  
 config.fast_grid_low = 0.395;             % Hz - Fast grid pattern lower bound
 config.fast_grid_high = 0.473;            % Hz - Fast grid pattern upper bound
 config.bandstop_order = 4;                % Filter order for bandstop filters
@@ -278,6 +282,12 @@ config.movavg_window = 10;                % Window size for moving average (samp
 config.movavg_method = 'mean';            % 'mean' or 'median'
 config.movavg_dimension = 1;              % 1=temporal, 2=spatial  
 config.movavg_endpoints = 'shrink';       % 'shrink', 'fill', 'discard'
+
+%% MATLAB movmean Filter Configuration (Direct MATLAB Implementation)
+% Uses MATLAB's built-in movmean function directly (like PM07_PT01a_Simple.m)
+config.matlab_movmean_window = 10;        % Window size for MATLAB movmean (samples)
+config.matlab_movmean_dimension = 1;      % 1=temporal, 2=spatial
+config.matlab_movmean_endpoints = 'shrink'; % 'shrink', 'fill', 'discard' (MATLAB nanflag options)
 
 %% Head Data Zone Configuration (per dataset)
 % Specify which zone(s) to display for head data overlay in plots
