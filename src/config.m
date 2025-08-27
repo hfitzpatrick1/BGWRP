@@ -163,19 +163,45 @@ config.anti_aliasing = false;                  % false = disable anti-aliasing i
 config.colormap_resolution = 1024;
 
 %% Manual Plot Bounds (used when dynamic_bounds = false)
+% Per-dataset, per-chart bounds configuration for all chart types
 % Based on discovered data ranges: PT01a [-30.2, 41.5], PT01b [-29.9, 30.3], PT01c [-26.3, 25.2]
+%
+% Chart Types:
+%   - raw_data:         Raw Data Waterfall (Figure 1)
+%   - displacement_rate: Displacement Rate Waterfall (Figure 2, top subplot)
+%   - strain:           Strain Waterfall (Figure 3, top subplot)
 
-% Raw data bounds (conservative range covering all datasets)
-config.manual_bounds.raw.min = -0.25;
-config.manual_bounds.raw.max = 0.15;
+% ===== PT01a_Recovery_short bounds =====
+config.manual_bounds.PT01a_Recovery_short.raw_data.min = -0.30;
+config.manual_bounds.PT01a_Recovery_short.raw_data.max = 0.20;
+config.manual_bounds.PT01a_Recovery_short.displacement_rate.min = -0.25;
+config.manual_bounds.PT01a_Recovery_short.displacement_rate.max = 0.15;
+config.manual_bounds.PT01a_Recovery_short.strain.min = -3.0;
+config.manual_bounds.PT01a_Recovery_short.strain.max = 1.0;
 
-% Displacement rate bounds (more focused)
-config.manual_bounds.displacement.min = -0.25;
-config.manual_bounds.displacement.max = 0.15;
+% ===== PT01b_Recovery_short bounds =====
+config.manual_bounds.PT01b_Recovery_short.raw_data.min = -0.25;
+config.manual_bounds.PT01b_Recovery_short.raw_data.max = 0.15;
+config.manual_bounds.PT01b_Recovery_short.displacement_rate.min = -0.20;
+config.manual_bounds.PT01b_Recovery_short.displacement_rate.max = 0.12;
+config.manual_bounds.PT01b_Recovery_short.strain.min = -2.5;
+config.manual_bounds.PT01b_Recovery_short.strain.max = 0.8;
 
-% Strain bounds (typically negative accumulation)
-config.manual_bounds.strain.min = -3;
-config.manual_bounds.strain.max = 1;
+% ===== PT01c_Recovery_short bounds =====
+config.manual_bounds.PT01c_Recovery_short.raw_data.min = -0.22;
+config.manual_bounds.PT01c_Recovery_short.raw_data.max = 0.12;
+config.manual_bounds.PT01c_Recovery_short.displacement_rate.min = -0.18;
+config.manual_bounds.PT01c_Recovery_short.displacement_rate.max = 0.10;
+config.manual_bounds.PT01c_Recovery_short.strain.min = -2.2;
+config.manual_bounds.PT01c_Recovery_short.strain.max = 0.6;
+
+% ===== Global fallback bounds (used if dataset-specific bounds not found) =====
+config.manual_bounds.global.raw_data.min = -0.25;
+config.manual_bounds.global.raw_data.max = 0.15;
+config.manual_bounds.global.displacement_rate.min = -0.25;
+config.manual_bounds.global.displacement_rate.max = 0.15;
+config.manual_bounds.global.strain.min = -3;
+config.manual_bounds.global.strain.max = 1;
 
 %% TDMS Conversion Configuration
 config.tdms_scaling_method = 'single_step';   % 'two_stage', 'single_step', 'double_precision'
