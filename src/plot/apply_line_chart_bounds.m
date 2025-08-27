@@ -13,10 +13,11 @@ function apply_line_chart_bounds(config, test_label, chart_type)
 %   apply_line_chart_bounds(config, 'PT01a_Recovery_short', 'displacement_rate');
 
 % Map chart type to specific line chart bounds
-head_bound_type = 'head_data';
 if strcmp(chart_type, 'displacement_rate')
+    head_bound_type = 'head_data';          % Drawdown rate bounds for displacement plots
     das_bound_type = 'displacement_rate_line';
 elseif strcmp(chart_type, 'strain')
+    head_bound_type = 'head_data_strain';   % Head level bounds for strain plots
     das_bound_type = 'strain_line';
 else
     chart_logger('WARNING: Unknown chart type for line bounds: %s', chart_type);
@@ -33,7 +34,11 @@ try
     % Apply head data bounds (yyaxis left)
     yyaxis left;
     ylim(head_bounds);
-    chart_logger('    Applied head data Y-axis bounds: [%.3f, %.3f] ft', head_bounds(1), head_bounds(2));
+    if strcmp(chart_type, 'displacement_rate')
+        chart_logger('    Applied drawdown rate Y-axis bounds: [%.3f, %.3f] ft/min', head_bounds(1), head_bounds(2));
+    else
+        chart_logger('    Applied head data Y-axis bounds: [%.3f, %.3f] ft', head_bounds(1), head_bounds(2));
+    end
     
     % Apply DAS line data bounds (yyaxis right)
     yyaxis right;

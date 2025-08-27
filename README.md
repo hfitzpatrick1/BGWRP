@@ -97,7 +97,9 @@ cd('C:\Coding\BGWRP\src')
 | `run_filter_ensemble` | `mode = 'run_filter_ensemble'; BGWRP_Toolkit` | Multi-channel ensemble averaging |
 | `run_filter_grid` | `mode = 'run_filter_grid'; BGWRP_Toolkit` | Targeted grid pattern removal |
 | `run_filter_movavg` | `mode = 'run_filter_movavg'; BGWRP_Toolkit` | Parameterized moving average filter |
-| `run_filter_matlab_movmean` | `mode = 'run_filter_matlab_movmean'; BGWRP_Toolkit` | **NEW** MATLAB movmean filter (simple, direct) |
+| `run_filter_matlab_movmean` | `mode = 'run_filter_matlab_movmean'; BGWRP_Toolkit` | **NEW** MATLAB movmean filter (10-second window) |
+| `run_filter_matlab_movmean_5sec` | `mode = 'run_filter_matlab_movmean_5sec'; BGWRP_Toolkit` | **NEW** MATLAB movmean filter (5-second window) |
+| `run_filter_movmean_plus_grid` | `mode = 'run_filter_movmean_plus_grid'; BGWRP_Toolkit` | **NEW** MATLAB movmean + 0.35 Hz grid removal |
 | `run_filter_baseline` | `mode = 'run_filter_baseline'; BGWRP_Toolkit` | Baseline (no filtering) |
 | **Basic Filtering** |
 | `run_detrend` | `mode = 'run_detrend'; BGWRP_Toolkit` | Analysis with detrend filtering |
@@ -180,6 +182,9 @@ cd('C:\Coding\BGWRP\src')
 - **Ensemble Averaging**: Multi-channel signal extraction
 - **Grid Pattern Removal**: Targeted artifact suppression
 - **MATLAB movmean Filter**: Direct MATLAB implementation for simple, fast smoothing
+  - 10-second window (`run_filter_matlab_movmean`): Standard smoothing like reference scripts
+  - 5-second window (`run_filter_matlab_movmean_5sec`): Faster response, less smoothing
+- **Combined Filtering**: MATLAB movmean + grid removal for comprehensive noise reduction
 - **Phase Alignment**: Correction for file boundary discontinuities
 
 ### Mode Isolation
@@ -215,6 +220,7 @@ cd('C:\Coding\BGWRP\src')
 - **Mode conflicts** - Each mode resets configuration completely (by design)
 - **Filter errors** - Check input data format and sampling rate compatibility
 - **Memory issues** - Use `prep_no_decim` mode sparingly; 100Hz data requires significant RAM
+- **Vertical bands/grid patterns** - Use `run_filter_movmean_plus_grid` to remove 0.35 Hz artifacts
 
 ### Debug Modes
 Test individual components:

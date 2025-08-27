@@ -314,18 +314,33 @@ if exist('mode', 'var') && ischar(mode)
             config.chen_denoising = false;
             fprintf('Running MATLAB movmean filter (10-sample window)\n');
             
-        case 'run_filter_movmean_plus_grid'
-            % Run MATLAB movmean + grid pattern removal (0.35 Hz target)
-            config.run_tdms_conversion = false;
-            config.run_concatenation = false;
-            config.run_timing_extraction = false;
-            config.run_data_analysis = true;
-            config.save_charts = false;
-            config.smoothing_method = 'matlab_movmean';  % First: MATLAB movmean
-            config.apply_concatenation_filter = true;   % Then: Apply grid removal
-            config.filter_method = 'dual_bandstop';     % Target 0.35 Hz pattern
-            config.chen_denoising = false;
-            fprintf('Running MATLAB movmean + 0.35 Hz grid removal\n');
+            case 'run_filter_movmean_plus_grid'
+        % Run MATLAB movmean + grid pattern removal (0.35 Hz target)
+        config.run_tdms_conversion = false;
+        config.run_concatenation = false;
+        config.run_timing_extraction = false;
+        config.run_data_analysis = true;
+        config.save_charts = false;
+        config.smoothing_method = 'matlab_movmean';  % First: MATLAB movmean
+        config.apply_concatenation_filter = true;   % Then: Apply grid removal
+        config.filter_method = 'dual_bandstop';     % Target 0.35 Hz pattern
+        config.chen_denoising = false;
+        fprintf('Running MATLAB movmean + 0.35 Hz grid removal\n');
+        
+    case 'run_filter_matlab_movmean_5sec'
+        % Run MATLAB movmean filter with 5-second window (5 samples at 1Hz)
+        config.run_tdms_conversion = false;
+        config.run_concatenation = false;
+        config.run_timing_extraction = false;
+        config.run_data_analysis = true;
+        config.save_charts = false;
+        config.smoothing_method = 'matlab_movmean';  % Use MATLAB movmean
+        config.matlab_movmean_window = 5;           % 5-second window (5 samples)
+        % Reset other filtering
+        config.apply_concatenation_filter = false;
+        config.filter_method = 'none';
+        config.chen_denoising = false;
+        fprintf('Running MATLAB movmean filter (5-second window)\n');
             
         case 'run_smooth'
             % Analysis mode with boundary smoothing

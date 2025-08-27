@@ -20,6 +20,8 @@ switch lower(data_type)
         chart_type = 'strain';
     case 'head_data'
         chart_type = 'head_data';
+    case 'head_data_strain'
+        chart_type = 'head_data_strain';
     case 'displacement_rate_line'
         chart_type = 'displacement_rate_line';
     case 'strain_line'
