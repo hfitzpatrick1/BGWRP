@@ -165,7 +165,7 @@ for i = 1:length(test_labels)
         fprintf('    Unified raw data bounds: [%.6f, %.6f]\n', raw_bounds(1), raw_bounds(2));
     else
         % Calculate individual bounds for this dataset
-        raw_bounds = get_plot_bounds(das_data, 'raw', config);
+        raw_bounds = get_plot_bounds(das_data, 'raw', config, test_label);
         clim(raw_bounds);
     end
     
@@ -217,7 +217,7 @@ for i = 1:length(test_labels)
         fprintf('    Unified displacement rate bounds: [%.6f, %.6f] nm/s\n', disp_bounds(1), disp_bounds(2));
     else
         % Calculate individual bounds for this dataset
-        disp_bounds = get_plot_bounds(das_data, 'displacement', config);
+        disp_bounds = get_plot_bounds(das_data, 'displacement', config, test_label);
         set(gca, 'clim', disp_bounds);
     end
     
@@ -413,10 +413,10 @@ for i = 1:length(test_labels)
             set(gca, 'clim', strain_bounds);
             fprintf('    Individual strain bounds: [%.6f, %.6f] nm/m\n', strain_bounds(1), strain_bounds(2));
         else
-            % Fixed bounds
-            strain_bounds = [-2, 0];
+            % Use manual bounds configuration via get_plot_bounds
+            strain_bounds = get_plot_bounds(das_data, 'strain', config, test_label);
             set(gca, 'clim', strain_bounds);
-            fprintf('    Fixed strain bounds: [-2, 0] nm/m\n');
+            fprintf('    Manual strain bounds: [%.3f, %.3f] nm/m\n', strain_bounds(1), strain_bounds(2));
         end
     end
     
