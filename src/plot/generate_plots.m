@@ -212,7 +212,11 @@ for i = 1:length(test_labels)
     
     subplot(2,1,1);
     % Apply configurable plotting method to test pixelation sources
-    v = apply_plot_config(das_data.time_array, das_data.depth_ft, das_data.smoothed_data', config, 'waterfall');
+    % For displacement rate, use the analysis window data only
+    analysis_mask = das_data.time_array >= analysis_start & das_data.time_array <= analysis_end;
+    analysis_smoothed_data = das_data.smoothed_data(analysis_mask, :);
+    analysis_time_array = das_data.time_array(analysis_mask);
+    v = apply_plot_config(analysis_time_array, das_data.depth_ft, analysis_smoothed_data', config, 'waterfall');
     
     % Set displacement rate bounds using new utility functions
     if ~isempty(unified_bounds) && isfield(unified_bounds, 'displacement')
@@ -277,7 +281,7 @@ for i = 1:length(test_labels)
                         ylabel('Drawdown Rate (ft/min)');
                         
                         yyaxis right;
-                        plot(das_data.time_array, das_data.smoothed_data(:, das_data.pumping_zone.channel_idx), 'Color', [0 0 0], 'LineStyle', '-', 'LineWidth', 1.2, 'DisplayName', 'DAS');
+                        plot(das_data.analysis_time, das_data.analysis_strain_rate, 'Color', [0 0 0], 'LineStyle', '-', 'LineWidth', 1.2, 'DisplayName', 'DAS');
                         ylabel('Displacement Rate (nm/s)');
                         chart_logger('    Plotted averaged drawdown rate from %d zones', length(zones_to_plot));
                         
@@ -319,7 +323,7 @@ for i = 1:length(test_labels)
                     end
                     
                     yyaxis right;
-                    plot(das_data.time_array, das_data.smoothed_data(:, das_data.pumping_zone.channel_idx), 'Color', [0 0 0], 'LineStyle', '-', 'LineWidth', 1.2, 'DisplayName', 'DAS');
+                    plot(das_data.analysis_time, das_data.analysis_strain_rate, 'Color', [0 0 0], 'LineStyle', '-', 'LineWidth', 1.2, 'DisplayName', 'DAS');
                     ylabel('Displacement Rate (nm/s)');
                     chart_logger('    Plotted drawdown rate data from zones: %s', strjoin(zones_to_plot, ', '));
                     
@@ -328,21 +332,21 @@ for i = 1:length(test_labels)
                 end
             else
                 % No valid head data, just plot DAS
-                plot(das_data.time_array, das_data.smoothed_data(:, das_data.pumping_zone.channel_idx), 'Color', [0 0 0], 'LineStyle', '-', 'LineWidth', 1.2, 'DisplayName', 'DAS');
+                plot(das_data.analysis_time, das_data.analysis_strain_rate, 'Color', [0 0 0], 'LineStyle', '-', 'LineWidth', 1.2, 'DisplayName', 'DAS');
                 xlim([analysis_start analysis_end]);
                 ylabel('Displacement Rate (nm/s)');
                 xlabel('Date Time UTC');
             end
         else
             % No head data, just plot DAS
-            plot(das_data.time_array, das_data.smoothed_data(:, das_data.pumping_zone.channel_idx), 'Color', [0 0 0], 'LineStyle', '-', 'LineWidth', 1.2, 'DisplayName', 'DAS');
+            plot(das_data.analysis_time, das_data.analysis_strain_rate, 'Color', [0 0 0], 'LineStyle', '-', 'LineWidth', 1.2, 'DisplayName', 'DAS');
             xlim([analysis_start analysis_end]);
             ylabel('Displacement Rate (nm/s)');
             xlabel('Date Time UTC');
         end
     else
         % No head data, just plot DAS
-        plot(das_data.time_array, das_data.smoothed_data(:, das_data.pumping_zone.channel_idx), 'Color', [0 0 0], 'LineStyle', '-', 'LineWidth', 1.2, 'DisplayName', 'DAS');
+        plot(das_data.analysis_time, das_data.analysis_strain_rate, 'Color', [0 0 0], 'LineStyle', '-', 'LineWidth', 1.2, 'DisplayName', 'DAS');
         xlim([analysis_start analysis_end]);
         ylabel('Displacement Rate (nm/s)');
         xlabel('Date Time UTC');
@@ -591,4 +595,4 @@ end
 % Close chart logging session
 chart_logger('close');
 
-endend
+end
