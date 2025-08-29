@@ -269,10 +269,16 @@ for i = 1:length(test_labels)
                     averaged_data = average_zone_data(zones_to_plot, head_data);
                     if ~isempty(averaged_data)
                         yyaxis left;
-                        plot(averaged_data.Date, averaged_data.Drawdownft, 'DisplayName', 'Head (avg)');
+                        % Calculate drawdown rate (derivative of head)
+                        dt = seconds(diff(averaged_data.Date));
+                        drawdown_rate = diff(averaged_data.Drawdownft) ./ dt; % ft/sec
+                        drawdown_rate_per_min = drawdown_rate * 60; % Convert to ft/min
+                        time_for_derivative = averaged_data.Date(2:end); % Time points for derivative
+                        
+                        plot(time_for_derivative, drawdown_rate_per_min, 'DisplayName', 'Drawdown Rate (avg)');
                         xlim([analysis_start analysis_end]);
                         xlabel('Date Time UTC');
-                        ylabel('Head (ft)');
+                        ylabel('Drawdown Rate (ft/min)');
                         
                         yyaxis right;
                         plot(das_data.time_array, das_data.smoothed_data(:, das_data.pumping_zone.channel_idx), 'Color', [0 0 0], 'LineStyle', '-', 'LineWidth', 1.2, 'DisplayName', 'DAS');
@@ -301,15 +307,21 @@ for i = 1:length(test_labels)
                             else
                                 zone_color = [0 0 0];
                             end
-                            plot(zone_data.recovery_data.Date, zone_data.recovery_data.Drawdownft, ...
+                            % Calculate drawdown rate (derivative of head)
+                            dt = seconds(diff(zone_data.recovery_data.Date));
+                            drawdown_rate = diff(zone_data.recovery_data.Drawdownft) ./ dt; % ft/sec
+                            drawdown_rate_per_min = drawdown_rate * 60; % Convert to ft/min
+                            time_for_derivative = zone_data.recovery_data.Date(2:end); % Time points for derivative
+                            
+                            plot(time_for_derivative, drawdown_rate_per_min, ...
                                 'Color', zone_color, 'LineStyle', '-', 'LineWidth', 1.2, ...
-                                'DisplayName', sprintf('Head %s', zone_name));
+                                'DisplayName', sprintf('Drawdown Rate %s', zone_name));
                         end
                     end
                     hold off;
                     xlim([analysis_start analysis_end]);
                     xlabel('Date Time UTC');
-                    ylabel('Head (ft)');
+                    ylabel('Drawdown Rate (ft/min)');
                     if length(zones_to_plot) > 1
                         legend('show');
                     end
@@ -317,7 +329,7 @@ for i = 1:length(test_labels)
                     yyaxis right;
                     plot(das_data.time_array, das_data.smoothed_data(:, das_data.pumping_zone.channel_idx), 'Color', [0 0 0], 'LineStyle', '-', 'LineWidth', 1.2, 'DisplayName', 'DAS');
                     ylabel('Displacement Rate (nm/s)');
-                    chart_logger('    Plotted head data from zones: %s', strjoin(zones_to_plot, ', '));
+                    chart_logger('    Plotted drawdown rate data from zones: %s', strjoin(zones_to_plot, ', '));
                     
                     % Apply line chart Y-axis bounds
                     apply_line_chart_bounds(config, test_label, 'displacement_rate');

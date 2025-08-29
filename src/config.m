@@ -224,8 +224,8 @@ config.manual_bounds.PT01c_Recovery_short.strain.min = -0.2;
 config.manual_bounds.PT01c_Recovery_short.strain.max = 0.2;
 
 % Line chart Y-axis bounds (for subplot line charts paired with waterfall charts)
-config.manual_bounds.PT01c_Recovery_short.head_data.min = -0.16;           % Head drawdown ft (yyaxis left)
-config.manual_bounds.PT01c_Recovery_short.head_data.max = -0.06;
+config.manual_bounds.PT01c_Recovery_short.head_data.min = -0.07;           % Drawdown rate ft/min (yyaxis left)
+config.manual_bounds.PT01c_Recovery_short.head_data.max = 0.15;
 config.manual_bounds.PT01c_Recovery_short.displacement_rate_line.min = -0.12;  % DAS displacement rate nm/s (yyaxis right)
 config.manual_bounds.PT01c_Recovery_short.displacement_rate_line.max = 0.10;
 config.manual_bounds.PT01c_Recovery_short.strain_line.min = -0.2;         % DAS strain nm/m (yyaxis right)

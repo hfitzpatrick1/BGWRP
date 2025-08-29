@@ -97,7 +97,8 @@ cd('C:\Coding\BGWRP\src')
 | `run_filter_ensemble` | `mode = 'run_filter_ensemble'; BGWRP_Toolkit` | Multi-channel ensemble averaging |
 | `run_filter_grid` | `mode = 'run_filter_grid'; BGWRP_Toolkit` | Targeted grid pattern removal |
 | `run_filter_movavg` | `mode = 'run_filter_movavg'; BGWRP_Toolkit` | Parameterized moving average filter |
-| `run_filter_matlab_movmean` | `mode = 'run_filter_matlab_movmean'; BGWRP_Toolkit` | **NEW** MATLAB movmean filter (simple, direct) |
+| `run_filter_matlab_movmean` | `mode = 'run_filter_matlab_movmean'; BGWRP_Toolkit` | MATLAB movmean filter (10-second window) |
+| `run_filter_matlab_movmean_5sec` | `mode = 'run_filter_matlab_movmean_5sec'; BGWRP_Toolkit` | **NEW** MATLAB movmean filter (5-second window) |
 | `run_filter_baseline` | `mode = 'run_filter_baseline'; BGWRP_Toolkit` | Baseline (no filtering) |
 | **Basic Filtering** |
 | `run_detrend` | `mode = 'run_detrend'; BGWRP_Toolkit` | Analysis with detrend filtering |
