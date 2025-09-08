@@ -210,7 +210,7 @@ for i = 1:length(test_labels)
     figure(fig2_num);
     clf;
     
-    subplot(2,1,1);
+    subplot(3,1,1);
     % Apply configurable plotting method to test pixelation sources
     % For displacement rate, use the analysis window data only
     analysis_mask = das_data.time_array >= analysis_start & das_data.time_array <= analysis_end;
@@ -255,22 +255,23 @@ for i = 1:length(test_labels)
     xlabel('Date Time UTC');
     title(sprintf('DAS Displacement Rate - Test %s', upper(test_label)));
     
-    subplot(2,1,2);
+    subplot(3,1,2);
     if ~isempty(head_data)
-        % Plot head data if available (like simple script)
+        % Plot monitoring well data (z2, z3, z4, z5) - exclude pw for separate subplot
         zone_names = fieldnames(head_data.zones);
         chart_logger('    DEBUG DISPLACEMENT: Found %d zones: %s', length(zone_names), strjoin(zone_names, ', '));
         if ~isempty(zone_names)
-            % Get zones to plot based on configuration
+            % Get zones to plot based on configuration, but exclude pw for this subplot
             zones_to_plot = get_zones_to_plot(test_label, zone_names, head_data, config);
+            monitoring_zones = zones_to_plot(~strcmp(zones_to_plot, 'pw'));  % Exclude pw
             
-            if ~isempty(zones_to_plot)
+            if ~isempty(monitoring_zones)
                 % Get display mode
                 display_mode = get_head_display_mode(test_label, config);
                 
                 if strcmp(display_mode, 'average')
                     % Average multiple zones into single line
-                    averaged_data = average_zone_data(zones_to_plot, head_data);
+                    averaged_data = average_zone_data(monitoring_zones, head_data);
                     if ~isempty(averaged_data)
                         yyaxis left;
                         % Convert head levels to drawdown rate for better comparison with displacement rate
@@ -283,21 +284,21 @@ for i = 1:length(test_labels)
                         yyaxis right;
                         plot(das_data.analysis_time, das_data.analysis_strain_rate, 'Color', [0 0 0], 'LineStyle', '-', 'LineWidth', 1.2, 'DisplayName', 'DAS');
                         ylabel('Displacement Rate (nm/s)');
-                        chart_logger('    Plotted averaged drawdown rate from %d zones', length(zones_to_plot));
+                        chart_logger('    Plotted averaged drawdown rate from %d monitoring zones', length(monitoring_zones));
                         
                         % Apply line chart Y-axis bounds
                         apply_line_chart_bounds(config, test_label, 'displacement_rate');
                     end
                 else
-                    % Plot multiple zones or single zone
+                    % Plot multiple monitoring zones (excluding pw)
                     yyaxis left;
                     hold on;
                     % Define consistent colors for zones z2, z3, z4, z5 across all datasets
-                    zone_colors = containers.Map({'z2', 'z3', 'z4', 'z5'}, ...
-                        {[0.8500 0.3250 0.0980], [0.9290 0.6940 0.1250], [0.4940 0.1840 0.5560], [0.4660 0.6740 0.1880]});
+                    zone_colors = containers.Map({'z2', 'z3', 'z4', 'z5', 'pw'}, ...
+                        {[0.8500 0.3250 0.0980], [0.9290 0.6940 0.1250], [0.4940 0.1840 0.5560], [0.4660 0.6740 0.1880], [0.0000 1.0000 1.0000]});
                     
-                    for z_idx = 1:length(zones_to_plot)
-                        zone_name = zones_to_plot{z_idx};
+                    for z_idx = 1:length(monitoring_zones)
+                        zone_name = monitoring_zones{z_idx};
                         zone_data = head_data.zones.(zone_name);
                         if isfield(zone_data, 'recovery_data') && ~isempty(zone_data.recovery_data) && ...
                            isfield(zone_data.recovery_data, 'Date') && length(zone_data.recovery_data.Date) > 1
@@ -318,14 +319,14 @@ for i = 1:length(test_labels)
                     xlim([analysis_start analysis_end]);
                     xlabel('Date Time UTC');
                     ylabel('Drawdown Rate (ft/min)');
-                    if length(zones_to_plot) > 1
+                    if length(monitoring_zones) > 1
                         legend('show');
                     end
                     
                     yyaxis right;
                     plot(das_data.analysis_time, das_data.analysis_strain_rate, 'Color', [0 0 0], 'LineStyle', '-', 'LineWidth', 1.2, 'DisplayName', 'DAS');
                     ylabel('Displacement Rate (nm/s)');
-                    chart_logger('    Plotted drawdown rate data from zones: %s', strjoin(zones_to_plot, ', '));
+                    chart_logger('    Plotted monitoring well drawdown rate data from zones: %s', strjoin(monitoring_zones, ', '));
                     
                     % Apply line chart Y-axis bounds
                     apply_line_chart_bounds(config, test_label, 'displacement_rate');
@@ -351,8 +352,44 @@ for i = 1:length(test_labels)
         ylabel('Displacement Rate (nm/s)');
         xlabel('Date Time UTC');
     end
-    title(sprintf('Representative Channel (%.0f ft)', das_data.pumping_zone.channel_depth_ft));
+    title(sprintf('Monitoring Wells - Representative Channel (%.0f ft)', das_data.pumping_zone.channel_depth_ft));
     grid on;
+    
+    % Third subplot: Pumping Well (pw) data
+    subplot(3,1,3);
+    if ~isempty(head_data) && isfield(head_data.zones, 'pw')
+        pw_data = head_data.zones.pw;
+        if isfield(pw_data, 'recovery_data') && ~isempty(pw_data.recovery_data) && ...
+           isfield(pw_data.recovery_data, 'Date') && length(pw_data.recovery_data.Date) > 1
+            
+            yyaxis left;
+            % Convert head levels to drawdown rate for better comparison with displacement rate
+            [drawdown_rate, rate_time] = calculate_drawdown_rate(pw_data.recovery_data.Date, pw_data.recovery_data.Drawdownft, 'ft_per_min');
+            plot(rate_time, drawdown_rate, 'Color', [0.0000 1.0000 1.0000], 'LineStyle', '-', 'LineWidth', 0.8, 'DisplayName', 'Pumping Well Drawdown Rate');
+            xlim([analysis_start analysis_end]);
+            xlabel('Date Time UTC');
+            ylabel('Pumping Well Drawdown Rate (ft/min)');
+            
+            yyaxis right;
+            plot(das_data.analysis_time, das_data.analysis_strain_rate, 'Color', [0 0 0], 'LineStyle', '-', 'LineWidth', 1.2, 'DisplayName', 'DAS');
+            ylabel('Displacement Rate (nm/s)');
+            
+            % Apply only the DAS bounds (right Y-axis) to match subplot 2, keep left Y-axis (drawdown rate) separate
+            das_bounds = get_plot_bounds([], 'displacement_rate_line', config, test_label);
+            ylim(das_bounds);
+            chart_logger('    Applied displacement rate line bounds to match subplot 2: [%.3f, %.3f] nm/s', das_bounds(1), das_bounds(2));
+            
+            title('Pumping Well (pw) Drawdown');
+            grid on;
+            chart_logger('    Plotted pumping well (pw) drawdown rate data');
+        else
+            text(0.5, 0.5, 'No valid pumping well recovery data', 'HorizontalAlignment', 'center');
+            title('Pumping Well (pw) - No Data');
+        end
+    else
+        text(0.5, 0.5, 'No pumping well data available', 'HorizontalAlignment', 'center');
+        title('Pumping Well (pw) - No Data');
+    end
     
     if plot_results.save_enabled
         filename = sprintf('test_%s_displacement_rate.png', test_label);
@@ -400,7 +437,7 @@ for i = 1:length(test_labels)
         dintdata(:, nn) = detrend(intdata(:, nn), 2);
     end
     
-    subplot(2,1,1);
+    subplot(3,1,1);
     % Apply configurable plotting method to test pixelation sources
     v = apply_plot_config(iTdas, das_data.depth_ft, dintdata'/10, config, 'waterfall');
     
@@ -467,21 +504,22 @@ for i = 1:length(test_labels)
     xlabel('Date Time UTC');
     title(sprintf('DAS Strain - Test %s', upper(test_label)));
     
-    subplot(2,1,2);
+    subplot(3,1,2);
     if ~isempty(head_data)
-        % Plot head data if available
+        % Plot monitoring well data (z2, z3, z4, z5) - exclude pw for separate subplot
         zone_names = fieldnames(head_data.zones);
         if ~isempty(zone_names)
-            % Get zones to plot based on configuration
+            % Get zones to plot based on configuration, but exclude pw for this subplot
             zones_to_plot = get_zones_to_plot(test_label, zone_names, head_data, config);
+            monitoring_zones = zones_to_plot(~strcmp(zones_to_plot, 'pw'));  % Exclude pw
             
-            if ~isempty(zones_to_plot)
+            if ~isempty(monitoring_zones)
                 % Get display mode
                 display_mode = get_head_display_mode(test_label, config);
                 
                 if strcmp(display_mode, 'average')
                     % Average multiple zones into single line
-                    averaged_data = average_zone_data(zones_to_plot, head_data);
+                    averaged_data = average_zone_data(monitoring_zones, head_data);
                     if ~isempty(averaged_data)
                         yyaxis left;
                         plot(averaged_data.Date, averaged_data.Drawdownft, 'DisplayName', 'Head (avg)');
@@ -492,21 +530,21 @@ for i = 1:length(test_labels)
                         yyaxis right;
                         plot(iTdas, dintdata(:, das_data.pumping_zone.channel_idx)/10, 'Color', [0 0 0], 'LineStyle', '-', 'LineWidth', 1.2, 'DisplayName', 'DAS');
                         ylabel('Strain (nm/m)');
-                        chart_logger('    Plotted averaged head data from %d zones', length(zones_to_plot));
+                        chart_logger('    Plotted averaged head data from %d monitoring zones', length(monitoring_zones));
                         
                         % Apply line chart Y-axis bounds
                         apply_line_chart_bounds(config, test_label, 'strain');
                     end
                 else
-                    % Plot multiple zones or single zone
+                    % Plot multiple monitoring zones (excluding pw)
                     yyaxis left;
                     hold on;
                     % Define consistent colors for zones z2, z3, z4, z5 across all datasets
-                    zone_colors = containers.Map({'z2', 'z3', 'z4', 'z5'}, ...
-                        {[0.8500 0.3250 0.0980], [0.9290 0.6940 0.1250], [0.4940 0.1840 0.5560], [0.4660 0.6740 0.1880]});
+                    zone_colors = containers.Map({'z2', 'z3', 'z4', 'z5', 'pw'}, ...
+                        {[0.8500 0.3250 0.0980], [0.9290 0.6940 0.1250], [0.4940 0.1840 0.5560], [0.4660 0.6740 0.1880], [0.0000 1.0000 1.0000]});
                     
-                    for z_idx = 1:length(zones_to_plot)
-                        zone_name = zones_to_plot{z_idx};
+                    for z_idx = 1:length(monitoring_zones)
+                        zone_name = monitoring_zones{z_idx};
                         zone_data = head_data.zones.(zone_name);
                         if isfield(zone_data, 'recovery_data') && ~isempty(zone_data.recovery_data) && ...
                            isfield(zone_data.recovery_data, 'Date') && length(zone_data.recovery_data.Date) > 1
@@ -525,14 +563,14 @@ for i = 1:length(test_labels)
                     xlim([analysis_start analysis_end]);
                     xlabel('Date Time UTC');
                     ylabel('Head (ft)');
-                    if length(zones_to_plot) > 1
+                    if length(monitoring_zones) > 1
                         legend('show');
                     end
                     
                     yyaxis right;
                     plot(iTdas, dintdata(:, das_data.pumping_zone.channel_idx)/10, 'Color', [0 0 0], 'LineStyle', '-', 'LineWidth', 1.2, 'DisplayName', 'DAS');
                     ylabel('Strain (nm/m)');
-                    chart_logger('    Plotted head data from zones: %s', strjoin(zones_to_plot, ', '));
+                    chart_logger('    Plotted monitoring well head data from zones: %s', strjoin(monitoring_zones, ', '));
                     
                     % Apply line chart Y-axis bounds
                     apply_line_chart_bounds(config, test_label, 'strain');
@@ -559,8 +597,46 @@ for i = 1:length(test_labels)
         ylabel('Strain (nm/m)');
         xlabel('Date Time UTC');
     end
-    title(sprintf('Representative Channel Strain (%.0f ft)', das_data.pumping_zone.channel_depth_ft));
+    title(sprintf('Monitoring Wells - Representative Channel Strain (%.0f ft)', das_data.pumping_zone.channel_depth_ft));
     grid on;
+    
+    % Third subplot: Pumping Well (pw) data for strain figure
+    subplot(3,1,3);
+    if ~isempty(head_data) && isfield(head_data.zones, 'pw')
+        pw_data = head_data.zones.pw;
+        if isfield(pw_data, 'recovery_data') && ~isempty(pw_data.recovery_data) && ...
+           isfield(pw_data.recovery_data, 'Date') && length(pw_data.recovery_data.Date) > 1
+            
+            yyaxis left;
+            plot(pw_data.recovery_data.Date, pw_data.recovery_data.Drawdownft, 'Color', [0.0000 1.0000 1.0000], 'LineStyle', '-', 'LineWidth', 0.8, 'DisplayName', 'Pumping Well Head');
+            xlim([analysis_start analysis_end]);
+            xlabel('Date Time UTC');
+            ylabel('Pumping Well Head (ft)');
+            
+            % Apply pumping well specific bounds
+            pw_bounds = get_plot_bounds([], 'pw_head_strain', config, test_label);
+            ylim(pw_bounds);
+            
+            yyaxis right;
+            plot(iTdas, dintdata(:, das_data.pumping_zone.channel_idx)/10, 'Color', [0 0 0], 'LineStyle', '-', 'LineWidth', 1.2, 'DisplayName', 'DAS');
+            ylabel('Strain (nm/m)');
+            
+            % Apply only the DAS bounds (right Y-axis) to match subplot 2, keep left Y-axis (head data) separate
+            das_bounds = get_plot_bounds([], 'strain_line', config, test_label);
+            ylim(das_bounds);
+            chart_logger('    Applied strain line bounds to match subplot 2: [%.3f, %.3f] nm/m', das_bounds(1), das_bounds(2));
+            
+            title('Pumping Well (pw) Head');
+            grid on;
+            chart_logger('    Plotted pumping well (pw) head data');
+        else
+            text(0.5, 0.5, 'No valid pumping well recovery data', 'HorizontalAlignment', 'center');
+            title('Pumping Well (pw) - No Data');
+        end
+    else
+        text(0.5, 0.5, 'No pumping well data available', 'HorizontalAlignment', 'center');
+        title('Pumping Well (pw) - No Data');
+    end
     
     if plot_results.save_enabled
         filename = sprintf('test_%s_strain.png', test_label);

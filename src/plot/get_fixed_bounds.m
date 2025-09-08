@@ -60,6 +60,12 @@ if nargin >= 2 && isfield(config, 'manual_bounds')
     end
 end
 
+% Check for default bounds before falling back to traditional bounds
+if strcmp(lower(data_type), 'depth_axis') && isfield(config, 'default_depth_axis')
+    bounds = [config.default_depth_axis.min, config.default_depth_axis.max];
+    return;
+end
+
 % Fall back to traditional fixed bounds
 switch lower(data_type)
     case 'raw'
@@ -68,6 +74,8 @@ switch lower(data_type)
         bounds = [-0.25, 0.15];
     case 'strain'
         bounds = [-2, 0];
+    case 'depth_axis'
+        bounds = [200, 665];  % Default depth range for all pump tests
     otherwise
         bounds = [-1, 1];
 end
