@@ -92,12 +92,12 @@ config.manual_bounds.PT01b_start_of_pumping.displacement_rate_line.min = -0.5;  
 config.manual_bounds.PT01b_start_of_pumping.displacement_rate_line.max = -0.2;
 config.manual_bounds.PT01b_start_of_pumping.strain_line.min = -0.5;         % DAS strain nm/m (matches waterfall)
 config.manual_bounds.PT01b_start_of_pumping.strain_line.max = 0.45;
-config.manual_bounds.PT01b_start_of_pumping.head_data_strain.min = -0.04;   % Head levels ft (Figure 3) - monitoring wells only
-config.manual_bounds.PT01b_start_of_pumping.head_data_strain.max = 0.05;
+config.manual_bounds.PT01b_start_of_pumping.head_data_strain.min = -0.023;   % Head levels ft (Figure 3) - monitoring wells only
+config.manual_bounds.PT01b_start_of_pumping.head_data_strain.max = 0;
 config.manual_bounds.PT01b_start_of_pumping.depth_axis.min = 200;           % Depth axis ft
 config.manual_bounds.PT01b_start_of_pumping.depth_axis.max = 665;
-config.manual_bounds.PT01b_start_of_pumping.pw_head_strain.min = -6.0;     % Pumping well head levels ft (Figure 3, subplot 3)
-config.manual_bounds.PT01b_start_of_pumping.pw_head_strain.max = 1.0;
+config.manual_bounds.PT01b_start_of_pumping.pw_head_strain.min = -0.2;     % Pumping well head levels ft (Figure 3, subplot 3)
+config.manual_bounds.PT01b_start_of_pumping.pw_head_strain.max = 5;
 
 %% Head Data Zone Configuration (per dataset)
 % PT01b START OF PUMPING zone configuration  
