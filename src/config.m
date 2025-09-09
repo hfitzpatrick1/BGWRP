@@ -76,6 +76,31 @@ config.manual_bounds.PT01c_start_of_pumping.depth_axis.max = 665;
 config.manual_bounds.PT01c_start_of_pumping.pw_head_strain.min = -9.0;     % Pumping well head levels ft (Figure 3, subplot 3)
 config.manual_bounds.PT01c_start_of_pumping.pw_head_strain.max = 1.0;
 
+% ===== PT01a_Recovery_short bounds =====
+% Recovery bounds for PT01a dataset
+config.manual_bounds.PT01a_Recovery_short.raw_data.min = 0;        % Figure 1: Raw data waterfall
+config.manual_bounds.PT01a_Recovery_short.raw_data.max = 0.2;
+config.manual_bounds.PT01a_Recovery_short.displacement_rate.min = 0.04; % Figure 2: Displacement rate main colorbar
+config.manual_bounds.PT01a_Recovery_short.displacement_rate.max = 0.22;
+config.manual_bounds.PT01a_Recovery_short.strain.min = -0.2;          % Figure 3: Strain main colorbar
+config.manual_bounds.PT01a_Recovery_short.strain.max = 0.20;
+
+% Line chart Y-axis bounds (for subplot line charts paired with waterfall charts)
+config.manual_bounds.PT01a_Recovery_short.head_data.min = -0.02;          % Drawdown rate ft/min (Figure 2 subplot 2) - monitoring wells only
+config.manual_bounds.PT01a_Recovery_short.head_data.max = 0.08;
+config.manual_bounds.PT01a_Recovery_short.pw_head_data.min = -1;          % PW drawdown rate (Figure 2 subplot 3)
+config.manual_bounds.PT01a_Recovery_short.pw_head_data.max = 55;
+config.manual_bounds.PT01a_Recovery_short.displacement_rate_line.min = 0.05;  % DAS displacement rate nm/s (subplot 2 & 3)
+config.manual_bounds.PT01a_Recovery_short.displacement_rate_line.max = 0.25;
+config.manual_bounds.PT01a_Recovery_short.strain_line.min = -0.2;        % DAS strain nm/m (matches waterfall)
+config.manual_bounds.PT01a_Recovery_short.strain_line.max = 0.2;
+config.manual_bounds.PT01a_Recovery_short.head_data_strain.min = 0;   % Head levels ft (Figure 3 subplot 2) - monitoring wells only
+config.manual_bounds.PT01a_Recovery_short.head_data_strain.max = 0.13;
+config.manual_bounds.PT01a_Recovery_short.depth_axis.min = 200;           % Depth axis ft
+config.manual_bounds.PT01a_Recovery_short.depth_axis.max = 665;
+config.manual_bounds.PT01a_Recovery_short.pw_head_strain.min = -24;     % Pumping well head levels ft (Figure 3 subplot 3)
+config.manual_bounds.PT01a_Recovery_short.pw_head_strain.max = 5;
+
 % ===== PT01b_start_of_pumping bounds =====
 % Similar bounds to PT01c but adjusted for PT01b data characteristics
 config.manual_bounds.PT01b_start_of_pumping.raw_data.min = -0.4;        % Figure 1: Raw data waterfall
@@ -107,6 +132,10 @@ config.head_zones.PT01b_start_of_pumping.display_mode = 'multiple';
 % PT01c START OF PUMPING zone configuration
 config.head_zones.PT01c_start_of_pumping.zones = {'z2', 'z3', 'z4', 'z5', 'pw'};  % Zones 2-5 and pumping well
 config.head_zones.PT01c_start_of_pumping.display_mode = 'multiple';
+
+% PT01a_Recovery_short zone configuration
+config.head_zones.PT01a_Recovery_short.zones = {'z2', 'z3', 'z4', 'z5', 'pw'};  % Zones 2-5 and pumping well
+config.head_zones.PT01a_Recovery_short.display_mode = 'multiple';
 
 %% Additional Configuration Parameters
 config.apply_concatenation_filter = false;

@@ -24,8 +24,24 @@ success = false;
 try
     fprintf('Processing head data: %s\n', input_directory);
     
-    % Check if this is a PT01c or PT01b dataset and use global head data directory
-    if contains(input_directory, 'PT01c')
+    % Check if this is a PT01c, PT01b, or PT01a dataset and use global head data directory
+    if contains(input_directory, 'PT01a')
+        fprintf('🔄 Detected PT01a dataset - using global head data directory\n');
+        global_head_dir = 'C:\Coding\BGWRP\data\head';
+        
+        % Find ONLY head_a_*.mat files in global directory for PT01a
+        mat_files = dir(fullfile(global_head_dir, 'head_a_*.mat'));
+        
+        if isempty(mat_files)
+            fprintf('⚠ No head_a_*.mat files found in %s\n', global_head_dir);
+            % Fallback to input directory
+            mat_files = dir(fullfile(input_directory, '*.mat'));
+        else
+            fprintf('✓ Found %d head_a_*.mat files in global directory\n', length(mat_files));
+            % Update input_directory to point to global directory for file loading
+            input_directory = global_head_dir;
+        end
+    elseif contains(input_directory, 'PT01c')
         fprintf('🔄 Detected PT01c dataset - using global head data directory\n');
         global_head_dir = 'C:\Coding\BGWRP\data\head';
         
@@ -134,8 +150,8 @@ try
             end
             
             % Extract zone name from filename - support both zone (z2, z3, etc.) and pumping well (pw)
-            % Handle both head_b_z2.mat and head_c_z2.mat and head_c_pw.mat patterns
-            zone_match = regexp(filename, 'head_[bc]_(z\d+|pw)\.mat', 'tokens');
+            % Handle head_a_z2.mat, head_b_z2.mat, head_c_z2.mat and head_c_pw.mat patterns
+            zone_match = regexp(filename, 'head_[abc]_(z\d+|pw)\.mat', 'tokens');
             if isempty(zone_match)
                 fprintf('    ⚠ Could not extract zone name from %s\n', filename);
                 continue;
