@@ -179,10 +179,17 @@ for i = 1:length(test_labels)
     channels = 1:size(data1Hz, 2);
     depth_ft = ((channels - C1 - 1) * MperChan) / 0.3048;
     
-    % Create time array
-            data_start = test_timing.start;
+    % Create time array with timing adjustment
+    data_start = test_timing.start;
+    
+    % Apply DAS timing adjustment if specified
+    if isfield(test_timing, 'das_timing_adjustment') && test_timing.das_timing_adjustment ~= 0
+        data_start = data_start + seconds(test_timing.das_timing_adjustment);
+        fprintf('  Applied DAS timing adjustment: +%d seconds\n', test_timing.das_timing_adjustment);
+    end
+    
     n_samples = size(data1Hz, 1);
-            time_array = data_start + seconds(0:n_samples-1);
+    time_array = data_start + seconds(0:n_samples-1);
             
     % Apply configurable smoothing (from simple script approach)
     if isfield(config, 'disable_analysis_smoothing') && config.disable_analysis_smoothing
@@ -248,7 +255,10 @@ for i = 1:length(test_labels)
                 fprintf('  Applying dual bandstop filter (grid pattern removal)...\n');
                 config.sampling_rate = 1.0;  % 1Hz decimated data
                 smoothed_data = apply_filter(data1Hz, 'dual_bandstop', config);
-
+            case 'matlab_movmean'
+                % Direct MATLAB movmean implementation with configurable window
+                fprintf('  Applying MATLAB movmean filter...\n');
+                smoothed_data = apply_filter(data1Hz, 'matlab_movmean', config);
             case 'none'
                 smoothed_data = data1Hz;  % No smoothing
             otherwise
@@ -256,7 +266,13 @@ for i = 1:length(test_labels)
                 config.temporal_window = smooth_window;
                 smoothed_data = apply_filter(data1Hz, 'movmean', config);
         end
-        fprintf('  Applied %s smoothing (window: %d)\n', smoothing_method, smooth_window);
+        % Report the window size used
+        if strcmp(smoothing_method, 'matlab_movmean') && isfield(config, 'matlab_movmean_window')
+            actual_window = config.matlab_movmean_window;
+        else
+            actual_window = smooth_window;
+        end
+        fprintf('  Applied %s smoothing (window: %d)\n', smoothing_method, actual_window);
     end
     
     % DEBUG: Check data after smoothing

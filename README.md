@@ -22,6 +22,8 @@ BGWRP/
 │   │   └── save_timing_config.m
 │   ├── plot/              # Plotting and visualization
 │   │   ├── generate_plots.m
+│   │   ├── analyze_fft_spectrum.m    # FFT analysis functions
+│   │   ├── plot_fft_analysis.m       # FFT figure generation
 │   │   └── [chart generation functions]
 │   ├── diagnostic/        # Diagnostic and quality assessment
 │   │   ├── diagnose_file_boundaries.m
@@ -65,6 +67,12 @@ Edit `src/config.m` to set:
 - Analysis windows, waterfall bounds, filtering options
 - Decimation factors, calibration parameters
 - Chart output settings and file paths
+- **FFT analysis parameters** (Figure 4 configuration):
+  - `config.sampling_rate` - Sampling rate for FFT analysis (default: 1.0 Hz)
+  - `config.fft_window_length` - FFT window size (default: 512)
+  - `config.freq_range_max` - Maximum frequency to analyze (default: 0.4 Hz)
+  - `config.psd_method` - PSD computation method ('pwelch' or 'periodogram')
+  - Grid pattern detection thresholds for artifact identification
 - Advanced filtering algorithm parameters (Chen, spatial, temporal, ensemble)
 - MATLAB movmean filter parameters (`matlab_movmean_window`, etc.)
 
@@ -87,8 +95,8 @@ cd('C:\Coding\BGWRP\src')
 | `prep_no_decim` | `mode = 'prep_no_decim'; BGWRP_Toolkit` | Full prep preserving 100Hz (no decimation) |
 | `prep_purge` | `mode = 'prep_purge'; BGWRP_Toolkit` | Full prep with purge of previous data |
 | **Analysis** |
-| `run` | `mode = 'run'; BGWRP_Toolkit` | Analyze data, display plots |
-| `run_save` | `mode = 'run_save'; BGWRP_Toolkit` | Analyze data, save charts |
+| `run` | `mode = 'run'; BGWRP_Toolkit` | Analyze data, display 4 figures |
+| `run_save` | `mode = 'run_save'; BGWRP_Toolkit` | Analyze data, save 4 figures |
 | **Advanced Filtering** |
 | `run_filter_chen` | `mode = 'run_filter_chen'; BGWRP_Toolkit` | Chen et al. complete denoising framework |
 | `run_filter_chen_fk` | `mode = 'run_filter_chen_fk'; BGWRP_Toolkit` | Chen F-K filter (grid pattern removal) |
@@ -104,6 +112,53 @@ cd('C:\Coding\BGWRP\src')
 | **Basic Filtering** |
 | `run_detrend` | `mode = 'run_detrend'; BGWRP_Toolkit` | Analysis with detrend filtering |
 | `run_highpass` | `mode = 'run_highpass'; BGWRP_Toolkit` | Analysis with highpass filtering |
+
+## Analysis Figures
+
+The toolkit generates **4 comprehensive figures** for each test:
+
+### Figure 1: Raw Data Waterfall
+- **Purpose**: Visualize raw DAS displacement rate data across depth and time
+- **Content**: Waterfall plot with color-coded displacement rates
+- **Features**: Configurable depth bounds, analysis window filtering, head data overlay
+
+### Figure 2: Displacement Rate Analysis  
+- **Purpose**: Compare DAS displacement rate with head monitoring data
+- **Content**: 3 subplots
+  - Subplot 1: DAS displacement rate waterfall (analysis window)
+  - Subplot 2: Monitoring wells drawdown rate vs DAS representative channel
+  - Subplot 3: Pumping well drawdown rate vs DAS representative channel
+- **Features**: Dual y-axis plots, configurable bounds, zone-specific analysis
+
+### Figure 3: Strain Analysis
+- **Purpose**: Analyze integrated DAS strain with head data correlation
+- **Content**: 3 subplots  
+  - Subplot 1: DAS strain waterfall (integrated displacement)
+  - Subplot 2: Monitoring wells head levels vs DAS strain
+  - Subplot 3: Pumping well head levels vs DAS strain
+- **Features**: Time-based integration, detrended strain, correlation analysis
+
+### Figure 4: FFT Analysis (NEW)
+- **Purpose**: Comprehensive frequency domain analysis of DAS data
+- **Content**: 4 subplots
+  - **Subplot 1**: Power Spectral Density (PSD) with dominant frequency identification
+  - **Subplot 2**: Spatial Frequency Coherence across channels
+  - **Subplot 3**: Time-Frequency Evolution (spectrogram)
+  - **Subplot 4**: Frequency Band Power Analysis with grid pattern detection
+- **Features**:
+  - Automatic grid pattern artifact detection (0.15-0.33 Hz and 0.35-0.45 Hz bands)
+  - Dominant frequency peak identification and labeling
+  - Signal-to-noise ratio estimation
+  - Spatial coherence analysis across fiber optic channels
+  - Configurable FFT parameters (window size, overlap, frequency range)
+
+#### FFT Analysis Capabilities
+- **Grid Pattern Detection**: Automatically identifies and quantifies grid pattern artifacts
+- **Frequency Peak Analysis**: Finds and labels dominant frequencies in the signal
+- **Spatial Coherence**: Analyzes frequency consistency across different fiber channels
+- **Time-Frequency Evolution**: Shows how frequency content changes over time
+- **Power Distribution**: Breaks down signal power across different frequency bands
+- **Quality Assessment**: Provides SNR estimates and noise characterization
 | `run_median` | `mode = 'run_median'; BGWRP_Toolkit` | Analysis with median filtering |
 | **Diagnostics** |
 | `diagnostic_boundaries` | `mode = 'diagnostic_boundaries'; BGWRP_Toolkit` | Analyze file boundary artifacts |

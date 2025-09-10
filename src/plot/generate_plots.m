@@ -138,7 +138,7 @@ for i = 1:length(test_labels)
     end
     
     % Apply configurable plotting method to test pixelation sources
-    v = apply_plot_config(das_data.time_array, das_data.depth_ft, das_data.smoothed_data', config, 'waterfall');
+    apply_plot_config(das_data.time_array, das_data.depth_ft, das_data.smoothed_data', config, 'waterfall');
     
     % Overlay head data if available
     if ~isempty(head_data) && isfield(head_data, 'zones')
@@ -216,7 +216,7 @@ for i = 1:length(test_labels)
     analysis_mask = das_data.time_array >= analysis_start & das_data.time_array <= analysis_end;
     analysis_smoothed_data = das_data.smoothed_data(analysis_mask, :);
     analysis_time_array = das_data.time_array(analysis_mask);
-    v = apply_plot_config(analysis_time_array, das_data.depth_ft, analysis_smoothed_data', config, 'waterfall');
+    apply_plot_config(analysis_time_array, das_data.depth_ft, analysis_smoothed_data', config, 'waterfall');
     
     % Set displacement rate bounds using new utility functions
     if ~isempty(unified_bounds) && isfield(unified_bounds, 'displacement')
@@ -439,7 +439,7 @@ for i = 1:length(test_labels)
     
     subplot(3,1,1);
     % Apply configurable plotting method to test pixelation sources
-    v = apply_plot_config(iTdas, das_data.depth_ft, dintdata'/10, config, 'waterfall');
+    apply_plot_config(iTdas, das_data.depth_ft, dintdata'/10, config, 'waterfall');
     
     % Set strain bounds using actual plotted data (dintdata/10)
     if ~isempty(unified_bounds) && isfield(unified_bounds, 'strain')
@@ -646,6 +646,24 @@ for i = 1:length(test_labels)
         chart_logger('  Saved: %s', filename);
     end
     
+    %% Figure 4: Simple FFT Analysis
+    fig4_num = 100 + i*4;
+    chart_logger('  Creating Figure %d: Simple FFT Analysis', fig4_num);
+    figure(fig4_num);
+    clf;
+    set(gcf, 'Position', [300 + i*50, 100, 1000, 500]);
+    
+    % Create simple FFT plots
+    plot_simple_fft(das_data, test_label, config);
+    
+    if plot_results.save_enabled
+        filename = sprintf('test_%s_simple_fft.png', test_label);
+        filepath = fullfile(save_dir, filename);
+        saveas(gcf, filepath);
+        plot_results.figures_created{end+1} = filename;
+        chart_logger('  Saved: %s', filename);
+    end
+    
     % Store figure handles
     if ~isfield(plot_results, 'figures')
         plot_results.figures = struct();
@@ -653,6 +671,7 @@ for i = 1:length(test_labels)
     plot_results.figures.(test_label).raw_data = fig1_num;
     plot_results.figures.(test_label).displacement_rate = fig2_num;
     plot_results.figures.(test_label).strain = fig3_num;
+    plot_results.figures.(test_label).simple_fft = fig4_num;
 end
 
 %% Summary
