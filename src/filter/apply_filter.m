@@ -25,7 +25,7 @@ function filtered_data = apply_filter(data, filter_type, config)
 %   'fk_dip'           - F-K domain dip filter
 %   'ensemble'         - Multi-channel ensemble averaging
 %   'dual_bandstop'    - Targeted grid pattern removal (0.15-0.33 & 0.395-0.473 Hz)
-
+%   'common_mode_removal' - Remove common mode noise using reference window normalization
 %   'custom'           - Custom filter chain from config
 
 fprintf('  Applying filter: %s\n', filter_type);
@@ -107,6 +107,13 @@ switch lower(filter_type)
         % Targeted grid pattern removal
         filtered_data = dual_bandstop_filter(data, config);
         
+    case 'common_mode_removal'
+        % Common mode noise removal using reference window normalization
+        if isfield(config, 'time_array') && ~isempty(config.time_array)
+            filtered_data = common_mode_removal_filter(data, config.time_array, config);
+        else
+            error('Common mode removal filter requires time_array in config');
+        end
 
     case 'custom'
         filtered_data = apply_custom_filter_chain(data, config);
