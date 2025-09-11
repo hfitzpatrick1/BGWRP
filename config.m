@@ -40,7 +40,7 @@ config.analysis_windows.PT01c_Recovery_short.end = datetime(2023,10,24,19,19,00,
 % PT-01a START OF PUMPING Analysis Window
 % This dataset captures the pump start for PT01a at 16:43 UTC
 config.analysis_windows.PT01a_start_of_pumping.start = datetime(2023,11,07,16,43,00,00,'TimeZone','UTC');
-config.analysis_windows.PT01a_start_of_pumping.end = datetime(2023,11,07,16,48,00,00,'TimeZone','UTC');
+config.analysis_windows.PT01a_start_of_pumping.end = datetime(2023,11,07,16,59,00,00,'TimeZone','UTC');
 
 % PT-01b START OF PUMPING Analysis Window
 % This dataset captures the pump start period

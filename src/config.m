@@ -24,7 +24,7 @@ config.waterfall_display_bounds.max_depth = 665;
 % PT-01a START OF PUMPING Analysis Window (NEW DATASET)
 % This dataset captures the pump start for PT01a at 16:43 UTC
 config.analysis_windows.PT01a_start_of_pumping.start = datetime(2023,11,07,16,43,00,00,'TimeZone','UTC');
-config.analysis_windows.PT01a_start_of_pumping.end = datetime(2023,11,07,16,48,00,00,'TimeZone','UTC');
+config.analysis_windows.PT01a_start_of_pumping.end = datetime(2023,11,07,16,59,00,00,'TimeZone','UTC');
 
 % PT-01b START OF PUMPING Analysis Window (NEW DATASET)
 % This dataset captures the pump start at 15:24 UTC
@@ -196,8 +196,8 @@ config.manual_bounds.PT01b_Recovery_short.pw_head_strain.max = 6;
 
 % ===== PT01c_Recovery_short bounds (actual dataset name) =====
 % Recovery phase bounds for PT01c (updated per user request)
-config.manual_bounds.PT01c_Recovery_short.raw_data.min = -0.15;        % Figure 1: Raw data waterfall
-config.manual_bounds.PT01c_Recovery_short.raw_data.max = 0.1;
+config.manual_bounds.PT01c_Recovery_short.raw_data.min = -0.55       % Figure 1: Raw data waterfall
+config.manual_bounds.PT01c_Recovery_short.raw_data.max = 0.5
 config.manual_bounds.PT01c_Recovery_short.displacement_rate.min = -0.12; % Figure 2: Displacement rate main colorbar
 config.manual_bounds.PT01c_Recovery_short.displacement_rate.max = 0.08;
 config.manual_bounds.PT01c_Recovery_short.strain.min = -0.2;          % Figure 3: Strain main colorbar
