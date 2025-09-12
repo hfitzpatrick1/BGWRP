@@ -48,8 +48,14 @@ fprintf('Depth range: %.1f to %.1f ft (%d channels)\n', min(depth_analysis), max
 %% APPROACH 1: Subtraction-based Common Mode + 5-sec Moving Mean
 fprintf('\n--- APPROACH 1: Subtraction Common Mode + 5-sec Moving Mean ---\n');
 
-% Calculate common mode signal (depth-averaged for each time step)
-common_mode = mean(data_analysis, 2);
+% Use only the last 100 ft (565-665 ft) for common mode calculation
+cm_depth_mask = depth_analysis >= 565 & depth_analysis <= 665;
+cm_data = data_analysis(:, cm_depth_mask);
+fprintf('Using depths %.1f-%.1f ft (%d channels) for common mode calculation\n', ...
+    min(depth_analysis(cm_depth_mask)), max(depth_analysis(cm_depth_mask)), sum(cm_depth_mask));
+
+% Calculate common mode signal (depth-averaged for each time step from last 100 ft only)
+common_mode = mean(cm_data, 2);
 
 % Remove common mode by subtraction
 data_cm_subtracted = data_analysis - common_mode;
@@ -70,7 +76,9 @@ quiet_mask = time_analysis >= quiet_start & time_analysis <= quiet_end;
 
 if any(quiet_mask)
     ref_data = data_analysis(quiet_mask, :);
-    ref_signal = mean(ref_data, 2); % Average across depths
+    % Use same depth range (565-665 ft) for division approach consistency
+    ref_data_cm = ref_data(:, cm_depth_mask);
+    ref_signal = mean(ref_data_cm, 2); % Average across depths (last 100 ft only)
     baseline_common_mode = mean(ref_signal); % Average across time
     
     fprintf('Reference window: %s to %s (%d points)\n', quiet_start, quiet_end, sum(quiet_mask));
@@ -127,6 +135,7 @@ fprintf('\n--- Creating Individual Comparison Visualizations ---\n');
 figure('Position', [100, 100, 1500, 800]);
 subplot(3,1,1);
 imagesc(time_analysis, depth_analysis, data_analysis');
+colormap(parula);
 colorbar;
 title('Original Strain Rate (nm/s)');
 xlabel('Time'); ylabel('Depth (ft)');
@@ -134,6 +143,7 @@ caxis([-0.15, 0.1]);
 
 subplot(3,1,2);
 imagesc(time_analysis, depth_analysis, strain_original');
+colormap(parula);
 colorbar;
 title('Original Strain (nm/m)');
 xlabel('Time'); ylabel('Depth (ft)');
@@ -156,17 +166,19 @@ grid on;
 figure('Position', [200, 150, 1500, 800]);
 subplot(3,1,1);
 imagesc(time_analysis, depth_analysis, data_approach1');
+colormap(parula);
 colorbar;
 title('CM Subtraction + 5-sec Moving Mean - Strain Rate (nm/s)');
 xlabel('Time'); ylabel('Depth (ft)');
-caxis([-0.15, 0.1]);
+caxis([-0.07, 0.07]);
 
 subplot(3,1,2);
 imagesc(time_analysis, depth_analysis, strain_approach1');
+colormap(parula);
 colorbar;
 title('CM Subtraction + 5-sec Moving Mean - Strain (nm/m)');
 xlabel('Time'); ylabel('Depth (ft)');
-caxis([min(strain_approach1(:)), max(strain_approach1(:))]);
+caxis([-0.5, 0.5]);
 
 subplot(3,1,3);
 yyaxis left;
@@ -183,13 +195,15 @@ grid on;
 figure('Position', [300, 200, 1500, 800]);
 subplot(3,1,1);
 imagesc(time_analysis, depth_analysis, data_approach2');
+colormap(parula);
 colorbar;
 title('CM Division + 5-sec Moving Mean - Strain Rate (nm/s)');
 xlabel('Time'); ylabel('Depth (ft)');
-caxis([-0.15, 0.1]);
+caxis([-6, 0]);
 
 subplot(3,1,2);
 imagesc(time_analysis, depth_analysis, strain_approach2');
+colormap(parula);
 colorbar;
 title('CM Division + 5-sec Moving Mean - Strain (nm/m)');
 xlabel('Time'); ylabel('Depth (ft)');
@@ -210,6 +224,7 @@ grid on;
 figure('Position', [400, 250, 1500, 800]);
 subplot(3,1,1);
 imagesc(time_analysis, depth_analysis, data_approach3');
+colormap(parula);
 colorbar;
 title('5-sec Moving Mean Only - Strain Rate (nm/s)');
 xlabel('Time'); ylabel('Depth (ft)');
@@ -217,6 +232,7 @@ caxis([-0.15, 0.1]);
 
 subplot(3,1,2);
 imagesc(time_analysis, depth_analysis, strain_approach3');
+colormap(parula);
 colorbar;
 title('5-sec Moving Mean Only - Strain (nm/m)');
 xlabel('Time'); ylabel('Depth (ft)');
