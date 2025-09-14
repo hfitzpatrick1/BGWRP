@@ -62,40 +62,40 @@ for i = 1:length(test_labels)
     
         test_timing = timing_config.(test_label);
     
-    % Simple file discovery - find any MAT file in the dataset directory
-    % Use test_label (directory name) as authority, not config dataset_name
-    dataset_dirs = {
-        fullfile(config.base_input, '_active', test_label);
-        fullfile(config.base_input, '_concatenated', test_label);
-    };
+    % Simple file discovery - look only in _active datasets
+    % Find exactly one .mat file in _das subdirectory
+    dataset_dir = fullfile(config.base_input, '_active', test_label);
+    das_subdir = fullfile(dataset_dir, '_das');
     
-    das_filepath = '';
-    for dir_idx = 1:length(dataset_dirs)
-        dataset_dir = dataset_dirs{dir_idx};
-        if exist(dataset_dir, 'dir')
-            mat_files = dir(fullfile(dataset_dir, '*.mat'));
-            % Filter out timing config files
-            data_files = mat_files(~contains({mat_files.name}, 'get_timing'));
-            
-            if length(data_files) == 1
-                das_filepath = fullfile(dataset_dir, data_files(1).name);
-                fprintf('  Found data file: %s\n', data_files(1).name);
-                break;
-            elseif length(data_files) > 1
-                error('Multiple data MAT files found in %s - cannot determine which to use', dataset_dir);
-            end
-        end
-    end
-    
-    if isempty(das_filepath)
-        fprintf('  ⚠ DAS data file not found for %s\n', test_label);
-        das_results.(test_label).error = 'das_file_not_found';
+    if ~exist(das_subdir, 'dir')
+        fprintf('  ⚠ _das subdirectory not found for %s\n', test_label);
+        das_results.(test_label).error = 'das_subdir_not_found';
         continue;
     end
     
+    % Find all .mat files in _das subdirectory
+    mat_files = dir(fullfile(das_subdir, '*.mat'));
+    
+    if length(mat_files) == 0
+        fprintf('  ⚠ No .mat files found in _das subdirectory for %s\n', test_label);
+        das_results.(test_label).error = 'no_das_files';
+        continue;
+    elseif length(mat_files) > 1
+        fprintf('  ⚠ Multiple .mat files found in _das subdirectory for %s:\n', test_label);
+        for i = 1:length(mat_files)
+            fprintf('    %s\n', mat_files(i).name);
+        end
+        das_results.(test_label).error = 'multiple_das_files';
+        continue;
+    end
+    
+    % Found exactly one .mat file - use it
+    das_filepath = fullfile(das_subdir, mat_files(1).name);
+    fprintf('  Found DAS data file: %s\n', mat_files(1).name);
+    
     fprintf('  Loading DAS data: %s\n', das_filepath);
     
-    % Load DAS data (handle both decimated and full-resolution data)
+    % Load DAS data (handle multiple variable naming conventions)
     loaded_data = load(das_filepath);
     if isfield(loaded_data, 'decdata')
         data1Hz = loaded_data.decdata;
@@ -103,8 +103,14 @@ for i = 1:length(test_labels)
     elseif isfield(loaded_data, 'fulldata')
         data1Hz = loaded_data.fulldata;
         fprintf('  Loaded full-resolution data: [%d x %d]\n', size(data1Hz, 1), size(data1Hz, 2));
+    elseif isfield(loaded_data, 'Data')
+        data1Hz = loaded_data.Data;
+        fprintf('  Loaded processed data: [%d x %d]\n', size(data1Hz, 1), size(data1Hz, 2));
     else
-        error('No valid data variable found. Expected ''decdata'' or ''fulldata''');
+        % Show available variables to help debug
+        available_vars = fieldnames(loaded_data);
+        fprintf('  Available variables in file: %s\n', strjoin(available_vars, ', '));
+        error('No valid data variable found. Expected ''decdata'', ''fulldata'', or ''Data''');
     end
     
     % DEBUG: Check data quality immediately after loading

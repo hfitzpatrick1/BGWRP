@@ -1290,15 +1290,15 @@ if config.run_data_analysis
                 dataset_name = active_datasets(i).name;
                 dataset_dir = fullfile(active_dir, dataset_name);
                 
-                % Find timing config in _das_timing subdirectory
+                % Find timing config in _das_timing subdirectory - accept any .m file
                 timing_dir = fullfile(dataset_dir, '_das_timing');
                 m_files = [];
                 if exist(timing_dir, 'dir')
-                    m_files = dir(fullfile(timing_dir, 'get_timing_*.m'));
+                    m_files = dir(fullfile(timing_dir, '*.m'));
                 end
                 
-                if ~isempty(m_files)
-                    % Use the first timing config file found
+                if length(m_files) == 1
+                    % Found exactly one .m file - use it
                     [~, func_name, ~] = fileparts(m_files(1).name);
                     
                     % Load this config using MATLAB function
@@ -1320,8 +1320,13 @@ if config.run_data_analysis
                     % Add to timing config
                     timing_config.(test_label) = loaded_config.test_config;
                     fprintf('✓ Found dataset: %s\n', dataset_name);
+                elseif length(m_files) == 0
+                    fprintf('⚠ No .m files found in _das_timing subdirectory for %s\n', dataset_name);
                 else
-                    fprintf('⚠ No timing config file found in %s\n', dataset_name);
+                    fprintf('⚠ Multiple .m files found in _das_timing subdirectory for %s:\n', dataset_name);
+                    for j = 1:length(m_files)
+                        fprintf('    %s\n', m_files(j).name);
+                    end
                 end
             end
         end
