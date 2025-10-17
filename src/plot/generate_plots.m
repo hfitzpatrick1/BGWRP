@@ -49,6 +49,18 @@ end
 
 chart_logger('Creating plots for tests: %s', strjoin(test_labels, ', '));
 
+%% Run correlation analysis if enabled
+if isfield(config, 'correlation_analysis') && config.correlation_analysis
+    chart_logger('Running strain rate vs head data correlation analysis...');
+    try
+        correlation_results = analyze_strain_head_correlation(das_results.timing, test_labels, config);
+        plot_strain_head_correlation(correlation_results, config);
+        chart_logger('✓ Correlation analysis completed');
+    catch ME
+        chart_logger('✗ Correlation analysis failed: %s', ME.message);
+    end
+end
+
 %% Pre-calculate unified bounds if using related bounds
 unified_bounds = struct();
 if isfield(config, 'use_related_bounds') && config.use_related_bounds && length(test_labels) > 1

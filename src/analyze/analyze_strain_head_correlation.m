@@ -19,28 +19,33 @@ function correlation_results = analyze_strain_head_correlation(timing_config, te
         test_label = test_labels{i};
         fprintf('Analyzing correlation for test: %s\n', test_label);
         
-        % Load DAS data
-        das_data = load_das_data(test_label, config);
-        if isempty(das_data)
-            continue;
-        end
-        
-        % Load head data
-        head_data = load_head_data(test_label, config);
-        if isempty(head_data)
-            continue;
-        end
-        
-        % Extract strain rate (already calculated in analyze_das_data)
+    % Load DAS data (this should be the filtered results from run_filter_matlab_movmean_5sec)
+    das_data = load_das_data(test_label, config);
+    if isempty(das_data)
+        continue;
+    end
+    
+    % Load head data
+    head_data = load_head_data(test_label, config);
+    if isempty(head_data)
+        continue;
+    end
+    
+    % Extract strain rate from filtered DAS data
+    if isfield(das_data, 'analysis_strain_rate')
         strain_rate = das_data.analysis_strain_rate;
         strain_time = das_data.analysis_time;
+    else
+        fprintf('  No analysis_strain_rate found in DAS data for %s\n', test_label);
+        continue;
+    end
         
-        % Extract head data (drawdown rate)
-        head_rate = calculate_drawdown_rate(head_data.time, head_data.head_levels);
-        head_time = head_data.time;
-        
-        % Synchronize time series
-        [strain_sync, head_sync, sync_time] = synchronize_time_series(strain_rate, strain_time, head_rate, head_time);
+    % Extract head data (drawdown rate) - use raw head data
+    head_rate = calculate_drawdown_rate(head_data.time, head_data.head_levels);
+    head_time = head_data.time;
+    
+    % Synchronize time series (strain_rate is already filtered from 5-second moving mean)
+    [strain_sync, head_sync, sync_time] = synchronize_time_series(strain_rate, strain_time, head_rate, head_time);
         
         % Detect signal onset for both datasets
         strain_onset = detect_signal_onset(strain_sync, sync_time, 'strain');

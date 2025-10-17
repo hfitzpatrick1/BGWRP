@@ -351,7 +351,13 @@ if exist('mode', 'var') && ischar(mode)
             config.save_charts = contains(mode, 'save');
             config.correlation_analysis = true;
             config.signal_onset_detection = true;
-            fprintf('Running strain rate vs head data correlation analysis\n');
+            % Apply 5-second moving mean filter before correlation analysis
+            config.smoothing_method = 'matlab_movmean';
+            config.matlab_movmean_window = 5;
+            config.apply_concatenation_filter = false;
+            config.filter_method = 'none';
+            config.chen_denoising = false;
+            fprintf('Running 5-second moving mean filter + strain rate vs head data correlation analysis\n');
             
         case 'run_smooth'
             % Analysis mode with boundary smoothingg
