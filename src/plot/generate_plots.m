@@ -65,6 +65,22 @@ if isfield(config, 'correlation_analysis') && config.correlation_analysis
     end
 end
 
+%% Run storage parameter analysis if enabled
+if isfield(config, 'storage_analysis') && config.storage_analysis
+    chart_logger('Running storage parameter analysis...');
+    try
+        storage_results = analyze_storage_parameters(das_results, head_results, das_results.timing, test_labels, config);
+        plot_storage_analysis(storage_results, config);
+        chart_logger('✓ Storage parameter analysis completed');
+    catch ME
+        chart_logger('✗ Storage parameter analysis failed: %s', ME.message);
+        fprintf('Storage analysis error details: %s\n', ME.message);
+        if ~isempty(ME.stack)
+            fprintf('  at %s (line %d)\n', ME.stack(1).name, ME.stack(1).line);
+        end
+    end
+end
+
 %% Pre-calculate unified bounds if using related bounds
 unified_bounds = struct();
 if isfield(config, 'use_related_bounds') && config.use_related_bounds && length(test_labels) > 1
@@ -689,11 +705,11 @@ for i = 1:length(test_labels)
     set(gcf, 'Name', sprintf('Displacement Rate vs Head Data - %s', upper(test_label)));
     
     if ~isempty(head_data)
-        % Plot monitoring well data (z2, z3, z4, z5) - exclude pw
+        % Plot monitoring well data (ONLY z4 and z5)
         zone_names = fieldnames(head_data.zones);
         if ~isempty(zone_names)
-            zones_to_plot = get_zones_to_plot(test_label, zone_names, head_data, config);
-            monitoring_zones = zones_to_plot(~strcmp(zones_to_plot, 'pw'));
+            % Filter to only z4 and z5
+            monitoring_zones = intersect({'z4', 'z5'}, zone_names);
             
             if ~isempty(monitoring_zones)
                 % Plot multiple monitoring zones
@@ -754,11 +770,11 @@ for i = 1:length(test_labels)
     set(gcf, 'Name', sprintf('Strain vs Head Data - %s', upper(test_label)));
     
     if ~isempty(head_data)
-        % Plot monitoring well data (z2, z3, z4, z5) - exclude pw
+        % Plot monitoring well data (ONLY z4 and z5)
         zone_names = fieldnames(head_data.zones);
         if ~isempty(zone_names)
-            zones_to_plot = get_zones_to_plot(test_label, zone_names, head_data, config);
-            monitoring_zones = zones_to_plot(~strcmp(zones_to_plot, 'pw'));
+            % Filter to only z4 and z5
+            monitoring_zones = intersect({'z4', 'z5'}, zone_names);
             
             if ~isempty(monitoring_zones)
                 % Plot multiple monitoring zones
@@ -788,13 +804,34 @@ for i = 1:length(test_labels)
                 ylabel('Head Level (ft)', 'FontSize', 12);
                 legend('show', 'Location', 'best', 'FontSize', 10);
                 
-                % Calculate strain (integrate displacement rate)
-                if isfield(das_data, 'analysis_time') && isfield(das_data, 'analysis_strain_rate')
-                    dt = 1;  % 1 second sampling
-                    strain = cumsum(das_data.analysis_strain_rate * dt, 1);
+                % Calculate strain (integrate displacement rate) - same as Figure 103
+                if isfield(das_data, 'time_array') && isfield(das_data, 'smoothed_data')
+                    % Find integration start point (10 min before analysis window)
+                    integration_reference_time = analysis_start - minutes(10);
+                    integration_start_idx = find(das_data.time_array >= integration_reference_time, 1, 'first');
+                    if isempty(integration_start_idx)
+                        integration_start_idx = 1;
+                    end
+                    
+                    % Integrate using cumtrapz (same as Figure 103)
+                    channel_idx = das_data.pumping_zone.channel_idx;
+                    subdata1Hz = das_data.smoothed_data(integration_start_idx:end, channel_idx);
+                    intdata = cumtrapz(subdata1Hz, 1);
+                    
+                    % Detrend with quadratic (same as Figure 103)
+                    dintdata = detrend(intdata, 2);
+                    
+                    % Scale and get time array
+                    strain = dintdata / 10;  % Divide by 10 (same as Figure 103)
+                    strain_time = das_data.time_array(integration_start_idx:end);
+                    
+                    % Extract only analysis window
+                    analysis_mask = strain_time >= analysis_start & strain_time <= analysis_end;
+                    strain_analysis = strain(analysis_mask);
+                    strain_time_analysis = strain_time(analysis_mask);
                     
                     yyaxis right;
-                    plot(das_data.analysis_time, strain, 'Color', [0 0 0], 'LineStyle', '-', 'LineWidth', 2.5, 'DisplayName', 'DAS Strain (shifted +20s)');
+                    plot(strain_time_analysis, strain_analysis, 'Color', [0 0 0], 'LineStyle', '-', 'LineWidth', 2.5, 'DisplayName', 'DAS Strain (shifted +20s)');
                     ylabel('Strain (nm/m)', 'FontSize', 12);
                     
                     % Apply line chart Y-axis bounds

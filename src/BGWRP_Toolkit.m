@@ -361,6 +361,24 @@ if exist('mode', 'var') && ischar(mode)
             config.das_time_shift_seconds = 20;
             fprintf('Running 5-second moving mean filter + strain rate vs head data correlation analysis (DAS shifted +20s)\n');
             
+        case 'run_storage_analysis'
+            % Analysis mode for storage parameter estimation from DAS-head correlation
+            config.run_tdms_conversion = false;
+            config.run_concatenation = false;
+            config.run_timing_extraction = false;
+            config.run_data_analysis = true;
+            config.save_charts = contains(mode, 'save');
+            config.storage_analysis = true;
+            % Apply 5-second moving mean filter
+            config.smoothing_method = 'matlab_movmean';
+            config.matlab_movmean_window = 5;
+            config.apply_concatenation_filter = false;
+            config.filter_method = 'none';
+            config.chen_denoising = false;
+            % Shift DAS time forward by 20 seconds to align with head data
+            config.das_time_shift_seconds = 20;
+            fprintf('Running storage parameter analysis from DAS-head correlation (DAS shifted +20s)\n');
+            
         case 'run_smooth'
             % Analysis mode with boundary smoothingg
             config.run_tdms_conversion = false;
