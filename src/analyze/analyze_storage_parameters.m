@@ -67,7 +67,7 @@ for i = 1:length(test_labels)
         end
         
         % Calculate drawdown rate for this zone
-        [drawdown_rate, rate_time] = calculate_drawdown_rate(zone_data.recovery_data.Date, zone_data.recovery_data.Drawdownft, 'ft/min');
+        [drawdown_rate, rate_time] = calculate_drawdown_rate(zone_data.recovery_data.Date, zone_data.recovery_data.Drawdownft, 'ft_per_min');
         
         % Synchronize time series
         [das_sync, head_sync, sync_time] = synchronize_time_series(das_strain_rate, das_time, drawdown_rate, rate_time);

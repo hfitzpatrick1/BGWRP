@@ -5,7 +5,11 @@ function plot_storage_analysis(storage_results, config)
 %   storage_results - Results from analyze_storage_parameters
 %   config         - Configuration structure
 
+fprintf('\n=== PLOTTING STORAGE ANALYSIS ===\n');
+fprintf('Storage results fields: %s\n', strjoin(fieldnames(storage_results), ', '));
+
 test_labels = storage_results.tests;
+fprintf('Test labels: %s\n', strjoin(test_labels, ', '));
 
 for i = 1:length(test_labels)
     test_label = test_labels{i};
@@ -17,7 +21,10 @@ for i = 1:length(test_labels)
     has_z4 = isfield(storage_results, z4_key);
     has_z5 = isfield(storage_results, z5_key);
     
+    fprintf('  Checking for %s: has_z4=%d, has_z5=%d\n', test_label, has_z4, has_z5);
+    
     if ~has_z4 && ~has_z5
+        fprintf('  No z4 or z5 results found for %s, skipping plot\n', test_label);
         continue;
     end
     
@@ -31,7 +38,7 @@ for i = 1:length(test_labels)
         data_z4 = storage_results.(z4_key);
         
         % Scatter plot
-        scatter(data_z4.window_head, data_z4.window_das, 40, 'b', 'filled', 'Alpha', 0.6);
+        scatter(data_z4.window_head, data_z4.window_das, 40, 'b', 'filled', 'MarkerFaceAlpha', 0.6);
         hold on;
         
         % Linear fit line
@@ -53,7 +60,7 @@ for i = 1:length(test_labels)
         data_z5 = storage_results.(z5_key);
         
         % Scatter plot
-        scatter(data_z5.window_head, data_z5.window_das, 40, 'g', 'filled', 'Alpha', 0.6);
+        scatter(data_z5.window_head, data_z5.window_das, 40, 'g', 'filled', 'MarkerFaceAlpha', 0.6);
         hold on;
         
         % Linear fit line
