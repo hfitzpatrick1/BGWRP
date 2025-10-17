@@ -342,8 +342,19 @@ if exist('mode', 'var') && ischar(mode)
         config.chen_denoising = false;
         fprintf('Running MATLAB movmean filter (5-second window)\n');
             
+        case 'run_correlation_analysis'
+            % Analysis mode with strain rate vs head data correlation
+            config.run_tdms_conversion = false;
+            config.run_concatenation = false;
+            config.run_timing_extraction = false;
+            config.run_data_analysis = true;
+            config.save_charts = contains(mode, 'save');
+            config.correlation_analysis = true;
+            config.signal_onset_detection = true;
+            fprintf('Running strain rate vs head data correlation analysis\n');
+            
         case 'run_smooth'
-            % Analysis mode with boundary smoothing
+            % Analysis mode with boundary smoothingg
             config.run_tdms_conversion = false;
             config.run_concatenation = false;
             config.run_timing_extraction = false;
