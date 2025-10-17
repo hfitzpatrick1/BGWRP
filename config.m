@@ -323,6 +323,14 @@ config.colormap_resolution = 256;
 config.disable_analysis_smoothing = false;
 config.smoothing_method = 'none';
 
+%% Storage Analysis Parameters (Traditional Pump Test Values for Comparison)
+% From PT-01A Step Drawdown Test (10/24/23)
+config.traditional_T_ft2_day = 9073.6;  % Transmissivity from traditional analysis
+config.traditional_K_ft_day = 22.68;    % Hydraulic conductivity from traditional analysis  
+config.traditional_S = 4.206e-5;        % Storativity from traditional analysis
+config.aquifer_thickness_ft = 400;      % Saturated thickness (ft)
+config.aquifer_thickness_m = 122;       % Saturated thickness (m)
+
 fprintf('✓ Batch configuration loaded (PT01a_start_of_pumping, PT01b_start_of_pumping, PT01c_start_of_pumping, PT01c_recovery, PT01a_Recovery_short, PT01b_Recovery_short, and PT01c_Recovery_short with corrected bounds)\n');
 
 end

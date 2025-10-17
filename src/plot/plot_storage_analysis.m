@@ -136,39 +136,47 @@ for i = 1:length(test_labels)
     
     if has_z4
         text(0.1, y_pos, 'Zone z4:', 'FontSize', 12, 'FontWeight', 'bold', 'Color', [0.4940 0.1840 0.5560]);
+        y_pos = y_pos - 0.07;
+        text(0.15, y_pos, sprintf('S_s: %.2e 1/m, S: %.2e (b=%.0fm)', data_z4.Ss_estimate, data_z4.S_storativity, data_z4.aquifer_thickness_m), 'FontSize', 10);
+        y_pos = y_pos - 0.05;
+        text(0.15, y_pos, sprintf('R²: %.4f, Slope: %.3f', data_z4.r_squared, data_z4.slope), 'FontSize', 10);
+        if ~isnan(data_z4.T_traditional_ft2_day)
+            y_pos = y_pos - 0.05;
+            text(0.15, y_pos, sprintf('T: %.0f ft²/day, K: %.1f ft/day', data_z4.T_traditional_ft2_day, data_z4.K_traditional_ft_day), 'FontSize', 10);
+        end
         y_pos = y_pos - 0.08;
-        text(0.15, y_pos, sprintf('Specific Storage (S_s): %.2e 1/m', data_z4.Ss_estimate), 'FontSize', 11);
-        y_pos = y_pos - 0.06;
-        text(0.15, y_pos, sprintf('Storativity (S, b=100m): %.2e', data_z4.Ss_estimate * 100), 'FontSize', 11);
-        y_pos = y_pos - 0.06;
-        text(0.15, y_pos, sprintf('Correlation (R²): %.4f', data_z4.r_squared), 'FontSize', 11);
-        y_pos = y_pos - 0.06;
-        text(0.15, y_pos, sprintf('Time lag: %d seconds', data_z4.time_lag_seconds), 'FontSize', 11);
-        y_pos = y_pos - 0.06;
-        text(0.15, y_pos, sprintf('Slope: %.3f (nm/s)/(ft/min)', data_z4.slope), 'FontSize', 11);
-        y_pos = y_pos - 0.1;
     end
     
     if has_z5
         text(0.1, y_pos, 'Zone z5:', 'FontSize', 12, 'FontWeight', 'bold', 'Color', [0.4660 0.6740 0.1880]);
+        y_pos = y_pos - 0.07;
+        text(0.15, y_pos, sprintf('S_s: %.2e 1/m, S: %.2e (b=%.0fm)', data_z5.Ss_estimate, data_z5.S_storativity, data_z5.aquifer_thickness_m), 'FontSize', 10);
+        y_pos = y_pos - 0.05;
+        text(0.15, y_pos, sprintf('R²: %.4f, Slope: %.3f', data_z5.r_squared, data_z5.slope), 'FontSize', 10);
+        if ~isnan(data_z5.T_traditional_ft2_day)
+            y_pos = y_pos - 0.05;
+            text(0.15, y_pos, sprintf('T: %.0f ft²/day, K: %.1f ft/day', data_z5.T_traditional_ft2_day, data_z5.K_traditional_ft_day), 'FontSize', 10);
+        end
         y_pos = y_pos - 0.08;
-        text(0.15, y_pos, sprintf('Specific Storage (S_s): %.2e 1/m', data_z5.Ss_estimate), 'FontSize', 11);
-        y_pos = y_pos - 0.06;
-        text(0.15, y_pos, sprintf('Storativity (S, b=100m): %.2e', data_z5.Ss_estimate * 100), 'FontSize', 11);
-        y_pos = y_pos - 0.06;
-        text(0.15, y_pos, sprintf('Correlation (R²): %.4f', data_z5.r_squared), 'FontSize', 11);
-        y_pos = y_pos - 0.06;
-        text(0.15, y_pos, sprintf('Time lag: %d seconds', data_z5.time_lag_seconds), 'FontSize', 11);
-        y_pos = y_pos - 0.06;
-        text(0.15, y_pos, sprintf('Slope: %.3f (nm/s)/(ft/min)', data_z5.slope), 'FontSize', 11);
-        y_pos = y_pos - 0.1;
     end
     
-    text(0.1, y_pos, 'Assumptions:', 'FontSize', 11, 'FontWeight', 'bold');
-    y_pos = y_pos - 0.06;
-    text(0.15, y_pos, sprintf('Biot-Willis coefficient (α): %.1f', data_z4.alpha_biot), 'FontSize', 10);
+    % Add comparison with traditional if available
+    if has_z4 && ~isnan(data_z4.S_traditional)
+        text(0.1, y_pos, 'Comparison with Traditional:', 'FontSize', 11, 'FontWeight', 'bold');
+        y_pos = y_pos - 0.06;
+        text(0.15, y_pos, sprintf('Traditional S: %.2e', data_z4.S_traditional), 'FontSize', 10);
+        y_pos = y_pos - 0.05;
+        text(0.15, y_pos, sprintf('DAS S (z4): %.2e (%.1f%% of trad.)', data_z4.S_storativity, 100*data_z4.S_storativity/data_z4.S_traditional), 'FontSize', 10);
+        y_pos = y_pos - 0.05;
+        text(0.15, y_pos, sprintf('DAS S (z5): %.2e (%.1f%% of trad.)', data_z5.S_storativity, 100*data_z5.S_storativity/data_z5.S_traditional), 'FontSize', 10);
+        y_pos = y_pos - 0.07;
+    end
+    
+    text(0.1, y_pos, 'Method:', 'FontSize', 11, 'FontWeight', 'bold');
     y_pos = y_pos - 0.05;
-    text(0.15, y_pos, 'Based on: α * S_s * ∂h/∂t ≈ ∂ε/∂t', 'FontSize', 10, 'FontStyle', 'italic');
+    text(0.15, y_pos, sprintf('Biot-Willis (α): %.1f', data_z4.alpha_biot), 'FontSize', 9);
+    y_pos = y_pos - 0.04;
+    text(0.15, y_pos, 'α * S_s * ∂h/∂t ≈ ∂ε/∂t', 'FontSize', 9, 'FontStyle', 'italic');
     
     % Save if enabled
     if isfield(config, 'save_charts') && config.save_charts

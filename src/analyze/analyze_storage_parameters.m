@@ -130,6 +130,63 @@ for i = 1:length(test_labels)
         alpha_biot = 1.0;  % Biot-Willis coefficient (typically 0.7-1.0)
         Ss_estimate = (slope_SI * 1e-9) / alpha_biot;  % Convert from nanostrain to strain, result in 1/m
         
+        % Calculate storativity (using aquifer thickness from config or default)
+        if isfield(config, 'aquifer_thickness_m') && ~isnan(config.aquifer_thickness_m)
+            aquifer_thickness = config.aquifer_thickness_m;  % meters from config
+        else
+            aquifer_thickness = 100;  % meters (default fallback)
+        end
+        S_storativity = Ss_estimate * aquifer_thickness;
+        
+        % Estimate transmissivity and hydraulic conductivity
+        % If we have transmissivity from traditional pump test analysis, we can calculate K
+        % For now, we'll provide the framework and use typical values for demonstration
+        
+        % Method 1: From time lag (if measurable)
+        % Hydraulic diffusivity: D = r²/(4*t_lag) where r is radial distance
+        % Then: T = D * S
+        if abs(time_lag) > 0
+            % Assume radial distance (distance from DAS to monitoring well)
+            radial_distance = 10;  % meters (adjustable - typical wellbore to formation distance)
+            time_lag_sec = abs(time_lag);
+            hydraulic_diffusivity = (radial_distance^2) / (4 * time_lag_sec);  % m²/s
+            T_from_lag = hydraulic_diffusivity * S_storativity;  % m²/s
+            K_from_lag = T_from_lag / aquifer_thickness;  % m/s
+            K_from_lag_ft_day = K_from_lag * 283168.47;  % Convert m/s to ft/day
+            T_from_lag_ft2_day = T_from_lag * 283168.47;  % Convert m²/s to ft²/day
+        else
+            % No measurable time lag
+            T_from_lag = NaN;
+            K_from_lag = NaN;
+            K_from_lag_ft_day = NaN;
+            T_from_lag_ft2_day = NaN;
+        end
+        
+        % Method 2: Use traditional pump test T value (if available in config)
+        if isfield(config, 'traditional_T_ft2_day') && ~isnan(config.traditional_T_ft2_day)
+            T_traditional_ft2_day = config.traditional_T_ft2_day;
+            T_traditional_m2_s = T_traditional_ft2_day / 283168.47;  % Convert ft²/day to m²/s
+            K_traditional_m_s = T_traditional_m2_s / aquifer_thickness;
+            K_traditional_ft_day = K_traditional_m_s * 283168.47;  % Convert m/s to ft/day
+            
+            % Calculate hydraulic diffusivity from traditional analysis
+            D_traditional = T_traditional_m2_s / S_storativity;
+            
+            % Storativity from traditional test (if available)
+            if isfield(config, 'traditional_S') && ~isnan(config.traditional_S)
+                S_traditional = config.traditional_S;
+            else
+                S_traditional = NaN;
+            end
+        else
+            T_traditional_ft2_day = NaN;
+            T_traditional_m2_s = NaN;
+            K_traditional_m_s = NaN;
+            K_traditional_ft_day = NaN;
+            D_traditional = NaN;
+            S_traditional = NaN;
+        end
+        
         % Store results
         result_key = sprintf('%s_%s', test_label, zone_name);
         storage_results.(result_key) = struct();
@@ -147,7 +204,19 @@ for i = 1:length(test_labels)
         storage_results.(result_key).correlation = r_value;
         storage_results.(result_key).time_lag_seconds = time_lag;
         storage_results.(result_key).Ss_estimate = Ss_estimate;
+        storage_results.(result_key).S_storativity = S_storativity;
+        storage_results.(result_key).aquifer_thickness_m = aquifer_thickness;
         storage_results.(result_key).alpha_biot = alpha_biot;
+        storage_results.(result_key).T_from_lag_m2_s = T_from_lag;
+        storage_results.(result_key).T_from_lag_ft2_day = T_from_lag_ft2_day;
+        storage_results.(result_key).K_from_lag_m_s = K_from_lag;
+        storage_results.(result_key).K_from_lag_ft_day = K_from_lag_ft_day;
+        storage_results.(result_key).T_traditional_ft2_day = T_traditional_ft2_day;
+        storage_results.(result_key).T_traditional_m2_s = T_traditional_m2_s;
+        storage_results.(result_key).K_traditional_m_s = K_traditional_m_s;
+        storage_results.(result_key).K_traditional_ft_day = K_traditional_ft_day;
+        storage_results.(result_key).S_traditional = S_traditional;
+        storage_results.(result_key).D_traditional = D_traditional;
         
         fprintf('  Zone %s results:\n', zone_name);
         fprintf('    Correlation window: %s to %s\n', window_time(1), window_time(end));
@@ -155,7 +224,13 @@ for i = 1:length(test_labels)
         fprintf('    R²: %.4f\n', r_squared);
         fprintf('    Time lag: %d seconds\n', time_lag);
         fprintf('    Specific storage (Ss,ε): %.2e 1/m\n', Ss_estimate);
-        fprintf('    Storativity (S = Ss × b, assuming b=100m): %.2e\n', Ss_estimate * 100);
+        fprintf('    Storativity (S = Ss × b, b=%.0fm): %.2e\n', aquifer_thickness, S_storativity);
+        if ~isnan(T_traditional_ft2_day)
+            fprintf('    Traditional T: %.1f ft²/day, K: %.2f ft/day\n', T_traditional_ft2_day, K_traditional_ft_day);
+            if ~isnan(S_traditional)
+                fprintf('    Traditional S: %.2e (DAS/Traditional ratio: %.2f)\n', S_traditional, S_storativity/S_traditional);
+            end
+        end
     end
 end
 
