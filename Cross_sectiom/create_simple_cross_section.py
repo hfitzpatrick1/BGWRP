@@ -44,7 +44,7 @@ def create_simple_cross_section():
     ax.set_xlim(-7, 30)
     ax.set_ylim(0, 700)
     ax.invert_yaxis()
-    ax.set_ylabel('Depth (ft)', fontsize=12)
+    ax.set_ylabel('Feet Below Ground Surface', fontsize=12)
     ax.set_xticks([])  # Remove x-axis ticks and labels
     ax.set_title('Cross Section: PM-07 to PT-01c', 
                  fontsize=16, fontweight='bold')
@@ -54,10 +54,11 @@ def create_simple_cross_section():
     
     # Plot geological layers (actual geology from site)
     geology_layers = [
-        (0, 125, 'Bellflower Aquiclude', '#CD5C5C'),  # Red
-        (125, 375, 'Gage/Gardena Aquifer', '#FFD700'),  # Yellow
-        (375, 650, 'Lynwood/Silverado Aquifer', '#4169E1'),  # Blue (extended to include brackish water)
-        (650, 700, 'Lower San Pedro Formation', '#228B22')  # Green
+        (0, 170, 'Bellflower Aquiclude', '#CD5C5C'),  # Red
+        (170, 300, 'Gage/Gardena Aquifer', '#FFD700'),  # Yellow
+        (300, 470, 'Lynwood/Silverado Aquifer', '#4169E1'),  # Blue
+        (470, 565, 'Lynwood/Silverado Brackish', '#191970'),  # Dark Blue
+        (565, 700, 'Lower San Pedro Formation', '#228B22')  # Green
     ]
     
     for top, bottom, name, color in geology_layers:
