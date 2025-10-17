@@ -1,37 +1,41 @@
-function correlation_results = analyze_strain_head_correlation(timing_config, test_labels, config)
-    %ANALYZE_STRAIN_HEAD_CORRELATION Analyze linear relationship between strain rate and head data
-    %
-    % Inputs:
-    %   timing_config - Timing configuration
-    %   test_labels   - Cell array of test labels
-    %   config        - Configuration structure
-    %
-    % Outputs:
-    %   correlation_results - Structure with correlation analysis results
+function correlation_results = analyze_strain_head_correlation(das_results, head_results, timing_config, test_labels, config)
+%ANALYZE_STRAIN_HEAD_CORRELATION Analyze linear relationship between strain rate and head data
+%
+% Inputs:
+%   das_results   - DAS results from analyze_das_data (with filtered data)
+%   head_results  - Head results from analyze_head_data
+%   timing_config - Timing configuration
+%   test_labels   - Cell array of test labels
+%   config        - Configuration structure
+%
+% Outputs:
+%   correlation_results - Structure with correlation analysis results
+
+fprintf('=== STRAIN RATE vs HEAD DATA CORRELATION ANALYSIS ===\n');
+
+% Initialize results
+correlation_results = struct();
+correlation_results.tests = test_labels;
+
+for i = 1:length(test_labels)
+    test_label = test_labels{i};
+    fprintf('Analyzing correlation for test: %s\n', test_label);
     
-    fprintf('=== STRAIN RATE vs HEAD DATA CORRELATION ANALYSIS ===\n');
-    
-    % Initialize results
-    correlation_results = struct();
-    correlation_results.tests = test_labels;
-    
-    for i = 1:length(test_labels)
-        test_label = test_labels{i};
-        fprintf('Analyzing correlation for test: %s\n', test_label);
-        
-    % Load DAS data (this should be the filtered results from run_filter_matlab_movmean_5sec)
-    das_data = load_das_data(test_label, config);
-    if isempty(das_data)
+    % Get DAS data from already-processed results
+    if ~isfield(das_results, test_label) || isfield(das_results.(test_label), 'error')
+        fprintf('  No DAS results found for %s\n', test_label);
         continue;
     end
+    das_data = das_results.(test_label);
     
-    % Load head data
-    head_data = load_head_data(test_label, config);
-    if isempty(head_data)
+    % Get head data from already-processed results
+    if ~isfield(head_results, test_label) || isfield(head_results.(test_label), 'error')
+        fprintf('  No head results found for %s\n', test_label);
         continue;
     end
+    head_data = head_results.(test_label);
     
-    % Extract strain rate from filtered DAS data
+    % Extract strain rate from filtered DAS data (already has 5-sec filter applied)
     if isfield(das_data, 'analysis_strain_rate')
         strain_rate = das_data.analysis_strain_rate;
         strain_time = das_data.analysis_time;
@@ -40,11 +44,18 @@ function correlation_results = analyze_strain_head_correlation(timing_config, te
         continue;
     end
         
-    % Extract head data (drawdown rate) - use raw head data
-    head_rate = calculate_drawdown_rate(head_data.time, head_data.head_levels);
-    head_time = head_data.time;
+    % Extract head data (drawdown rate) from zone z5 (best signal)
+    if ~isfield(head_data, 'zones') || ~isfield(head_data.zones, 'z5')
+        fprintf('  No z5 zone data found in head results for %s\n', test_label);
+        continue;
+    end
+    zone_data = head_data.zones.z5;
     
-    % Synchronize time series (strain_rate is already filtered from 5-second moving mean)
+    % Calculate drawdown rate for z5
+    head_rate = calculate_drawdown_rate(zone_data.time, zone_data.head_levels, 'ft/min');
+    head_time = zone_data.rate_time;
+    
+    % Synchronize time series (strain_rate is already filtered and time-shifted)
     [strain_sync, head_sync, sync_time] = synchronize_time_series(strain_rate, strain_time, head_rate, head_time);
         
         % Detect signal onset for both datasets

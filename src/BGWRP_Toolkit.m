@@ -357,7 +357,9 @@ if exist('mode', 'var') && ischar(mode)
             config.apply_concatenation_filter = false;
             config.filter_method = 'none';
             config.chen_denoising = false;
-            fprintf('Running 5-second moving mean filter + strain rate vs head data correlation analysis\n');
+            % Shift DAS time forward by 20 seconds to align with head data
+            config.das_time_shift_seconds = 20;
+            fprintf('Running 5-second moving mean filter + strain rate vs head data correlation analysis (DAS shifted +20s)\n');
             
         case 'run_smooth'
             % Analysis mode with boundary smoothingg

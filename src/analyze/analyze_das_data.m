@@ -300,9 +300,17 @@ for i = 1:length(test_labels)
             end
             analysis_mask = time_array >= analysis_start & time_array <= analysis_end;
             
+    % Apply time shift if configured (for alignment with head data)
+    if isfield(config, 'das_time_shift_seconds') && config.das_time_shift_seconds ~= 0
+        time_array_shifted = time_array + seconds(config.das_time_shift_seconds);
+        fprintf('  Applied DAS time shift: +%d seconds\n', config.das_time_shift_seconds);
+    else
+        time_array_shifted = time_array;
+    end
+    
     % Store essential results (simplified structure)
     das_results.(test_label).data_file = das_filepath;
-    das_results.(test_label).time_array = time_array;
+    das_results.(test_label).time_array = time_array_shifted;  % Use shifted time
     das_results.(test_label).smoothed_data = smoothed_data;
     das_results.(test_label).depth_ft = depth_ft;
     das_results.(test_label).C1 = C1;
@@ -311,7 +319,7 @@ for i = 1:length(test_labels)
     das_results.(test_label).pumping_zone.max_ft = zone_max_ft;
     das_results.(test_label).pumping_zone.channel_idx = channel_idx;
     das_results.(test_label).pumping_zone.channel_depth_ft = depth_ft(channel_idx);
-            das_results.(test_label).analysis_time = time_array(analysis_mask);
+            das_results.(test_label).analysis_time = time_array_shifted(analysis_mask);  % Use shifted time
     das_results.(test_label).analysis_strain_rate = smoothed_data(analysis_mask, channel_idx);
             
     fprintf('  ✓ DAS analysis completed for %s\n', test_label);
