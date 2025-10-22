@@ -69,21 +69,21 @@
      </g>
      <g id="depth-axis" transform="translate(20,0)" fill="#374151" font-size="15" font-weight="600">
        <rect x="-6" y="0" width="6" height="840" fill="#000000"/>
-       <text x="16" y="5">0 ft</text>
-       <text x="16" y="65">50 ft</text>
-       <text x="16" y="125">100 ft</text>
-       <text x="16" y="185">150 ft</text>
-       <text x="16" y="245">200 ft</text>
-       <text x="16" y="305">250 ft</text>
-       <text x="16" y="365">300 ft</text>
-       <text x="16" y="425">350 ft</text>
-       <text x="16" y="485">400 ft</text>
-       <text x="16" y="545">450 ft</text>
-       <text x="16" y="605">500 ft</text>
-       <text x="16" y="665">550 ft</text>
-       <text x="16" y="725">600 ft</text>
-       <text x="16" y="785">650 ft</text>
-       <text x="16" y="845">700 ft</text>
+       <text x="16" y="15">0 ft</text>
+       <text x="16" y="75">50 ft</text>
+       <text x="16" y="130">100 ft</text>
+       <text x="16" y="190">150 ft</text>
+       <text x="16" y="250">200 ft</text>
+       <text x="16" y="310">250 ft</text>
+       <text x="16" y="370">300 ft</text>
+       <text x="16" y="430">350 ft</text>
+       <text x="16" y="490">400 ft</text>
+       <text x="16" y="550">450 ft</text>
+       <text x="16" y="610">500 ft</text>
+       <text x="16" y="670">550 ft</text>
+       <text x="16" y="730">600 ft</text>
+       <text x="16" y="790">650 ft</text>
+       <text x="16" y="830">700 ft</text>
      </g>
    </g>
 
@@ -140,7 +140,6 @@
        <rect x="17" y="0" width="5" height="798" fill="#ff2c55"/>
        <text x="8" y="-8" font-size="14" font-weight="700" fill="#ffffff" text-anchor="middle">Z1</text>
        <text x="-90" y="786" font-size="18" font-weight="700" fill="#111827">645-665'</text>
-       <text x="30" y="400" font-size="16" fill="#ff2c55" font-weight="700" transform="rotate(90 30 400)">DAS fiber</text>
      </g>
      
      <!-- Zone 2: 0-485 casing, 485-505 screen - RIGHT of Zone 1 -->
@@ -148,7 +147,7 @@
        <rect x="32" y="0" width="16" height="582" fill="#8b9aa6" stroke="#4a5661" stroke-width="1.5"/>
        <rect x="32" y="582" width="16" height="24" fill="url(#screen-hatch)" stroke="#4a5661" stroke-width="1.5"/>
        <text x="40" y="-8" font-size="14" font-weight="700" fill="#ffffff" text-anchor="middle">Z2</text>
-       <text x="54" y="594" font-size="18" font-weight="700" fill="#111827">485-505'</text>
+       <text x="74" y="594" font-size="18" font-weight="700" fill="#111827">485-505'</text>
      </g>
      
      <!-- Zone 4: 0-360 casing, 360-380 screen - RIGHT of Zone 2 -->
@@ -156,7 +155,7 @@
        <rect x="64" y="0" width="16" height="432" fill="#8b9aa6" stroke="#4a5661" stroke-width="1.5"/>
        <rect x="64" y="432" width="16" height="24" fill="url(#screen-hatch)" stroke="#4a5661" stroke-width="1.5"/>
        <text x="72" y="-8" font-size="14" font-weight="700" fill="#ffffff" text-anchor="middle">Z4</text>
-       <text x="86" y="444" font-size="18" font-weight="700" fill="#111827">360-380'</text>
+       <text x="106" y="444" font-size="18" font-weight="700" fill="#111827">360-380'</text>
      </g>
   </g>
 
@@ -219,20 +218,21 @@
   </g>
 
    <!-- Legend -->
-   <g id="legend" transform="translate(1000,750)" font-family="Segoe UI, Roboto, Helvetica, Arial, sans-serif">
-     <rect x="0" y="0" width="700" height="40" rx="8" fill="#22c55e" stroke="#16a34a" stroke-width="2" filter="url(#shadow)"/>
-     <g transform="translate(20,24)" font-size="16" fill="#ffffff">
+   <g id="legend" transform="translate(1000,850)" font-family="Segoe UI, Roboto, Helvetica, Arial, sans-serif">
+     <rect x="0" y="0" width="600" height="50" rx="8" fill="#ffffff" stroke="#d1d5db" stroke-width="2" filter="url(#shadow)"/>
+     <text x="300" y="12" font-size="16" fill="#111827" font-weight="700" text-anchor="middle">Legend</text>
+     <g transform="translate(20,35)" font-size="18" fill="#111827">
        <rect x="0" y="-10" width="28" height="12" fill="#8b9aa6" stroke="#4a5661" stroke-width="1.5"/>
        <text x="38" y="-2">Casing</text>
        
-       <rect x="140" y="-10" width="28" height="12" fill="url(#screen-hatch)" stroke="#4a5661" stroke-width="1.5"/>
-       <text x="178" y="-2">Screen</text>
+       <rect x="100" y="-10" width="28" height="12" fill="url(#screen-hatch)" stroke="#4a5661" stroke-width="1.5"/>
+       <text x="138" y="-2">Screen</text>
        
-       <rect x="280" y="-10" width="28" height="12" fill="#ff2c55"/>
-       <text x="318" y="-2">Fiber optic (DAS)</text>
+       <rect x="200" y="-10" width="28" height="12" fill="#ff2c55"/>
+       <text x="238" y="-2">Fiber Optic Cable</text>
        
-       <rect x="520" y="-10" width="28" height="12" fill="#2563eb"/>
-       <text x="558" y="-2">PT-01c screen</text>
+       <rect x="380" y="-10" width="28" height="12" fill="#2563eb"/>
+       <text x="418" y="-2">PT-01c screen</text>
      </g>
    </g>
 
