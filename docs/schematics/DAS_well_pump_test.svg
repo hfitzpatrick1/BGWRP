@@ -1,0 +1,158 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Distributed Acoustic Sensing (DAS) in Well Casing - Pump Test Schematic
+     Editable SVG: group layers are named and structured for quick tweaking.
+     Colors chosen for clarity in print and dark/light backgrounds.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 900" width="1200" height="900">
+  <defs>
+    <linearGradient id="grad-sediment" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0%" stop-color="#d7d7d7"/>
+      <stop offset="100%" stop-color="#b9b9b9"/>
+    </linearGradient>
+    <linearGradient id="grad-sand" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0%" stop-color="#e9d7b1"/>
+      <stop offset="100%" stop-color="#ccb47e"/>
+    </linearGradient>
+    <linearGradient id="grad-shale" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0%" stop-color="#9aa3a8"/>
+      <stop offset="100%" stop-color="#6d757a"/>
+    </linearGradient>
+    <pattern id="hash" patternUnits="userSpaceOnUse" width="10" height="10" patternTransform="rotate(45)">
+      <rect width="10" height="10" fill="#fafafa"/>
+      <path d="M0 0 L0 10" stroke="#e0e0e0" stroke-width="2"/>
+    </pattern>
+    <marker id="arrow" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L6,3 L0,6 Z" fill="#2c3e50"/>
+    </marker>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="1.5" stdDeviation="2" flood-color="#000" flood-opacity="0.25" />
+    </filter>
+  </defs>
+
+  <!-- Background / title band -->
+  <g id="title">
+    <rect x="0" y="0" width="1200" height="120" fill="#5a8bd6"/>
+    <text x="40" y="60" fill="#ffffff" font-size="44" font-family="Segoe UI, Roboto, Helvetica, Arial, sans-serif" font-weight="700">Distributed Acoustic Sensing (DAS) in Well Casing</text>
+    <text x="40" y="100" fill="#eaf2ff" font-size="26" font-family="Segoe UI, Roboto, Helvetica, Arial, sans-serif">Pump test with temperature and strain monitoring</text>
+  </g>
+
+  <!-- Surface rig simplified -->
+  <g id="surface" transform="translate(0,120)">
+    <rect x="0" y="0" width="1200" height="80" fill="#9ec3ff"/>
+    <rect x="0" y="80" width="1200" height="40" fill="#88b0ee"/>
+    <g transform="translate(140,10)" filter="url(#shadow)">
+      <rect x="0" y="0" width="160" height="40" rx="4" fill="#2c3e50"/>
+      <rect x="50" y="-60" width="60" height="60" fill="#8ea3b6"/>
+      <rect x="75" y="-120" width="10" height="120" fill="#b7c6d3"/>
+    </g>
+    <text x="140" y="140" font-size="18" fill="#2c3e50" font-family="Segoe UI, Roboto, Helvetica, Arial, sans-serif">Surface unit / DAS interrogator</text>
+  </g>
+
+  <!-- Geology stack -->
+  <g id="geology" transform="translate(0,240)">
+    <rect x="0" y="0" width="1200" height="180" fill="url(#grad-sediment)"/>
+    <rect x="0" y="180" width="1200" height="220" fill="url(#grad-sand)"/>
+    <rect x="0" y="400" width="1200" height="300" fill="url(#grad-shale)"/>
+    <rect x="0" y="700" width="1200" height="120" fill="#40454a"/>
+
+    <!-- Formation labels -->
+    <text x="1020" y="80" font-size="20" fill="#2c3e50" font-family="Segoe UI, Roboto, Helvetica, Arial, sans-serif">Alluvium</text>
+    <text x="1020" y="260" font-size="20" fill="#2c3e50" font-family="Segoe UI, Roboto, Helvetica, Arial, sans-serif">Sandstone (aquifer)</text>
+    <text x="1020" y="520" font-size="20" fill="#ffffff" font-family="Segoe UI, Roboto, Helvetica, Arial, sans-serif">Shale</text>
+    <text x="1020" y="770" font-size="20" fill="#e6e6e6" font-family="Segoe UI, Roboto, Helvetica, Arial, sans-serif">Basement</text>
+  </g>
+
+  <!-- Wellbore and completion -->
+  <g id="well" transform="translate(380,220)">
+    <!-- borehole -->
+    <rect x="180" y="40" width="60" height="560" fill="#d0d0d0" stroke="#a6a6a6" stroke-width="2"/>
+    <!-- cement -->
+    <rect x="186" y="46" width="48" height="548" fill="#bbbbbb"/>
+    <!-- casing -->
+    <rect x="194" y="54" width="32" height="532" fill="#5c6b77"/>
+    <!-- fiber cable -->
+    <rect x="204" y="54" width="4" height="532" fill="#ff2c55"/>
+    <!-- pump intake interval -->
+    <rect x="194" y="430" width="32" height="70" fill="url(#hash)" stroke="#5c6b77" stroke-width="2"/>
+    <text x="240" y="475" font-size="16" fill="#2c3e50" font-family="Segoe UI, Roboto, Helvetica, Arial, sans-serif">Pumped interval</text>
+  </g>
+
+  <!-- Flow arrows to indicate pumping -->
+  <g id="flow" transform="translate(0,240)" opacity="0.9">
+    <path d="M720,500 C680,520 640,520 600,500" fill="none" stroke="#2c3e50" stroke-width="3" marker-end="url(#arrow)"/>
+    <path d="M760,520 C720,540 680,540 640,520" fill="none" stroke="#2c3e50" stroke-width="3" marker-end="url(#arrow)"/>
+    <path d="M780,540 C740,560 700,560 660,540" fill="none" stroke="#2c3e50" stroke-width="3" marker-end="url(#arrow)"/>
+  </g>
+
+  <!-- Callouts: DAS, Temperature, Strain -->
+  <g id="callouts" font-family="Segoe UI, Roboto, Helvetica, Arial, sans-serif">
+    <!-- DAS Interrogator to fiber -->
+    <path d="M300,230 C420,240 520,280 580,330" fill="none" stroke="#ff2c55" stroke-width="3" marker-end="url(#arrow)"/>
+    <text x="80" y="220" font-size="18" fill="#ff2c55" font-weight="600">DAS interrogator → armored fiber along casing</text>
+
+    <!-- Temperature sensing note -->
+    <path d="M920,470 C870,470 840,470 780,470" fill="none" stroke="#0aa" stroke-width="3" marker-end="url(#arrow)"/>
+    <text x="940" y="465" font-size="18" fill="#0aa" font-weight="600">Temperature response (cooling during pump-down)</text>
+
+    <!-- Strain sensing note -->
+    <path d="M910,620 C860,600 820,590 760,585" fill="none" stroke="#8e44ad" stroke-width="3" marker-end="url(#arrow)"/>
+    <text x="940" y="625" font-size="18" fill="#8e44ad" font-weight="600">Axial strain from fluid drawdown and compaction</text>
+  </g>
+
+  <!-- Depth scale -->
+  <g id="depth-scale" transform="translate(960,240)">
+    <rect x="0" y="0" width="6" height="580" fill="#2c3e50"/>
+    <!-- ticks every 50 m -->
+    <g fill="#2c3e50" font-size="14" font-family="Segoe UI, Roboto, Helvetica, Arial, sans-serif">
+      <g>
+        <line x1="0" y1="0" x2="20" y2="0" stroke="#2c3e50" stroke-width="2"/>
+        <text x="28" y="5">0 m (surface)</text>
+      </g>
+      <g>
+        <line x1="0" y1="100" x2="14" y2="100" stroke="#2c3e50" stroke-width="2"/>
+        <text x="28" y="105">50 m</text>
+      </g>
+      <g>
+        <line x1="0" y1="200" x2="14" y2="200" stroke="#2c3e50" stroke-width="2"/>
+        <text x="28" y="205">100 m</text>
+      </g>
+      <g>
+        <line x1="0" y1="300" x2="14" y2="300" stroke="#2c3e50" stroke-width="2"/>
+        <text x="28" y="305">150 m</text>
+      </g>
+      <g>
+        <line x1="0" y1="400" x2="14" y2="400" stroke="#2c3e50" stroke-width="2"/>
+        <text x="28" y="405">200 m</text>
+      </g>
+      <g>
+        <line x1="0" y1="500" x2="14" y2="500" stroke="#2c3e50" stroke-width="2"/>
+        <text x="28" y="505">250 m</text>
+      </g>
+      <g>
+        <line x1="0" y1="580" x2="20" y2="580" stroke="#2c3e50" stroke-width="2"/>
+        <text x="28" y="585">290 m TD</text>
+      </g>
+    </g>
+  </g>
+
+  <!-- Legend -->
+  <g id="legend" transform="translate(60,760)" font-family="Segoe UI, Roboto, Helvetica, Arial, sans-serif">
+    <rect x="0" y="0" width="560" height="110" rx="8" fill="#ffffff" stroke="#d0d5db" filter="url(#shadow)"/>
+    <g transform="translate(20,22)" font-size="16">
+      <rect x="0" y="-12" width="24" height="6" fill="#ff2c55"/>
+      <text x="36" y="-6" fill="#2c3e50">Fiber optic cable</text>
+      <rect x="0" y="16" width="24" height="6" fill="#5c6b77"/>
+      <text x="36" y="22" fill="#2c3e50">Steel casing</text>
+      <rect x="0" y="44" width="24" height="6" fill="url(#hash)" stroke="#5c6b77" stroke-width="1"/>
+      <text x="36" y="50" fill="#2c3e50">Pumped/monitoring interval</text>
+    </g>
+  </g>
+
+  <!-- Footer note -->
+  <g id="footer">
+    <text x="60" y="880" fill="#6b7280" font-size="14" font-family="Segoe UI, Roboto, Helvetica, Arial, sans-serif">Edit text, depths, colors, and geometry in any SVG editor (Inkscape/Illustrator) or directly as XML. ViewBox units are pixels.</text>
+  </g>
+</svg>
+
+
+
