@@ -44,12 +44,11 @@
 
   <!-- Title bar -->
   <rect x="0" y="0" width="1800" height="110" fill="#4f7bd6"/>
-  <text x="40" y="52" fill="#ffffff" font-size="44" font-family="Segoe UI, Roboto, Helvetica, Arial, sans-serif" font-weight="700">Cross Section: PM-07 (5-zone nested) and PT-01c (extraction)</text>
-  <text x="40" y="90" fill="#eaf2ff" font-size="24" font-family="Segoe UI, Roboto, Helvetica, Arial, sans-serif">DAS fiber strapped to PM-07 Zone 1 casing; pump test temperature and axial strain monitoring</text>
+  <text x="40" y="52" fill="#ffffff" font-size="44" font-family="Segoe UI, Roboto, Helvetica, Arial, sans-serif" font-weight="700">Distributed Fiber Optic Sensing applied to Aquifer Pump Test</text>
 
    <!-- Depth axis and grid (0–805 ft bgs) -->
-   <g id="grid" transform="translate(0,140)" font-family="Segoe UI, Roboto, Helvetica, Arial, sans-serif">
-     <rect x="0" y="0" width="1800" height="966" fill="#ffffff"/>
+   <g id="grid" transform="translate(0,110)" font-family="Segoe UI, Roboto, Helvetica, Arial, sans-serif">
+     <rect x="0" y="0" width="1800" height="840" fill="#ffffff"/>
      <g stroke="#d1d5db" stroke-dasharray="4 4" opacity="0.6">
        <!-- 50 ft spacing: 60 px per 50 ft = 1.2 px/ft -->
        <line x1="20" y1="0" x2="1780" y2="0"/>
@@ -67,11 +66,9 @@
        <line x1="20" y1="720" x2="1780" y2="720"/>
        <line x1="20" y1="780" x2="1780" y2="780"/>
        <line x1="20" y1="840" x2="1780" y2="840"/>
-       <line x1="20" y1="900" x2="1780" y2="900"/>
-       <line x1="20" y1="960" x2="1780" y2="960"/>
      </g>
      <g id="depth-axis" transform="translate(20,0)" fill="#374151" font-size="15" font-weight="600">
-       <rect x="-6" y="0" width="6" height="966" fill="#111827"/>
+       <rect x="-6" y="0" width="6" height="840" fill="#000000"/>
        <text x="16" y="5">0 ft</text>
        <text x="16" y="65">50 ft</text>
        <text x="16" y="125">100 ft</text>
@@ -87,13 +84,11 @@
        <text x="16" y="725">600 ft</text>
        <text x="16" y="785">650 ft</text>
        <text x="16" y="845">700 ft</text>
-       <text x="16" y="905">750 ft</text>
-       <text x="16" y="965">800 ft</text>
      </g>
    </g>
 
   <!-- Geological sequences (1.2 px/ft scale) -->
-  <g id="formations" transform="translate(0,140)" font-family="Segoe UI, Roboto, Helvetica, Arial, sans-serif" font-size="20" font-weight="600">
+  <g id="formations" transform="translate(0,110)" font-family="Segoe UI, Roboto, Helvetica, Arial, sans-serif" font-size="20" font-weight="600">
     <!-- Mesa: 0-159.139 ft = 0-191 px -->
     <rect x="120" y="0" width="1560" height="191" fill="url(#bellflower)"/>
     <!-- Pacific: 159.139-328.736 ft = 191-394 px -->
@@ -102,8 +97,8 @@
     <rect x="120" y="394" width="1560" height="184" fill="url(#lynwood)"/>
     <!-- Bent Spring: 481.859-579.527 ft = 578-695 px -->
     <rect x="120" y="578" width="1560" height="117" fill="url(#brackish)"/>
-     <!-- Upper Wilmington B: 579.527-805 ft = 695-966 px -->
-     <rect x="120" y="695" width="1560" height="271" fill="url(#lsp)"/>
+     <!-- Upper Wilmington B: 579.527-700 ft = 695-840 px -->
+     <rect x="120" y="695" width="1560" height="145" fill="url(#lsp)"/>
 
      <g fill="#000000" font-size="28" font-weight="700" text-anchor="middle">
        <text x="900" y="95">Mesa</text>
@@ -115,8 +110,8 @@
   </g>
 
   <!-- PM-07 nested well (5 zones) - scale 1.2 px/ft -->
-  <g id="PM-07" transform="translate(400,140)" font-family="Segoe UI, Roboto, Helvetica, Arial, sans-serif">
-    <text x="-40" y="-20" font-size="26" font-weight="700" fill="#111827">PM-07</text>
+  <g id="PM-07" transform="translate(400,110)" font-family="Segoe UI, Roboto, Helvetica, Arial, sans-serif">
+    <text x="-40" y="-20" font-size="26" font-weight="700" fill="#ffffff">PM-07</text>
     
     <!-- Borehole envelope -->
     <ellipse cx="0" cy="400" rx="90" ry="400" fill="#e0e0e0" opacity="0.4"/>
@@ -125,16 +120,16 @@
      <g id="zone5">
        <rect x="-64" y="0" width="16" height="348" fill="#8b9aa6" stroke="#4a5661" stroke-width="1.5"/>
        <rect x="-64" y="348" width="16" height="24" fill="url(#screen-hatch)" stroke="#4a5661" stroke-width="1.5"/>
-       <text x="-86" y="-8" font-size="14" font-weight="700" fill="#111827">Z5</text>
-       <text x="-134" y="360" font-size="18" font-weight="700" fill="#111827">290-310'</text>
+       <text x="-56" y="-8" font-size="14" font-weight="700" fill="#ffffff" text-anchor="middle">Z5</text>
+       <text x="-154" y="360" font-size="18" font-weight="700" fill="#111827">290-310'</text>
      </g>
      
      <!-- Zone 3: 0-420 casing, 420-440 screen - LEFT of Zone 1 -->
      <g id="zone3">
        <rect x="-32" y="0" width="16" height="504" fill="#8b9aa6" stroke="#4a5661" stroke-width="1.5"/>
        <rect x="-32" y="504" width="16" height="24" fill="url(#screen-hatch)" stroke="#4a5661" stroke-width="1.5"/>
-       <text x="-54" y="-8" font-size="14" font-weight="700" fill="#111827">Z3</text>
-       <text x="-102" y="516" font-size="18" font-weight="700" fill="#111827">420-440'</text>
+       <text x="-24" y="-8" font-size="14" font-weight="700" fill="#ffffff" text-anchor="middle">Z3</text>
+       <text x="-122" y="516" font-size="18" font-weight="700" fill="#111827">420-440'</text>
      </g>
      
      <!-- Zone 1 (deepest): 0-645 casing, 645-665 screen + DAS fiber - CENTER -->
@@ -143,8 +138,8 @@
        <rect x="0" y="774" width="16" height="24" fill="url(#screen-hatch)" stroke="#111827" stroke-width="2.5"/>
        <!-- Fiber strapped to outside of Zone 1 casing -->
        <rect x="17" y="0" width="5" height="798" fill="#ff2c55"/>
-       <text x="-22" y="-8" font-size="14" font-weight="700" fill="#111827">Z1</text>
-       <text x="-70" y="786" font-size="18" font-weight="700" fill="#111827">645-665'</text>
+       <text x="8" y="-8" font-size="14" font-weight="700" fill="#ffffff" text-anchor="middle">Z1</text>
+       <text x="-90" y="786" font-size="18" font-weight="700" fill="#111827">645-665'</text>
        <text x="30" y="400" font-size="16" fill="#ff2c55" font-weight="700" transform="rotate(90 30 400)">DAS fiber</text>
      </g>
      
@@ -152,7 +147,7 @@
      <g id="zone2">
        <rect x="32" y="0" width="16" height="582" fill="#8b9aa6" stroke="#4a5661" stroke-width="1.5"/>
        <rect x="32" y="582" width="16" height="24" fill="url(#screen-hatch)" stroke="#4a5661" stroke-width="1.5"/>
-       <text x="10" y="-8" font-size="14" font-weight="700" fill="#111827">Z2</text>
+       <text x="40" y="-8" font-size="14" font-weight="700" fill="#ffffff" text-anchor="middle">Z2</text>
        <text x="54" y="594" font-size="18" font-weight="700" fill="#111827">485-505'</text>
      </g>
      
@@ -160,14 +155,14 @@
      <g id="zone4">
        <rect x="64" y="0" width="16" height="432" fill="#8b9aa6" stroke="#4a5661" stroke-width="1.5"/>
        <rect x="64" y="432" width="16" height="24" fill="url(#screen-hatch)" stroke="#4a5661" stroke-width="1.5"/>
-       <text x="42" y="-8" font-size="14" font-weight="700" fill="#111827">Z4</text>
+       <text x="72" y="-8" font-size="14" font-weight="700" fill="#ffffff" text-anchor="middle">Z4</text>
        <text x="86" y="444" font-size="18" font-weight="700" fill="#111827">360-380'</text>
      </g>
   </g>
 
    <!-- PT-01c extraction well (total depth 310 ft, screen 260-310 ft) -->
-   <g id="PT-01c" transform="translate(1400,140)" font-family="Segoe UI, Roboto, Helvetica, Arial, sans-serif">
-     <text x="-30" y="-20" font-size="26" font-weight="700" fill="#111827">PT-01c</text>
+   <g id="PT-01c" transform="translate(1400,110)" font-family="Segoe UI, Roboto, Helvetica, Arial, sans-serif">
+     <text x="-30" y="-20" font-size="26" font-weight="700" fill="#ffffff">PT-01c</text>
      <!-- Casing (0-260 ft = 0-312 px) -->
      <rect x="-50" y="0" width="100" height="312" fill="#6b7280" stroke="#374151" stroke-width="2"/>
      <!-- Screen interval (260-310 ft = 312-372 px) -->
@@ -180,7 +175,7 @@
    </g>
 
   <!-- Flow towards PT-01c during pumping -->
-  <g id="flow" transform="translate(0,140)">
+  <g id="flow" transform="translate(0,110)">
     <path d="M550,360 L1340,360" stroke="#1e40af" stroke-width="4" stroke-dasharray="8 6" marker-end="url(#arrow)"/>
     <text x="800" y="380" font-size="22" font-family="Segoe UI, Roboto, Helvetica, Arial, sans-serif" fill="#1e40af" font-weight="800">Groundwater flow to extraction well</text>
   </g>
@@ -188,10 +183,12 @@
   <!-- Callouts for temperature and strain -->
   <g id="callouts" font-family="Segoe UI, Roboto, Helvetica, Arial, sans-serif" font-weight="700">
     <!-- Temperature response -->
-    <path d="M640,720 C580,680 520,640 460,600" fill="none" stroke="#0aa" stroke-width="4" marker-end="url(#arrow)"/>
+    <path d="M640,720 C580,680 520,640 417,600" fill="none" stroke="#0aa" stroke-width="4"/>
+    <circle cx="640" cy="720" r="60" fill="#0aa"/>
+    <text x="640" y="725" font-size="20" fill="#ffffff" font-weight="700" text-anchor="middle">null</text>
     <g filter="url(#shadow)">
-      <rect x="360" y="715" width="440" height="50" rx="6" fill="#ffffff" opacity="0.95"/>
-      <text x="375" y="745" font-size="18" fill="#0aa">No temperature anomalies detected (DTS)</text>
+      <rect x="460" y="615" width="440" height="50" rx="6" fill="#ffffff" opacity="0.95"/>
+      <text x="680" y="645" font-size="18" fill="#0aa" text-anchor="middle">No temperature anomalies detected (DTS)</text>
     </g>
     
     <!-- Strain response area circle with smooth gradient pattern -->
@@ -210,21 +207,21 @@
       </radialGradient>
     </defs>
     <!-- Axial strain on Zone 1 -->
-    <path d="M580,360 C575,362 570,364 30,380" fill="none" stroke="#8e44ad" stroke-width="4" marker-end="url(#arrow)"/>
+    <path d="M580,320 C575,322 570,324 417,320" fill="none" stroke="#8e44ad" stroke-width="4"/>
     
     <!-- Strain response circle at start of arrow -->
-    <circle cx="580" cy="360" r="60" fill="url(#strain-gradient)" stroke="#8e44ad" stroke-width="3"/>
-    <text x="580" y="365" font-size="20" fill="#ffffff" font-weight="700" text-anchor="middle">Strain</text>
+    <circle cx="580" cy="320" r="60" fill="url(#strain-gradient)" stroke="#8e44ad" stroke-width="3"/>
+    <text x="580" y="325" font-size="20" fill="#ffffff" font-weight="700" text-anchor="middle">Strain</text>
     <g filter="url(#shadow)">
-      <rect x="220" y="420" width="520" height="50" rx="6" fill="#ffffff" opacity="0.95"/>
-      <text x="235" y="450" font-size="18" fill="#8e44ad">Axial strain from drawdown (poroelastic response)</text>
+      <rect x="220" y="380" width="520" height="50" rx="6" fill="#ffffff" opacity="0.95"/>
+      <text x="480" y="410" font-size="18" fill="#8e44ad" text-anchor="middle">Axial strain from drawdown (poroelastic response)</text>
     </g>
   </g>
 
    <!-- Legend -->
-   <g id="legend" transform="translate(800,1000)" font-family="Segoe UI, Roboto, Helvetica, Arial, sans-serif">
-     <rect x="0" y="0" width="700" height="40" rx="8" fill="#ffffff" stroke="#d1d5db" stroke-width="2" filter="url(#shadow)"/>
-     <g transform="translate(20,24)" font-size="16" fill="#111827">
+   <g id="legend" transform="translate(1000,750)" font-family="Segoe UI, Roboto, Helvetica, Arial, sans-serif">
+     <rect x="0" y="0" width="700" height="40" rx="8" fill="#22c55e" stroke="#16a34a" stroke-width="2" filter="url(#shadow)"/>
+     <g transform="translate(20,24)" font-size="16" fill="#ffffff">
        <rect x="0" y="-10" width="28" height="12" fill="#8b9aa6" stroke="#4a5661" stroke-width="1.5"/>
        <text x="38" y="-2">Casing</text>
        
