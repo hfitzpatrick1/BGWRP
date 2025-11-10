@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="700" viewBox="0 0 1000 700">
+  <!-- Background -->
+  <rect x="0" y="0" width="1000" height="700" fill="#f8fafc"/>
+  
+  <!-- Title -->
+  <text x="500" y="40" font-size="28" font-weight="bold" text-anchor="middle" fill="#1f2937">
+    Complementary Distributed Fiber Optic Sensing
+  </text>
+  <text x="500" y="70" font-size="18" text-anchor="middle" fill="#6b7280">
+    Two measurements, one cable - integrated analysis
+  </text>
+  
+  <!-- DTS Circle (Left) -->
+  <circle cx="380" cy="350" r="220" fill="#3b82f6" opacity="0.7" stroke="#1e40af" stroke-width="3"/>
+  
+  <!-- DAS Circle (Right) -->
+  <circle cx="560" cy="350" r="220" fill="#10b981" opacity="0.7" stroke="#047857" stroke-width="3"/>
+  
+  <!-- DTS Labels -->
+  <text x="250" y="300" font-size="22" font-weight="bold" text-anchor="middle" fill="black">DTS</text>
+  <text x="250" y="325" font-size="16" text-anchor="middle" fill="black">Distributed Temperature</text>
+  <text x="250" y="370" font-size="14" text-anchor="middle" fill="black">• Raman backscatter</text>
+  <text x="250" y="390" font-size="14" text-anchor="middle" fill="black">• Thermal gradients</text>
+  <text x="250" y="410" font-size="14" text-anchor="middle" fill="black">• Preferential flow paths</text>
+  
+  <!-- DAS Labels -->
+  <text x="680" y="300" font-size="22" font-weight="bold" text-anchor="middle" fill="black">DAS</text>
+  <text x="680" y="325" font-size="16" text-anchor="middle" fill="black">Distributed Acoustic</text>
+  <text x="680" y="370" font-size="14" text-anchor="middle" fill="black">• Rayleigh backscatter</text>
+  <text x="680" y="390" font-size="14" text-anchor="middle" fill="black">• Strain detection</text>
+  <text x="680" y="410" font-size="14" text-anchor="middle" fill="black">• Seismic waves</text>
+  
+  <!-- Overlap Labels -->
+  <text x="450" y="300" font-size="18" font-weight="bold" text-anchor="middle" fill="black">Integrated Sensing</text>
+  <text x="450" y="350" font-size="14" text-anchor="middle" fill="black">• Multi-parameter analysis</text>
+  <text x="450" y="370" font-size="14" text-anchor="middle" fill="black">• Cross-correlation</text>
+  <text x="450" y="390" font-size="14" text-anchor="middle" fill="black">• Basin characterization</text>
+  <text x="450" y="410" font-size="14" text-anchor="middle" fill="black">• Environmental monitoring</text>
+  
+  <!-- Bottom Applications -->
+  <rect x="50" y="600" width="900" height="100" fill="white" stroke="#d1d5db" stroke-width="2" rx="8"/>
+  <text x="480" y="620" font-size="18" font-weight="bold" text-anchor="middle" fill="#1f2937">Applications</text>
+  <text x="320" y="645" font-size="20" font-weight="bold" text-anchor="middle" fill="#0f766e">Geothermal</text>
+  <text x="620" y="645" font-size="20" font-weight="bold" text-anchor="middle" fill="#0f766e">Infrastructure</text>
+  <text x="320" y="675" font-size="20" font-weight="bold" text-anchor="middle" fill="#0f766e">Basin Characterization</text>
+  <text x="620" y="675" font-size="20" font-weight="bold" text-anchor="middle" fill="#0f766e">Environmental</text>
+  
+  <!-- Fiber representation -->
+  <line x1="100" y1="100" x2="900" y2="100" stroke="#3b82f6" stroke-width="3"/>
+  <line x1="100" y1="110" x2="900" y2="110" stroke="#10b981" stroke-width="3"/>
+  <text x="500" y="90" font-size="14" font-weight="bold" text-anchor="middle" fill="#1f2937">Multi-fiber Cable</text>
+  <text x="260" y="130" font-size="12" text-anchor="middle" fill="#3b82f6">Multimode (DTS)</text>
+  <text x="700" y="130" font-size="12" text-anchor="middle" fill="#10b981">Single mode (DAS)</text>
+</svg>

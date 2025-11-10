@@ -1,0 +1,37 @@
+WHY USE BOTH DTS AND DAS?
+Complementary Distributed Fiber Optic Sensing
+
+LEFT CIRCLE (DTS - Blue):
+• Physical Parameter: Temperature
+• Measurement: Thermal profiling
+• Applications:
+  - Leak detection (thermal signatures)
+  - Geothermal monitoring
+  - Groundwater flow
+  - Thermal stress analysis
+
+RIGHT CIRCLE (DAS - Green):
+• Physical Parameter: Strain/Vibration
+• Measurement: Acoustic/seismic
+• Applications:
+  - Structural health monitoring
+  - Seismic activity detection
+  - Mechanical failure prediction
+  - Ground movement
+
+OVERLAP SECTION (Darker Blue-Green):
+• Single 9/125 µm fiber
+• Simultaneous measurement
+• Enhanced leak detection (thermal + acoustic)
+• Comprehensive monitoring
+• Cost-effective dual sensing
+• Early warning systems
+
+KEY ADVANTAGE: "Two measurements, one fiber - complete subsurface intelligence"
+
+BOTTOM APPLICATIONS:
+• Geothermal: Thermal gradients + seismic activity
+• Infrastructure: Thermal stress + structural vibration
+• Environmental: Groundwater flow + subsurface movement
+
+

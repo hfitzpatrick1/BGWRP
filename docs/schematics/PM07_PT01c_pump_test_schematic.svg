@@ -8,7 +8,7 @@
        Zone 5 (shallowest): 0-290 ft casing, 290-310 ft screen
      Scale: 1.2 px/ft vertical
      Edit freely in any SVG editor. -->
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1800 1226" width="1800" height="1226">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 2200 1600" width="2200" height="1600">
   <defs>
     <linearGradient id="bellflower" x1="0" y1="0" x2="0" y2="1">
       <stop offset="0%" stop-color="#e9b3b3"/>
@@ -43,29 +43,29 @@
   </defs>
 
   <!-- Title bar -->
-  <rect x="0" y="0" width="1800" height="110" fill="#4f7bd6"/>
+  <rect x="0" y="0" width="2200" height="110" fill="#4f7bd6"/>
   <text x="40" y="52" fill="#ffffff" font-size="44" font-family="Segoe UI, Roboto, Helvetica, Arial, sans-serif" font-weight="700">Distributed Fiber Optic Sensing applied to Aquifer Pump Test</text>
 
    <!-- Depth axis and grid (0–805 ft bgs) -->
    <g id="grid" transform="translate(0,110)" font-family="Segoe UI, Roboto, Helvetica, Arial, sans-serif">
-     <rect x="0" y="0" width="1800" height="840" fill="#ffffff"/>
+     <rect x="0" y="0" width="2200" height="840" fill="#ffffff"/>
      <g stroke="#d1d5db" stroke-dasharray="4 4" opacity="0.6">
        <!-- 50 ft spacing: 60 px per 50 ft = 1.2 px/ft -->
-       <line x1="20" y1="0" x2="1780" y2="0"/>
-       <line x1="20" y1="60" x2="1780" y2="60"/>
-       <line x1="20" y1="120" x2="1780" y2="120"/>
-       <line x1="20" y1="180" x2="1780" y2="180"/>
-       <line x1="20" y1="240" x2="1780" y2="240"/>
-       <line x1="20" y1="300" x2="1780" y2="300"/>
-       <line x1="20" y1="360" x2="1780" y2="360"/>
-       <line x1="20" y1="420" x2="1780" y2="420"/>
-       <line x1="20" y1="480" x2="1780" y2="480"/>
-       <line x1="20" y1="540" x2="1780" y2="540"/>
-       <line x1="20" y1="600" x2="1780" y2="600"/>
-       <line x1="20" y1="660" x2="1780" y2="660"/>
-       <line x1="20" y1="720" x2="1780" y2="720"/>
-       <line x1="20" y1="780" x2="1780" y2="780"/>
-       <line x1="20" y1="840" x2="1780" y2="840"/>
+       <line x1="20" y1="0" x2="2180" y2="0"/>
+       <line x1="20" y1="60" x2="2180" y2="60"/>
+       <line x1="20" y1="120" x2="2180" y2="120"/>
+       <line x1="20" y1="180" x2="2180" y2="180"/>
+       <line x1="20" y1="240" x2="2180" y2="240"/>
+       <line x1="20" y1="300" x2="2180" y2="300"/>
+       <line x1="20" y1="360" x2="2180" y2="360"/>
+       <line x1="20" y1="420" x2="2180" y2="420"/>
+       <line x1="20" y1="480" x2="2180" y2="480"/>
+       <line x1="20" y1="540" x2="2180" y2="540"/>
+       <line x1="20" y1="600" x2="2180" y2="600"/>
+       <line x1="20" y1="660" x2="2180" y2="660"/>
+       <line x1="20" y1="720" x2="2180" y2="720"/>
+       <line x1="20" y1="780" x2="2180" y2="780"/>
+       <line x1="20" y1="840" x2="2180" y2="840"/>
      </g>
      <g id="depth-axis" transform="translate(20,0)" fill="#374151" font-size="15" font-weight="600">
        <rect x="-6" y="0" width="6" height="840" fill="#000000"/>
@@ -89,23 +89,23 @@
 
   <!-- Geological sequences (1.2 px/ft scale) -->
   <g id="formations" transform="translate(0,110)" font-family="Segoe UI, Roboto, Helvetica, Arial, sans-serif" font-size="20" font-weight="600">
-    <!-- Mesa: 0-159.139 ft = 0-191 px -->
-    <rect x="120" y="0" width="1560" height="191" fill="url(#bellflower)"/>
-    <!-- Pacific: 159.139-328.736 ft = 191-394 px -->
-    <rect x="120" y="191" width="1560" height="203" fill="url(#gage)"/>
-    <!-- Harbor: 328.736-481.859 ft = 394-578 px -->
-    <rect x="120" y="394" width="1560" height="184" fill="url(#lynwood)"/>
-    <!-- Bent Spring: 481.859-579.527 ft = 578-695 px -->
-    <rect x="120" y="578" width="1560" height="117" fill="url(#brackish)"/>
-     <!-- Upper Wilmington B: 579.527-700 ft = 695-840 px -->
-     <rect x="120" y="695" width="1560" height="145" fill="url(#lsp)"/>
+    <!-- Bellflower Aquiclude: 0-170 ft = 0-204 px -->
+    <rect x="120" y="0" width="2060" height="204" fill="url(#bellflower)"/>
+    <!-- Gage-Gardena Aquifer: 170-300 ft = 204-360 px -->
+    <rect x="120" y="204" width="2060" height="156" fill="url(#gage)"/>
+    <!-- Lynwood/Silverado Aquifer: 300-460 ft = 360-552 px -->
+    <rect x="120" y="360" width="2060" height="192" fill="url(#lynwood)"/>
+    <!-- Lynwood/Silverado Brackish: 460-565 ft = 552-678 px -->
+    <rect x="120" y="552" width="2060" height="126" fill="url(#brackish)"/>
+     <!-- Lower San Pedro Fm.: 565-700 ft = 678-840 px -->
+     <rect x="120" y="678" width="2060" height="162" fill="url(#lsp)"/>
 
-     <g fill="#000000" font-size="28" font-weight="700" text-anchor="middle">
-       <text x="900" y="95">Mesa</text>
-       <text x="900" y="290">Pacific</text>
-       <text x="900" y="485">Harbor</text>
-       <text x="900" y="635" fill="#000000">Bent Spring</text>
-       <text x="900" y="830" fill="#000000">Upper Wilmington B</text>
+     <g fill="#000000" font-size="28" font-weight="700" text-anchor="start">
+      <text x="1750" y="102">Bellflower Aquiclude</text>
+      <text x="1750" y="282">Gage-Gardena Aquifer</text>
+      <text x="1750" y="456">Lynwood/Silverado Aquifer</text>
+      <text x="1750" y="615" fill="#000000">Lynwood/Silverado Brackish</text>
+      <text x="1750" y="759" fill="#000000">Upper Pico Formation</text>
      </g>
   </g>
 
@@ -159,39 +159,86 @@
      </g>
   </g>
 
-   <!-- PT-01c extraction well (total depth 310 ft, screen 260-310 ft) -->
-   <g id="PT-01c" transform="translate(1400,110)" font-family="Segoe UI, Roboto, Helvetica, Arial, sans-serif">
-     <text x="-30" y="-20" font-size="26" font-weight="700" fill="#ffffff">PT-01c</text>
-     <!-- Casing (0-260 ft = 0-312 px) -->
-     <rect x="-50" y="0" width="100" height="312" fill="#6b7280" stroke="#374151" stroke-width="2"/>
-     <!-- Screen interval (260-310 ft = 312-372 px) -->
-     <rect x="-50" y="312" width="100" height="60" fill="#2563eb" opacity="0.7" stroke="#1e40af" stroke-width="2"/>
-     <!-- Screen depth label -->
-     <text x="60" y="350" font-size="18" font-weight="700" fill="#111827">260-310'</text>
-     <!-- Extraction arrow pointing up inside well -->
-     <path d="M0,360 L0,250" stroke="#111827" stroke-width="4" marker-end="url(#arrow)"/>
-     <text x="0" y="230" font-size="18" fill="#111827" font-weight="900" text-anchor="middle">Extraction</text>
-   </g>
+  <!-- PT-01c extraction well (total depth 310 ft, screen 260-310 ft) -->
+  <!-- PM-07 at x=400, PT-01c is 177 ft away -->
+  <g id="PT-01c" transform="translate(1108,110)" font-family="Segoe UI, Roboto, Helvetica, Arial, sans-serif">
+    <text x="-30" y="-20" font-size="26" font-weight="700" fill="#ffffff">PT-01c</text>
+    <!-- Casing (0-260 ft = 0-312 px) -->
+    <rect x="-50" y="0" width="100" height="312" fill="#6b7280" stroke="#374151" stroke-width="2"/>
+    <!-- Screen interval (260-310 ft = 312-372 px) -->
+    <rect x="-50" y="312" width="100" height="60" fill="url(#screen-hatch)" stroke="#4a5661" stroke-width="2"/>
+    <!-- Screen depth label -->
+    <text x="60" y="350" font-size="18" font-weight="700" fill="#111827">260-310'</text>
+    <!-- Extraction arrow pointing up inside well -->
+    <path d="M0,360 L0,250" stroke="#111827" stroke-width="4" marker-end="url(#arrow)"/>
+    <text x="0" y="230" font-size="18" fill="#111827" font-weight="900" text-anchor="middle">Extraction</text>
+  </g>
 
-  <!-- Flow towards PT-01c during pumping -->
+  <!-- PT-01a extraction well (total depth 510 ft, screen 450-510 ft) -->
+  <!-- 60 ft from PT-01c (237 ft from PM-07) -->
+  <g id="PT-01a" transform="translate(1348,110)" font-family="Segoe UI, Roboto, Helvetica, Arial, sans-serif">
+    <text x="-30" y="-20" font-size="26" font-weight="700" fill="#ffffff">PT-01a</text>
+    <!-- Casing (0-450 ft = 0-540 px) -->
+    <rect x="-50" y="0" width="100" height="540" fill="#6b7280" stroke="#374151" stroke-width="2"/>
+    <!-- Screen interval (450-510 ft = 540-612 px) -->
+    <rect x="-50" y="540" width="100" height="72" fill="url(#screen-hatch)" stroke="#4a5661" stroke-width="2"/>
+    <!-- Screen depth label -->
+    <text x="60" y="578" font-size="18" font-weight="700" fill="#111827">450-510'</text>
+    <!-- Extraction arrow pointing up inside well -->
+    <path d="M0,600 L0,490" stroke="#111827" stroke-width="4" marker-end="url(#arrow)"/>
+    <text x="0" y="470" font-size="18" fill="#111827" font-weight="900" text-anchor="middle">Extraction</text>
+  </g>
+
+  <!-- PT-01b extraction well (total depth 400 ft, screen 350-400 ft) -->
+  <!-- 60 ft from PT-01a (297 ft from PM-07) -->
+  <g id="PT-01b" transform="translate(1588,110)" font-family="Segoe UI, Roboto, Helvetica, Arial, sans-serif">
+    <text x="-30" y="-20" font-size="26" font-weight="700" fill="#ffffff">PT-01b</text>
+    <!-- Casing (0-350 ft = 0-420 px) -->
+    <rect x="-50" y="0" width="100" height="420" fill="#6b7280" stroke="#374151" stroke-width="2"/>
+    <!-- Screen interval (350-400 ft = 420-480 px) -->
+    <rect x="-50" y="420" width="100" height="60" fill="url(#screen-hatch)" stroke="#4a5661" stroke-width="2"/>
+    <!-- Screen depth label -->
+    <text x="60" y="458" font-size="18" font-weight="700" fill="#111827">350-400'</text>
+    <!-- Extraction arrow pointing up inside well -->
+    <path d="M0,468 L0,358" stroke="#111827" stroke-width="4" marker-end="url(#arrow)"/>
+    <text x="0" y="338" font-size="18" fill="#111827" font-weight="900" text-anchor="middle">Extraction</text>
+  </g>
+
+  <!-- Distance annotation between PM-07 and PT-01c -->
+  <g id="distance-annotation" transform="translate(0,110)" font-family="Segoe UI, Roboto, Helvetica, Arial, sans-serif">
+    <!-- Horizontal dimension line -->
+    <line x1="400" y1="80" x2="1108" y2="80" stroke="#111827" stroke-width="2.5"/>
+    <!-- End ticks -->
+    <line x1="400" y1="70" x2="400" y2="90" stroke="#111827" stroke-width="2.5"/>
+    <line x1="1108" y1="70" x2="1108" y2="90" stroke="#111827" stroke-width="2.5"/>
+    <!-- Distance label -->
+    <text x="754" y="70" font-size="20" font-weight="800" fill="#111827" text-anchor="middle">177 ft</text>
+  </g>
+
+  <!-- Flow towards extraction wells during pumping -->
   <g id="flow" transform="translate(0,110)">
-    <path d="M550,360 L1340,360" stroke="#1e40af" stroke-width="4" stroke-dasharray="8 6" marker-end="url(#arrow)"/>
-    <text x="800" y="380" font-size="22" font-family="Segoe UI, Roboto, Helvetica, Arial, sans-serif" fill="#1e40af" font-weight="800">Groundwater flow to extraction well</text>
+    <path d="M550,360 L1050,360" stroke="#1e40af" stroke-width="4" stroke-dasharray="8 6" marker-end="url(#arrow)"/>
+    <text x="800" y="395" font-size="22" font-family="Segoe UI, Roboto, Helvetica, Arial, sans-serif" fill="#1e40af" font-weight="800" text-anchor="middle">Groundwater flow to extraction wells</text>
   </g>
 
   <!-- Callouts for temperature and strain -->
   <g id="callouts" font-family="Segoe UI, Roboto, Helvetica, Arial, sans-serif" font-weight="700">
     <!-- Temperature response -->
     <path d="M640,720 C580,680 520,640 417,600" fill="none" stroke="#0aa" stroke-width="4"/>
-    <circle cx="640" cy="720" r="60" fill="#0aa"/>
-    <text x="640" y="725" font-size="20" fill="#ffffff" font-weight="700" text-anchor="middle">null</text>
+    <circle cx="640" cy="720" r="60" fill="url(#temp-gradient)"/>
+    <text x="640" y="725" font-size="20" fill="#ffffff" font-weight="700" text-anchor="middle">Temp</text>
     <g filter="url(#shadow)">
-      <rect x="460" y="615" width="440" height="50" rx="6" fill="#ffffff" opacity="0.95"/>
-      <text x="680" y="645" font-size="18" fill="#0aa" text-anchor="middle">No temperature anomalies detected (DTS)</text>
+      <rect x="420" y="615" width="520" height="50" rx="6" fill="#ffffff" opacity="0.95"/>
+      <text x="680" y="645" font-size="18" fill="#0aa" text-anchor="middle">Temperature Measured by DTS (preferential flow paths)</text>
     </g>
     
     <!-- Strain response area circle with smooth gradient pattern -->
     <defs>
+      <radialGradient id="temp-gradient" cx="50%" cy="50%" r="50%">
+        <stop offset="0%" style="stop-color:#dc2626;stop-opacity:1" />
+        <stop offset="50%" style="stop-color:#fbbf24;stop-opacity:1" />
+        <stop offset="100%" style="stop-color:#1e40af;stop-opacity:1" />
+      </radialGradient>
       <radialGradient id="strain-gradient" cx="50%" cy="50%" r="50%">
         <stop offset="0%" style="stop-color:#dc2626;stop-opacity:1" />
         <stop offset="20%" style="stop-color:#dc2626;stop-opacity:1" />
@@ -213,30 +260,27 @@
     <text x="580" y="325" font-size="20" fill="#ffffff" font-weight="700" text-anchor="middle">Strain</text>
     <g filter="url(#shadow)">
       <rect x="220" y="380" width="520" height="50" rx="6" fill="#ffffff" opacity="0.95"/>
-      <text x="480" y="410" font-size="18" fill="#8e44ad" text-anchor="middle">Axial strain from drawdown (poroelastic response)</text>
+      <text x="480" y="410" font-size="18" fill="#8e44ad" text-anchor="middle">Axial Strain Measured by DAS (poroelastic response)</text>
     </g>
   </g>
 
    <!-- Legend -->
-   <g id="legend" transform="translate(1000,850)" font-family="Segoe UI, Roboto, Helvetica, Arial, sans-serif">
-     <rect x="0" y="0" width="600" height="50" rx="8" fill="#ffffff" stroke="#d1d5db" stroke-width="2" filter="url(#shadow)"/>
-     <text x="300" y="12" font-size="16" fill="#111827" font-weight="700" text-anchor="middle">Legend</text>
-     <g transform="translate(20,35)" font-size="18" fill="#111827">
-       <rect x="0" y="-10" width="28" height="12" fill="#8b9aa6" stroke="#4a5661" stroke-width="1.5"/>
-       <text x="38" y="-2">Casing</text>
+   <g id="legend" transform="translate(1750,15)" font-family="Segoe UI, Roboto, Helvetica, Arial, sans-serif">
+     <rect x="0" y="0" width="420" height="80" rx="8" fill="#ffffff" opacity="0.95" stroke="#d1d5db" stroke-width="2"/>
+     <text x="210" y="22" font-size="18" fill="#111827" font-weight="700" text-anchor="middle">Legend</text>
+     <g transform="translate(25,40)" font-size="15" fill="#111827">
+       <rect x="0" y="0" width="24" height="10" fill="#8b9aa6" stroke="#4a5661" stroke-width="1.5"/>
+       <text x="32" y="9">Casing</text>
        
-       <rect x="100" y="-10" width="28" height="12" fill="url(#screen-hatch)" stroke="#4a5661" stroke-width="1.5"/>
-       <text x="138" y="-2">Screen</text>
+       <rect x="115" y="0" width="24" height="10" fill="url(#screen-hatch)" stroke="#4a5661" stroke-width="1.5"/>
+       <text x="147" y="9">Screen</text>
        
-       <rect x="200" y="-10" width="28" height="12" fill="#ff2c55"/>
-       <text x="238" y="-2">Fiber Optic Cable</text>
-       
-       <rect x="380" y="-10" width="28" height="12" fill="#2563eb"/>
-       <text x="418" y="-2">PT-01c screen</text>
+       <rect x="230" y="0" width="24" height="10" fill="#ff2c55"/>
+       <text x="262" y="9">Fiber Optic</text>
      </g>
    </g>
 
    <!-- Footer -->
-   <text x="60" y="1216" fill="#6b7280" font-size="14" font-family="Segoe UI, Roboto, Helvetica, Arial, sans-serif">Scale: 1.2 px/ft vertical. Edit depths/formations as needed. Export to PNG/PDF for publication.</text>
+   <text x="60" y="1390" fill="#6b7280" font-size="14" font-family="Segoe UI, Roboto, Helvetica, Arial, sans-serif">Scale: 1.2 px/ft vertical. PT-01c is 177 ft from PM-07; extraction wells spaced 60 ft apart. Export to PNG/PDF for publication.</text>
 </svg>
 
