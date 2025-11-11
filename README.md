@@ -109,6 +109,9 @@ cd('C:\Coding\BGWRP\src')
 | `run_filter_matlab_movmean_5sec` | `mode = 'run_filter_matlab_movmean_5sec'; BGWRP_Toolkit` | **NEW** MATLAB movmean filter (5-second window) |
 | `run_filter_movmean_plus_grid` | `mode = 'run_filter_movmean_plus_grid'; BGWRP_Toolkit` | **NEW** MATLAB movmean + 0.35 Hz grid removal |
 | `run_filter_baseline` | `mode = 'run_filter_baseline'; BGWRP_Toolkit` | Baseline (no filtering) |
+| **Correlation & Storage Analysis** |
+| `run_correlation_analysis` | `mode = 'run_correlation_analysis'; BGWRP_Toolkit` | **NEW** Strain rate vs head data correlation (DAS shifted +20s) |
+| `run_storage_analysis` | `mode = 'run_storage_analysis'; BGWRP_Toolkit` | **NEW** Storage parameter estimation from DAS-head correlation |
 | **Basic Filtering** |
 | `run_detrend` | `mode = 'run_detrend'; BGWRP_Toolkit` | Analysis with detrend filtering |
 | `run_highpass` | `mode = 'run_highpass'; BGWRP_Toolkit` | Analysis with highpass filtering |
@@ -170,6 +173,30 @@ The toolkit generates **4 comprehensive figures** for each test:
 | `purge_unraw` | `mode = 'purge_unraw'; BGWRP_Toolkit` | Archive non-underscore dirs and purge |
 | **Complete Pipeline** |
 | `all` | `mode = 'all'; BGWRP_Toolkit` | Full pipeline: prep + analysis |
+
+## Data Export Utilities
+
+### LAS File Export
+Export DAS amplitude statistics to LAS format for WellCAD visualization:
+
+```matlab
+% Export DAS variance data to LAS format
+export_das_to_las('PT01c_Recovery_short')
+% Creates: PT01c_Recovery_short_DAS_Variance.las
+
+% Custom output filename
+export_das_to_las('PT01c_Recovery_short', 'MyDAS_Analysis.las')
+```
+
+**LAS File Contents:**
+- `DEPT`: Depth in feet (matching DTS format)
+- `DAS_VAR`: Amplitude variance by depth
+- `DAS_RMS`: RMS amplitude by depth  
+- `DAS_STD`: Standard deviation by depth
+- `DAS_MEAN`: Mean amplitude by depth
+- `DAS_MAX`: Maximum absolute amplitude by depth
+
+Load the generated LAS file into WellCAD alongside DTS temperature logs for integrated thermal-acoustic analysis.
 
 ## Adding New Data
 
