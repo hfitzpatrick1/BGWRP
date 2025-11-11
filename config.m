@@ -74,7 +74,7 @@ config.save_charts = true;
 config.dynamic_bounds = false;  % Use manual bounds for consistent visualization
 
 %% Default Depth Axis Bounds (applied to all pump tests unless overridden)
-config.default_depth_axis.min = 200;  % ft
+config.default_depth_axis.min = 175;  % ft
 config.default_depth_axis.max = 665;  % ft
 
 %% Manual Plot Bounds (used when dynamic_bounds = false)
@@ -175,7 +175,7 @@ config.manual_bounds.PT01c_Recovery_short.strain_line.min = -0.2;        % DAS s
 config.manual_bounds.PT01c_Recovery_short.strain_line.max = 0.2;
 config.manual_bounds.PT01c_Recovery_short.head_data_strain.min = -0.2;   % Head levels ft (Figure 3 subplot 2) - monitoring wells only
 config.manual_bounds.PT01c_Recovery_short.head_data_strain.max = -0.01;
-config.manual_bounds.PT01c_Recovery_short.depth_axis.min = 200;           % Depth axis ft
+config.manual_bounds.PT01c_Recovery_short.depth_axis.min = 150;           % Depth axis ft
 config.manual_bounds.PT01c_Recovery_short.depth_axis.max = 665;
 config.manual_bounds.PT01c_Recovery_short.pw_head_strain.min = -9;     % Pumping well head levels ft (Figure 3 subplot 3)
 config.manual_bounds.PT01c_Recovery_short.pw_head_strain.max = 1;

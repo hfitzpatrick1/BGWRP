@@ -75,7 +75,7 @@ switch lower(data_type)
     case 'strain'
         bounds = [-2, 0];
     case 'depth_axis'
-        bounds = [200, 665];  % Default depth range for all pump tests
+        bounds = [175, 665];  % Default depth range for all pump tests
     otherwise
         bounds = [-1, 1];
 end
