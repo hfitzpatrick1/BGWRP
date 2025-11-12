@@ -18,7 +18,7 @@ if nargin < 3
     export_type = 'full';
 end
 
-if nargin < 2
+if nargin < 2 || isempty(output_filename)
     switch export_type
         case 'event'
             output_filename = sprintf('%s_DAS_Event.las', dataset_name);
