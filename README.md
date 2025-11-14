@@ -19,7 +19,9 @@ BGWRP/
 │   │   ├── analyze_head_data.m
 │   │   ├── analyze_das_data.m
 │   │   ├── discover_datasets.m
-│   │   └── save_timing_config.m
+│   │   ├── save_timing_config.m
+│   │   ├── linear_regression_strain_drawdown.m  # Linear regression analysis
+│   │   └── calculate_storage_from_poroelasticity.m  # Storage calculation
 │   ├── plot/              # Plotting and visualization
 │   │   ├── generate_plots.m
 │   │   ├── analyze_fft_spectrum.m    # FFT analysis functions

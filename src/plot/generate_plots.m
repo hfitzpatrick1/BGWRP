@@ -56,6 +56,32 @@ if isfield(config, 'correlation_analysis') && config.correlation_analysis
         correlation_results = analyze_strain_head_correlation(das_results, head_results, das_results.timing, test_labels, config);
         plot_strain_head_correlation(correlation_results, config);
         chart_logger('✓ Correlation analysis completed');
+        
+        % Run linear regression analysis for each test
+        chart_logger('Running linear regression: strain rate vs drawdown rate...');
+        for j = 1:length(test_labels)
+            test_label = test_labels{j};
+            if isfield(das_results, test_label) && isfield(head_results, test_label)
+                try
+                    % Set up configuration for linear regression
+                    lr_config.timing_correction_sec = 21;  % Default: 21 seconds backward shift
+                    lr_config.zone = 'z5';  % Default: Zone 5
+                    lr_config.show_plots = true;
+                    
+                    % Perform linear regression
+                    lr_results = linear_regression_strain_drawdown(das_results, head_results, test_label, lr_config);
+                    
+                    % Store results in das_results for later use
+                    das_results.(test_label).linear_regression = lr_results;
+                    
+                    chart_logger('✓ Linear regression for %s: R=%.3f, R²=%.3f', test_label, lr_results.R, lr_results.R_squared);
+                catch ME
+                    chart_logger('✗ Linear regression failed for %s: %s', test_label, ME.message);
+                    fprintf('  Error at %s (line %d)\n', ME.stack(1).name, ME.stack(1).line);
+                end
+            end
+        end
+        
     catch ME
         chart_logger('✗ Correlation analysis failed: %s', ME.message);
         fprintf('Correlation analysis error details: %s\n', ME.message);
