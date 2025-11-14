@@ -143,7 +143,7 @@ The toolkit generates **4 comprehensive figures** for each test:
   - Subplot 3: Pumping well head levels vs DAS strain
 - **Features**: Time-based integration, detrended strain, correlation analysis
 
-### Figure 4: FFT Analysis (NEW)
+### Figure 4: FFT Analysis
 - **Purpose**: Comprehensive frequency domain analysis of DAS data
 - **Content**: 4 subplots
   - **Subplot 1**: Power Spectral Density (PSD) with dominant frequency identification
@@ -156,6 +156,18 @@ The toolkit generates **4 comprehensive figures** for each test:
   - Signal-to-noise ratio estimation
   - Spatial coherence analysis across fiber optic channels
   - Configurable FFT parameters (window size, overlap, frequency range)
+
+### Figure 20: Linear Regression Analysis (NEW)
+- **Purpose**: Quantify correlation between DAS strain rate and drawdown rate for poroelastic storage calculation
+- **Content**: 2 subplots
+  - **Subplot 1**: Scatter plot with linear regression fit and statistics (R, R², RMSE, slope)
+  - **Subplot 2**: Time series overlay showing peak alignment between strain rate and drawdown rate
+- **Features**:
+  - Automatic timing correction to align DAS and pressure transducer data
+  - Quality assessment (good/moderate/weak correlation)
+  - Derivative-based drawdown rate calculation
+  - Results stored in `das_results.(test_name).linear_regression` for downstream storage analysis
+- **Usage**: Automatically generated when running `mode = 'run_correlation_analysis'; BGWRP_Toolkit`
 
 #### FFT Analysis Capabilities
 - **Grid Pattern Detection**: Automatically identifies and quantifies grid pattern artifacts
@@ -175,6 +187,69 @@ The toolkit generates **4 comprehensive figures** for each test:
 | `purge_unraw` | `mode = 'purge_unraw'; BGWRP_Toolkit` | Archive non-underscore dirs and purge |
 | **Complete Pipeline** |
 | `all` | `mode = 'all'; BGWRP_Toolkit` | Full pipeline: prep + analysis |
+
+## Poroelastic Storage Analysis
+
+### Linear Regression: Strain Rate vs Drawdown Rate
+
+The toolkit includes automated linear regression analysis to quantify the relationship between DAS strain rate and drawdown rate from pressure transducers. This is a critical step for calculating aquifer storage parameters using poroelasticity theory (Wang, 2000).
+
+**Automated Workflow (Recommended):**
+```matlab
+% Run correlation analysis with automatic linear regression
+mode = 'run_correlation_analysis'; 
+BGWRP_Toolkit
+
+% Results stored in: das_results.(test_name).linear_regression
+% - slope: Regression slope (ns/s per ft/min)
+% - R: Correlation coefficient
+% - R_squared: R² value
+% - strain_rate, drawdown_rate, time: Aligned data arrays
+```
+
+**Manual Timing Adjustment:**
+```matlab
+% First run correlation analysis
+mode = 'run_correlation_analysis'; 
+BGWRP_Toolkit
+
+% Then test different timing corrections
+% Edit TIMING_CORRECTION_SECONDS in test_timing_correction.m
+test_timing_correction
+
+% Adjust timing until peaks align in Figure 20 (right subplot)
+% Look for R² > 0.5 for good correlation
+```
+
+**Direct Function Call:**
+```matlab
+% Load correlation results first
+mode = 'run_correlation_analysis'; BGWRP_Toolkit
+
+% Configure and run linear regression
+lr_config.timing_correction_sec = 21;  % Adjust based on your data
+lr_config.zone = 'z5';                 % Zone 5 by default
+lr_config.show_plots = true;
+
+results = linear_regression_strain_drawdown(das_results, head_results, 'PT01c_Recovery_short', lr_config);
+
+% results contains: slope, R, R_squared, strain_rate, drawdown_rate, time
+```
+
+**Key Parameters:**
+- `timing_correction_sec`: Time shift (seconds) to apply backward to head data to align with GPS-synced DAS data
+- `zone`: Pressure transducer zone to analyze (default: 'z5' for Zone 5)
+- Default timing correction: 21 seconds (optimized for PT01c Recovery dataset)
+
+**Quality Assessment:**
+- R² > 0.5: Good correlation, suitable for storage calculation
+- R² > 0.25: Moderate correlation, use with caution
+- R² < 0.25: Weak correlation, adjust timing or check data quality
+
+**Troubleshooting:**
+- If peaks not aligned: Adjust `timing_correction_sec` ±2 seconds at a time
+- If correlation weak: Try different depth ranges, longer time windows, or different zones
+- Check Figure 20 (right plot) for visual alignment of peaks
 
 ## Data Export Utilities
 
@@ -305,6 +380,8 @@ Load the generated LAS file into WellCAD alongside DTS temperature logs for inte
 - **Filter errors** - Check input data format and sampling rate compatibility
 - **Memory issues** - Use `prep_no_decim` mode sparingly; 100Hz data requires significant RAM
 - **Vertical bands/grid patterns** - Use `run_filter_movmean_plus_grid` to remove 0.35 Hz artifacts
+- **"Weak correlation in linear regression"** - Adjust `timing_correction_sec`, check for Noordbergum effect, or try longer recovery dataset
+- **"Peaks not aligned in Figure 20"** - Fine-tune timing correction ±1-2 seconds using `test_timing_correction.m`
 
 ### Debug Modes
 Test individual components:

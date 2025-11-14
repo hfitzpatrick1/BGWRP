@@ -6,11 +6,11 @@
 % 2. Adjust TIMING_CORRECTION_SECONDS below
 % 3. Run this script
 
-clear; clc;
+clc;  % Clear command window but KEEP workspace variables!
 
 %% CONFIGURATION
 test_name = 'PT01c_Recovery_short';
-TIMING_CORRECTION_SECONDS = 21;  % <-- ADJUST THIS VALUE
+TIMING_CORRECTION_SECONDS = 31;  % <-- ADJUST THIS VALUE (shifted 10 more seconds backward)
 zone = 'z5';
 
 %% Check if correlation results exist
