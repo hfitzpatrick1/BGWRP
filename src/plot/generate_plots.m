@@ -64,7 +64,7 @@ if isfield(config, 'correlation_analysis') && config.correlation_analysis
             if isfield(das_results, test_label) && isfield(head_results, test_label)
                 try
                     % Set up configuration for linear regression
-                    lr_config.timing_correction_sec = 21;  % Default: 21 seconds backward shift
+                    lr_config.timing_correction_sec = 8;  % Optimized: 8 seconds backward shift (R=0.724, R^2=0.525)
                     lr_config.zone = 'z5';  % Default: Zone 5
                     lr_config.show_plots = true;
                     
@@ -74,7 +74,7 @@ if isfield(config, 'correlation_analysis') && config.correlation_analysis
                     % Store results in das_results for later use
                     das_results.(test_label).linear_regression = lr_results;
                     
-                    chart_logger('✓ Linear regression for %s: R=%.3f, R²=%.3f', test_label, lr_results.R, lr_results.R_squared);
+                    chart_logger('✓ Linear regression for %s: R=%.3f, R^2=%.3f', test_label, lr_results.R, lr_results.R_squared);
                 catch ME
                     chart_logger('✗ Linear regression failed for %s: %s', test_label, ME.message);
                     fprintf('  Error at %s (line %d)\n', ME.stack(1).name, ME.stack(1).line);

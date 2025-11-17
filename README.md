@@ -194,31 +194,33 @@ The toolkit generates **4 comprehensive figures** for each test:
 
 The toolkit includes automated linear regression analysis to quantify the relationship between DAS strain rate and drawdown rate from pressure transducers. This is a critical step for calculating aquifer storage parameters using poroelasticity theory (Wang, 2000).
 
-**Automated Workflow (Recommended):**
+**Complete Workflow (REQUIRED STEPS):**
 ```matlab
-% Run correlation analysis with automatic linear regression
+% Step 1: Run initial correlation analysis
 mode = 'run_correlation_analysis'; 
 BGWRP_Toolkit
+
+% Step 2: Optimize timing correction (REQUIRED)
+test_timing_correction
+% Adjust TIMING_CORRECTION_SECONDS until peaks align perfectly
+% Green (drawdown rate) and black (strain rate) should overlay
+
+% Step 3: Update optimized timing in generate_plots.m (line 67)
+%         Change: lr_config.timing_correction_sec = X.X;  
+%         (where X.X is your optimized value, e.g., 7.5)
+
+% Step 4: Re-run correlation analysis with optimized timing
+mode = 'run_correlation_analysis'; 
+BGWRP_Toolkit
+
+% Step 5: Calculate storage parameters
+calculate_storage_from_regression
 
 % Results stored in: das_results.(test_name).linear_regression
 % - slope: Regression slope (ns/s per ft/min)
 % - R: Correlation coefficient
-% - R_squared: R² value
+% - R_squared: R^2 value
 % - strain_rate, drawdown_rate, time: Aligned data arrays
-```
-
-**Manual Timing Adjustment:**
-```matlab
-% First run correlation analysis
-mode = 'run_correlation_analysis'; 
-BGWRP_Toolkit
-
-% Then test different timing corrections
-% Edit TIMING_CORRECTION_SECONDS in test_timing_correction.m
-test_timing_correction
-
-% Adjust timing until peaks align in Figure 20 (right subplot)
-% Look for R² > 0.5 for good correlation
 ```
 
 **Direct Function Call:**
@@ -227,7 +229,7 @@ test_timing_correction
 mode = 'run_correlation_analysis'; BGWRP_Toolkit
 
 % Configure and run linear regression
-lr_config.timing_correction_sec = 21;  % Adjust based on your data
+lr_config.timing_correction_sec = 8;  % Optimized for PT01c_Recovery_short (R=0.724)
 lr_config.zone = 'z5';                 % Zone 5 by default
 lr_config.show_plots = true;
 
@@ -239,12 +241,13 @@ results = linear_regression_strain_drawdown(das_results, head_results, 'PT01c_Re
 **Key Parameters:**
 - `timing_correction_sec`: Time shift (seconds) to apply backward to head data to align with GPS-synced DAS data
 - `zone`: Pressure transducer zone to analyze (default: 'z5' for Zone 5)
-- Default timing correction: 21 seconds (optimized for PT01c Recovery dataset)
+- Optimized timing correction: **8 seconds** (PT01c Recovery dataset, R=0.724, R²=0.525)
+- Note: Timing correction must be optimized for each dataset using `test_timing_correction`
 
 **Quality Assessment:**
-- R² > 0.5: Good correlation, suitable for storage calculation
-- R² > 0.25: Moderate correlation, use with caution
-- R² < 0.25: Weak correlation, adjust timing or check data quality
+- R^2 > 0.5: Good correlation, suitable for storage calculation
+- R^2 > 0.25: Moderate correlation, use with caution
+- R^2 < 0.25: Weak correlation, adjust timing or check data quality
 
 **Troubleshooting:**
 - If peaks not aligned: Adjust `timing_correction_sec` ±2 seconds at a time

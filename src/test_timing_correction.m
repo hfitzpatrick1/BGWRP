@@ -10,7 +10,7 @@ clc;  % Clear command window but KEEP workspace variables!
 
 %% CONFIGURATION
 test_name = 'PT01c_Recovery_short';
-TIMING_CORRECTION_SECONDS = 31;  % <-- ADJUST THIS VALUE (shifted 10 more seconds backward)
+TIMING_CORRECTION_SECONDS = 7.5;  % <-- ADJUST THIS VALUE (reduce to move green forward/right)
 zone = 'z5';
 
 %% Check if correlation results exist
