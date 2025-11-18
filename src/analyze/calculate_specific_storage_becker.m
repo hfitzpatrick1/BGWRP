@@ -109,6 +109,25 @@ if using_displacement_rate
     end
 end
 
+% Check if strain rate characteristic length scaling is requested
+if ~using_displacement_rate && isfield(config, 'strain_rate_characteristic_length_m') && config.strain_rate_characteristic_length_m > 0
+    L_char = config.strain_rate_characteristic_length_m;
+    L_gauge = 10;  % DAS gauge length in meters
+    scaling_factor = L_gauge / L_char;
+    
+    fprintf('\n📏 APPLYING CHARACTERISTIC LENGTH SCALING TO STRAIN RATE 📏\n');
+    fprintf('  Strain rate calculated with gauge length: %.1f m\n', L_gauge);
+    fprintf('  Rescaling to characteristic length: %.4f m\n', L_char);
+    fprintf('  Scaling factor: %.1f (= %.1fm / %.4fm)\n', scaling_factor, L_gauge, L_char);
+    fprintf('  Original slope: %.4e (1/s)/(ft/s)\n', slope_raw);
+    
+    % Apply scaling
+    slope_raw = slope_raw * scaling_factor;
+    
+    fprintf('  Scaled slope: %.4e (1/s)/(ft/s)\n', slope_raw);
+    fprintf('  ⚠ This is an EMPIRICAL SCALING - assumes effective compression over %.2f cm\n', L_char*100);
+end
+
 % Check if we're using head rate or drawdown rate
 using_head_rate = isfield(lr_results, 'head_rate') && ~isempty(lr_results.head_rate);
 
