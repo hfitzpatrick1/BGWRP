@@ -46,6 +46,9 @@ end
 if ~isfield(config, 'gamma_unit')
     config.gamma_unit = 'SI';  % Default to SI units
 end
+if ~isfield(config, 'poisson_ratio')
+    config.poisson_ratio = 0.30;  % Typical for sand/sandstone (0.25-0.35)
+end
 % No aquifer_thickness needed - stopping at specific storage
 
 %% Constants
@@ -126,6 +129,27 @@ if ~using_displacement_rate && isfield(config, 'strain_rate_characteristic_lengt
     
     fprintf('  Scaled slope: %.4e (1/s)/(ft/s)\n', slope_raw);
     fprintf('  ⚠ This is an EMPIRICAL SCALING - assumes effective compression over %.2f cm\n', L_char*100);
+end
+
+% Apply Poisson's ratio correction: Convert axial strain to volumetric strain
+% DAS measures axial strain εzz, but poroelasticity needs volumetric strain εkk
+% For isotropic, confined aquifer: εkk = εzz × (1 + 2ν/(1-ν))
+if isfield(config, 'poisson_ratio') && config.poisson_ratio > 0
+    nu = config.poisson_ratio;
+    poisson_correction = 1 + (2*nu)/(1-nu);
+    
+    fprintf('\n📐 APPLYING POISSON''S RATIO CORRECTION 📐\n');
+    fprintf('  DAS measures: Axial strain rate (∂εzz/∂t)\n');
+    fprintf('  Poroelasticity needs: Volumetric strain rate (∂εkk/∂t)\n');
+    fprintf('  Poisson''s ratio (ν): %.2f\n', nu);
+    fprintf('  Conversion factor: εkk/εzz = 1 + 2ν/(1-ν) = %.3f\n', poisson_correction);
+    fprintf('  Original slope: %.4e (1/s)/(ft/s)\n', slope_raw);
+    
+    % Apply correction to slope
+    slope_raw = slope_raw * poisson_correction;
+    
+    fprintf('  Corrected slope: %.4e (1/s)/(ft/s)\n', slope_raw);
+    fprintf('  ✓ Now represents volumetric strain rate\n');
 end
 
 % Check if we're using head rate or drawdown rate
@@ -249,6 +273,7 @@ storage_results.S_s = S_s;
 storage_results.alpha = config.alpha;
 storage_results.gamma = gamma;
 storage_results.gamma_unit = config.gamma_unit;
+storage_results.poisson_ratio = config.poisson_ratio;
 storage_results.slope_raw = slope_raw;
 storage_results.slope_converted = slope_converted;
 storage_results.R = lr_results.R;
