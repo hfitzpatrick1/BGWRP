@@ -26,6 +26,7 @@ function storage_results = calculate_specific_storage_becker(lr_results, config)
 %   config - Configuration structure with fields:
 %            .alpha - Biot-Willis coefficient (default: 0.95 for clean sand/gravelly sand)
 %            .gamma_unit - 'SI' or 'imperial' (default: 'SI')
+%            .displacement_to_strain_conversion_factor - Custom conversion factor (NOT RECOMMENDED - use strain rate instead)
 %
 % Outputs:
 %   storage_results - Structure containing:
@@ -63,8 +64,50 @@ end
 %            = (1/s) / (ft/s)
 % NOTE: Linear regression now outputs strain rate directly (already converted from nm/s)
 %       and drawdown rate in ft/s (matching strain rate units)
+%
+% If displacement_rate was used, we need to convert the slope:
+%   displacement_rate slope: (nm/s) per (ft/s)
+%   To convert to strain rate slope: divide by characteristic length
+%   But this is NOT recommended - use strain rate for proper physical meaning
 
-slope_raw = lr_results.slope;  % (1/s) per (ft/s)
+slope_raw = lr_results.slope;  % (1/s) per (ft/s) for strain rate, or (nm/s) per (ft/s) for displacement rate
+
+% Check if displacement rate was used instead of strain rate
+using_displacement_rate = isfield(lr_results, 'use_displacement_rate') && lr_results.use_displacement_rate;
+
+if using_displacement_rate
+    fprintf('\n⚠⚠⚠ WARNING: Using DISPLACEMENT RATE instead of STRAIN RATE ⚠⚠⚠\n');
+    fprintf('  Storage calculations require STRAIN RATE for correct physical meaning\n');
+    fprintf('  Displacement rate slope: %.4e (nm/s) per (ft/s)\n', slope_raw);
+    
+    % Check if user provided custom conversion factor
+    if isfield(config, 'displacement_to_strain_conversion_factor') && config.displacement_to_strain_conversion_factor > 0
+        conversion_factor = config.displacement_to_strain_conversion_factor;
+        fprintf('  Using CUSTOM conversion factor: %.2e\n', conversion_factor);
+    else
+        % Default conversion: divide by gauge length
+        % But this might be too small - user can override
+        gauge_length_m = 10;  % DAS gauge length
+        characteristic_length_m = gauge_length_m;
+        conversion_factor = characteristic_length_m * 1e9;  % 1e10
+        
+        fprintf('  Using default conversion (gauge length): L = %.1f m\n', characteristic_length_m);
+        fprintf('  ⚠ NOTE: This conversion is approximate - displacement rate at single point\n');
+        fprintf('    cannot be directly converted to strain rate without spatial gradient\n');
+    end
+    
+    % Convert: (nm/s) / (ft/s) → (1/s) / (ft/s)
+    slope_raw = slope_raw / conversion_factor;
+    
+    fprintf('  Converted slope: %.4e (1/s) per (ft/s)\n', slope_raw);
+    fprintf('  ⚠ This is an APPROXIMATION - use strain rate for accurate results\n');
+    
+    % Also need to create strain_rate field for compatibility
+    if isfield(lr_results, 'displacement_rate')
+        % Convert displacement rate to strain rate equivalent
+        lr_results.strain_rate = lr_results.displacement_rate / conversion_factor;
+    end
+end
 
 % Check if we're using head rate or drawdown rate
 using_head_rate = isfield(lr_results, 'head_rate') && ~isempty(lr_results.head_rate);

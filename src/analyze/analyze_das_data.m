@@ -275,6 +275,7 @@ for i = 1:length(test_labels)
         % Report the window size used
         if strcmp(smoothing_method, 'matlab_movmean') && isfield(config, 'matlab_movmean_window')
             actual_window = config.matlab_movmean_window;
+            fprintf('  Using MATLAB movmean with window=%d samples (%.1f seconds)\n', actual_window, actual_window);
         else
             actual_window = smooth_window;
         end
@@ -312,6 +313,13 @@ for i = 1:length(test_labels)
     das_results.(test_label).data_file = das_filepath;
     das_results.(test_label).time_array = time_array_shifted;  % Use shifted time
     das_results.(test_label).smoothed_data = smoothed_data;
+    % Store smoothing method info for verification
+    if isfield(config, 'smoothing_method')
+        das_results.(test_label).smoothing_method = config.smoothing_method;
+        if strcmp(config.smoothing_method, 'matlab_movmean') && isfield(config, 'matlab_movmean_window')
+            das_results.(test_label).smoothing_window = config.matlab_movmean_window;
+        end
+    end
     das_results.(test_label).depth_ft = depth_ft;
     das_results.(test_label).C1 = C1;
     das_results.(test_label).MperChan = MperChan;
