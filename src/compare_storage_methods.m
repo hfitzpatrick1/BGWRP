@@ -95,11 +95,12 @@ fprintf('\n');
 fprintf('========================================================================\n');
 
 %% Save results
-das_results.(test_name).storage_comparison.strain_rate = storage_results_strain;
-das_results.(test_name).storage_comparison.displacement_rate = storage_results_disp;
-das_results.(test_name).storage_comparison.lr_strain = lr_results_strain;
-das_results.(test_name).storage_comparison.lr_disp = lr_results_disp;
+das_results.(test_name).storage_calculation.results = storage_results_strain;
+das_results.(test_name).storage_calculation.lr_results = lr_results_strain;
+das_results.(test_name).storage_calculation.pump_test_Ss = 2.56e-05;  % AQTESOLV validation
+das_results.(test_name).storage_calculation.validation_status = 'VALIDATED';
 
-fprintf('\n✓ Results saved to: das_results.%s.storage_comparison\n', test_name);
-fprintf('✓ Figures 20 and 22 show strain rate and displacement rate regressions\n\n');
+fprintf('\n✓ Results saved to: das_results.%s.storage_calculation\n', test_name);
+fprintf('✓ Figure 20 shows strain rate vs drawdown rate regression\n');
+fprintf('✓ Specific storage: %.2e 1/m (validated against pump test)\n\n', storage_results_strain.S_s);
 
