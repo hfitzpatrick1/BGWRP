@@ -599,10 +599,10 @@ residuals = strain_clean - strain_predicted;
 RMSE = sqrt(mean(residuals.^2));
 
 if config.use_displacement_rate
-    fprintf('Slope: %.4e (nm/s) per (ft/s)\n', slope);
+    fprintf('Slope: %.4e (nm/s)/(ft/s)\n', slope);
     fprintf('Intercept: %.4e nm/s\n', intercept);
 else
-    fprintf('Slope: %.4e (1/s) per (ft/s)\n', slope);
+    fprintf('Slope: %.4e (1/s)/(ft/s)\n', slope);
     fprintf('Intercept: %.4e 1/s\n', intercept);
 end
 fprintf('Correlation (R): %.4f\n', R_corr);

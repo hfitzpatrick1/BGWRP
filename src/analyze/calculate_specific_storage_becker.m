@@ -78,7 +78,7 @@ using_displacement_rate = isfield(lr_results, 'use_displacement_rate') && lr_res
 if using_displacement_rate
     fprintf('\n⚠⚠⚠ WARNING: Using DISPLACEMENT RATE instead of STRAIN RATE ⚠⚠⚠\n');
     fprintf('  Storage calculations require STRAIN RATE for correct physical meaning\n');
-    fprintf('  Displacement rate slope: %.4e (nm/s) per (ft/s)\n', slope_raw);
+    fprintf('  Displacement rate slope: %.4e (nm/s)/(ft/s)\n', slope_raw);
     
     % Check if user provided custom conversion factor
     if isfield(config, 'displacement_to_strain_conversion_factor') && config.displacement_to_strain_conversion_factor > 0
@@ -99,7 +99,7 @@ if using_displacement_rate
     % Convert: (nm/s) / (ft/s) → (1/s) / (ft/s)
     slope_raw = slope_raw / conversion_factor;
     
-    fprintf('  Converted slope: %.4e (1/s) per (ft/s)\n', slope_raw);
+    fprintf('  Converted slope: %.4e (1/s)/(ft/s)\n', slope_raw);
     fprintf('  ⚠ This is an APPROXIMATION - use strain rate for accurate results\n');
     
     % Also need to create strain_rate field for compatibility
@@ -115,11 +115,11 @@ using_head_rate = isfield(lr_results, 'head_rate') && ~isempty(lr_results.head_r
 fprintf('\nLinear Regression Results:\n');
 if using_head_rate
     fprintf('  Using HEAD RATE (∂h/∂t) - slope = (∂ε/∂t) / (∂h/∂t)\n');
-    fprintf('  Slope: %.4e (1/s) per (ft/s)\n', slope_raw);
+    fprintf('  Slope: %.4e (1/s)/(ft/s)\n', slope_raw);
     fprintf('  Becker eq: S_ε = -α × slope / γ\n');
 else
     fprintf('  Using DRAWDOWN RATE (∂s/∂t) - slope = (∂ε/∂t) / (∂s/∂t)\n');
-    fprintf('  Slope: %.4e (1/s) per (ft/s)\n', slope_raw);
+    fprintf('  Slope: %.4e (1/s)/(ft/s)\n', slope_raw);
     fprintf('  Becker eq: S_ε = +α × slope / γ (signs cancel)\n');
 end
 fprintf('  R: %.4f\n', lr_results.R);
