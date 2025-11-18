@@ -10,6 +10,11 @@ function results = linear_regression_strain_drawdown(das_results, head_results, 
 %            .zone - Zone to analyze (default: 'z5')
 %            .show_plots - Whether to generate plots (default: true)
 %            .use_displacement_rate - If true, use displacement rate instead of strain rate (default: false)
+%            .depth_range_ft - [min_ft max_ft] depth range to analyze (default: use pumping_zone channel)
+%            .depth_averaging_method - How to combine channels in depth range:
+%                'mean' - Average all channels (default)
+%                'median' - Median of all channels
+%                'representative' - Single channel at center of range
 %            .pre_diff_smoothing_window - Smooth displacement channels BEFORE difference (default: none)
 %            .strain_rate_smoothing_window - Smooth strain rate AFTER difference (default: 5)
 %            .strain_rate_smoothing_method - Smoothing method:
@@ -42,6 +47,7 @@ if ~isfield(config, 'zone'), config.zone = 'z5'; end
 if ~isfield(config, 'show_plots'), config.show_plots = true; end
 if ~isfield(config, 'timing_correction_sec'), config.timing_correction_sec = 7.5; end
 if ~isfield(config, 'use_displacement_rate'), config.use_displacement_rate = false; end
+if ~isfield(config, 'depth_averaging_method'), config.depth_averaging_method = 'mean'; end
 
 %% Extract data
 if config.use_displacement_rate
@@ -74,9 +80,52 @@ gauge_length_m = 10;  % DAS gauge length in meters (L in equation)
 spatial_resolution_m = 0.25;  % Spatial resolution per channel (0.25 m)
 channels_per_gauge = round(gauge_length_m / spatial_resolution_m);  % ~40 channels for 10m gauge
 
-% Get the channel index for the representative channel (285 ft)
-if isfield(das_filtered, 'pumping_zone') && isfield(das_filtered.pumping_zone, 'channel_idx')
+% Determine which channels to analyze based on depth range
+if isfield(config, 'depth_range_ft') && ~isempty(config.depth_range_ft)
+    % User specified a depth range
+    depth_min_ft = config.depth_range_ft(1);
+    depth_max_ft = config.depth_range_ft(2);
+    
+    % Find channels within this depth range
+    depth_ft = das_filtered.depth_ft;
+    channels_in_range = find(depth_ft >= depth_min_ft & depth_ft <= depth_max_ft);
+    
+    if isempty(channels_in_range)
+        error('No channels found in depth range %.1f - %.1f ft', depth_min_ft, depth_max_ft);
+    end
+    
+    fprintf('\n=== DEPTH RANGE ANALYSIS ===\n');
+    fprintf('Depth range: %.1f - %.1f ft\n', depth_min_ft, depth_max_ft);
+    fprintf('Channels in range: %d (ch %d to ch %d)\n', length(channels_in_range), ...
+        channels_in_range(1), channels_in_range(end));
+    fprintf('Averaging method: %s\n', config.depth_averaging_method);
+    
+    % Select representative channel or prepare for averaging
+    if strcmp(config.depth_averaging_method, 'representative')
+        % Use center channel of range
+        channel_idx = channels_in_range(round(length(channels_in_range)/2));
+        fprintf('Using representative channel: %d (%.1f ft)\n', channel_idx, depth_ft(channel_idx));
+        use_depth_averaging = false;
+    else
+        % Will average across all channels in range
+        channel_idx = channels_in_range(1);  % Start channel for strain rate calculation
+        use_depth_averaging = true;
+        fprintf('Will average across all %d channels in range\n', length(channels_in_range));
+    end
+    
+elseif isfield(das_filtered, 'pumping_zone') && isfield(das_filtered.pumping_zone, 'channel_idx')
+    % Default: use pumping zone channel
     channel_idx = das_filtered.pumping_zone.channel_idx;
+    use_depth_averaging = false;
+    fprintf('\n=== USING DEFAULT PUMPING ZONE CHANNEL ===\n');
+    fprintf('Channel: %d (%.1f ft)\n', channel_idx, das_filtered.depth_ft(channel_idx));
+else
+    error('No depth range specified and no pumping_zone channel available');
+end
+
+% Now process based on whether we're using a single channel or depth averaging
+if isfield(das_filtered, 'pumping_zone') && isfield(das_filtered.pumping_zone, 'channel_idx')
+    % For reference only - actual channel_idx may be different if depth_range specified
     
     % CORRECT METHOD: Calculate difference across gauge length
     if isfield(das_filtered, 'smoothed_data') && isfield(das_filtered, 'time_array')
@@ -138,11 +187,33 @@ if isfield(das_filtered, 'pumping_zone') && isfield(das_filtered.pumping_zone, '
         time_strain = time_das_full(time_mask);
         
         if config.use_displacement_rate
-            % Use displacement rate directly at single channel (285 ft)
+            % Use displacement rate directly
             fprintf('\n=== USING DISPLACEMENT RATE (not strain rate) ===\n');
-            displacement_rate_smoothed = displacement_rate_full(time_mask, channel_idx);  % nm/s
+            
+            if use_depth_averaging
+                % Average displacement rate across depth range
+                fprintf('  Averaging displacement rate across depth range\n');
+                displacement_rate_all_channels = displacement_rate_full(time_mask, channels_in_range);  % [time × channels]
+                
+                switch config.depth_averaging_method
+                    case 'mean'
+                        displacement_rate_smoothed = mean(displacement_rate_all_channels, 2);  % Average across channels
+                        fprintf('  Method: Mean across %d channels\n', length(channels_in_range));
+                    case 'median'
+                        displacement_rate_smoothed = median(displacement_rate_all_channels, 2);  % Median across channels
+                        fprintf('  Method: Median across %d channels\n', length(channels_in_range));
+                    otherwise
+                        displacement_rate_smoothed = mean(displacement_rate_all_channels, 2);
+                        fprintf('  Method: Mean (default) across %d channels\n', length(channels_in_range));
+                end
+                fprintf('  Depth range: %.1f - %.1f ft (%d channels)\n', depth_min_ft, depth_max_ft, length(channels_in_range));
+            else
+                % Single channel
+                displacement_rate_smoothed = displacement_rate_full(time_mask, channel_idx);  % nm/s
+                fprintf('  Channel: %d (%.1f ft)\n', channel_idx, das_filtered.depth_ft(channel_idx));
+            end
+            
             strain_smoothed = displacement_rate_smoothed;  % Store as strain_smoothed for compatibility (but it's actually displacement rate)
-            fprintf('  Channel: %d (%.1f ft)\n', channel_idx, das_filtered.depth_ft(channel_idx));
             fprintf('  Source: smoothed_data (should have 5-second movmean if correlation analysis was run)\n');
             if isfield(das_filtered, 'smoothing_method')
                 fprintf('  Smoothing method: %s', das_filtered.smoothing_method);
@@ -157,18 +228,62 @@ if isfield(das_filtered, 'pumping_zone') && isfield(das_filtered.pumping_zone, '
             fprintf('Displacement rate range: %.2e to %.2e nm/s\n', min(displacement_rate_smoothed), max(displacement_rate_smoothed));
         else
             % Calculate strain rate using difference across gauge length
-            channel_idx_L = channel_idx + channels_per_gauge;
+            fprintf('\n=== CALCULATING STRAIN RATE (Equation 2) ===\n');
             
-            % OPTION: Average across multiple channel pairs for spatial smoothing
-            spatial_averaging = false;
-            n_pairs = 1;
-            if isfield(config, 'strain_rate_spatial_averaging') && config.strain_rate_spatial_averaging > 1
-                n_pairs = config.strain_rate_spatial_averaging;
-                spatial_averaging = true;
-                fprintf('  Using spatial averaging across %d channel pairs\n', n_pairs);
-            end
-            
-            if channel_idx_L <= size(displacement_rate_full, 2)
+            if use_depth_averaging
+                % Average strain rate across multiple channel pairs in depth range
+                fprintf('  Averaging strain rate across depth range\n');
+                n_pairs = length(channels_in_range);
+                strain_pairs = zeros(length(time_mask), n_pairs);
+                valid_pairs = 0;
+                
+                for pair_idx = 1:n_pairs
+                    ch_z = channels_in_range(pair_idx);
+                    ch_z_L = ch_z + channels_per_gauge;
+                    
+                    if ch_z_L <= size(displacement_rate_full, 2)
+                        disp_z = displacement_rate_full(time_mask, ch_z);
+                        disp_z_L = displacement_rate_full(time_mask, ch_z_L);
+                        strain_pairs(:, pair_idx) = (disp_z_L - disp_z) / (gauge_length_m * 1e9);
+                        valid_pairs = valid_pairs + 1;
+                    end
+                end
+                
+                if valid_pairs == 0
+                    error('No valid channel pairs found in depth range for strain rate calculation');
+                end
+                
+                % Average across valid pairs
+                switch config.depth_averaging_method
+                    case 'mean'
+                        displacement_diff = mean(strain_pairs(:, 1:valid_pairs), 2) * (gauge_length_m * 1e9);  % Convert back for display
+                        strain_smoothed = mean(strain_pairs(:, 1:valid_pairs), 2);  % Units: 1/s
+                        fprintf('  Method: Mean across %d channel pairs\n', valid_pairs);
+                    case 'median'
+                        displacement_diff = median(strain_pairs(:, 1:valid_pairs), 2) * (gauge_length_m * 1e9);
+                        strain_smoothed = median(strain_pairs(:, 1:valid_pairs), 2);  % Units: 1/s
+                        fprintf('  Method: Median across %d channel pairs\n', valid_pairs);
+                    otherwise
+                        displacement_diff = mean(strain_pairs(:, 1:valid_pairs), 2) * (gauge_length_m * 1e9);
+                        strain_smoothed = mean(strain_pairs(:, 1:valid_pairs), 2);  % Units: 1/s
+                        fprintf('  Method: Mean (default) across %d channel pairs\n', valid_pairs);
+                end
+                fprintf('  Depth range: %.1f - %.1f ft (%d valid pairs)\n', depth_min_ft, depth_max_ft, valid_pairs);
+                
+            else
+                % Single channel pair calculation (original method)
+                channel_idx_L = channel_idx + channels_per_gauge;
+                
+                % OPTION: Average across multiple channel pairs for spatial smoothing
+                spatial_averaging = false;
+                n_pairs = 1;
+                if isfield(config, 'strain_rate_spatial_averaging') && config.strain_rate_spatial_averaging > 1
+                    n_pairs = config.strain_rate_spatial_averaging;
+                    spatial_averaging = true;
+                    fprintf('  Using spatial averaging across %d channel pairs\n', n_pairs);
+                end
+                
+                if channel_idx_L <= size(displacement_rate_full, 2)
                 % Get displacement at both channels (or multiple pairs if spatial averaging)
                 if spatial_averaging
                     % Average across multiple channel pairs centered on the main channel
@@ -346,10 +461,11 @@ if isfield(das_filtered, 'pumping_zone') && isfield(das_filtered.pumping_zone, '
                 fprintf('  Displacement difference [u̇(z+L) - u̇(z)]: %.2e to %.2e nm/s\n', min(displacement_diff), max(displacement_diff));
                 fprintf('  Strain rate ε̇ = difference / L: %.2e to %.2e 1/s\n', min(strain_smoothed), max(strain_smoothed));
                 fprintf('  ✓ Conversion verified: (nm/s) / (10 m) = (nm/s) / (1e10 nm) = 1e-10 / s\n');
-            else
-                error('Channel z+L (%d) exceeds available channels (%d)', channel_idx_L, size(displacement_rate_full, 2));
-            end
-        end
+                else
+                    error('Channel z+L (%d) exceeds available channels (%d)', channel_idx_L, size(displacement_rate_full, 2));
+                end
+            end  % End of use_depth_averaging else block (single channel pair calculation)
+        end  % End of use_depth_averaging if-else
     else
         error('Need smoothed_data and time_array fields to calculate strain rate correctly');
     end
@@ -452,10 +568,19 @@ time_clean = time_head_overlap(valid_idx);
 
 fprintf('Valid points for regression: %d\n', length(strain_clean));
 
-% Flip both signs to reverse the graph (user request)
-fprintf('  Flipping signs of both head rate and strain rate to reverse graph\n');
-head_rate_clean = -head_rate_clean;  % Flip head rate
-strain_clean = -strain_clean;  % Flip strain rate
+% Option to flip signs for visualization (both head and strain to align them)
+if ~isfield(config, 'flip_for_display')
+    config.flip_for_display = true;  % Default: flip both to align visually
+end
+
+if config.flip_for_display
+    fprintf('  Flipping both head rate and strain rate signs to align them visually (config.flip_for_display = true)\n');
+    head_rate_clean = -head_rate_clean;  % Flip head rate
+    strain_clean = -strain_clean;  % Flip strain rate
+    fprintf('  Result: Both signals now point in same direction for visual comparison\n');
+else
+    fprintf('  Using original signs for both head and strain rate (config.flip_for_display = false)\n');
+end
 
 %% LINEAR REGRESSION: Strain Rate vs Head Rate
 fprintf('\n=== REGRESSION RESULTS ===\n');
@@ -467,19 +592,6 @@ intercept = p_regression(2);  % 1/s
 R_matrix = corrcoef(head_rate_clean, strain_clean);
 R_corr = R_matrix(1,2);
 R_squared = R_corr^2;
-
-% Note: After flipping both signs, slope sign is preserved (both flipped, so ratio stays same)
-% But we want positive slope, so if it's negative, flip strain rate again
-if slope < 0
-    fprintf('  Slope is negative (%.4e), flipping strain rate sign to get positive slope\n', slope);
-    strain_clean = -strain_clean;
-    p_regression = polyfit(head_rate_clean, strain_clean, 1);
-    slope = p_regression(1);
-    intercept = p_regression(2);
-    R_matrix = corrcoef(head_rate_clean, strain_clean);
-    R_corr = R_matrix(1,2);
-    R_squared = R_corr^2;
-end
 
 % Calculate residuals and RMSE
 strain_predicted = polyval(p_regression, head_rate_clean);
@@ -534,8 +646,17 @@ results.use_displacement_rate = config.use_displacement_rate;
 
 %% PLOTTING
 if config.show_plots
-    figure(20); clf;
-    set(gcf, 'Position', [50 50 1400 600], 'Name', sprintf('Linear Regression - %s', test_name));
+    % Use different figure numbers for displacement rate vs strain rate
+    if config.use_displacement_rate
+        fig_num = 22;  % Displacement rate gets Figure 22
+        fig_name = sprintf('Linear Regression (Displacement Rate) - %s', test_name);
+    else
+        fig_num = 20;  % Strain rate gets Figure 20
+        fig_name = sprintf('Linear Regression (Strain Rate) - %s', test_name);
+    end
+    
+    figure(fig_num); clf;
+    set(gcf, 'Position', [50 50 1400 600], 'Name', fig_name);
     
     % Left plot: Scatter with regression line
     subplot(1,2,1);
@@ -565,6 +686,7 @@ if config.show_plots
     subplot(1,2,2);
     yyaxis left;
     % Interpolate head rate to DAS time points for plotting (so both are at same times)
+    % Note: head_rate_clean already has flip applied if config.flip_for_display = true
     head_rate_at_das_times = interp1(time_clean, head_rate_clean, time_das_overlap, 'linear', 'extrap');
     plot(time_das_overlap, head_rate_at_das_times, 'Color', [0.4660 0.6740 0.1880], 'LineWidth', 2.5, 'DisplayName', 'Head Rate');
     ylabel('Head Rate (ft/s)', 'FontSize', 12, 'FontWeight', 'bold');
@@ -573,11 +695,17 @@ if config.show_plots
     
     yyaxis right;
     % Plot strain/displacement at ORIGINAL DAS time points (before interpolation) - this won't change with timing correction
+    % Apply same flip as used in regression for consistency
+    strain_overlap_display = strain_overlap;
+    if config.flip_for_display && ~config.use_displacement_rate
+        strain_overlap_display = -strain_overlap_display;
+    end
+    
     if config.use_displacement_rate
-        plot(time_das_overlap, strain_overlap, 'Color', [0 0 0], 'LineWidth', 2.5, 'DisplayName', 'Displacement Rate');
+        plot(time_das_overlap, strain_overlap_display, 'Color', [0 0 0], 'LineWidth', 2.5, 'DisplayName', 'Displacement Rate');
         ylabel('Displacement Rate (nm/s)', 'FontSize', 12, 'FontWeight', 'bold');
     else
-        plot(time_das_overlap, strain_overlap, 'Color', [0 0 0], 'LineWidth', 2.5, 'DisplayName', 'Strain Rate');
+        plot(time_das_overlap, strain_overlap_display, 'Color', [0 0 0], 'LineWidth', 2.5, 'DisplayName', 'Strain Rate');
         ylabel('Strain Rate (1/s)', 'FontSize', 12, 'FontWeight', 'bold');
     end
     ax.YColor = 'k';
@@ -599,7 +727,7 @@ if config.show_plots
     % ADDITIONAL PLOT: Compare strain rate vs displacement rate for visual alignment
     if ~config.use_displacement_rate && isfield(das_filtered, 'smoothed_data')
         figure(21); clf;
-        set(gcf, 'Position', [100 100 1400 800], 'Name', sprintf('Strain vs Displacement Comparison - %s', test_name));
+        set(gcf, 'Position', [100 100 1400 800], 'Name', sprintf('Strain vs Displacement Comparison (Strain Rate Analysis) - %s', test_name));
         
         % Get displacement rate at same channel for comparison
         % This is already smoothed (5-second movmean from correlation analysis)
@@ -629,8 +757,14 @@ if config.show_plots
             displacement_smoothed = displacement_at_channel;  % Use as-is
         end
         
+        % Apply flip if configured (for consistency with main plot)
+        strain_overlap_display = strain_overlap;
+        if config.flip_for_display
+            strain_overlap_display = -strain_overlap_display;
+        end
+        
         % Normalize both to same scale for visual comparison (0-1 range)
-        strain_norm = (strain_overlap - min(strain_overlap)) / (max(strain_overlap) - min(strain_overlap) + eps);
+        strain_norm = (strain_overlap_display - min(strain_overlap_display)) / (max(strain_overlap_display) - min(strain_overlap_display) + eps);
         disp_norm_raw = (displacement_at_channel - min(displacement_at_channel)) / (max(displacement_at_channel) - min(displacement_at_channel) + eps);
         disp_norm_smooth = (displacement_smoothed - min(displacement_smoothed)) / (max(displacement_smoothed) - min(displacement_smoothed) + eps);
         
@@ -656,7 +790,7 @@ if config.show_plots
         ax.YColor = 'b';
         
         yyaxis right;
-        plot(time_comparison, strain_overlap, 'r-', 'LineWidth', 2, 'DisplayName', 'Strain Rate');
+        plot(time_comparison, strain_overlap_display, 'r-', 'LineWidth', 2, 'DisplayName', 'Strain Rate');
         ylabel('Strain Rate (1/s)', 'Color', 'r');
         ax.YColor = 'r';
         xlabel('Time UTC');
@@ -668,7 +802,7 @@ if config.show_plots
         subplot(2,2,3);
         % Interpolate to same time points
         common_time = time_comparison;
-        strain_interp = interp1(time_comparison, strain_overlap, common_time, 'linear');
+        strain_interp = interp1(time_comparison, strain_overlap_display, common_time, 'linear');
         disp_interp_smooth = interp1(time_comparison, displacement_smoothed, common_time, 'linear');
         valid = ~isnan(strain_interp) & ~isnan(disp_interp_smooth);
         scatter(disp_interp_smooth(valid), strain_interp(valid), 20, 'b', 'filled', 'MarkerFaceAlpha', 0.6);

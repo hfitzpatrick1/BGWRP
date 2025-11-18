@@ -91,6 +91,81 @@ if isfield(config, 'correlation_analysis') && config.correlation_analysis
     end
 end
 
+%% Run linear regression analysis if enabled
+if isfield(config, 'linear_regression') && config.linear_regression
+    chart_logger('Running linear regression analysis...');
+    try
+        % Determine if we should run both strain rate and displacement rate regressions
+        run_both = false;
+        if isfield(config, 'lr_run_both_comparisons')
+            run_both = config.lr_run_both_comparisons;
+        end
+        
+        % Run linear regression for each test
+        for j = 1:length(test_labels)
+            test_label = test_labels{j};
+            if isfield(das_results, test_label) && isfield(head_results, test_label)
+                try
+                    % Set up base configuration for linear regression
+                    lr_config.timing_correction_sec = 8;  % Default: 8 seconds backward shift
+                    if isfield(config, 'lr_timing_correction_sec')
+                        lr_config.timing_correction_sec = config.lr_timing_correction_sec;
+                    end
+                    lr_config.zone = 'z5';  % Default: Zone 5
+                    if isfield(config, 'lr_zone')
+                        lr_config.zone = config.lr_zone;
+                    end
+                    % Depth range analysis (optional)
+                    if isfield(config, 'lr_depth_range_ft')
+                        lr_config.depth_range_ft = config.lr_depth_range_ft;
+                    end
+                    if isfield(config, 'lr_depth_averaging_method')
+                        lr_config.depth_averaging_method = config.lr_depth_averaging_method;
+                    end
+                    lr_config.show_plots = true;
+                    
+                    % Run strain rate regression (default)
+                    lr_config.use_displacement_rate = false;
+                    lr_results_strain = linear_regression_strain_drawdown(das_results, head_results, test_label, lr_config);
+                    das_results.(test_label).linear_regression_strain = lr_results_strain;
+                    chart_logger('✓ Strain rate regression for %s: R=%.3f, R^2=%.3f', test_label, lr_results_strain.R, lr_results_strain.R_squared);
+                    
+                    % Also run displacement rate regression if requested
+                    if run_both
+                        lr_config.use_displacement_rate = true;
+                        lr_results_disp = linear_regression_strain_drawdown(das_results, head_results, test_label, lr_config);
+                        das_results.(test_label).linear_regression_displacement = lr_results_disp;
+                        chart_logger('✓ Displacement rate regression for %s: R=%.3f, R^2=%.3f', test_label, lr_results_disp.R, lr_results_disp.R_squared);
+                        
+                        % Print comparison
+                        fprintf('\n=== COMPARISON: Strain Rate vs Displacement Rate ===\n');
+                        fprintf('Test: %s\n', test_label);
+                        fprintf('Strain Rate Regression:       R=%.3f, R^2=%.3f, slope=%.2e (1/s per ft/s)\n', ...
+                            lr_results_strain.R, lr_results_strain.R_squared, lr_results_strain.slope);
+                        fprintf('Displacement Rate Regression: R=%.3f, R^2=%.3f, slope=%.2e (nm/s per ft/s)\n', ...
+                            lr_results_disp.R, lr_results_disp.R_squared, lr_results_disp.slope);
+                        fprintf('======================================================\n\n');
+                    end
+                    
+                    % Store primary result (for backward compatibility)
+                    das_results.(test_label).linear_regression = lr_results_strain;
+                    
+                catch ME
+                    chart_logger('✗ Linear regression failed for %s: %s', test_label, ME.message);
+                    fprintf('  Error at %s (line %d)\n', ME.stack(1).name, ME.stack(1).line);
+                end
+            end
+        end
+        
+    catch ME
+        chart_logger('✗ Linear regression analysis failed: %s', ME.message);
+        fprintf('Linear regression error details: %s\n', ME.message);
+        if ~isempty(ME.stack)
+            fprintf('  at %s (line %d)\n', ME.stack(1).name, ME.stack(1).line);
+        end
+    end
+end
+
 %% Run storage parameter analysis if enabled
 if isfield(config, 'storage_analysis') && config.storage_analysis
     chart_logger('Running storage parameter analysis...');

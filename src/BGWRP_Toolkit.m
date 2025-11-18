@@ -361,6 +361,42 @@ if exist('mode', 'var') && ischar(mode)
             config.das_time_shift_seconds = 20;
             fprintf('Running 5-second moving mean filter + strain rate vs head data correlation analysis (DAS shifted +20s)\n');
             
+        case 'run_linear_regression'
+            % Analysis mode for linear regression (run after correlation_analysis)
+            config.run_tdms_conversion = false;
+            config.run_concatenation = false;
+            config.run_timing_extraction = false;
+            config.run_data_analysis = true;
+            config.save_charts = contains(mode, 'save');
+            config.linear_regression = true;
+            config.lr_run_both_comparisons = false;  % Default: only strain rate
+            % Use same smoothing as correlation analysis
+            config.smoothing_method = 'matlab_movmean';
+            config.matlab_movmean_window = 5;
+            config.apply_concatenation_filter = false;
+            config.filter_method = 'none';
+            config.chen_denoising = false;
+            config.das_time_shift_seconds = 20;
+            fprintf('Running linear regression analysis (strain rate only)\n');
+            
+        case 'run_linear_regression_compare'
+            % Analysis mode for linear regression - run BOTH strain and displacement rate
+            config.run_tdms_conversion = false;
+            config.run_concatenation = false;
+            config.run_timing_extraction = false;
+            config.run_data_analysis = true;
+            config.save_charts = contains(mode, 'save');
+            config.linear_regression = true;
+            config.lr_run_both_comparisons = true;  % Run both for comparison
+            % Use same smoothing as correlation analysis
+            config.smoothing_method = 'matlab_movmean';
+            config.matlab_movmean_window = 5;
+            config.apply_concatenation_filter = false;
+            config.filter_method = 'none';
+            config.chen_denoising = false;
+            config.das_time_shift_seconds = 20;
+            fprintf('Running linear regression analysis (BOTH strain rate AND displacement rate for comparison)\n');
+            
         case 'run_storage_analysis'
             % Analysis mode for storage parameter estimation from DAS-head correlation
             config.run_tdms_conversion = false;
@@ -508,7 +544,7 @@ if exist('mode', 'var') && ischar(mode)
             config.save_charts = contains(mode, 'save');
             
         otherwise
-            error('Unknown mode: %s. Valid modes: prep, prep_single_step, prep_double_precision, prep_no_decim, prep_purge, prep_tdms, prep_concat, prep_timing, analyze, analyze_save, all, all_save, purge_inactive, purge_unraw, diagnostic_boundaries, diagnostic_enhanced, diagnostic_tdms', mode);
+            error('Unknown mode: %s. Valid modes: prep, prep_single_step, prep_double_precision, prep_no_decim, prep_purge, prep_tdms, prep_concat, prep_timing, analyze, analyze_save, all, all_save, purge_inactive, purge_unraw, diagnostic_boundaries, diagnostic_enhanced, diagnostic_tdms, run_correlation_analysis, run_linear_regression, run_linear_regression_compare, run_storage_analysis', mode);
     end
     
     fprintf('Mode "%s" configured\n', mode);
