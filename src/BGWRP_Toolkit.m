@@ -397,6 +397,35 @@ if exist('mode', 'var') && ischar(mode)
             config.das_time_shift_seconds = 20;
             fprintf('Running linear regression analysis (BOTH strain rate AND displacement rate for comparison)\n');
             
+        case 'run_amplitude_storage'
+            % Simple amplitude-based storage calculation (single channel method)
+            % This bypasses complex regression and uses max-min amplitude approach
+            config.run_tdms_conversion = false;
+            config.run_concatenation = false;
+            config.run_timing_extraction = false;
+            config.run_data_analysis = true;
+            config.save_charts = contains(mode, 'save');
+            config.amplitude_storage = true;
+            % Apply smoothing
+            config.smoothing_method = 'matlab_movmean';
+            config.matlab_movmean_window = 5;
+            config.apply_concatenation_filter = false;
+            config.filter_method = 'none';
+            config.chen_denoising = false;
+            config.das_time_shift_seconds = 20;
+            % Default parameters (can be overridden)
+            if ~isfield(config, 'amplitude_target_depth_ft')
+                config.amplitude_target_depth_ft = 285;  % Default to 285 ft
+            end
+            if ~isfield(config, 'amplitude_zone')
+                config.amplitude_zone = 'z5';  % Default zone
+            end
+            if ~isfield(config, 'amplitude_time_period_sec')
+                config.amplitude_time_period_sec = 60;  % Default 60 seconds
+            end
+            fprintf('Running amplitude-based storage calculation (single channel at %.0f ft, zone %s)\n', ...
+                config.amplitude_target_depth_ft, config.amplitude_zone);
+            
         case 'run_storage_analysis'
             % Analysis mode for storage parameter estimation from DAS-head correlation
             config.run_tdms_conversion = false;
@@ -544,7 +573,7 @@ if exist('mode', 'var') && ischar(mode)
             config.save_charts = contains(mode, 'save');
             
         otherwise
-            error('Unknown mode: %s. Valid modes: prep, prep_single_step, prep_double_precision, prep_no_decim, prep_purge, prep_tdms, prep_concat, prep_timing, analyze, analyze_save, all, all_save, purge_inactive, purge_unraw, diagnostic_boundaries, diagnostic_enhanced, diagnostic_tdms, run_correlation_analysis, run_linear_regression, run_linear_regression_compare, run_storage_analysis', mode);
+            error('Unknown mode: %s. Valid modes: prep, prep_single_step, prep_double_precision, prep_no_decim, prep_purge, prep_tdms, prep_concat, prep_timing, analyze, analyze_save, all, all_save, purge_inactive, purge_unraw, diagnostic_boundaries, diagnostic_enhanced, diagnostic_tdms, run_correlation_analysis, run_linear_regression, run_linear_regression_compare, run_amplitude_storage, run_storage_analysis', mode);
     end
     
     fprintf('Mode "%s" configured\n', mode);

@@ -166,6 +166,40 @@ if isfield(config, 'linear_regression') && config.linear_regression
     end
 end
 
+%% Run amplitude-based storage calculation if enabled
+if isfield(config, 'amplitude_storage') && config.amplitude_storage
+    chart_logger('Running amplitude-based storage calculation...');
+    try
+        % Run amplitude storage for each test
+        for j = 1:length(test_labels)
+            test_label = test_labels{j};
+            if isfield(das_results, test_label) && isfield(head_results, test_label)
+                try
+                    % Call the amplitude storage function
+                    amplitude_results = calculate_amplitude_storage(das_results, head_results, test_label, config);
+                    
+                    % Store results
+                    das_results.(test_label).amplitude_storage = amplitude_results;
+                    
+                    chart_logger('✓ Amplitude storage for %s: Ss = %.2e 1/m (depth = %.1f ft)', ...
+                        test_label, amplitude_results.Ss, amplitude_results.depth_ft);
+                    
+                catch ME
+                    chart_logger('✗ Amplitude storage failed for %s: %s', test_label, ME.message);
+                    fprintf('  Error at %s (line %d)\n', ME.stack(1).name, ME.stack(1).line);
+                end
+            end
+        end
+        
+    catch ME
+        chart_logger('✗ Amplitude storage calculation failed: %s', ME.message);
+        fprintf('Amplitude storage error details: %s\n', ME.message);
+        if ~isempty(ME.stack)
+            fprintf('  at %s (line %d)\n', ME.stack(1).name, ME.stack(1).line);
+        end
+    end
+end
+
 %% Run storage parameter analysis if enabled
 if isfield(config, 'storage_analysis') && config.storage_analysis
     chart_logger('Running storage parameter analysis...');
