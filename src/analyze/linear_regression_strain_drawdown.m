@@ -512,6 +512,20 @@ drawdown_rate_ftps = ds ./ dt_head;  % Drawdown rate: ∂s/∂t (negative during
 head_rate_ftps = -drawdown_rate_ftps;  % Head rate: ∂h/∂t = -∂s/∂t (positive during recovery)
 time_head_rate = zone_time_corrected(1:end-1);  % Time vector (one less after diff)
 
+% Apply smoothing to head rate to match strain rate smoothing level
+if isfield(config, 'head_rate_smoothing_window') && config.head_rate_smoothing_window > 1
+    smoothing_window = config.head_rate_smoothing_window;
+    fprintf('\n=== SMOOTHING HEAD RATE ===\n');
+    fprintf('  Applying %d-point moving mean to head rate (matching strain rate smoothing)\n', smoothing_window);
+    fprintf('  Raw head rate range: %.4e to %.4e ft/s\n', min(head_rate_ftps), max(head_rate_ftps));
+    head_rate_ftps = movmean(head_rate_ftps, smoothing_window, 'Endpoints', 'shrink');
+    fprintf('  Smoothed head rate range: %.4e to %.4e ft/s\n', min(head_rate_ftps), max(head_rate_ftps));
+else
+    fprintf('\n⚠ WARNING: No smoothing applied to head rate\n');
+    fprintf('  Strain rate has smoothing but head rate does not - this may reduce correlation\n');
+    fprintf('  Consider setting config.head_rate_smoothing_window = 5 to match\n');
+end
+
 fprintf('Drawdown rate range: %.4e to %.4e ft/s (negative during recovery)\n', min(drawdown_rate_ftps), max(drawdown_rate_ftps));
 fprintf('Head rate range: %.4e to %.4e ft/s (positive during recovery)\n', min(head_rate_ftps), max(head_rate_ftps));
 
@@ -582,44 +596,100 @@ else
     fprintf('  Using original signs for both head and strain rate (config.flip_for_display = false)\n');
 end
 
-%% LINEAR REGRESSION: Strain Rate vs Head Rate
-fprintf('\n=== REGRESSION RESULTS ===\n');
-p_regression = polyfit(head_rate_clean, strain_clean, 1);
-slope = p_regression(1);  % (1/s) per (ft/s) - strain rate per head rate
-intercept = p_regression(2);  % 1/s
+%% LINEAR REGRESSION OR AMPLITUDE ANALYSIS
+% Check if amplitude mode is requested (removes baseline drift)
+use_amplitude = isfield(config, 'use_amplitude') && config.use_amplitude;
 
-% Calculate correlation and R^2
-R_matrix = corrcoef(head_rate_clean, strain_clean);
-R_corr = R_matrix(1,2);
-R_squared = R_corr^2;
-
-% Calculate residuals and RMSE
-strain_predicted = polyval(p_regression, head_rate_clean);
-residuals = strain_clean - strain_predicted;
-RMSE = sqrt(mean(residuals.^2));
-
-if config.use_displacement_rate
-    fprintf('Slope: %.4e (nm/s)/(ft/s)\n', slope);
-    fprintf('Intercept: %.4e nm/s\n', intercept);
+if use_amplitude
+    fprintf('\n=== AMPLITUDE ANALYSIS (Peak-to-Trough) ===\n');
+    fprintf('  Using max - min amplitude (matching advisor method)\n');
+    
+    % Find maximum and minimum values in the window
+    max_strain = max(strain_clean);
+    min_strain = min(strain_clean);
+    [~, max_strain_idx] = max(strain_clean);
+    [~, min_strain_idx] = min(strain_clean);
+    
+    max_head = max(head_rate_clean);
+    min_head = min(head_rate_clean);
+    [~, max_head_idx] = max(head_rate_clean);
+    [~, min_head_idx] = min(head_rate_clean);
+    
+    fprintf('\n  Strain rate:\n');
+    fprintf('    Max: %.4e 1/s (at point %d)\n', max_strain, max_strain_idx);
+    fprintf('    Min: %.4e 1/s (at point %d)\n', min_strain, min_strain_idx);
+    
+    fprintf('  Head rate:\n');
+    fprintf('    Max: %.4e ft/s (at point %d)\n', max_head, max_head_idx);
+    fprintf('    Min: %.4e ft/s (at point %d)\n', min_head, min_head_idx);
+    
+    % Calculate amplitudes (max - min = peak-to-trough range)
+    amplitude_strain = max_strain - min_strain;
+    amplitude_head = max_head - min_head;
+    
+    fprintf('\n  Amplitude (max - min):\n');
+    fprintf('    Strain rate: %.4e 1/s\n', amplitude_strain);
+    fprintf('    Head rate: %.4e ft/s\n', amplitude_head);
+    
+    % Slope = amplitude ratio
+    slope = amplitude_strain / amplitude_head;
+    intercept = min_strain;  % Use min as intercept
+    baseline_strain = min_strain;  % For compatibility
+    baseline_head = min_head;
+    
+    fprintf('\n  Slope (amplitude ratio): %.4e (1/s)/(ft/s)\n', slope);
+    fprintf('  ✓ Using peak-to-trough range (advisor method)!\n');
+    
+    % For amplitude mode, correlation metrics are not applicable
+    R_corr = NaN;
+    R_squared = NaN;
+    RMSE = NaN;
+    strain_predicted = baseline_strain + slope * (head_rate_clean - baseline_head);
+    residuals = strain_clean - strain_predicted;
+    
 else
-    fprintf('Slope: %.4e (1/s)/(ft/s)\n', slope);
-    fprintf('Intercept: %.4e 1/s\n', intercept);
+    % Original regression approach
+    fprintf('\n=== REGRESSION RESULTS ===\n');
+    p_regression = polyfit(head_rate_clean, strain_clean, 1);
+    slope = p_regression(1);  % (1/s) per (ft/s) - strain rate per head rate
+    intercept = p_regression(2);  % 1/s
+
+    % Calculate correlation and R^2
+    R_matrix = corrcoef(head_rate_clean, strain_clean);
+    R_corr = R_matrix(1,2);
+    R_squared = R_corr^2;
+
+    % Calculate residuals and RMSE
+    strain_predicted = polyval(p_regression, head_rate_clean);
+    residuals = strain_clean - strain_predicted;
+    RMSE = sqrt(mean(residuals.^2));
 end
-fprintf('Correlation (R): %.4f\n', R_corr);
-fprintf('R^2: %.4f\n', R_squared);
-if config.use_displacement_rate
-    fprintf('RMSE: %.4e nm/s\n', RMSE);
-else
-    fprintf('RMSE: %.4e 1/s\n', RMSE);
-end
 
-% Quality assessment
-if R_squared > 0.5
-    fprintf('✓ GOOD correlation - suitable for storage calculation\n');
-elseif R_squared > 0.25
-    fprintf('⚠ MODERATE correlation - use with caution\n');
-else
-    fprintf('✗ WEAK correlation - NOT suitable for storage calculation\n');
+if ~use_amplitude
+    % Only print regression metrics if not using amplitude mode
+    if config.use_displacement_rate
+        fprintf('Slope: %.4e (nm/s)/(ft/s)\n', slope);
+        fprintf('Intercept: %.4e nm/s\n', intercept);
+    else
+        fprintf('Slope: %.4e (1/s)/(ft/s)\n', slope);
+        fprintf('Intercept: %.4e 1/s\n', intercept);
+    end
+    fprintf('Correlation (R): %.4f\n', R_corr);
+    fprintf('R^2: %.4f\n', R_squared);
+    if config.use_displacement_rate
+        fprintf('RMSE: %.4e nm/s\n', RMSE);
+    else
+        fprintf('RMSE: %.4e 1/s\n', RMSE);
+    end
+
+    % Quality assessment
+    if R_squared > 0.5
+        fprintf('✓ GOOD correlation - suitable for storage calculation\n');
+    elseif R_squared > 0.25
+        fprintf('⚠ MODERATE correlation - use with caution\n');
+    else
+        fprintf('✗ WEAK correlation - NOT suitable for storage calculation\n');
+    end
 end
 
 %% Store results
@@ -663,21 +733,34 @@ if config.show_plots
     scatter(head_rate_clean, strain_clean, 20, 'b', 'filled', 'MarkerFaceAlpha', 0.6);
     hold on;
     head_rate_range = linspace(min(head_rate_clean), max(head_rate_clean), 100);
-    plot(head_rate_range, polyval(p_regression, head_rate_range), 'r-', 'LineWidth', 3);
+    if use_amplitude
+        % For amplitude mode, plot the line through baseline and peak
+        plot(head_rate_range, intercept + slope * (head_rate_range - baseline_head), 'r-', 'LineWidth', 3);
+    else
+        plot(head_rate_range, polyval(p_regression, head_rate_range), 'r-', 'LineWidth', 3);
+    end
     xlabel('Head Rate (ft/s)', 'FontSize', 12, 'FontWeight', 'bold');
     if config.use_displacement_rate
         ylabel('Displacement Rate (nm/s)', 'FontSize', 12, 'FontWeight', 'bold');
     else
         ylabel('Strain Rate (1/s)', 'FontSize', 12, 'FontWeight', 'bold');
     end
-    title(sprintf('Linear Regression: R = %.3f, R^2 = %.3f', R_corr, R_squared), 'FontSize', 14, 'FontWeight', 'bold');
+    if use_amplitude
+        title(sprintf('Amplitude Analysis: Slope = %.2e', slope), 'FontSize', 14, 'FontWeight', 'bold');
+    else
+        title(sprintf('Linear Regression: R = %.3f, R^2 = %.3f', R_corr, R_squared), 'FontSize', 14, 'FontWeight', 'bold');
+    end
     grid on;
     legend({'Data', sprintf('Fit: y = %.2e*x + %.2e', slope, intercept)}, 'Location', 'best', 'FontSize', 10);
     set(gca, 'FontSize', 11);
     
     % Add text box with statistics
-    text_str = sprintf('Slope: %.2e\nR: %.3f\nR^2: %.3f\nRMSE: %.2e\nN: %d', ...
-        slope, R_corr, R_squared, RMSE, length(strain_clean));
+    if use_amplitude
+        text_str = sprintf('Slope: %.2e\nAmplitude Mode\nN: %d', slope, length(strain_clean));
+    else
+        text_str = sprintf('Slope: %.2e\nR: %.3f\nR^2: %.3f\nRMSE: %.2e\nN: %d', ...
+            slope, R_corr, R_squared, RMSE, length(strain_clean));
+    end
     text(0.05, 0.95, text_str, 'Units', 'normalized', 'VerticalAlignment', 'top', ...
         'BackgroundColor', 'white', 'EdgeColor', 'black', 'FontSize', 10);
     
