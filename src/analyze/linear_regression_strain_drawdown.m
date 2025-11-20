@@ -227,125 +227,53 @@ if isfield(das_filtered, 'pumping_zone') && isfield(das_filtered.pumping_zone, '
             end
             fprintf('Displacement rate range: %.2e to %.2e nm/s\n', min(displacement_rate_smoothed), max(displacement_rate_smoothed));
         else
-            % Calculate strain rate using difference across gauge length
-            fprintf('\n=== CALCULATING STRAIN RATE (Equation 2) ===\n');
+            % Calculate strain rate using SINGLE CHANNEL method
+            fprintf('\n=== CALCULATING STRAIN RATE (Single Channel Method) ===\n');
+            fprintf('  DAS channels already measure strain over gauge length!\n');
+            fprintf('  Using: strain_rate = channel_value / gauge_length\n');
             
             if use_depth_averaging
-                % Average strain rate across multiple channel pairs in depth range
+                % Average strain rate across multiple channels in depth range
                 fprintf('  Averaging strain rate across depth range\n');
-                n_pairs = length(channels_in_range);
-                strain_pairs = zeros(length(time_mask), n_pairs);
-                valid_pairs = 0;
+                n_channels = length(channels_in_range);
+                strain_channels = zeros(length(time_mask), n_channels);
                 
-                for pair_idx = 1:n_pairs
-                    ch_z = channels_in_range(pair_idx);
-                    ch_z_L = ch_z + channels_per_gauge;
-                    
-                    if ch_z_L <= size(displacement_rate_full, 2)
-                        disp_z = displacement_rate_full(time_mask, ch_z);
-                        disp_z_L = displacement_rate_full(time_mask, ch_z_L);
-                        strain_pairs(:, pair_idx) = (disp_z_L - disp_z) / (gauge_length_m * 1e9);
-                        valid_pairs = valid_pairs + 1;
-                    end
+                for ch_idx = 1:n_channels
+                    ch_z = channels_in_range(ch_idx);
+                    disp_z = displacement_rate_full(time_mask, ch_z);
+                    strain_channels(:, ch_idx) = disp_z / (gauge_length_m * 1e9);  % Single channel method
                 end
                 
-                if valid_pairs == 0
-                    error('No valid channel pairs found in depth range for strain rate calculation');
-                end
-                
-                % Average across valid pairs
+                % Average across all channels
                 switch config.depth_averaging_method
                     case 'mean'
-                        displacement_diff = mean(strain_pairs(:, 1:valid_pairs), 2) * (gauge_length_m * 1e9);  % Convert back for display
-                        strain_smoothed = mean(strain_pairs(:, 1:valid_pairs), 2);  % Units: 1/s
-                        fprintf('  Method: Mean across %d channel pairs\n', valid_pairs);
+                        strain_smoothed = mean(strain_channels, 2);  % Units: 1/s
+                        fprintf('  Method: Mean across %d channels\n', n_channels);
                     case 'median'
-                        displacement_diff = median(strain_pairs(:, 1:valid_pairs), 2) * (gauge_length_m * 1e9);
-                        strain_smoothed = median(strain_pairs(:, 1:valid_pairs), 2);  % Units: 1/s
-                        fprintf('  Method: Median across %d channel pairs\n', valid_pairs);
+                        strain_smoothed = median(strain_channels, 2);  % Units: 1/s
+                        fprintf('  Method: Median across %d channels\n', n_channels);
                     otherwise
-                        displacement_diff = mean(strain_pairs(:, 1:valid_pairs), 2) * (gauge_length_m * 1e9);
-                        strain_smoothed = mean(strain_pairs(:, 1:valid_pairs), 2);  % Units: 1/s
-                        fprintf('  Method: Mean (default) across %d channel pairs\n', valid_pairs);
+                        strain_smoothed = mean(strain_channels, 2);  % Units: 1/s
+                        fprintf('  Method: Mean (default) across %d channels\n', n_channels);
                 end
-                fprintf('  Depth range: %.1f - %.1f ft (%d valid pairs)\n', depth_min_ft, depth_max_ft, valid_pairs);
+                fprintf('  Depth range: %.1f - %.1f ft (%d channels)\n', depth_min_ft, depth_max_ft, n_channels);
                 
             else
-                % Single channel pair calculation (original method)
-                channel_idx_L = channel_idx + channels_per_gauge;
+                % Single channel calculation
+                fprintf('  Using single channel: %d (%.1f ft)\n', channel_idx, das_filtered.depth_ft(channel_idx));
                 
-                % OPTION: Average across multiple channel pairs for spatial smoothing
-                spatial_averaging = false;
-                n_pairs = 1;
-                if isfield(config, 'strain_rate_spatial_averaging') && config.strain_rate_spatial_averaging > 1
-                    n_pairs = config.strain_rate_spatial_averaging;
-                    spatial_averaging = true;
-                    fprintf('  Using spatial averaging across %d channel pairs\n', n_pairs);
-                end
+                % Get displacement rate at single channel
+                displacement_at_z = displacement_rate_full(time_mask, channel_idx);
                 
-                if channel_idx_L <= size(displacement_rate_full, 2)
-                % Get displacement at both channels (or multiple pairs if spatial averaging)
-                if spatial_averaging
-                    % Average across multiple channel pairs centered on the main channel
-                    offset_range = floor((n_pairs - 1) / 2);
-                    strain_pairs = zeros(length(time_mask), n_pairs);
-                    valid_pairs = 0;
-                    
-                    for pair_idx = 1:n_pairs
-                        offset = pair_idx - offset_range - 1;
-                        ch_z = channel_idx + offset;
-                        ch_z_L = ch_z + channels_per_gauge;
-                        
-                        if ch_z >= 1 && ch_z_L <= size(displacement_rate_full, 2)
-                            disp_z = displacement_rate_full(time_mask, ch_z);
-                            disp_z_L = displacement_rate_full(time_mask, ch_z_L);
-                            strain_pairs(:, pair_idx) = (disp_z_L - disp_z) / (gauge_length_m * 1e9);
-                            valid_pairs = valid_pairs + 1;
-                        end
-                    end
-                    
-                    if valid_pairs > 0
-                        % Average across valid pairs only
-                        displacement_diff = mean(strain_pairs(:, 1:valid_pairs), 2) * (gauge_length_m * 1e9);  % Convert back to nm/s for consistency
-                        fprintf('    Averaged strain from %d channel pairs (offsets: %d to %d)\n', valid_pairs, -offset_range, offset_range);
-                    else
-                        % Fallback to main pair if no valid pairs
-                        displacement_at_z = displacement_rate_full(time_mask, channel_idx);
-                        displacement_at_z_L = displacement_rate_full(time_mask, channel_idx_L);
-                        displacement_diff = displacement_at_z_L - displacement_at_z;
-                        fprintf('    WARNING: No valid pairs for spatial averaging, using main channel pair\n');
-                    end
-                else
-                    % Single channel pair (original method)
-                    displacement_at_z = displacement_rate_full(time_mask, channel_idx);
-                    displacement_at_z_L = displacement_rate_full(time_mask, channel_idx_L);
-                
-                    % OPTION: Apply additional smoothing to displacement channels BEFORE difference
-                    % This reduces noise before the difference calculation (which amplifies noise)
-                    if isfield(config, 'pre_diff_smoothing_window') && config.pre_diff_smoothing_window > 1
-                        pre_smooth_window = config.pre_diff_smoothing_window;
-                        fprintf('  Applying pre-difference smoothing to displacement channels: %d-sample window\n', pre_smooth_window);
-                        displacement_at_z = movmean(displacement_at_z, pre_smooth_window, 'Endpoints', 'shrink');
-                        displacement_at_z_L = movmean(displacement_at_z_L, pre_smooth_window, 'Endpoints', 'shrink');
-                    end
-                    
-                    % Calculate difference: [u̇(z+L,t) - u̇(z,t)]
-                    % This is the numerator of equation (2)
-                    displacement_diff = displacement_at_z_L - displacement_at_z;  % Units: nm/s
-                end
-                
-                % Divide by L to get strain rate: ε̇(z,t) = [u̇(z+L,t) - u̇(z,t)] / L
+                % Calculate strain rate: ε̇(z,t) = u̇(z,t) / L
+                % Each DAS channel already measures strain averaged over the gauge length
                 % Unit conversion:
-                %   displacement_diff is in nm/s
+                %   displacement_at_z is in nm/s
                 %   gauge_length_m = 10 m = 10 * 1e9 nm = 1e10 nm
-                %   strain_rate = (nm/s) / (10 m) = (nm/s) / (1e10 nm) = 1e-10 * (nm/s) / nm = 1e-10 / s
+                %   strain_rate = (nm/s) / (10 m) = (nm/s) / (1e10 nm) = 1e-10 / s
                 % 
-                % Formula: strain_rate = displacement_diff / (gauge_length_m * 1e9)
-                % where 1e9 converts meters to nanometers
-                % Result: (nm/s) / (10 * 1e9 nm) = (nm/s) / (1e10 nm) = 1e-10 / s
-                %
                 % This gives strain rate in units of 1/s (per second)
-                strain_smoothed = displacement_diff / (gauge_length_m * 1e9);  % Units: 1/s
+                strain_smoothed = displacement_at_z / (gauge_length_m * 1e9);  % Units: 1/s
                 
                 % Apply additional smoothing to strain rate (difference can amplify noise)
                 % This makes it look smooth like the drawdown rate plots
@@ -453,17 +381,13 @@ if isfield(das_filtered, 'pumping_zone') && isfield(das_filtered.pumping_zone, '
                     strain_smoothed = -strain_smoothed;  % Flip sign so strain is positive during recovery
                 end
                 
-                fprintf('\n=== STRAIN RATE CALCULATION (Equation 2) ===\n');
-                fprintf('Formula: ε̇(z,t) = [u̇(z+L,t) - u̇(z,t)] / L\n');
+                fprintf('\n=== STRAIN RATE CALCULATION (Single Channel Method) ===\n');
+                fprintf('Formula: ε̇(z,t) = u̇(z,t) / L\n');
                 fprintf('  Channel z: %d (%.1f ft) → u̇(z,t) in nm/s\n', channel_idx, das_filtered.depth_ft(channel_idx));
-                fprintf('  Channel z+L: %d (%.1f ft) → u̇(z+L,t) in nm/s\n', channel_idx_L, das_filtered.depth_ft(channel_idx_L));
-                fprintf('  Gauge length L: %.1f m (%d channels)\n', gauge_length_m, channels_per_gauge);
-                fprintf('  Displacement difference [u̇(z+L) - u̇(z)]: %.2e to %.2e nm/s\n', min(displacement_diff), max(displacement_diff));
-                fprintf('  Strain rate ε̇ = difference / L: %.2e to %.2e 1/s\n', min(strain_smoothed), max(strain_smoothed));
+                fprintf('  Gauge length L: %.1f m = %.2e nm\n', gauge_length_m, gauge_length_m * 1e9);
+                fprintf('  Displacement rate u̇(z): %.2e to %.2e nm/s\n', min(displacement_at_z), max(displacement_at_z));
+                fprintf('  Strain rate ε̇ = u̇/L: %.2e to %.2e 1/s\n', min(strain_smoothed), max(strain_smoothed));
                 fprintf('  ✓ Conversion verified: (nm/s) / (10 m) = (nm/s) / (1e10 nm) = 1e-10 / s\n');
-                else
-                    error('Channel z+L (%d) exceeds available channels (%d)', channel_idx_L, size(displacement_rate_full, 2));
-                end
             end  % End of use_depth_averaging else block (single channel pair calculation)
         end  % End of use_depth_averaging if-else
     else
@@ -481,11 +405,14 @@ else
         fprintf('Using displacement rate at single channel (fallback method)\n');
         fprintf('Displacement rate range: %.2e to %.2e nm/s\n', min(displacement_rate_smoothed), max(displacement_rate_smoothed));
     else
-        % Calculate strain rate (OLD METHOD - incorrect without full matrix!)
-        strain_smoothed = displacement_rate_smoothed / (gauge_length_m * 1e9);  % OLD METHOD - incorrect!
-        fprintf('WARNING: Using old method (single channel). Need full matrix for correct calculation!\n');
-        fprintf('Displacement rate range: %.2e to %.2e nm/s\n', min(displacement_rate_smoothed), max(displacement_rate_smoothed));
-        fprintf('Strain rate range: %.2e to %.2e 1/s\n', min(strain_smoothed), max(strain_smoothed));
+        % Calculate strain rate using SINGLE CHANNEL METHOD (CORRECTED!)
+        strain_smoothed = displacement_rate_smoothed / (gauge_length_m * 1e9);
+        fprintf('Using single-channel strain rate calculation (fallback path)\n');
+        fprintf('  Formula: strain_rate = displacement_rate / gauge_length\n');
+        fprintf('  Displacement rate range: %.2e to %.2e nm/s\n', min(displacement_rate_smoothed), max(displacement_rate_smoothed));
+        fprintf('  Gauge length: %.1f m = %.2e nm\n', gauge_length_m, gauge_length_m * 1e9);
+        fprintf('  Strain rate range: %.2e to %.2e 1/s\n', min(strain_smoothed), max(strain_smoothed));
+        fprintf('  ✓ Single-channel method (matches amplitude calculation)\n');
     end
 end
 

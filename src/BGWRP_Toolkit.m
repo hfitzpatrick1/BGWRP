@@ -18,6 +18,12 @@ fprintf('Added all subdirectories to path: %s\n', script_dir);
 
 %% Configuration Setup
 % Load config from file first (clear cache to ensure fresh config)
+% BUT preserve any user-defined config fields first!
+if exist('config', 'var')
+    user_config = config;  % Save user's custom settings
+else
+    user_config = struct();  % Empty if none provided
+end
 clear config
 file_config = config();
 
@@ -26,6 +32,12 @@ file_config = config();
 if exist('mode', 'var') && ischar(mode)
     fprintf('Using shorthand mode: %s\n', mode);
     config = file_config; % Start with file config
+    
+    % Merge in user's custom settings (user settings take priority)
+    user_fields = fieldnames(user_config);
+    for i = 1:length(user_fields)
+        config.(user_fields{i}) = user_config.(user_fields{i});
+    end
     
     % Parse mode
     mode_parts = strsplit(lower(mode), '_');
@@ -406,14 +418,10 @@ if exist('mode', 'var') && ischar(mode)
             config.run_data_analysis = true;
             config.save_charts = contains(mode, 'save');
             config.amplitude_storage = true;
-            % Apply smoothing
-            config.smoothing_method = 'matlab_movmean';
-            config.matlab_movmean_window = 5;
-            config.apply_concatenation_filter = false;
-            config.filter_method = 'none';
-            config.chen_denoising = false;
-            config.das_time_shift_seconds = 20;
-            % Default parameters (can be overridden)
+            % ALSO run correlation analysis to ensure fresh smoothed_data is available
+            config.correlation_analysis = true;
+            config.signal_onset_detection = true;
+            % Set default parameters FIRST (before using them)
             if ~isfield(config, 'amplitude_target_depth_ft')
                 config.amplitude_target_depth_ft = 285;  % Default to 285 ft
             end
@@ -423,7 +431,35 @@ if exist('mode', 'var') && ischar(mode)
             if ~isfield(config, 'amplitude_time_period_sec')
                 config.amplitude_time_period_sec = 60;  % Default 60 seconds
             end
-            fprintf('Running amplitude-based storage calculation (single channel at %.0f ft, zone %s)\n', ...
+            % ALSO enable linear regression with amplitude mode for visualization
+            config.linear_regression = true;
+            config.lr_run_both_comparisons = false;
+            config.lr_use_amplitude = true;  % Use amplitude method in regression plot
+            % Set linear regression to use same zone as amplitude calculation
+            if ~isfield(config, 'lr_zone')
+                config.lr_zone = config.amplitude_zone;
+            end
+            % Set default timing correction if not specified
+            if ~isfield(config, 'lr_timing_correction_sec')
+                config.lr_timing_correction_sec = 8;  % Default
+            end
+            % Set linear regression to use same depth as amplitude calculation
+            if ~isfield(config, 'lr_depth_range_ft')
+                % Use a narrow range around the target depth to select the same channel
+                target = config.amplitude_target_depth_ft;
+                config.lr_depth_range_ft = [target-0.5, target+0.5];
+            end
+            if ~isfield(config, 'lr_depth_averaging_method')
+                config.lr_depth_averaging_method = 'representative';  % Single channel
+            end
+            % Apply smoothing
+            config.smoothing_method = 'matlab_movmean';
+            config.matlab_movmean_window = 5;
+            config.apply_concatenation_filter = false;
+            config.filter_method = 'none';
+            config.chen_denoising = false;
+            config.das_time_shift_seconds = 20;
+            fprintf('Running amplitude-based storage calculation with linear regression plot (single channel at %.0f ft, zone %s)\n', ...
                 config.amplitude_target_depth_ft, config.amplitude_zone);
             
         case 'run_storage_analysis'

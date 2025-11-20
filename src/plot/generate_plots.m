@@ -124,6 +124,11 @@ if isfield(config, 'linear_regression') && config.linear_regression
                     end
                     lr_config.show_plots = true;
                     
+                    % Check if amplitude mode is requested
+                    if isfield(config, 'lr_use_amplitude')
+                        lr_config.use_amplitude = config.lr_use_amplitude;
+                    end
+                    
                     % Run strain rate regression (default)
                     lr_config.use_displacement_rate = false;
                     lr_results_strain = linear_regression_strain_drawdown(das_results, head_results, test_label, lr_config);

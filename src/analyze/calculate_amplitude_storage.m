@@ -54,8 +54,19 @@ das_data = das_results.(test_name);
 head_data = head_results.(test_name).zones.(zone_name).recovery_data;
 
 %% Find channel closest to target depth
-% Approximate depth calculation: channel spacing is 0.25m = 0.82 ft
-depth_ft = (1:size(das_data.smoothed_data, 2)) * 0.82;
+% Check if smoothed_data exists, otherwise error with helpful message
+if ~isfield(das_data, 'smoothed_data')
+    error('smoothed_data field not found! Run correlation_analysis mode first to generate smoothed_data matrix.');
+end
+
+% Get depth information
+if isfield(das_data, 'depth_ft')
+    depth_ft = das_data.depth_ft;
+else
+    % Approximate depth calculation: channel spacing is 0.25m = 0.82 ft
+    depth_ft = (1:size(das_data.smoothed_data, 2)) * 0.82;
+end
+
 [~, ch_idx] = min(abs(depth_ft - target_depth_ft));
 actual_depth = depth_ft(ch_idx);
 
