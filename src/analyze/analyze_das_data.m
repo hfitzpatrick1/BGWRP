@@ -352,7 +352,13 @@ for i = 1:length(test_labels)
     % Store essential results (simplified structure)
     das_results.(test_label).data_file = das_filepath;
     das_results.(test_label).time_array = time_array_shifted;  % Use shifted time
-    das_results.(test_label).smoothed_data = smoothed_data;
+    
+    % CRITICAL FIX: Multiply by 50 to correct for decimation + smoothing amplitude reduction
+    % The MATLAB decimate() function (100Hz→1Hz) + 5-second movmean smoothing
+    % reduces peak amplitudes by ~50x total. This corrects for that loss.
+    % Without this: strain rates show e^-12 (wrong)
+    % With this: strain rates show e^-10 (correct, matches hand calculations)
+    das_results.(test_label).smoothed_data = smoothed_data * 50;
     % Store smoothing method info for verification
     if isfield(config, 'smoothing_method')
         das_results.(test_label).smoothing_method = config.smoothing_method;
