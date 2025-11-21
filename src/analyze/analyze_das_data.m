@@ -113,8 +113,48 @@ for i = 1:length(test_labels)
         error('No valid data variable found. Expected ''decdata'', ''fulldata'', or ''Data''');
     end
     
-    % DEBUG: Check data quality immediately after loading
-    fprintf('  DEBUG: Raw loaded data range: [%.3f, %.3f]\n', min(data1Hz(:)), max(data1Hz(:)));
+    % OPTIONAL: Convert from nm/sample to nm/s
+    % Only apply if explicitly enabled via config flag
+    % This corrects for TDMS conversion not multiplying by sampling frequency
+    if isfield(config, 'apply_sampling_freq_correction') && config.apply_sampling_freq_correction
+        % Determine the actual sampling frequency of THIS file
+        if isfield(loaded_data, 'decdata')
+            % This is DECIMATED data - averaging over 1 second means values are already rates!
+            % When decimated from 100Hz to 1Hz, each sample = average over 1 second
+            % This makes the values effectively "nm per second" = nm/s already
+            % So NO correction needed (multiply by 1)
+            sampling_freq = 1.0;  % Hz (no correction - data already in nm/s)
+            fprintf('  ℹ Sampling frequency correction for decimated data\n');
+            fprintf('    Data type: Decimated to 1 Hz (from 100 Hz original)\n');
+            fprintf('    Decimated values represent average over 1 second → already in nm/s\n');
+            fprintf('    Correction factor: %.0f (no change)\n', sampling_freq);
+        elseif isfield(loaded_data, 'fs_f')
+            % Use the stored sampling frequency (for non-decimated data)
+            sampling_freq = loaded_data.fs_f;  % Hz
+            fprintf('  ⚠ APPLYING SAMPLING FREQUENCY CORRECTION\n');
+            fprintf('    Data type: Original or full-resolution\n');
+            fprintf('    Stored sampling frequency: %.2f Hz\n', sampling_freq);
+        else
+            % Default fallback
+            sampling_freq = 1.0;  % Hz (assume 1 Hz decimated data)
+            fprintf('  ⚠ WARNING: No sampling frequency (fs_f) found in file!\n');
+            fprintf('    Assuming decimated data at 1 Hz\n');
+        end
+        
+        fprintf('    Data was saved as nm/sample, converting to nm/s\n');
+        fprintf('    Using sampling frequency: %.2f Hz\n', sampling_freq);
+        fprintf('    Before correction: [%.3e, %.3e] nm/sample\n', min(data1Hz(:)), max(data1Hz(:)));
+        
+        data1Hz = data1Hz * sampling_freq;  % Convert nm/sample → nm/s
+        
+        fprintf('    After correction: [%.3e, %.3e] nm/s\n', min(data1Hz(:)), max(data1Hz(:)));
+        fprintf('    ✓ Data now represents displacement RATE (nm/s)\n');
+    else
+        fprintf('  Sampling frequency correction: DISABLED (data assumed to be already in nm/s)\n');
+    end
+    
+    % DEBUG: Check data quality after correction
+    fprintf('  DEBUG: Corrected data range: [%.3f, %.3f]\n', min(data1Hz(:)), max(data1Hz(:)));
     nan_count = sum(isnan(data1Hz(:)));
     fprintf('  DEBUG: NaN values in loaded data: %d out of %d (%.1f%%)\n', nan_count, numel(data1Hz), (nan_count/numel(data1Hz))*100);
     

@@ -371,6 +371,12 @@ if exist('mode', 'var') && ischar(mode)
             config.chen_denoising = false;
             % Shift DAS time forward by 20 seconds to align with head data
             config.das_time_shift_seconds = 20;
+            % ENABLE sampling frequency correction for strain rate calculation
+            config.apply_sampling_freq_correction = true;
+            % Set reasonable colorbar limits for displacement rate (nm/s)
+            % For decimated 1Hz data, values are already effectively nm/s (~±3 range)
+            config.manual_bounds.raw = [-5, 5];  % nm/s
+            config.manual_bounds.displacement = [-5, 5];  % nm/s
             fprintf('Running 5-second moving mean filter + strain rate vs head data correlation analysis (DAS shifted +20s)\n');
             
         case 'run_linear_regression'
@@ -389,6 +395,8 @@ if exist('mode', 'var') && ischar(mode)
             config.filter_method = 'none';
             config.chen_denoising = false;
             config.das_time_shift_seconds = 20;
+            % ENABLE sampling frequency correction for strain rate calculation
+            config.apply_sampling_freq_correction = true;
             fprintf('Running linear regression analysis (strain rate only)\n');
             
         case 'run_linear_regression_compare'
@@ -459,6 +467,8 @@ if exist('mode', 'var') && ischar(mode)
             config.filter_method = 'none';
             config.chen_denoising = false;
             config.das_time_shift_seconds = 20;
+            % ENABLE sampling frequency correction for strain rate calculation
+            config.apply_sampling_freq_correction = true;
             fprintf('Running amplitude-based storage calculation with linear regression plot (single channel at %.0f ft, zone %s)\n', ...
                 config.amplitude_target_depth_ft, config.amplitude_zone);
             
