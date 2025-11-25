@@ -32,7 +32,7 @@ function results = linear_regression_strain_drawdown(das_results, head_results, 
 %
 % Outputs:
 %   results - Structure containing:
-%            .slope - Regression slope (1/s per ft/s for strain, nm/s per ft/s for displacement)
+%            .slope - Regression slope (1/s per m/s for strain, nm/s per m/s for displacement)
 %            .intercept - Regression intercept
 %            .R - Correlation coefficient
 %            .R_squared - R^2
@@ -437,6 +437,9 @@ dt_head = diff(seconds(zone_time_corrected - zone_time_corrected(1)));  % Time s
 ds = diff(zone_head);  % Drawdown change (ft)
 drawdown_rate_ftps = ds ./ dt_head;  % Drawdown rate: ∂s/∂t (negative during recovery)
 head_rate_ftps = -drawdown_rate_ftps;  % Head rate: ∂h/∂t = -∂s/∂t (positive during recovery)
+% Convert head rate to m/s (to match advisor's units)
+ft_to_m = 0.3048;
+head_rate_mps = head_rate_ftps * ft_to_m;  % Head rate in m/s
 time_head_rate = zone_time_corrected(1:end-1);  % Time vector (one less after diff)
 
 % Apply smoothing to head rate to match strain rate smoothing level
@@ -444,9 +447,9 @@ if isfield(config, 'head_rate_smoothing_window') && config.head_rate_smoothing_w
     smoothing_window = config.head_rate_smoothing_window;
     fprintf('\n=== SMOOTHING HEAD RATE ===\n');
     fprintf('  Applying %d-point moving mean to head rate (matching strain rate smoothing)\n', smoothing_window);
-    fprintf('  Raw head rate range: %.4e to %.4e ft/s\n', min(head_rate_ftps), max(head_rate_ftps));
-    head_rate_ftps = movmean(head_rate_ftps, smoothing_window, 'Endpoints', 'shrink');
-    fprintf('  Smoothed head rate range: %.4e to %.4e ft/s\n', min(head_rate_ftps), max(head_rate_ftps));
+    fprintf('  Raw head rate range: %.4e to %.4e m/s\n', min(head_rate_mps), max(head_rate_mps));
+    head_rate_mps = movmean(head_rate_mps, smoothing_window, 'Endpoints', 'shrink');
+    fprintf('  Smoothed head rate range: %.4e to %.4e m/s\n', min(head_rate_mps), max(head_rate_mps));
 else
     fprintf('\n⚠ WARNING: No smoothing applied to head rate\n');
     fprintf('  Strain rate has smoothing but head rate does not - this may reduce correlation\n');
@@ -454,7 +457,7 @@ else
 end
 
 fprintf('Drawdown rate range: %.4e to %.4e ft/s (negative during recovery)\n', min(drawdown_rate_ftps), max(drawdown_rate_ftps));
-fprintf('Head rate range: %.4e to %.4e ft/s (positive during recovery)\n', min(head_rate_ftps), max(head_rate_ftps));
+fprintf('Head rate range: %.4e to %.4e m/s (positive during recovery)\n', min(head_rate_mps), max(head_rate_mps));
 
 %% Use the SAME time window as Figure 102 (analysis_time window)
 % This ensures we're looking at the exact same time period
@@ -480,7 +483,7 @@ fprintf('Strain data points: %d, DAS time points: %d (should match)\n', sum(vali
 % Extract head data that falls within this window (after timing correction)
 valid_head_idx = (time_head_rate >= time_start) & (time_head_rate <= time_end);
 time_head_overlap = time_head_rate(valid_head_idx);
-head_rate_overlap = head_rate_ftps(valid_head_idx);  % ft/s (use head rate, not drawdown rate!)
+head_rate_overlap = head_rate_mps(valid_head_idx);  % m/s (use head rate, not drawdown rate!)
 
 fprintf('Head points in overlap: %d\n', sum(valid_head_idx));
 fprintf('DAS points in overlap: %d\n', sum(valid_das_idx));
@@ -547,8 +550,8 @@ if use_amplitude
     fprintf('    Min: %.4e 1/s (at point %d)\n', min_strain, min_strain_idx);
     
     fprintf('  Head rate:\n');
-    fprintf('    Max: %.4e ft/s (at point %d)\n', max_head, max_head_idx);
-    fprintf('    Min: %.4e ft/s (at point %d)\n', min_head, min_head_idx);
+    fprintf('    Max: %.4e m/s (at point %d)\n', max_head, max_head_idx);
+    fprintf('    Min: %.4e m/s (at point %d)\n', min_head, min_head_idx);
     
     % Calculate amplitudes (max - min = peak-to-trough range)
     amplitude_strain = max_strain - min_strain;
@@ -556,7 +559,7 @@ if use_amplitude
     
     fprintf('\n  Amplitude (max - min):\n');
     fprintf('    Strain rate: %.4e 1/s\n', amplitude_strain);
-    fprintf('    Head rate: %.4e ft/s\n', amplitude_head);
+    fprintf('    Head rate: %.4e m/s\n', amplitude_head);
     
     % Slope = amplitude ratio
     slope = amplitude_strain / amplitude_head;
@@ -564,7 +567,7 @@ if use_amplitude
     baseline_strain = min_strain;  % For compatibility
     baseline_head = min_head;
     
-    fprintf('\n  Slope (amplitude ratio): %.4e (1/s)/(ft/s)\n', slope);
+    fprintf('\n  Slope (amplitude ratio): %.4e (1/s)/(m/s)\n', slope);
     fprintf('  ✓ Using peak-to-trough range (advisor method)!\n');
     
     % Calculate predicted values using amplitude-based slope
@@ -587,7 +590,7 @@ else
     % Original regression approach
     fprintf('\n=== REGRESSION RESULTS ===\n');
     p_regression = polyfit(head_rate_clean, strain_clean, 1);
-    slope = p_regression(1);  % (1/s) per (ft/s) - strain rate per head rate
+    slope = p_regression(1);  % (1/s) per (m/s) - strain rate per head rate
     intercept = p_regression(2);  % 1/s
 
     % Calculate correlation and R^2
@@ -604,10 +607,10 @@ end
 if ~use_amplitude
     % Only print regression metrics if not using amplitude mode
     if config.use_displacement_rate
-        fprintf('Slope: %.4e (nm/s)/(ft/s)\n', slope);
+        fprintf('Slope: %.4e (nm/s)/(m/s)\n', slope);
         fprintf('Intercept: %.4e nm/s\n', intercept);
     else
-        fprintf('Slope: %.4e (1/s)/(ft/s)\n', slope);
+        fprintf('Slope: %.4e (1/s)/(m/s)\n', slope);
         fprintf('Intercept: %.4e 1/s\n', intercept);
     end
     fprintf('Correlation (R): %.4f\n', R_corr);
@@ -675,7 +678,7 @@ if config.show_plots
     else
         plot(head_rate_range, polyval(p_regression, head_rate_range), 'r-', 'LineWidth', 3);
     end
-    xlabel('Head Rate (ft/s)', 'FontSize', 12, 'FontWeight', 'bold');
+    xlabel('Head Rate (m/s)', 'FontSize', 12, 'FontWeight', 'bold');
     if config.use_displacement_rate
         ylabel('Displacement Rate (nm/s)', 'FontSize', 12, 'FontWeight', 'bold');
     else
@@ -709,7 +712,7 @@ if config.show_plots
     % Note: head_rate_clean already has flip applied if config.flip_for_display = true
     head_rate_at_das_times = interp1(time_clean, head_rate_clean, time_das_overlap, 'linear', 'extrap');
     plot(time_das_overlap, head_rate_at_das_times, 'Color', [0.4660 0.6740 0.1880], 'LineWidth', 2.5, 'DisplayName', 'Head Rate');
-    ylabel('Head Rate (ft/s)', 'FontSize', 12, 'FontWeight', 'bold');
+    ylabel('Head Rate (m/s)', 'FontSize', 12, 'FontWeight', 'bold');
     ax = gca;
     ax.YColor = [0.4660 0.6740 0.1880];
     

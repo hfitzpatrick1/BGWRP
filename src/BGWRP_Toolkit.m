@@ -407,6 +407,8 @@ if exist('mode', 'var') && ischar(mode)
             config.save_charts = contains(mode, 'save');
             config.linear_regression = true;
             config.lr_run_both_comparisons = false;  % Default: only strain rate
+            % Use amplitude mode (change in strain rate = max - min) to match advisor
+            config.use_amplitude = true;  % Uses amplitude (max - min) instead of raw values
             % Use same smoothing as correlation analysis
             config.smoothing_method = 'matlab_movmean';
             config.matlab_movmean_window = 5;

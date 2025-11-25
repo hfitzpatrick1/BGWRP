@@ -54,6 +54,10 @@ storage_config.alpha = 0.9;  % Biot-Willis coefficient (0.9-1.0 for unconsolidat
 storage_config.gamma_unit = 'SI';  % Use SI units
 storage_config.aquifer_thickness_ft = 380;  % PM07 Zone 5 thickness
 
+% No characteristic length scaling (advisor doesn't use it)
+% storage_config.strain_rate_characteristic_length_m = 1.0;  % Disabled
+storage_config.poisson_ratio = 0.30;  % Typical for sand/sandstone
+
 % Traditional pump test value for comparison (PM07 Zone 5 from Aqtesolv)
 storage_config.S_traditional = 0.002955;
 
