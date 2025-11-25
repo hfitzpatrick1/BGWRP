@@ -46,6 +46,7 @@ end
 all_items = dir(base_path);
 input_folders = {};
 
+% First, check regular folders (not starting with _)
 for i = 1:length(all_items)
     item = all_items(i);
     if item.isdir && ~startsWith(item.name, '.') && ~startsWith(item.name, '_')
@@ -72,6 +73,41 @@ for i = 1:length(all_items)
             input_folders{end+1} = item.name;
             fprintf('  Found input folder: %s (%d TDMS in _das, %d MAT in _head)\n', ...
                 item.name, length(tdms_files), length(mat_files));
+        end
+    end
+end
+
+% Also check _active subdirectory for datasets
+active_dir = fullfile(base_path, '_active');
+if exist(active_dir, 'dir')
+    active_items = dir(active_dir);
+    for i = 1:length(active_items)
+        item = active_items(i);
+        if item.isdir && ~startsWith(item.name, '.') && ~startsWith(item.name, '_')
+            folder_path = fullfile(active_dir, item.name);
+            
+            % Check for new structure: _das and _head subdirectories
+            das_dir = fullfile(folder_path, '_das');
+            head_dir = fullfile(folder_path, '_head');
+            
+            tdms_files = [];
+            mat_files = [];
+            
+            % Check _das subdirectory for TDMS files
+            if exist(das_dir, 'dir')
+                tdms_files = dir(fullfile(das_dir, '*.tdms'));
+            end
+            
+            % Check _head subdirectory for MAT files
+            if exist(head_dir, 'dir')
+                mat_files = dir(fullfile(head_dir, '*.mat'));
+            end
+            
+            if ~isempty(tdms_files) || ~isempty(mat_files)
+                input_folders{end+1} = item.name;
+                fprintf('  Found input folder in _active: %s (%d TDMS in _das, %d MAT in _head)\n', ...
+                    item.name, length(tdms_files), length(mat_files));
+            end
         end
     end
 end

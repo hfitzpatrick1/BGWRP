@@ -567,12 +567,21 @@ if use_amplitude
     fprintf('\n  Slope (amplitude ratio): %.4e (1/s)/(ft/s)\n', slope);
     fprintf('  ✓ Using peak-to-trough range (advisor method)!\n');
     
-    % For amplitude mode, correlation metrics are not applicable
-    R_corr = NaN;
-    R_squared = NaN;
-    RMSE = NaN;
+    % Calculate predicted values using amplitude-based slope
     strain_predicted = baseline_strain + slope * (head_rate_clean - baseline_head);
     residuals = strain_clean - strain_predicted;
+    
+    % Calculate correlation and R^2 for quality assessment (even in amplitude mode)
+    % This shows how well the data correlates, regardless of how slope was calculated
+    R_matrix = corrcoef(head_rate_clean, strain_clean);
+    R_corr = R_matrix(1,2);
+    R_squared = R_corr^2;
+    RMSE = sqrt(mean(residuals.^2));
+    
+    fprintf('\n  Correlation metrics (for quality assessment):\n');
+    fprintf('    R: %.4f\n', R_corr);
+    fprintf('    R^2: %.4f\n', R_squared);
+    fprintf('    RMSE: %.4e 1/s\n', RMSE);
     
 else
     % Original regression approach
@@ -673,7 +682,7 @@ if config.show_plots
         ylabel('Strain Rate (1/s)', 'FontSize', 12, 'FontWeight', 'bold');
     end
     if use_amplitude
-        title(sprintf('Amplitude Analysis: Slope = %.2e', slope), 'FontSize', 14, 'FontWeight', 'bold');
+        title(sprintf('Amplitude Analysis: R = %.3f, R^2 = %.3f', R_corr, R_squared), 'FontSize', 14, 'FontWeight', 'bold');
     else
         title(sprintf('Linear Regression: R = %.3f, R^2 = %.3f', R_corr, R_squared), 'FontSize', 14, 'FontWeight', 'bold');
     end
@@ -681,9 +690,10 @@ if config.show_plots
     legend({'Data', sprintf('Fit: y = %.2e*x + %.2e', slope, intercept)}, 'Location', 'best', 'FontSize', 10);
     set(gca, 'FontSize', 11);
     
-    % Add text box with statistics
+    % Add text box with statistics - ALWAYS show R and R² for quality assessment
     if use_amplitude
-        text_str = sprintf('Slope: %.2e\nAmplitude Mode\nN: %d', slope, length(strain_clean));
+        text_str = sprintf('Slope: %.2e\nR: %.3f\nR^2: %.3f\nAmplitude Mode\nRMSE: %.2e\nN: %d', ...
+            slope, R_corr, R_squared, RMSE, length(strain_clean));
     else
         text_str = sprintf('Slope: %.2e\nR: %.3f\nR^2: %.3f\nRMSE: %.2e\nN: %d', ...
             slope, R_corr, R_squared, RMSE, length(strain_clean));

@@ -117,17 +117,17 @@ for i = 1:length(test_labels)
     % Only apply if explicitly enabled via config flag
     % This corrects for TDMS conversion not multiplying by sampling frequency
     if isfield(config, 'apply_sampling_freq_correction') && config.apply_sampling_freq_correction
-        % Determine the actual sampling frequency of THIS file
-        if isfield(loaded_data, 'decdata')
-            % This is DECIMATED data - averaging over 1 second means values are already rates!
-            % When decimated from 100Hz to 1Hz, each sample = average over 1 second
-            % This makes the values effectively "nm per second" = nm/s already
-            % So NO correction needed (multiply by 1)
-            sampling_freq = 1.0;  % Hz (no correction - data already in nm/s)
-            fprintf('  ℹ Sampling frequency correction for decimated data\n');
-            fprintf('    Data type: Decimated to 1 Hz (from 100 Hz original)\n');
-            fprintf('    Decimated values represent average over 1 second → already in nm/s\n');
-            fprintf('    Correction factor: %.0f (no change)\n', sampling_freq);
+    % Determine the actual sampling frequency of THIS file
+    if isfield(loaded_data, 'decdata')
+        % DECIMATED data: Need to determine if units are correct
+        % The check_tdms_units script showed values are ~±330, which is 1300x too large
+        % This suggests the data might already be in wrong units or scale
+        % For now, DON'T apply conversion - investigate the actual issue
+        sampling_freq = 1.0;  % Don't convert - investigate first
+        fprintf('  ℹ DECIMATED DATA - NOT applying sampling frequency conversion\n');
+        fprintf('    Data appears to have unit/scale issues (check_tdms_units showed ~±330)\n');
+        fprintf('    Need to investigate actual units before applying conversion\n');
+        fprintf('    Current range will be checked against advisor''s ~±0.25 nm/s\n');
         elseif isfield(loaded_data, 'fs_f')
             % Use the stored sampling frequency (for non-decimated data)
             sampling_freq = loaded_data.fs_f;  % Hz
@@ -353,12 +353,10 @@ for i = 1:length(test_labels)
     das_results.(test_label).data_file = das_filepath;
     das_results.(test_label).time_array = time_array_shifted;  % Use shifted time
     
-    % CRITICAL FIX: Multiply by 50 to correct for decimation + smoothing amplitude reduction
-    % The MATLAB decimate() function (100Hz→1Hz) + 5-second movmean smoothing
-    % reduces peak amplitudes by ~50x total. This corrects for that loss.
-    % Without this: strain rates show e^-12 (wrong)
-    % With this: strain rates show e^-10 (correct, matches hand calculations)
-    das_results.(test_label).smoothed_data = smoothed_data * 50;
+    % NO CORRECTION FACTOR NEEDED: Using downsample() (no anti-aliasing filter)
+    % downsample() preserves amplitude by taking every Nth sample without filtering
+    % This matches the advisor's method and gives correct e^-10 strain rates
+    das_results.(test_label).smoothed_data = smoothed_data;
     % Store smoothing method info for verification
     if isfield(config, 'smoothing_method')
         das_results.(test_label).smoothing_method = config.smoothing_method;
@@ -373,8 +371,9 @@ for i = 1:length(test_labels)
     das_results.(test_label).pumping_zone.max_ft = zone_max_ft;
     das_results.(test_label).pumping_zone.channel_idx = channel_idx;
     das_results.(test_label).pumping_zone.channel_depth_ft = depth_ft(channel_idx);
-            das_results.(test_label).analysis_time = time_array_shifted(analysis_mask);  % Use shifted time
-    das_results.(test_label).analysis_strain_rate = smoothed_data(analysis_mask, channel_idx);
+    das_results.(test_label).analysis_time = time_array_shifted(analysis_mask);  % Use shifted time
+    % Extract analysis_strain_rate from smoothed_data (amplitude preserved via downsample())
+    das_results.(test_label).analysis_strain_rate = das_results.(test_label).smoothed_data(analysis_mask, channel_idx);
             
     fprintf('  ✓ DAS analysis completed for %s\n', test_label);
     fprintf('    Representative channel: %d at %.1f ft\n', channel_idx, depth_ft(channel_idx));

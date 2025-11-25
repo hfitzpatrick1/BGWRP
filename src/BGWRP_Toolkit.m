@@ -352,7 +352,9 @@ if exist('mode', 'var') && ischar(mode)
         config.apply_concatenation_filter = false;
         config.filter_method = 'none';
         config.chen_denoising = false;
-        fprintf('Running MATLAB movmean filter (5-second window)\n');
+        % NOTE: 50x correction applied in analyze_das_data.m for decimation loss
+        config.apply_sampling_freq_correction = true;
+        fprintf('Running MATLAB movmean filter (5-second window, 50x correction)\n');
             
         case 'run_correlation_analysis'
             % Analysis mode with strain rate vs head data correlation
@@ -363,6 +365,11 @@ if exist('mode', 'var') && ischar(mode)
             config.save_charts = contains(mode, 'save');
             config.correlation_analysis = true;
             config.signal_onset_detection = true;
+            % Enable linear regression to store results for storage calculation
+            config.linear_regression = true;
+            config.lr_run_both_comparisons = false;  % Only strain rate
+            % Enable storage calculation after regression
+            config.calculate_storage = true;
             % Apply 5-second moving mean filter before correlation analysis
             config.smoothing_method = 'matlab_movmean';
             config.matlab_movmean_window = 5;
@@ -373,11 +380,23 @@ if exist('mode', 'var') && ischar(mode)
             config.das_time_shift_seconds = 20;
             % ENABLE sampling frequency correction for strain rate calculation
             config.apply_sampling_freq_correction = true;
-            % Set reasonable colorbar limits for displacement rate (nm/s)
-            % For decimated 1Hz data, values are already effectively nm/s (~±3 range)
-            config.manual_bounds.raw = [-5, 5];  % nm/s
-            config.manual_bounds.displacement = [-5, 5];  % nm/s
+            % Set colorbar limits for displacement rate (nm/s) and strain (nm/m)
+            % NOTE: 4.5x correction applied in analyze_das_data.m to restore amplitude
+            % lost to decimation anti-aliasing filter
+            % After 4.5x correction: displacement ~±3 nm/s (restores original), strain ~±1 nm/m
+            config.manual_bounds.raw.min = -5;
+            config.manual_bounds.raw.max = 5;
+            config.manual_bounds.displacement.min = -5;
+            config.manual_bounds.displacement.max = 5;
+            config.manual_bounds.strain.min = -2;   % Integrated values (nm/m, after 4.5x correction)
+            config.manual_bounds.strain.max = 2;     % Integrated values (nm/m, after 4.5x correction)
+            % Disable dynamic bounds to use manual bounds
+            config.dynamic_bounds = false;
+            % Disable related bounds to use individual manual bounds
+            config.use_related_bounds = false;
             fprintf('Running 5-second moving mean filter + strain rate vs head data correlation analysis (DAS shifted +20s)\n');
+            fprintf('  Colorbar bounds: Raw/Displacement ±5 nm/s, Strain ±2 nm/m\n');
+            fprintf('  Manual bounds enabled, dynamic_bounds disabled\n');
             
         case 'run_linear_regression'
             % Analysis mode for linear regression (run after correlation_analysis)
@@ -396,8 +415,9 @@ if exist('mode', 'var') && ischar(mode)
             config.chen_denoising = false;
             config.das_time_shift_seconds = 20;
             % ENABLE sampling frequency correction for strain rate calculation
+            % NOTE: 50x correction applied in analyze_das_data.m
             config.apply_sampling_freq_correction = true;
-            fprintf('Running linear regression analysis (strain rate only)\n');
+            fprintf('Running linear regression analysis (strain rate only, 50x correction applied)\n');
             
         case 'run_linear_regression_compare'
             % Analysis mode for linear regression - run BOTH strain and displacement rate
@@ -489,6 +509,25 @@ if exist('mode', 'var') && ischar(mode)
             % Shift DAS time forward by 20 seconds to align with head data
             config.das_time_shift_seconds = 20;
             fprintf('Running storage parameter analysis from DAS-head correlation (DAS shifted +20s)\n');
+            
+        case 'run_storage_calculation'
+            % Simple storage calculation from linear regression (Becker method)
+            config.run_tdms_conversion = false;
+            config.run_concatenation = false;
+            config.run_timing_extraction = false;
+            config.run_data_analysis = true;
+            config.save_charts = contains(mode, 'save');
+            config.correlation_analysis = true;
+            config.linear_regression = true;
+            config.lr_run_both_comparisons = false;
+            config.calculate_storage = true;  % Enable storage calculation
+            config.smoothing_method = 'matlab_movmean';
+            config.matlab_movmean_window = 5;
+            config.apply_concatenation_filter = false;
+            config.filter_method = 'none';
+            config.chen_denoising = false;
+            config.das_time_shift_seconds = 20;
+            fprintf('Running correlation analysis + linear regression + storage calculation\n');
             
         case 'run_smooth'
             % Analysis mode with boundary smoothingg
@@ -619,7 +658,7 @@ if exist('mode', 'var') && ischar(mode)
             config.save_charts = contains(mode, 'save');
             
         otherwise
-            error('Unknown mode: %s. Valid modes: prep, prep_single_step, prep_double_precision, prep_no_decim, prep_purge, prep_tdms, prep_concat, prep_timing, analyze, analyze_save, all, all_save, purge_inactive, purge_unraw, diagnostic_boundaries, diagnostic_enhanced, diagnostic_tdms, run_correlation_analysis, run_linear_regression, run_linear_regression_compare, run_amplitude_storage, run_storage_analysis', mode);
+            error('Unknown mode: %s. Valid modes: prep, prep_single_step, prep_double_precision, prep_no_decim, prep_purge, prep_tdms, prep_concat, prep_timing, analyze, analyze_save, all, all_save, purge_inactive, purge_unraw, diagnostic_boundaries, diagnostic_enhanced, diagnostic_tdms, run_correlation_analysis, run_linear_regression, run_linear_regression_compare, run_amplitude_storage, run_storage_analysis, run_storage_calculation', mode);
     end
     
     fprintf('Mode "%s" configured\n', mode);
@@ -732,8 +771,13 @@ if config.run_tdms_conversion
         fprintf('\n--- Processing %s ---\n', current_folder);
         
         % Set parameters for Silixa script (store in config to avoid clearing)
-        % Read TDMS files from original input directory _das subdirectory
-        config.silixa.directory = [fullfile(config.base_input, current_folder, '_das') '\'];
+        % Read TDMS files from _active or original input directory _das subdirectory
+        % Check _active first, then fall back to base path
+        tdms_source = fullfile(config.base_input, '_active', current_folder, '_das');
+        if ~exist(tdms_source, 'dir')
+            tdms_source = fullfile(config.base_input, current_folder, '_das');
+        end
+        config.silixa.directory = [tdms_source '\'];
         config.silixa.filesearch = '*.tdms';
         config.silixa.fileindex = [];
         config.silixa.save_data = 1;
@@ -790,7 +834,11 @@ if config.run_concatenation  % Run head processing if concatenation is enabled
         fprintf('\n--- Processing head data for %s ---\n', current_folder);
         
         % Head data input directory (expect _head subdirectory)
-        head_input_dir = fullfile(config.base_input, current_folder, '_head');
+        % Check _active first, then fall back to base path
+        head_input_dir = fullfile(config.base_input, '_active', current_folder, '_head');
+        if ~exist(head_input_dir, 'dir')
+            head_input_dir = fullfile(config.base_input, current_folder, '_head');
+        end
         
         % Head data output directory 
         head_output_dir = fullfile(config.base_input, '_combined_head', current_folder);

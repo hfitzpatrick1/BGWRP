@@ -68,10 +68,37 @@ try
         end
         
         try
-            downsampled_data(:, n) = decimate(channel_data, decimation_factor);
+            % Use MATLAB's decimate() function (matches paper method)
+            % Paper: "we down-sampled the 1,000 Hz sampling rate to 100 Hz using 
+            % the Matlab 'decimate' command which applies a lowpass Chebyshev Type I 
+            % infinite impulse response (IIR) anti-aliasing filter of order 8"
+            % 
+            % We're going from 100 Hz to 1 Hz, so use decimate() like the paper
+            % decimate() applies anti-aliasing filter (reduces amplitude) then downsamples
+            % The filter naturally reduces amplitude - this is expected behavior
+            % No additional division needed - decimate() handles the decimation correctly
+            
+            decimated = decimate(channel_data, decimation_factor);
+            
+            % Ensure output length matches (decimate may differ slightly)
+            if length(decimated) > output_length
+                downsampled_data(:, n) = decimated(1:output_length);
+            elseif length(decimated) < output_length
+                % Pad with last value if needed
+                downsampled_data(:, n) = [decimated; repmat(decimated(end), output_length - length(decimated), 1)];
+            else
+                downsampled_data(:, n) = decimated;
+            end
+            
         catch ME
-            warning('Decimation failed for channel %d: %s. Filling with NaN.', n, ME.message);
-            downsampled_data(:, n) = NaN(output_length, 1);
+            % Fallback: try direct downsampling if decimate() fails
+            warning('decimate() failed for channel %d, using simple downsample: %s', n, ME.message);
+            try
+                downsampled_data(:, n) = downsample(channel_data, decimation_factor);
+            catch ME2
+                warning('Decimation failed for channel %d: %s. Filling with NaN.', n, ME2.message);
+                downsampled_data(:, n) = NaN(output_length, 1);
+            end
         end
     end
     

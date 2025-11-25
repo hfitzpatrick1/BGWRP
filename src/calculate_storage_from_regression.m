@@ -23,10 +23,31 @@ zone = 'z5';
 
 % Check if linear regression results exist
 if ~isfield(das_results, test_name) || ~isfield(das_results.(test_name), 'linear_regression')
-    error('No linear regression results found for %s!\nMake sure correlation analysis completed successfully.', test_name);
+    fprintf('Linear regression results not found. Running linear regression now...\n');
+    
+    % Check if head_results exists
+    if ~exist('head_results', 'var')
+        error('No head_results found! Run correlation analysis first:\n  mode = ''run_correlation_analysis''; BGWRP_Toolkit');
+    end
+    
+    % Run linear regression
+    lr_config = struct();
+    lr_config.zone = zone;
+    lr_config.depth_range_ft = [279.5, 280.5];
+    lr_config.depth_averaging_method = 'representative';
+    lr_config.use_amplitude = true;
+    lr_config.use_displacement_rate = false;  % Use strain rate
+    
+    fprintf('Running linear regression for %s (zone %s)...\n', test_name, zone);
+    lr_results = linear_regression_strain_drawdown(das_results, head_results, test_name, lr_config);
+    
+    % Store results in das_results
+    das_results.(test_name).linear_regression = lr_results;
+    fprintf('✓ Linear regression complete (R=%.3f, R²=%.3f)\n', lr_results.R, lr_results.R_squared);
+else
+    lr_results = das_results.(test_name).linear_regression;
+    fprintf('Using existing linear regression results (R=%.3f, R²=%.3f)\n', lr_results.R, lr_results.R_squared);
 end
-
-lr_results = das_results.(test_name).linear_regression;
 
 %% Set up storage calculation configuration
 storage_config.alpha = 0.9;  % Biot-Willis coefficient (0.9-1.0 for unconsolidated)

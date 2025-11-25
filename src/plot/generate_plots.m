@@ -205,6 +205,22 @@ if isfield(config, 'amplitude_storage') && config.amplitude_storage
     end
 end
 
+%% Run storage calculation from regression if enabled
+if isfield(config, 'calculate_storage') && config.calculate_storage
+    chart_logger('Running storage calculation from linear regression...');
+    try
+        % Import the storage calculation function
+        calculate_storage_from_regression;
+        chart_logger('✓ Storage calculation completed');
+    catch ME
+        chart_logger('✗ Storage calculation failed: %s', ME.message);
+        fprintf('Storage calculation error details: %s\n', ME.message);
+        if ~isempty(ME.stack)
+            fprintf('  at %s (line %d)\n', ME.stack(1).name, ME.stack(1).line);
+        end
+    end
+end
+
 %% Run storage parameter analysis if enabled
 if isfield(config, 'storage_analysis') && config.storage_analysis
     chart_logger('Running storage parameter analysis...');
@@ -300,6 +316,7 @@ for i = 1:length(test_labels)
     end
     
     figure(fig1_num);
+    set(fig1_num, 'Visible', 'on');
     clf;
     
     % Check if required data exists before plotting
@@ -331,16 +348,22 @@ for i = 1:length(test_labels)
         hold off;
     end
     
-    % Set color bounds using new utility functions
-    if ~isempty(unified_bounds) && isfield(unified_bounds, 'raw')
-        % Use pre-calculated unified bounds
-        raw_bounds = unified_bounds.raw;
-        clim(raw_bounds);
-        chart_logger('    Unified raw data bounds: [%.6f, %.6f]', raw_bounds(1), raw_bounds(2));
-    else
-        % Calculate individual bounds for this dataset
-        raw_bounds = get_plot_bounds(das_data, 'raw', config, test_label);
-        clim(raw_bounds);
+    % Set color bounds for Figure 101 waterfall plot
+    % Check actual data range first
+    actual_min = min(das_data.smoothed_data(:));
+    actual_max = max(das_data.smoothed_data(:));
+    chart_logger('    Figure 101: Actual data range: [%.3f, %.3f] nm/s', actual_min, actual_max);
+    chart_logger('    Figure 101: Advisor''s range: [-0.25, 0.15] nm/s');
+    
+    % Match advisor's data range: use [-0.25, 0.15] nm/s
+    raw_bounds = [-0.25, 0.15];
+    clim(raw_bounds);
+    chart_logger('    Figure 101: Fixed colorbar bounds: [%.2f, %.2f] nm/s', raw_bounds(1), raw_bounds(2));
+    
+    % Warn if data is outside bounds
+    if actual_min < raw_bounds(1) || actual_max > raw_bounds(2)
+        chart_logger('    ⚠ WARNING: Data extends beyond colorbar bounds!');
+        chart_logger('      Data: [%.3f, %.3f], Bounds: [%.3f, %.3f]', actual_min, actual_max, raw_bounds(1), raw_bounds(2));
     end
     
     % Colormap is set by apply_plot_config, but ensure consistency for colorbar
@@ -380,6 +403,7 @@ for i = 1:length(test_labels)
     fig2_num = 100 + i*3 - 1;
     chart_logger('  Creating Figure %d: Displacement Rate', fig2_num);
     figure(fig2_num);
+    set(fig2_num, 'Visible', 'on');
     clf;
     
     subplot(3,1,1);
@@ -390,17 +414,11 @@ for i = 1:length(test_labels)
     analysis_time_array = das_data.time_array(analysis_mask);
     apply_plot_config(analysis_time_array, das_data.depth_ft, analysis_smoothed_data', config, 'waterfall');
     
-    % Set displacement rate bounds using new utility functions
-    if ~isempty(unified_bounds) && isfield(unified_bounds, 'displacement')
-        % Use pre-calculated unified bounds
-        disp_bounds = unified_bounds.displacement;
-        set(gca, 'clim', disp_bounds);
-        chart_logger('    Unified displacement rate bounds: [%.6f, %.6f] nm/s', disp_bounds(1), disp_bounds(2));
-    else
-        % Calculate individual bounds for this dataset
-        disp_bounds = get_plot_bounds(das_data, 'displacement', config, test_label);
-        set(gca, 'clim', disp_bounds);
-    end
+    % Set displacement rate bounds for Figure 102 subplot 1 (waterfall)
+    % Match advisor's data range: use [-0.25, 0.15] nm/s
+    disp_bounds = [-0.25, 0.15];
+    set(gca, 'clim', disp_bounds);
+    chart_logger('    Figure 102 subplot 1: Fixed displacement rate colorbar bounds: [%.2f, %.2f] nm/s', disp_bounds(1), disp_bounds(2));
     
     % Colormap is set by apply_plot_config, but ensure consistency for colorbar
     if isfield(config, 'colormap_name') && isfield(config, 'colormap_resolution')
@@ -456,10 +474,10 @@ for i = 1:length(test_labels)
                         yyaxis right;
                         plot(das_data.analysis_time, das_data.analysis_strain_rate, 'Color', [0 0 0], 'LineStyle', '-', 'LineWidth', 1.2, 'DisplayName', 'DAS');
                         ylabel('Displacement Rate (nm/s)');
+                        % Set fixed bounds for Figure 102 subplot 2
+                        ylim([-0.25, 0.15]);
                         chart_logger('    Plotted averaged drawdown rate from %d monitoring zones', length(monitoring_zones));
-                        
-                        % Apply line chart Y-axis bounds
-                        apply_line_chart_bounds(config, test_label, 'displacement_rate');
+                        chart_logger('    Figure 102 subplot 2: Fixed displacement rate y-axis bounds: [-0.25, 0.15] nm/s');
                     end
                 else
                     % Plot multiple monitoring zones (excluding pw)
@@ -498,10 +516,10 @@ for i = 1:length(test_labels)
                     yyaxis right;
                     plot(das_data.analysis_time, das_data.analysis_strain_rate, 'Color', [0 0 0], 'LineStyle', '-', 'LineWidth', 1.2, 'DisplayName', 'DAS');
                     ylabel('Displacement Rate (nm/s)');
+                    % Set fixed bounds for Figure 102 subplot 2
+                    ylim([-0.25, 0.15]);
                     chart_logger('    Plotted monitoring well drawdown rate data from zones: %s', strjoin(monitoring_zones, ', '));
-                    
-                    % Apply line chart Y-axis bounds
-                    apply_line_chart_bounds(config, test_label, 'displacement_rate');
+                    chart_logger('    Figure 102 subplot 2: Fixed displacement rate y-axis bounds: [-0.25, 0.15] nm/s');
                 end
             else
                 % No valid head data, just plot DAS
@@ -509,6 +527,7 @@ for i = 1:length(test_labels)
                 xlim([analysis_start analysis_end]);
                 ylabel('Displacement Rate (nm/s)');
                 xlabel('Date Time UTC');
+                ylim([-0.25, 0.15]);  % Fixed bounds for Figure 102 subplot 2
             end
         else
             % No head data, just plot DAS
@@ -516,6 +535,7 @@ for i = 1:length(test_labels)
             xlim([analysis_start analysis_end]);
             ylabel('Displacement Rate (nm/s)');
             xlabel('Date Time UTC');
+            ylim([-0.5, 0.5]);  % Fixed bounds for Figure 102 subplot 2 (with 2x correction)
         end
     else
         % No head data, just plot DAS
@@ -523,6 +543,7 @@ for i = 1:length(test_labels)
         xlim([analysis_start analysis_end]);
         ylabel('Displacement Rate (nm/s)');
         xlabel('Date Time UTC');
+        ylim([-0.5, 0.5]);  % Fixed bounds for Figure 102 subplot 2 (with 2x correction)
     end
     title(sprintf('Monitoring Wells - Representative Channel (%.0f ft)', das_data.pumping_zone.channel_depth_ft));
     grid on;
@@ -546,10 +567,9 @@ for i = 1:length(test_labels)
             plot(das_data.analysis_time, das_data.analysis_strain_rate, 'Color', [0 0 0], 'LineStyle', '-', 'LineWidth', 1.2, 'DisplayName', 'DAS');
             ylabel('Displacement Rate (nm/s)');
             
-            % Apply only the DAS bounds (right Y-axis) to match subplot 2, keep left Y-axis (drawdown rate) separate
-            das_bounds = get_plot_bounds([], 'displacement_rate_line', config, test_label);
-            ylim(das_bounds);
-            chart_logger('    Applied displacement rate line bounds to match subplot 2: [%.3f, %.3f] nm/s', das_bounds(1), das_bounds(2));
+            % Set fixed bounds for Figure 102 subplot 3 to match subplot 2
+            ylim([-0.25, 0.15]);
+            chart_logger('    Figure 102 subplot 3: Fixed displacement rate y-axis bounds: [-0.25, 0.15] nm/s');
             
             title('Pumping Well (pw) Drawdown');
             grid on;
@@ -575,6 +595,7 @@ for i = 1:length(test_labels)
     fig3_num = 100 + i*3;
     chart_logger('  Creating Figure %d: Strain', fig3_num);
     figure(fig3_num);
+    set(fig3_num, 'Visible', 'on');
     clf;
     
     % Calculate integrated data using absolute time-based integration
@@ -818,179 +839,179 @@ for i = 1:length(test_labels)
         chart_logger('  Saved: %s', filename);
     end
     
-    %% Figure 4: Simple FFT Analysis
-    fig4_num = 100 + i*4;
-    chart_logger('  Creating Figure %d: Simple FFT Analysis', fig4_num);
-    figure(fig4_num);
-    clf;
-    set(gcf, 'Position', [300 + i*50, 100, 1000, 500]);
+    %% Figure 4: Simple FFT Analysis (DISABLED)
+    % fig4_num = 100 + i*4;
+    % chart_logger('  Creating Figure %d: Simple FFT Analysis', fig4_num);
+    % figure(fig4_num);
+    % clf;
+    % set(gcf, 'Position', [300 + i*50, 100, 1000, 500]);
+    % 
+    % % Create simple FFT plots
+    % plot_simple_fft(das_data, test_label, config);
+    % 
+    % if plot_results.save_enabled
+    %     filename = sprintf('test_%s_simple_fft.png', test_label);
+    %     filepath = fullfile(save_dir, filename);
+    %     saveas(gcf, filepath);
+    %     plot_results.figures_created{end+1} = filename;
+    %     chart_logger('  Saved: %s', filename);
+    % end
     
-    % Create simple FFT plots
-    plot_simple_fft(das_data, test_label, config);
+    %% Figure 5: Standalone Displacement Rate vs Head Data (DISABLED)
+    % fig5_num = 100 + i*5;
+    % chart_logger('  Creating Figure %d: Displacement Rate vs Head Data', fig5_num);
+    % figure(fig5_num);
+    % clf;
+    % set(gcf, 'Position', [100, 200, 1400, 600]);
+    % set(gcf, 'Name', sprintf('Displacement Rate vs Head Data - %s', upper(test_label)));
     
-    if plot_results.save_enabled
-        filename = sprintf('test_%s_simple_fft.png', test_label);
-        filepath = fullfile(save_dir, filename);
-        saveas(gcf, filepath);
-        plot_results.figures_created{end+1} = filename;
-        chart_logger('  Saved: %s', filename);
-    end
+    % if ~isempty(head_data)
+    %     % Plot monitoring well data (ONLY z4 and z5)
+    %     % zone_names = fieldnames(head_data.zones);
+    %     % if ~isempty(zone_names)
+    %         % Filter to only z4 and z5
+    %         monitoring_zones = intersect({'z4', 'z5'}, zone_names);
+    %         
+    %         if ~isempty(monitoring_zones)
+    %             % Plot multiple monitoring zones
+    %             yyaxis left;
+    %             hold on;
+    %             % Define consistent colors for zones
+    %             zone_colors = containers.Map({'z2', 'z3', 'z4', 'z5'}, ...
+    %                 {[0.8500 0.3250 0.0980], [0.9290 0.6940 0.1250], [0.4940 0.1840 0.5560], [0.4660 0.6740 0.1880]});
+    %             
+    %             for z_idx = 1:length(monitoring_zones)
+    %                 zone_name = monitoring_zones{z_idx};
+    %                 zone_data = head_data.zones.(zone_name);
+    %                 if isfield(zone_data, 'recovery_data') && ~isempty(zone_data.recovery_data)
+    %                     if zone_colors.isKey(zone_name)
+    %                         zone_color = zone_colors(zone_name);
+    %                     else
+    %                         zone_color = [0 0 0];
+    %                     end
+    %                     [drawdown_rate, rate_time] = calculate_drawdown_rate(zone_data.recovery_data.Date, zone_data.recovery_data.Drawdownft, 'ft_per_min');
+    %                     plot(rate_time, drawdown_rate, ...
+    %                         'Color', zone_color, 'LineStyle', '-', 'LineWidth', 2.5, ...
+    %                         'DisplayName', sprintf('Drawdown Rate %s', zone_name));
+    %                 end
+    %             end
+    %             hold off;
+    %             xlim([analysis_start analysis_end]);
+    %             xlabel('Date Time UTC', 'FontSize', 12);
+    %             ylabel('Drawdown Rate (ft/min)', 'FontSize', 12);
+    %             legend('show', 'Location', 'best', 'FontSize', 10);
+    %             
+    %             yyaxis right;
+    %             plot(das_data.analysis_time, das_data.analysis_strain_rate, 'Color', [0 0 0], 'LineStyle', '-', 'LineWidth', 2.5, 'DisplayName', 'DAS (shifted +20s)');
+    %             ylabel('Displacement Rate (nm/s)', 'FontSize', 12);
+    %             
+    %             % Apply line chart Y-axis bounds
+    %             apply_line_chart_bounds(config, test_label, 'displacement_rate');
+    %         end
+    %     end
+    % end
+    % title(sprintf('Monitoring Wells - Representative Channel (%.0f ft) - %s', das_data.pumping_zone.channel_depth_ft, upper(test_label)), 'FontSize', 14);
+    % grid on;
+    % set(gca, 'FontSize', 11);
+    % 
+    % if plot_results.save_enabled
+    %     filename = sprintf('test_%s_displacement_vs_head.png', test_label);
+    %     filepath = fullfile(save_dir, filename);
+    %     saveas(gcf, filepath);
+    %     plot_results.figures_created{end+1} = filename;
+    %     chart_logger('  Saved: %s', filename);
+    % end
     
-    %% Figure 5: Standalone Displacement Rate vs Head Data (from Figure 102 subplot 2)
-    fig5_num = 100 + i*5;
-    chart_logger('  Creating Figure %d: Displacement Rate vs Head Data', fig5_num);
-    figure(fig5_num);
-    clf;
-    set(gcf, 'Position', [100, 200, 1400, 600]);
-    set(gcf, 'Name', sprintf('Displacement Rate vs Head Data - %s', upper(test_label)));
-    
-    if ~isempty(head_data)
+    %% Figure 6: Standalone Strain vs Head Data (DISABLED)
+    % fig6_num = 100 + i*6;
+    % chart_logger('  Creating Figure %d: Strain vs Head Data', fig6_num);
+    % figure(fig6_num);
+    % clf;
+    % set(gcf, 'Position', [120, 180, 1400, 600]);
+    % set(gcf, 'Name', sprintf('Strain vs Head Data - %s', upper(test_label)));
+    % 
+    % if ~isempty(head_data)
         % Plot monitoring well data (ONLY z4 and z5)
         zone_names = fieldnames(head_data.zones);
         if ~isempty(zone_names)
-            % Filter to only z4 and z5
-            monitoring_zones = intersect({'z4', 'z5'}, zone_names);
-            
-            if ~isempty(monitoring_zones)
-                % Plot multiple monitoring zones
-                yyaxis left;
-                hold on;
-                % Define consistent colors for zones
-                zone_colors = containers.Map({'z2', 'z3', 'z4', 'z5'}, ...
-                    {[0.8500 0.3250 0.0980], [0.9290 0.6940 0.1250], [0.4940 0.1840 0.5560], [0.4660 0.6740 0.1880]});
-                
-                for z_idx = 1:length(monitoring_zones)
-                    zone_name = monitoring_zones{z_idx};
-                    zone_data = head_data.zones.(zone_name);
-                    if isfield(zone_data, 'recovery_data') && ~isempty(zone_data.recovery_data)
-                        if zone_colors.isKey(zone_name)
-                            zone_color = zone_colors(zone_name);
-                        else
-                            zone_color = [0 0 0];
-                        end
-                        [drawdown_rate, rate_time] = calculate_drawdown_rate(zone_data.recovery_data.Date, zone_data.recovery_data.Drawdownft, 'ft_per_min');
-                        plot(rate_time, drawdown_rate, ...
-                            'Color', zone_color, 'LineStyle', '-', 'LineWidth', 2.5, ...
-                            'DisplayName', sprintf('Drawdown Rate %s', zone_name));
-                    end
-                end
-                hold off;
-                xlim([analysis_start analysis_end]);
-                xlabel('Date Time UTC', 'FontSize', 12);
-                ylabel('Drawdown Rate (ft/min)', 'FontSize', 12);
-                legend('show', 'Location', 'best', 'FontSize', 10);
-                
-                yyaxis right;
-                plot(das_data.analysis_time, das_data.analysis_strain_rate, 'Color', [0 0 0], 'LineStyle', '-', 'LineWidth', 2.5, 'DisplayName', 'DAS (shifted +20s)');
-                ylabel('Displacement Rate (nm/s)', 'FontSize', 12);
-                
-                % Apply line chart Y-axis bounds
-                apply_line_chart_bounds(config, test_label, 'displacement_rate');
-            end
-        end
-    end
-    title(sprintf('Monitoring Wells - Representative Channel (%.0f ft) - %s', das_data.pumping_zone.channel_depth_ft, upper(test_label)), 'FontSize', 14);
-    grid on;
-    set(gca, 'FontSize', 11);
-    
-    if plot_results.save_enabled
-        filename = sprintf('test_%s_displacement_vs_head.png', test_label);
-        filepath = fullfile(save_dir, filename);
-        saveas(gcf, filepath);
-        plot_results.figures_created{end+1} = filename;
-        chart_logger('  Saved: %s', filename);
-    end
-    
-    %% Figure 6: Standalone Strain vs Head Data (from Figure 103 subplot 2)
-    fig6_num = 100 + i*6;
-    chart_logger('  Creating Figure %d: Strain vs Head Data', fig6_num);
-    figure(fig6_num);
-    clf;
-    set(gcf, 'Position', [120, 180, 1400, 600]);
-    set(gcf, 'Name', sprintf('Strain vs Head Data - %s', upper(test_label)));
-    
-    if ~isempty(head_data)
-        % Plot monitoring well data (ONLY z4 and z5)
-        zone_names = fieldnames(head_data.zones);
-        if ~isempty(zone_names)
-            % Filter to only z4 and z5
-            monitoring_zones = intersect({'z4', 'z5'}, zone_names);
-            
-            if ~isempty(monitoring_zones)
-                % Plot multiple monitoring zones
-                yyaxis left;
-                hold on;
-                % Define consistent colors for zones
-                zone_colors = containers.Map({'z2', 'z3', 'z4', 'z5'}, ...
-                    {[0.8500 0.3250 0.0980], [0.9290 0.6940 0.1250], [0.4940 0.1840 0.5560], [0.4660 0.6740 0.1880]});
-                
-                for z_idx = 1:length(monitoring_zones)
-                    zone_name = monitoring_zones{z_idx};
-                    zone_data = head_data.zones.(zone_name);
-                    if isfield(zone_data, 'recovery_data') && ~isempty(zone_data.recovery_data)
-                        if zone_colors.isKey(zone_name)
-                            zone_color = zone_colors(zone_name);
-                        else
-                            zone_color = [0 0 0];
-                        end
-                        plot(zone_data.recovery_data.Date, zone_data.recovery_data.Drawdownft, ...
-                            'Color', zone_color, 'LineStyle', '-', 'LineWidth', 2.5, ...
-                            'DisplayName', sprintf('Head %s', zone_name));
-                    end
-                end
-                hold off;
-                xlim([analysis_start analysis_end]);
-                xlabel('Date Time UTC', 'FontSize', 12);
-                ylabel('Head Level (ft)', 'FontSize', 12);
-                legend('show', 'Location', 'best', 'FontSize', 10);
-                
-                % Calculate strain (integrate displacement rate) - same as Figure 103
-                if isfield(das_data, 'time_array') && isfield(das_data, 'smoothed_data')
-                    % Find integration start point (10 min before analysis window)
-                    integration_reference_time = analysis_start - minutes(10);
-                    integration_start_idx = find(das_data.time_array >= integration_reference_time, 1, 'first');
-                    if isempty(integration_start_idx)
-                        integration_start_idx = 1;
-                    end
-                    
-                    % Integrate using cumtrapz (same as Figure 103)
-                    channel_idx = das_data.pumping_zone.channel_idx;
-                    subdata1Hz = das_data.smoothed_data(integration_start_idx:end, channel_idx);
-                    intdata = cumtrapz(subdata1Hz, 1);
-                    
-                    % Detrend with quadratic (same as Figure 103)
-                    dintdata = detrend(intdata, 2);
-                    
-                    % Scale and get time array
-                    strain = dintdata / 10;  % Divide by 10 (same as Figure 103)
-                    strain_time = das_data.time_array(integration_start_idx:end);
-                    
-                    % Extract only analysis window
-                    analysis_mask = strain_time >= analysis_start & strain_time <= analysis_end;
-                    strain_analysis = strain(analysis_mask);
-                    strain_time_analysis = strain_time(analysis_mask);
-                    
-                    yyaxis right;
-                    plot(strain_time_analysis, strain_analysis, 'Color', [0 0 0], 'LineStyle', '-', 'LineWidth', 2.5, 'DisplayName', 'DAS Strain (shifted +20s)');
-                    ylabel('Strain (nm/m)', 'FontSize', 12);
-                    
-                    % Apply line chart Y-axis bounds
-                    apply_line_chart_bounds(config, test_label, 'strain');
-                end
-            end
-        end
-    end
-    title(sprintf('Monitoring Wells - Representative Channel Strain (%.0f ft) - %s', das_data.pumping_zone.channel_depth_ft, upper(test_label)), 'FontSize', 14);
-    grid on;
-    set(gca, 'FontSize', 11);
-    
-    if plot_results.save_enabled
-        filename = sprintf('test_%s_strain_vs_head.png', test_label);
-        filepath = fullfile(save_dir, filename);
-        saveas(gcf, filepath);
-        plot_results.figures_created{end+1} = filename;
-        chart_logger('  Saved: %s', filename);
-    end
+        %     % Filter to only z4 and z5
+    %         monitoring_zones = intersect({'z4', 'z5'}, zone_names);
+    %         
+    %         if ~isempty(monitoring_zones)
+    %             % Plot multiple monitoring zones
+    %             yyaxis left;
+    %             hold on;
+    %             % Define consistent colors for zones
+    %             zone_colors = containers.Map({'z2', 'z3', 'z4', 'z5'}, ...
+    %                 {[0.8500 0.3250 0.0980], [0.9290 0.6940 0.1250], [0.4940 0.1840 0.5560], [0.4660 0.6740 0.1880]});
+    %             
+    %             for z_idx = 1:length(monitoring_zones)
+    %                 zone_name = monitoring_zones{z_idx};
+    %                 zone_data = head_data.zones.(zone_name);
+    %                 if isfield(zone_data, 'recovery_data') && ~isempty(zone_data.recovery_data)
+    %                     if zone_colors.isKey(zone_name)
+    %                         zone_color = zone_colors(zone_name);
+    %                     else
+    %                         zone_color = [0 0 0];
+    %                     end
+    %                     plot(zone_data.recovery_data.Date, zone_data.recovery_data.Drawdownft, ...
+    %                         'Color', zone_color, 'LineStyle', '-', 'LineWidth', 2.5, ...
+    %                         'DisplayName', sprintf('Head %s', zone_name));
+    %                 end
+    %             end
+    %             hold off;
+    %             xlim([analysis_start analysis_end]);
+    %             xlabel('Date Time UTC', 'FontSize', 12);
+    %             ylabel('Head Level (ft)', 'FontSize', 12);
+    %             legend('show', 'Location', 'best', 'FontSize', 10);
+    %             
+    %             % Calculate strain (integrate displacement rate) - same as Figure 103
+    %             if isfield(das_data, 'time_array') && isfield(das_data, 'smoothed_data')
+    %                 % Find integration start point (10 min before analysis window)
+    %                 integration_reference_time = analysis_start - minutes(10);
+    %                 integration_start_idx = find(das_data.time_array >= integration_reference_time, 1, 'first');
+    %                 if isempty(integration_start_idx)
+    %                     integration_start_idx = 1;
+    %                 end
+    %                 
+    %                 % Integrate using cumtrapz (same as Figure 103)
+    %                 channel_idx = das_data.pumping_zone.channel_idx;
+    %                 subdata1Hz = das_data.smoothed_data(integration_start_idx:end, channel_idx);
+    %                 intdata = cumtrapz(subdata1Hz, 1);
+    %                 
+    %                 % Detrend with quadratic (same as Figure 103)
+    %                 dintdata = detrend(intdata, 2);
+    %                 
+    %                 % Scale and get time array
+    %                 strain = dintdata / 10;  % Divide by 10 (same as Figure 103)
+    %                 strain_time = das_data.time_array(integration_start_idx:end);
+    %                 
+    %                 % Extract only analysis window
+    %                 analysis_mask = strain_time >= analysis_start & strain_time <= analysis_end;
+    %                 strain_analysis = strain(analysis_mask);
+    %                 strain_time_analysis = strain_time(analysis_mask);
+    %                 
+    %                 yyaxis right;
+    %                 plot(strain_time_analysis, strain_analysis, 'Color', [0 0 0], 'LineStyle', '-', 'LineWidth', 2.5, 'DisplayName', 'DAS Strain (shifted +20s)');
+    %                 ylabel('Strain (nm/m)', 'FontSize', 12);
+    %                 
+    %                 % Apply line chart Y-axis bounds
+    %                 apply_line_chart_bounds(config, test_label, 'strain');
+    %             end
+    %         end
+    %     end
+    % end
+    % title(sprintf('Monitoring Wells - Representative Channel Strain (%.0f ft) - %s', das_data.pumping_zone.channel_depth_ft, upper(test_label)), 'FontSize', 14);
+    % grid on;
+    % set(gca, 'FontSize', 11);
+    % 
+    % if plot_results.save_enabled
+    %     filename = sprintf('test_%s_strain_vs_head.png', test_label);
+    %     filepath = fullfile(save_dir, filename);
+    %     saveas(gcf, filepath);
+    %     plot_results.figures_created{end+1} = filename;
+    %     chart_logger('  Saved: %s', filename);
+    % end
     
     % Store figure handles
     if ~isfield(plot_results, 'figures')
@@ -999,7 +1020,7 @@ for i = 1:length(test_labels)
     plot_results.figures.(test_label).raw_data = fig1_num;
     plot_results.figures.(test_label).displacement_rate = fig2_num;
     plot_results.figures.(test_label).strain = fig3_num;
-    plot_results.figures.(test_label).simple_fft = fig4_num;
+    % plot_results.figures.(test_label).simple_fft = fig4_num;  % Figure 4 disabled
 end
 
 %% Summary
