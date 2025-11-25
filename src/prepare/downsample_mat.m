@@ -68,33 +68,42 @@ try
         end
         
         try
-            % Use MATLAB's decimate() function (matches paper method)
-            % Paper: "we down-sampled the 1,000 Hz sampling rate to 100 Hz using 
-            % the Matlab 'decimate' command which applies a lowpass Chebyshev Type I 
-            % infinite impulse response (IIR) anti-aliasing filter of order 8"
-            % 
-            % We're going from 100 Hz to 1 Hz, so use decimate() like the paper
-            % decimate() applies anti-aliasing filter (reduces amplitude) then downsamples
-            % The filter naturally reduces amplitude - this is expected behavior
-            % No additional division needed - decimate() handles the decimation correctly
+            % Use MATLAB's resample() function (anti-aliasing with better amplitude preservation)
+            % resample() uses a Kaiser window FIR filter which:
+            % 1. Prevents aliasing artifacts (no vertical striping)
+            % 2. Preserves amplitude better than decimate()'s Chebyshev IIR filter
+            % This should match the advisor's method: smooth transitions + correct amplitude
             
-            decimated = decimate(channel_data, decimation_factor);
+            % Convert to double for resample() (works better with double precision)
+            channel_data_double = double(channel_data);
             
-            % Ensure output length matches (decimate may differ slightly)
-            if length(decimated) > output_length
-                downsampled_data(:, n) = decimated(1:output_length);
-            elseif length(decimated) < output_length
+            % Resample: resample(data, new_rate, old_rate)
+            % We want 1 Hz from 100 Hz, so new_rate=1, old_rate=100
+            % But we're decimating by decimation_factor, so: new_rate=1, old_rate=decimation_factor
+            resampled_channel = resample(channel_data_double, 1, decimation_factor);
+            
+            % Ensure output length matches
+            if length(resampled_channel) > output_length
+                downsampled_data(:, n) = resampled_channel(1:output_length);
+            elseif length(resampled_channel) < output_length
                 % Pad with last value if needed
-                downsampled_data(:, n) = [decimated; repmat(decimated(end), output_length - length(decimated), 1)];
+                downsampled_data(:, n) = [resampled_channel; repmat(resampled_channel(end), output_length - length(resampled_channel), 1)];
             else
-                downsampled_data(:, n) = decimated;
+                downsampled_data(:, n) = resampled_channel;
             end
             
         catch ME
-            % Fallback: try direct downsampling if decimate() fails
-            warning('decimate() failed for channel %d, using simple downsample: %s', n, ME.message);
+            % Fallback: try decimate() if resample() fails
+            warning('resample() failed for channel %d, trying decimate(): %s', n, ME.message);
             try
-                downsampled_data(:, n) = downsample(channel_data, decimation_factor);
+                decimated = decimate(channel_data, decimation_factor);
+                if length(decimated) > output_length
+                    downsampled_data(:, n) = decimated(1:output_length);
+                elseif length(decimated) < output_length
+                    downsampled_data(:, n) = [decimated; repmat(decimated(end), output_length - length(decimated), 1)];
+                else
+                    downsampled_data(:, n) = decimated;
+                end
             catch ME2
                 warning('Decimation failed for channel %d: %s. Filling with NaN.', n, ME2.message);
                 downsampled_data(:, n) = NaN(output_length, 1);

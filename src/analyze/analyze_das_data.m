@@ -356,6 +356,7 @@ for i = 1:length(test_labels)
     % NO CORRECTION FACTOR NEEDED: Using downsample() (no anti-aliasing filter)
     % downsample() preserves amplitude by taking every Nth sample without filtering
     % This matches the advisor's method and gives correct e^-10 strain rates
+    % Amplitude is preserved, so plots will match advisor's with proper blue/red colors
     das_results.(test_label).smoothed_data = smoothed_data;
     % Store smoothing method info for verification
     if isfield(config, 'smoothing_method')
