@@ -33,7 +33,8 @@ if ~isfield(das_results, test_name) || ~isfield(das_results.(test_name), 'linear
     % Run linear regression
     lr_config = struct();
     lr_config.zone = zone;
-    lr_config.depth_range_ft = [279.5, 280.5];
+    % Use middle of screened zone: 260-310 ft -> center at 285 ft
+    lr_config.depth_range_ft = [284.5, 285.5];  % Center of 260-310 ft screened zone
     lr_config.depth_averaging_method = 'representative';
     lr_config.use_amplitude = true;
     lr_config.use_displacement_rate = false;  % Use strain rate

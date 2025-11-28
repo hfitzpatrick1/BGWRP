@@ -561,8 +561,20 @@ if use_amplitude
     fprintf('    Strain rate: %.4e 1/s\n', amplitude_strain);
     fprintf('    Head rate: %.4e m/s\n', amplitude_head);
     
+    % Convert to advisor's units for comparison
+    displacement_amp = amplitude_strain * (gauge_length_m * 1e9);  % nm/s
+    head_amp_ft_per_min = (amplitude_head / 0.3048) * 60;  % ft/min
+    fprintf('\n  For comparison with advisor:\n');
+    fprintf('    Displacement amplitude: %.2f nm/s (advisor: 1.3 nm/s)\n', displacement_amp);
+    fprintf('    Head rate amplitude: %.4f ft/min (advisor: 0.09 ft/min)\n', head_amp_ft_per_min);
+    fprintf('    Strain rate amplitude: %.4e 1/s (advisor: 1.3e-10 1/s)\n', amplitude_strain);
+    
     % Slope = amplitude ratio
     slope = amplitude_strain / amplitude_head;
+    
+    fprintf('\n  Your calculated slope: %.4e (1/s)/(m/s)\n', slope);
+    fprintf('  Advisor''s slope: 2.8434e-07 (1/s)/(m/s)\n');
+    fprintf('  Difference: %.2fx\n', 2.8434e-07 / slope);
     intercept = min_strain;  % Use min as intercept
     baseline_strain = min_strain;  % For compatibility
     baseline_head = min_head;
@@ -652,6 +664,15 @@ results.test_name = test_name;
 results.zone = config.zone;
 results.n_points = length(strain_clean);
 results.use_displacement_rate = config.use_displacement_rate;
+
+% Store amplitude values for comparison
+if use_amplitude
+    results.displacement_amplitude_nm_per_s = displacement_amp;
+    results.head_rate_amplitude_ft_per_min = head_amp_ft_per_min;
+    results.strain_rate_amplitude = amplitude_strain;
+    results.advisor_slope = 2.8434e-07;
+    results.slope_difference_factor = 2.8434e-07 / slope;
+end
 
 %% PLOTTING
 if config.show_plots

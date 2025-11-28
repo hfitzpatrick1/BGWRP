@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- PM-07 (5-zone nested monitoring well) and PT-01c (extraction) schematic
      PM-07 construction:
-       Zone 1 (deepest): 0-645 ft casing, 645-665 ft screen (DAS fiber strapped to casing)
-       Zone 2: 0-485 ft casing, 485-505 ft screen
-       Zone 3: 0-420 ft casing, 420-440 ft screen
-       Zone 4: 0-360 ft casing, 360-380 ft screen
-       Zone 5 (shallowest): 0-290 ft casing, 290-310 ft screen
-     Scale: 1.2 px/ft vertical
+       Zone 1 (deepest): 0-197 m casing, 197-203 m screen (DAS fiber strapped to casing)
+       Zone 2: 0-148 m casing, 148-154 m screen
+       Zone 3: 0-128 m casing, 128-134 m screen
+       Zone 4: 0-110 m casing, 110-116 m screen
+       Zone 5 (shallowest): 0-88 m casing, 88-94 m screen
+     Scale: 4 px/m vertical
      Edit freely in any SVG editor. -->
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 2200 1600" width="2200" height="1600">
   <defs>
@@ -46,11 +46,11 @@
   <rect x="0" y="0" width="2200" height="110" fill="#4f7bd6"/>
   <text x="40" y="52" fill="#ffffff" font-size="44" font-family="Segoe UI, Roboto, Helvetica, Arial, sans-serif" font-weight="700">Distributed Fiber Optic Sensing applied to Aquifer Pump Test</text>
 
-   <!-- Depth axis and grid (0–805 ft bgs) -->
+   <!-- Depth axis and grid (0–245 m bgs) -->
    <g id="grid" transform="translate(0,110)" font-family="Segoe UI, Roboto, Helvetica, Arial, sans-serif">
      <rect x="0" y="0" width="2200" height="840" fill="#ffffff"/>
      <g stroke="#d1d5db" stroke-dasharray="4 4" opacity="0.6">
-       <!-- 50 ft spacing: 60 px per 50 ft = 1.2 px/ft -->
+       <!-- 15 m spacing: 60 px per 15 m = 4 px/m -->
        <line x1="20" y1="0" x2="2180" y2="0"/>
        <line x1="20" y1="60" x2="2180" y2="60"/>
        <line x1="20" y1="120" x2="2180" y2="120"/>
@@ -69,139 +69,139 @@
      </g>
      <g id="depth-axis" transform="translate(20,0)" fill="#374151" font-size="15" font-weight="600">
        <rect x="-6" y="0" width="6" height="840" fill="#000000"/>
-       <text x="16" y="15">0 ft</text>
-       <text x="16" y="75">50 ft</text>
-       <text x="16" y="130">100 ft</text>
-       <text x="16" y="190">150 ft</text>
-       <text x="16" y="250">200 ft</text>
-       <text x="16" y="310">250 ft</text>
-       <text x="16" y="370">300 ft</text>
-       <text x="16" y="430">350 ft</text>
-       <text x="16" y="490">400 ft</text>
-       <text x="16" y="550">450 ft</text>
-       <text x="16" y="610">500 ft</text>
-       <text x="16" y="670">550 ft</text>
-       <text x="16" y="730">600 ft</text>
-       <text x="16" y="790">650 ft</text>
-       <text x="16" y="830">700 ft</text>
+       <text x="16" y="15">0 m</text>
+       <text x="16" y="75">15 m</text>
+       <text x="16" y="130">30 m</text>
+       <text x="16" y="190">45 m</text>
+       <text x="16" y="250">60 m</text>
+       <text x="16" y="310">75 m</text>
+       <text x="16" y="370">90 m</text>
+       <text x="16" y="430">105 m</text>
+       <text x="16" y="490">120 m</text>
+       <text x="16" y="550">135 m</text>
+       <text x="16" y="610">150 m</text>
+       <text x="16" y="670">165 m</text>
+       <text x="16" y="730">180 m</text>
+       <text x="16" y="790">195 m</text>
+       <text x="16" y="830">210 m</text>
      </g>
    </g>
 
-  <!-- Geological sequences (1.2 px/ft scale) -->
+  <!-- Geological sequences (4 px/m scale) -->
   <g id="formations" transform="translate(0,110)" font-family="Segoe UI, Roboto, Helvetica, Arial, sans-serif" font-size="20" font-weight="600">
-    <!-- Bellflower Aquiclude: 0-170 ft = 0-204 px -->
-    <rect x="120" y="0" width="2060" height="204" fill="url(#bellflower)"/>
-    <!-- Gage-Gardena Aquifer: 170-300 ft = 204-360 px -->
-    <rect x="120" y="204" width="2060" height="156" fill="url(#gage)"/>
-    <!-- Lynwood/Silverado Aquifer: 300-460 ft = 360-552 px -->
-    <rect x="120" y="360" width="2060" height="192" fill="url(#lynwood)"/>
-    <!-- Lynwood/Silverado Brackish: 460-565 ft = 552-678 px -->
-    <rect x="120" y="552" width="2060" height="126" fill="url(#brackish)"/>
-     <!-- Lower San Pedro Fm.: 565-700 ft = 678-840 px -->
-     <rect x="120" y="678" width="2060" height="162" fill="url(#lsp)"/>
+    <!-- Bellflower Aquiclude: 0-52 m = 0-208 px -->
+    <rect x="120" y="0" width="2060" height="208" fill="url(#bellflower)"/>
+    <!-- Gage-Gardena Aquifer: 52-91 m = 208-364 px -->
+    <rect x="120" y="208" width="2060" height="156" fill="url(#gage)"/>
+    <!-- Lynwood/Silverado Aquifer: 91-140 m = 364-560 px -->
+    <rect x="120" y="364" width="2060" height="196" fill="url(#lynwood)"/>
+    <!-- Lynwood/Silverado Brackish: 140-172 m = 560-688 px -->
+    <rect x="120" y="560" width="2060" height="128" fill="url(#brackish)"/>
+     <!-- Lower San Pedro Fm.: 172-213 m = 688-852 px -->
+     <rect x="120" y="688" width="2060" height="164" fill="url(#lsp)"/>
 
      <g fill="#000000" font-size="28" font-weight="700" text-anchor="start">
-      <text x="1750" y="102">Bellflower Aquiclude</text>
-      <text x="1750" y="282">Gage-Gardena Aquifer</text>
-      <text x="1750" y="456">Lynwood/Silverado Aquifer</text>
-      <text x="1750" y="615" fill="#000000">Lynwood/Silverado Brackish</text>
-      <text x="1750" y="759" fill="#000000">Upper Pico Formation</text>
+      <text x="1750" y="104">Bellflower Aquiclude</text>
+      <text x="1750" y="286">Gage-Gardena Aquifer</text>
+      <text x="1750" y="462">Lynwood/Silverado Aquifer</text>
+      <text x="1750" y="624" fill="#000000">Lynwood/Silverado Brackish</text>
+      <text x="1750" y="770" fill="#000000">Upper Pico Formation</text>
      </g>
   </g>
 
-  <!-- PM-07 nested well (5 zones) - scale 1.2 px/ft -->
+  <!-- PM-07 nested well (5 zones) - scale 4 px/m -->
   <g id="PM-07" transform="translate(400,110)" font-family="Segoe UI, Roboto, Helvetica, Arial, sans-serif">
     <text x="-40" y="-20" font-size="26" font-weight="700" fill="#ffffff">PM-07</text>
     
     <!-- Borehole envelope -->
     <ellipse cx="0" cy="400" rx="90" ry="400" fill="#e0e0e0" opacity="0.4"/>
     
-     <!-- Zone 5 (shallowest): 0-290 casing, 290-310 screen - LEFT of Zone 3 -->
+     <!-- Zone 5 (shallowest): 0-88 m casing, 88-94 m screen - LEFT of Zone 3 -->
      <g id="zone5">
-       <rect x="-64" y="0" width="16" height="348" fill="#8b9aa6" stroke="#4a5661" stroke-width="1.5"/>
-       <rect x="-64" y="348" width="16" height="24" fill="url(#screen-hatch)" stroke="#4a5661" stroke-width="1.5"/>
+       <rect x="-64" y="0" width="16" height="352" fill="#8b9aa6" stroke="#4a5661" stroke-width="1.5"/>
+       <rect x="-64" y="352" width="16" height="24" fill="url(#screen-hatch)" stroke="#4a5661" stroke-width="1.5"/>
        <text x="-56" y="-8" font-size="14" font-weight="700" fill="#ffffff" text-anchor="middle">Z5</text>
-       <text x="-154" y="360" font-size="18" font-weight="700" fill="#111827">290-310'</text>
+       <text x="-154" y="364" font-size="18" font-weight="700" fill="#111827">88-94 m</text>
      </g>
      
-     <!-- Zone 3: 0-420 casing, 420-440 screen - LEFT of Zone 1 -->
+     <!-- Zone 3: 0-128 m casing, 128-134 m screen - LEFT of Zone 1 -->
      <g id="zone3">
-       <rect x="-32" y="0" width="16" height="504" fill="#8b9aa6" stroke="#4a5661" stroke-width="1.5"/>
-       <rect x="-32" y="504" width="16" height="24" fill="url(#screen-hatch)" stroke="#4a5661" stroke-width="1.5"/>
+       <rect x="-32" y="0" width="16" height="512" fill="#8b9aa6" stroke="#4a5661" stroke-width="1.5"/>
+       <rect x="-32" y="512" width="16" height="24" fill="url(#screen-hatch)" stroke="#4a5661" stroke-width="1.5"/>
        <text x="-24" y="-8" font-size="14" font-weight="700" fill="#ffffff" text-anchor="middle">Z3</text>
-       <text x="-122" y="516" font-size="18" font-weight="700" fill="#111827">420-440'</text>
+       <text x="-122" y="524" font-size="18" font-weight="700" fill="#111827">128-134 m</text>
      </g>
      
-     <!-- Zone 1 (deepest): 0-645 casing, 645-665 screen + DAS fiber - CENTER -->
+     <!-- Zone 1 (deepest): 0-197 m casing, 197-203 m screen + DAS fiber - CENTER -->
      <g id="zone1">
-       <rect x="0" y="0" width="16" height="774" fill="#8b9aa6" stroke="#111827" stroke-width="2.5"/>
-       <rect x="0" y="774" width="16" height="24" fill="url(#screen-hatch)" stroke="#111827" stroke-width="2.5"/>
+       <rect x="0" y="0" width="16" height="788" fill="#8b9aa6" stroke="#111827" stroke-width="2.5"/>
+       <rect x="0" y="788" width="16" height="24" fill="url(#screen-hatch)" stroke="#111827" stroke-width="2.5"/>
        <!-- Fiber strapped to outside of Zone 1 casing -->
-       <rect x="17" y="0" width="5" height="798" fill="#ff2c55"/>
+       <rect x="17" y="0" width="5" height="812" fill="#ff2c55"/>
        <text x="8" y="-8" font-size="14" font-weight="700" fill="#ffffff" text-anchor="middle">Z1</text>
-       <text x="-90" y="786" font-size="18" font-weight="700" fill="#111827">645-665'</text>
+       <text x="-90" y="800" font-size="18" font-weight="700" fill="#111827">197-203 m</text>
      </g>
      
-     <!-- Zone 2: 0-485 casing, 485-505 screen - RIGHT of Zone 1 -->
+     <!-- Zone 2: 0-148 m casing, 148-154 m screen - RIGHT of Zone 1 -->
      <g id="zone2">
-       <rect x="32" y="0" width="16" height="582" fill="#8b9aa6" stroke="#4a5661" stroke-width="1.5"/>
-       <rect x="32" y="582" width="16" height="24" fill="url(#screen-hatch)" stroke="#4a5661" stroke-width="1.5"/>
+       <rect x="32" y="0" width="16" height="592" fill="#8b9aa6" stroke="#4a5661" stroke-width="1.5"/>
+       <rect x="32" y="592" width="16" height="24" fill="url(#screen-hatch)" stroke="#4a5661" stroke-width="1.5"/>
        <text x="40" y="-8" font-size="14" font-weight="700" fill="#ffffff" text-anchor="middle">Z2</text>
-       <text x="74" y="594" font-size="18" font-weight="700" fill="#111827">485-505'</text>
+       <text x="74" y="604" font-size="18" font-weight="700" fill="#111827">148-154 m</text>
      </g>
      
-     <!-- Zone 4: 0-360 casing, 360-380 screen - RIGHT of Zone 2 -->
+     <!-- Zone 4: 0-110 m casing, 110-116 m screen - RIGHT of Zone 2 -->
      <g id="zone4">
-       <rect x="64" y="0" width="16" height="432" fill="#8b9aa6" stroke="#4a5661" stroke-width="1.5"/>
-       <rect x="64" y="432" width="16" height="24" fill="url(#screen-hatch)" stroke="#4a5661" stroke-width="1.5"/>
+       <rect x="64" y="0" width="16" height="440" fill="#8b9aa6" stroke="#4a5661" stroke-width="1.5"/>
+       <rect x="64" y="440" width="16" height="24" fill="url(#screen-hatch)" stroke="#4a5661" stroke-width="1.5"/>
        <text x="72" y="-8" font-size="14" font-weight="700" fill="#ffffff" text-anchor="middle">Z4</text>
-       <text x="106" y="444" font-size="18" font-weight="700" fill="#111827">360-380'</text>
+       <text x="106" y="452" font-size="18" font-weight="700" fill="#111827">110-116 m</text>
      </g>
   </g>
 
-  <!-- PT-01c extraction well (total depth 310 ft, screen 260-310 ft) -->
-  <!-- PM-07 at x=400, PT-01c is 177 ft away -->
+  <!-- PT-01c extraction well (total depth 94 m, screen 79-94 m) -->
+  <!-- PM-07 at x=400, PT-01c is 54 m away -->
   <g id="PT-01c" transform="translate(1108,110)" font-family="Segoe UI, Roboto, Helvetica, Arial, sans-serif">
     <text x="-30" y="-20" font-size="26" font-weight="700" fill="#ffffff">PT-01c</text>
-    <!-- Casing (0-260 ft = 0-312 px) -->
-    <rect x="-50" y="0" width="100" height="312" fill="#6b7280" stroke="#374151" stroke-width="2"/>
-    <!-- Screen interval (260-310 ft = 312-372 px) -->
-    <rect x="-50" y="312" width="100" height="60" fill="url(#screen-hatch)" stroke="#4a5661" stroke-width="2"/>
+    <!-- Casing (0-79 m = 0-316 px) -->
+    <rect x="-50" y="0" width="100" height="316" fill="#6b7280" stroke="#374151" stroke-width="2"/>
+    <!-- Screen interval (79-94 m = 316-376 px) -->
+    <rect x="-50" y="316" width="100" height="60" fill="url(#screen-hatch)" stroke="#4a5661" stroke-width="2"/>
     <!-- Screen depth label -->
-    <text x="60" y="350" font-size="18" font-weight="700" fill="#111827">260-310'</text>
+    <text x="60" y="354" font-size="18" font-weight="700" fill="#111827">79-94 m</text>
     <!-- Extraction arrow pointing up inside well -->
-    <path d="M0,360 L0,250" stroke="#111827" stroke-width="4" marker-end="url(#arrow)"/>
-    <text x="0" y="230" font-size="18" fill="#111827" font-weight="900" text-anchor="middle">Extraction</text>
+    <path d="M0,376 L0,266" stroke="#111827" stroke-width="4" marker-end="url(#arrow)"/>
+    <text x="0" y="246" font-size="18" fill="#111827" font-weight="900" text-anchor="middle">Extraction</text>
   </g>
 
-  <!-- PT-01a extraction well (total depth 510 ft, screen 450-510 ft) -->
-  <!-- 60 ft from PT-01c (237 ft from PM-07) -->
+  <!-- PT-01a extraction well (total depth 155 m, screen 137-155 m) -->
+  <!-- 18 m from PT-01c (72 m from PM-07) -->
   <g id="PT-01a" transform="translate(1348,110)" font-family="Segoe UI, Roboto, Helvetica, Arial, sans-serif">
     <text x="-30" y="-20" font-size="26" font-weight="700" fill="#ffffff">PT-01a</text>
-    <!-- Casing (0-450 ft = 0-540 px) -->
-    <rect x="-50" y="0" width="100" height="540" fill="#6b7280" stroke="#374151" stroke-width="2"/>
-    <!-- Screen interval (450-510 ft = 540-612 px) -->
-    <rect x="-50" y="540" width="100" height="72" fill="url(#screen-hatch)" stroke="#4a5661" stroke-width="2"/>
+    <!-- Casing (0-137 m = 0-548 px) -->
+    <rect x="-50" y="0" width="100" height="548" fill="#6b7280" stroke="#374151" stroke-width="2"/>
+    <!-- Screen interval (137-155 m = 548-620 px) -->
+    <rect x="-50" y="548" width="100" height="72" fill="url(#screen-hatch)" stroke="#4a5661" stroke-width="2"/>
     <!-- Screen depth label -->
-    <text x="60" y="578" font-size="18" font-weight="700" fill="#111827">450-510'</text>
+    <text x="60" y="586" font-size="18" font-weight="700" fill="#111827">137-155 m</text>
     <!-- Extraction arrow pointing up inside well -->
-    <path d="M0,600 L0,490" stroke="#111827" stroke-width="4" marker-end="url(#arrow)"/>
-    <text x="0" y="470" font-size="18" fill="#111827" font-weight="900" text-anchor="middle">Extraction</text>
+    <path d="M0,620 L0,510" stroke="#111827" stroke-width="4" marker-end="url(#arrow)"/>
+    <text x="0" y="490" font-size="18" fill="#111827" font-weight="900" text-anchor="middle">Extraction</text>
   </g>
 
-  <!-- PT-01b extraction well (total depth 400 ft, screen 350-400 ft) -->
-  <!-- 60 ft from PT-01a (297 ft from PM-07) -->
+  <!-- PT-01b extraction well (total depth 122 m, screen 107-122 m) -->
+  <!-- 18 m from PT-01a (90 m from PM-07) -->
   <g id="PT-01b" transform="translate(1588,110)" font-family="Segoe UI, Roboto, Helvetica, Arial, sans-serif">
     <text x="-30" y="-20" font-size="26" font-weight="700" fill="#ffffff">PT-01b</text>
-    <!-- Casing (0-350 ft = 0-420 px) -->
-    <rect x="-50" y="0" width="100" height="420" fill="#6b7280" stroke="#374151" stroke-width="2"/>
-    <!-- Screen interval (350-400 ft = 420-480 px) -->
-    <rect x="-50" y="420" width="100" height="60" fill="url(#screen-hatch)" stroke="#4a5661" stroke-width="2"/>
+    <!-- Casing (0-107 m = 0-428 px) -->
+    <rect x="-50" y="0" width="100" height="428" fill="#6b7280" stroke="#374151" stroke-width="2"/>
+    <!-- Screen interval (107-122 m = 428-488 px) -->
+    <rect x="-50" y="428" width="100" height="60" fill="url(#screen-hatch)" stroke="#4a5661" stroke-width="2"/>
     <!-- Screen depth label -->
-    <text x="60" y="458" font-size="18" font-weight="700" fill="#111827">350-400'</text>
+    <text x="60" y="466" font-size="18" font-weight="700" fill="#111827">107-122 m</text>
     <!-- Extraction arrow pointing up inside well -->
-    <path d="M0,468 L0,358" stroke="#111827" stroke-width="4" marker-end="url(#arrow)"/>
-    <text x="0" y="338" font-size="18" fill="#111827" font-weight="900" text-anchor="middle">Extraction</text>
+    <path d="M0,488 L0,378" stroke="#111827" stroke-width="4" marker-end="url(#arrow)"/>
+    <text x="0" y="358" font-size="18" fill="#111827" font-weight="900" text-anchor="middle">Extraction</text>
   </g>
 
   <!-- Distance annotation between PM-07 and PT-01c -->
@@ -212,13 +212,13 @@
     <line x1="400" y1="70" x2="400" y2="90" stroke="#111827" stroke-width="2.5"/>
     <line x1="1108" y1="70" x2="1108" y2="90" stroke="#111827" stroke-width="2.5"/>
     <!-- Distance label -->
-    <text x="754" y="70" font-size="20" font-weight="800" fill="#111827" text-anchor="middle">177 ft</text>
+    <text x="754" y="70" font-size="20" font-weight="800" fill="#111827" text-anchor="middle">54 m</text>
   </g>
 
   <!-- Flow towards extraction wells during pumping -->
   <g id="flow" transform="translate(0,110)">
-    <path d="M550,360 L1050,360" stroke="#1e40af" stroke-width="4" stroke-dasharray="8 6" marker-end="url(#arrow)"/>
-    <text x="800" y="395" font-size="22" font-family="Segoe UI, Roboto, Helvetica, Arial, sans-serif" fill="#1e40af" font-weight="800" text-anchor="middle">Groundwater flow to extraction wells</text>
+    <path d="M550,286 L1050,286" stroke="#1e40af" stroke-width="4" stroke-dasharray="8 6" marker-end="url(#arrow)"/>
+    <text x="800" y="321" font-size="22" font-family="Segoe UI, Roboto, Helvetica, Arial, sans-serif" fill="#1e40af" font-weight="800" text-anchor="middle">Groundwater flow to extraction wells</text>
   </g>
 
   <!-- Callouts for temperature and strain -->
@@ -281,6 +281,6 @@
    </g>
 
    <!-- Footer -->
-   <text x="60" y="1390" fill="#6b7280" font-size="14" font-family="Segoe UI, Roboto, Helvetica, Arial, sans-serif">Scale: 1.2 px/ft vertical. PT-01c is 177 ft from PM-07; extraction wells spaced 60 ft apart. Export to PNG/PDF for publication.</text>
+   <text x="60" y="1390" fill="#6b7280" font-size="14" font-family="Segoe UI, Roboto, Helvetica, Arial, sans-serif">Scale: 4 px/m vertical. PT-01c is 54 m from PM-07; extraction wells spaced 18 m apart. Export to PNG/PDF for publication.</text>
 </svg>
 
