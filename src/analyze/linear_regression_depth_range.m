@@ -207,12 +207,12 @@ if strain_avg_check < 0
 end
 
 % Apply same smoothing as single channel method
-fprintf('\n=== APPLYING SINGLE CHANNEL SMOOTHING TO STRAIN RATE ===\n');
-fprintf('Applying 5-second moving average to each strain rate channel (matches single channel)...\n');
+fprintf('\n=== APPLYING REDUCED SMOOTHING TO STRAIN RATE ===\n');
+fprintf('Applying 3-second moving average to each strain rate channel (less aggressive)...\n');
 for ch = 1:size(strain_rate_zone, 2)
-    strain_rate_zone(:, ch) = movmean(strain_rate_zone(:, ch), 5, 1, 'omitnan');
+    strain_rate_zone(:, ch) = movmean(strain_rate_zone(:, ch), 3, 1, 'omitnan');
 end
-fprintf('✓ Applied 5-second smoothing to all %d strain rate channels\n', size(strain_rate_zone, 2));
+fprintf('✓ Applied 3-second smoothing to all %d strain rate channels\n', size(strain_rate_zone, 2));
 
 % Average strain rates across the depth range
 strain_smoothed = mean(strain_rate_zone, 2, 'omitnan');  % Average across depths → [time × 1]
@@ -278,23 +278,23 @@ strain_interp = interp1(time_das_overlap, strain_overlap, time_head_overlap, 'li
 % Remove any NaN values
 valid_idx = ~isnan(strain_interp) & ~isnan(head_rate_overlap);
 strain_clean = strain_interp(valid_idx);
-head_rate_clean = head_rate_overlap(valid_idx);  % Use head rate
+drawdown_rate_clean = -head_rate_overlap(valid_idx);  % Convert to drawdown rate (negative head rate)
 time_clean = time_head_overlap(valid_idx);
 
 fprintf('Valid points for regression: %d\n', length(strain_clean));
 
-% Force flip strain rate UP to match drawdown rate spike direction
-fprintf('  Forcing strain rate spike UP to match drawdown rate\n');
-strain_clean = -strain_clean;  % Force flip strain rate so spike points UP
+% Flip strain rate to match drawdown rate direction
+fprintf('  Flipping strain rate to match drawdown rate direction\n');
+strain_clean = -strain_clean;  % Flip strain rate to match drawdown rate
 
-%% LINEAR REGRESSION: Strain Rate vs Head Rate
+%% LINEAR REGRESSION: Strain Rate vs Drawdown Rate
 fprintf('\n=== REGRESSION RESULTS ===\n');
-p_regression = polyfit(head_rate_clean, strain_clean, 1);
+p_regression = polyfit(drawdown_rate_clean, strain_clean, 1);
 slope = p_regression(1);  % (1/s) per (ft/s) - strain rate per head rate
 intercept = p_regression(2);  % 1/s
 
 % Calculate correlation and R^2
-R_matrix = corrcoef(head_rate_clean, strain_clean);
+R_matrix = corrcoef(drawdown_rate_clean, strain_clean);
 R_corr = R_matrix(1,2);
 R_squared = R_corr^2;
 
@@ -303,16 +303,16 @@ R_squared = R_corr^2;
 if slope < 0
     fprintf('  Slope is negative (%.4e), flipping strain rate sign to get positive slope\n', slope);
     strain_clean = -strain_clean;
-    p_regression = polyfit(head_rate_clean, strain_clean, 1);
+    p_regression = polyfit(drawdown_rate_clean, strain_clean, 1);
     slope = p_regression(1);
     intercept = p_regression(2);
-    R_matrix = corrcoef(head_rate_clean, strain_clean);
+    R_matrix = corrcoef(drawdown_rate_clean, strain_clean);
     R_corr = R_matrix(1,2);
     R_squared = R_corr^2;
 end
 
 % Calculate residuals and RMSE
-strain_predicted = polyval(p_regression, head_rate_clean);
+strain_predicted = polyval(p_regression, drawdown_rate_clean);
 residuals = strain_clean - strain_predicted;
 RMSE = sqrt(mean(residuals.^2));
 
@@ -338,8 +338,8 @@ results.R = R_corr;
 results.R_squared = R_squared;
 results.RMSE = RMSE;
 results.strain_rate = strain_clean;
-results.head_rate = head_rate_clean;  % Store head rate, not drawdown rate
-results.drawdown_rate = -head_rate_clean;  % Also store drawdown rate for reference
+results.head_rate = drawdown_rate_clean;  % Store head rate, not drawdown rate
+results.drawdown_rate = -drawdown_rate_clean;  % Also store drawdown rate for reference
 results.time = time_clean;
 results.timing_correction = config.timing_correction_sec;
 results.test_name = test_name;
@@ -354,9 +354,9 @@ if config.show_plots
     
     % Left plot: Scatter with regression line
     subplot(1,2,1);
-    scatter(head_rate_clean, strain_clean, 20, 'b', 'filled', 'MarkerFaceAlpha', 0.6);
+    scatter(drawdown_rate_clean, strain_clean, 20, 'b', 'filled', 'MarkerFaceAlpha', 0.6);
     hold on;
-    head_rate_range = linspace(min(head_rate_clean), max(head_rate_clean), 100);
+    head_rate_range = linspace(min(drawdown_rate_clean), max(drawdown_rate_clean), 100);
     plot(head_rate_range, polyval(p_regression, head_rate_range), 'r-', 'LineWidth', 3);
     hold off;
     xlabel('Drawdown Rate (ft/s)', 'FontSize', 12, 'FontWeight', 'bold');
@@ -379,7 +379,7 @@ if config.show_plots
     strain_scale = 1e-12;  % Strain rate typically in 10^-12 1/s
     
     % Check actual ranges to determine best scaling
-    head_max = max(abs(head_rate_clean));
+    head_max = max(abs(drawdown_rate_clean));
     strain_max = max(abs(strain_clean));
     
     if head_max > 0
@@ -405,7 +405,7 @@ if config.show_plots
     end
     
     yyaxis left;
-    plot(time_clean, head_rate_clean / head_scale, 'Color', [0.4660 0.6740 0.1880], 'LineWidth', 2.5, 'DisplayName', 'Drawdown Rate');
+    plot(time_clean, drawdown_rate_clean / head_scale, 'Color', [0.4660 0.6740 0.1880], 'LineWidth', 2.5, 'DisplayName', 'Drawdown Rate');
     ylabel(sprintf('Drawdown Rate (ft/s) ×10^{%d}', round(log10(head_scale))), 'FontSize', 12, 'FontWeight', 'bold');
     ax = gca;
     ax.YColor = [0.4660 0.6740 0.1880];
@@ -536,8 +536,8 @@ if config.show_plots
     
     yyaxis right;
     % Get head rate for comparison
-    if exist('head_rate_clean', 'var') && exist('time_clean', 'var')
-        head_rate_interp = interp1(time_clean, head_rate_clean, time_comparison, 'linear', 'extrap');
+    if exist('drawdown_rate_clean', 'var') && exist('time_clean', 'var')
+        head_rate_interp = interp1(time_clean, drawdown_rate_clean, time_comparison, 'linear', 'extrap');
         head_norm = (head_rate_interp - min(head_rate_interp)) / (max(head_rate_interp) - min(head_rate_interp) + eps);
         plot(time_comparison, head_norm, 'g-', 'LineWidth', 2, 'DisplayName', 'Head Rate (norm)');
         ylabel('Normalized Head Rate', 'Color', [0.4660 0.6740 0.1880]);
