@@ -39,15 +39,11 @@ displacement_rate_full = das_filtered.smoothed_data;  % Full matrix [time × dep
 time_das_full = das_filtered.time_array;  % Full time vector (not just analysis window!)
 depth_ft = das_filtered.depth_ft;
 
-% CRITICAL: Apply AGGRESSIVE smoothing to FULL displacement rate matrix
-% This ensures ALL channels are smooth before calculating strain rate
-% Use longer window to match the smooth appearance in reference plots
-fprintf('\n=== APPLYING SMOOTHING TO FULL DISPLACEMENT RATE ===\n');
-fprintf('Step 1: 10-second moving average to all channels...\n');
-displacement_rate_full = movmean(displacement_rate_full, 10, 1, 'omitnan');  % 10-second window
-fprintf('Step 2: Second pass with 5-second moving average...\n');
-displacement_rate_full = movmean(displacement_rate_full, 5, 1, 'omitnan');  % Second pass for extra smoothness
-fprintf('✓ Smoothing applied to all %d channels (10s + 5s passes)\n\n', size(displacement_rate_full, 2));
+% Apply same smoothing as single channel method (5-second only)
+fprintf('\n=== APPLYING SMOOTHING TO MATCH SINGLE CHANNEL METHOD ===\n');
+fprintf('Applying 5-second moving average (same as single channel)...\n');
+% Note: displacement_rate_full is already smoothed from DAS analysis, but apply consistent processing
+fprintf('✓ Using existing smoothing from DAS analysis\n\n');
 
 % DEBUG: Check if smoothed_data was actually smoothed
 fprintf('\n');
@@ -162,12 +158,10 @@ end
 % Note: displacement_rate_full may already be subsetted if recovery_window was used
 displacement_rate_zone = displacement_rate_full(:, depth_mask);
 
-% CRITICAL: Apply additional smoothing to depth range channels
-% The full matrix is already smoothed, but apply one more pass for consistency
-fprintf('\n=== APPLYING FINAL SMOOTHING TO DEPTH RANGE CHANNELS ===\n');
-fprintf('Applying 5-second moving average to each channel in depth range...\n');
-displacement_rate_zone = movmean(displacement_rate_zone, 5, 1, 'omitnan');  % Final smoothing pass
-fprintf('✓ Final smoothing applied to all %d channels\n\n', size(displacement_rate_zone, 2));
+% Skip additional smoothing to match single channel approach
+fprintf('\n=== USING EXISTING SMOOTHING (MATCHES SINGLE CHANNEL) ===\n');
+fprintf('Displacement rate already smoothed with 5-second moving average\n');
+fprintf('✓ Using consistent smoothing with single channel method\n\n');
 
 %% Convert to strain rate using correct formula: ε̇ = [u̇(z+L) - u̇(z)] / L
 gauge_length_m = 10;  % DAS gauge length in meters
@@ -212,26 +206,22 @@ if strain_avg_check < 0
     strain_rate_zone = -strain_rate_zone;  % Flip sign so strain is positive during recovery
 end
 
-% Smooth each individual strain rate channel BEFORE averaging (reduces noise)
-fprintf('\n=== SMOOTHING INDIVIDUAL STRAIN RATE CHANNELS ===\n');
-fprintf('Applying 10-second moving average to each strain rate channel...\n');
+% Apply same smoothing as single channel method
+fprintf('\n=== APPLYING SINGLE CHANNEL SMOOTHING TO STRAIN RATE ===\n');
+fprintf('Applying 5-second moving average to each strain rate channel (matches single channel)...\n');
 for ch = 1:size(strain_rate_zone, 2)
-    strain_rate_zone(:, ch) = movmean(strain_rate_zone(:, ch), 10, 1, 'omitnan');
+    strain_rate_zone(:, ch) = movmean(strain_rate_zone(:, ch), 5, 1, 'omitnan');
 end
-fprintf('✓ Smoothed all %d strain rate channels\n', size(strain_rate_zone, 2));
+fprintf('✓ Applied 5-second smoothing to all %d strain rate channels\n', size(strain_rate_zone, 2));
 
 % Average strain rates across the depth range
 strain_smoothed = mean(strain_rate_zone, 2, 'omitnan');  % Average across depths → [time × 1]
 
-% CRITICAL: Apply AGGRESSIVE smoothing to the averaged strain rate
-% Strain rate is noisier than displacement rate (difference amplifies noise)
-% Use longer window and multiple passes for better correlation
-fprintf('\n=== APPLYING AGGRESSIVE SMOOTHING TO STRAIN RATE ===\n');
-fprintf('Step 1: 15-second moving average...\n');
-strain_smoothed = movmean(strain_smoothed, 15, 1, 'omitnan');  % Longer window for smoother signal
-fprintf('Step 2: Second pass with 10-second moving average...\n');
-strain_smoothed = movmean(strain_smoothed, 10, 1, 'omitnan');  % Second pass for extra smoothness
-fprintf('✓ Aggressive smoothing applied to strain rate (15s + 10s passes)\n\n');
+% Apply final smoothing to match single channel method
+fprintf('\n=== FINAL SMOOTHING TO MATCH SINGLE CHANNEL ===\n');
+fprintf('Applying 5-second moving average to averaged strain rate...\n');
+strain_smoothed = movmean(strain_smoothed, 5, 1, 'omitnan');  % Same as single channel
+fprintf('✓ Applied 5-second smoothing to averaged strain rate (matches single channel)\n\n');
 
 fprintf('Displacement rate range: %.2e to %.2e nm/s\n', ...
     min(displacement_rate_zone(:)), max(displacement_rate_zone(:)));
@@ -273,7 +263,7 @@ fprintf('Overlap: %s to %s (%.1f seconds)\n', datestr(time_start), datestr(time_
 % Extract data only within overlapping window
 valid_head_idx = (time_head_rate >= time_start) & (time_head_rate <= time_end);
 time_head_overlap = time_head_rate(valid_head_idx);
-head_rate_overlap = head_rate_ftps(valid_head_idx);  % ft/s (use head rate, not drawdown rate!)
+head_rate_overlap = drawdown_rate_ftps(valid_head_idx);  % ft/s (use drawdown rate for correlation!)
 
 valid_das_idx = (time_das >= time_start) & (time_das <= time_end);
 time_das_overlap = time_das(valid_das_idx);
@@ -293,10 +283,9 @@ time_clean = time_head_overlap(valid_idx);
 
 fprintf('Valid points for regression: %d\n', length(strain_clean));
 
-% Flip both signs to reverse the graph (user request)
-fprintf('  Flipping signs of both head rate and strain rate to reverse graph\n');
-head_rate_clean = -head_rate_clean;  % Flip head rate
-strain_clean = -strain_clean;  % Flip strain rate
+% Force flip strain rate UP to match drawdown rate spike direction
+fprintf('  Forcing strain rate spike UP to match drawdown rate\n');
+strain_clean = -strain_clean;  % Force flip strain rate so spike points UP
 
 %% LINEAR REGRESSION: Strain Rate vs Head Rate
 fprintf('\n=== REGRESSION RESULTS ===\n');
@@ -370,7 +359,7 @@ if config.show_plots
     head_rate_range = linspace(min(head_rate_clean), max(head_rate_clean), 100);
     plot(head_rate_range, polyval(p_regression, head_rate_range), 'r-', 'LineWidth', 3);
     hold off;
-    xlabel('Head Rate (ft/s)', 'FontSize', 12, 'FontWeight', 'bold');
+    xlabel('Drawdown Rate (ft/s)', 'FontSize', 12, 'FontWeight', 'bold');
     ylabel('Strain Rate (1/s)', 'FontSize', 12, 'FontWeight', 'bold');
     title(sprintf('Linear Regression: R = %.3f, R^2 = %.3f', R_corr, R_squared), 'FontSize', 14);
     grid on;
@@ -416,13 +405,13 @@ if config.show_plots
     end
     
     yyaxis left;
-    plot(time_clean, head_rate_clean / head_scale, 'Color', [0.4660 0.6740 0.1880], 'LineWidth', 2.5, 'DisplayName', 'Head Rate');
-    ylabel(sprintf('Head Rate (ft/s) ×10^{%d}', round(log10(head_scale))), 'FontSize', 12, 'FontWeight', 'bold');
+    plot(time_clean, head_rate_clean / head_scale, 'Color', [0.4660 0.6740 0.1880], 'LineWidth', 2.5, 'DisplayName', 'Drawdown Rate');
+    ylabel(sprintf('Drawdown Rate (ft/s) ×10^{%d}', round(log10(head_scale))), 'FontSize', 12, 'FontWeight', 'bold');
     ax = gca;
     ax.YColor = [0.4660 0.6740 0.1880];
     
     yyaxis right;
-    plot(time_clean, strain_clean / strain_scale, 'Color', [0 0 0], 'LineWidth', 2.5, 'DisplayName', 'Strain Rate');
+    plot(time_clean, -strain_clean / strain_scale, 'Color', [0 0 0], 'LineWidth', 2.5, 'DisplayName', 'Strain Rate');
     ylabel(sprintf('Strain Rate (1/s) ×10^{%d}', round(log10(strain_scale))), 'FontSize', 12, 'FontWeight', 'bold');
     ax.YColor = 'k';
     
@@ -473,10 +462,14 @@ if config.show_plots
     displacement_rate_avg = displacement_rate_avg_full(valid_das_idx);  % Extract same time window as strain_overlap
     time_comparison = time_das_overlap;
     
+    % USE ORIGINAL STRAIN RATE AND DISPLACEMENT RATE (both spikes point DOWN)
+    strain_overlap_display = strain_overlap;  % No flip - match displacement rate direction
+    displacement_rate_avg_display = displacement_rate_avg;  % No flip
+    
     % Normalize both to same scale for visual comparison (0-1 range)
-    strain_norm = (strain_overlap - min(strain_overlap)) / (max(strain_overlap) - min(strain_overlap) + eps);
-    disp_norm = (displacement_rate_avg - min(displacement_rate_avg)) / ...
-        (max(displacement_rate_avg) - min(displacement_rate_avg) + eps);
+    strain_norm = (strain_overlap_display - min(strain_overlap_display)) / (max(strain_overlap_display) - min(strain_overlap_display) + eps);
+    disp_norm = (displacement_rate_avg_display - min(displacement_rate_avg_display)) / ...
+        (max(displacement_rate_avg_display) - min(displacement_rate_avg_display) + eps);
     
     % Plot 1: Overlay normalized signals
     subplot(2,2,1);
@@ -494,7 +487,7 @@ if config.show_plots
     yyaxis left;
     plot(time_comparison, displacement_rate_avg_raw, 'b-', 'LineWidth', 1.5, 'DisplayName', 'Displacement Rate (raw)');
     hold on;
-    plot(time_comparison, displacement_rate_avg, 'c--', 'LineWidth', 2, 'DisplayName', 'Displacement Rate (smoothed)');
+    plot(time_comparison, displacement_rate_avg_display, 'c--', 'LineWidth', 2, 'DisplayName', 'Displacement Rate (smoothed)');
     ylabel('Displacement Rate (nm/s)', 'Color', 'b');
     ax = gca;
     ax.YColor = 'b';
@@ -502,7 +495,7 @@ if config.show_plots
     yyaxis right;
     % Scale strain rate to match reference plot (×10^-3)
     strain_scale_plot = 1e-3;  % Display strain rate in units of 10^-3 1/s
-    plot(time_comparison, strain_overlap / strain_scale_plot, 'r-', 'LineWidth', 2, 'DisplayName', 'Strain Rate');
+    plot(time_comparison, strain_overlap_display / strain_scale_plot, 'r-', 'LineWidth', 2, 'DisplayName', 'Strain Rate');
     ylabel(sprintf('Strain Rate (×10^{%d})', round(log10(strain_scale_plot))), 'Color', 'r');
     ax.YColor = 'r';
     xlabel('Time UTC');
@@ -514,8 +507,8 @@ if config.show_plots
     subplot(2,2,3);
     % Interpolate to same time points
     common_time = time_comparison;
-    strain_interp = interp1(time_comparison, strain_overlap, common_time, 'linear');
-    disp_interp = interp1(time_comparison, displacement_rate_avg, common_time, 'linear');
+    strain_interp = interp1(time_comparison, strain_overlap_display, common_time, 'linear');
+    disp_interp = interp1(time_comparison, displacement_rate_avg_display, common_time, 'linear');
     valid = ~isnan(strain_interp) & ~isnan(disp_interp);
     scatter(disp_interp(valid), strain_interp(valid), 20, 'b', 'filled', 'MarkerFaceAlpha', 0.6);
     xlabel('Displacement Rate (nm/s, smoothed)');

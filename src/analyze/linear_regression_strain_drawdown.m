@@ -64,9 +64,9 @@ head_filtered = head_results.(test_name);
 fprintf('DAS data: %d time points\n', length(das_filtered.analysis_time));
 fprintf('Head data: %d time points\n', length(head_filtered.zones.(config.zone).recovery_data.Date));
 
-%% Get DAS strain rate using correct formula: ε̇(z,t) = [u̇(z+L,t) - u̇(z,t)] / L
-% Equation (2) from DAS theory:
-%   ε̇(z,t) = [u̇(z+L,t) - u̇(z,t)] / L
+%% Get DAS strain rate using single channel method: ε̇(z,t) = u̇(z,t) / L
+% Single channel approximation:
+%   ε̇(z,t) = u̇(z,t) / L
 % where:
 %   ε̇ = strain rate (1/s)
 %   u̇ = displacement rate (nm/s in our data)
@@ -229,8 +229,7 @@ if isfield(das_filtered, 'pumping_zone') && isfield(das_filtered.pumping_zone, '
         else
             % Calculate strain rate using SINGLE CHANNEL method
             fprintf('\n=== CALCULATING STRAIN RATE (Single Channel Method) ===\n');
-            fprintf('  DAS channels already measure strain over gauge length!\n');
-            fprintf('  Using: strain_rate = channel_value / gauge_length\n');
+            fprintf('  Using single channel approximation: strain_rate = displacement_rate / gauge_length\n');
             
             if use_depth_averaging
                 % Average strain rate across multiple channels in depth range
@@ -387,7 +386,7 @@ if isfield(das_filtered, 'pumping_zone') && isfield(das_filtered.pumping_zone, '
                 fprintf('  Gauge length L: %.1f m = %.2e nm\n', gauge_length_m, gauge_length_m * 1e9);
                 fprintf('  Displacement rate u̇(z): %.2e to %.2e nm/s\n', min(displacement_at_z), max(displacement_at_z));
                 fprintf('  Strain rate ε̇ = u̇/L: %.2e to %.2e 1/s\n', min(strain_smoothed), max(strain_smoothed));
-                fprintf('  ✓ Conversion verified: (nm/s) / (10 m) = (nm/s) / (1e10 nm) = 1e-10 / s\n');
+                fprintf('  ✓ Single-channel method (matches amplitude calculation)\n');
             end  % End of use_depth_averaging else block (single channel pair calculation)
         end  % End of use_depth_averaging if-else
     else

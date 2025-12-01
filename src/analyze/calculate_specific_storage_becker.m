@@ -95,8 +95,7 @@ if using_displacement_rate
         conversion_factor = characteristic_length_m * 1e9;  % 1e10
         
         fprintf('  Using default conversion (gauge length): L = %.1f m\n', characteristic_length_m);
-        fprintf('  ⚠ NOTE: This conversion is approximate - displacement rate at single point\n');
-        fprintf('    cannot be directly converted to strain rate without spatial gradient\n');
+        fprintf('  ⚠ NOTE: Using single-channel approximation for strain rate calculation\n');
     end
     
     % Convert: (nm/s) / (ft/s) → (1/s) / (ft/s)
