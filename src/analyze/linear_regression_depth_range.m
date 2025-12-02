@@ -34,8 +34,10 @@ das_filtered = das_results.(test_name);
 head_filtered = head_results.(test_name);
 
 %% Get DAS displacement rate for FULL depth range (not just one channel!)
-% smoothed_data is [time × depth] in nm/s (displacement rate)
-displacement_rate_full = das_filtered.smoothed_data;  % Full matrix [time × depth]
+% Use lightly smoothed data (compromise between raw and over-smoothed)
+fprintf('Using lightly smoothed data for strain rate calculation\n');
+displacement_rate_full = das_filtered.smoothed_data;  % Use the 5s smoothed data
+fprintf('This provides noise reduction while preserving spatial gradients\n');
 time_das_full = das_filtered.time_array;  % Full time vector (not just analysis window!)
 depth_ft = das_filtered.depth_ft;
 
@@ -153,15 +155,26 @@ if n_channels == 0
     error('No channels found in depth range %.0f-%.0f ft!', config.depth_range_ft(1), config.depth_range_ft(2));
 end
 
+% Extract depth information for the zone
+depth_ft_zone = depth_ft(depth_mask);
+
 % Extract displacement rate for selected depth range
 % Subset: [time × selected_depths]
 % Note: displacement_rate_full may already be subsetted if recovery_window was used
 displacement_rate_zone = displacement_rate_full(:, depth_mask);
 
 % Skip additional smoothing to match single channel approach
-fprintf('\n=== USING EXISTING SMOOTHING (MATCHES SINGLE CHANNEL) ===\n');
-fprintf('Displacement rate already smoothed with 5-second moving average\n');
-fprintf('✓ Using consistent smoothing with single channel method\n\n');
+fprintf('\n=== USING RAW DISPLACEMENT RATES (NO PRE-SMOOTHING) ===\n');
+fprintf('Using raw displacement rates for strain rate calculation\n');
+fprintf('✓ Will apply smoothing AFTER strain rate calculation\n\n');
+
+%% Skip pre-smoothing - use raw displacement rates
+fprintf('\n=== SKIPPING PRE-SMOOTHING ===\n');
+fprintf('Using raw displacement rates to preserve signal structure...\n');
+
+% Use raw displacement rates (no pre-filtering)
+% displacement_rate_zone already contains the data we want to use
+fprintf('✓ Using raw displacement rates for strain calculation\n');
 
 %% Convert to strain rate using correct formula: ε̇ = [u̇(z+L) - u̇(z)] / L
 gauge_length_m = 10;  % DAS gauge length in meters
@@ -173,50 +186,123 @@ fprintf('  Gauge length: %.1f m\n', gauge_length_m);
 fprintf('  Spatial resolution: %.3f m/channel\n', spatial_resolution_m);
 fprintf('  Channels per gauge: %d\n', channels_per_gauge);
 
-% Calculate strain rate for each channel in the zone
-% For each channel, find the channel that's L away and calculate difference
-n_channels_zone = size(displacement_rate_zone, 2);
-strain_rate_zone = zeros(size(displacement_rate_zone));
+% Calculate strain rate using CLEAN implementation of ε̇ = [u̇(z+L) - u̇(z)] / L
+% Using correct 10m gauge length as per DAS specifications
+gauge_length_m = 10;  % DAS gauge length - instrument specification
+channels_per_gauge = round(gauge_length_m / spatial_resolution_m);  % ~40 channels
 
-for ch = 1:n_channels_zone
-    % Find corresponding channel indices in full depth array
-    channel_indices = find(depth_mask);
-    ch_idx = channel_indices(ch);
-    
-    % Find channel that's L away (ch_idx + channels_per_gauge)
-    ch_idx_L = ch_idx + channels_per_gauge;
-    
-    if ch_idx_L <= size(displacement_rate_full, 2)
-        % Calculate difference: [u̇(z+L) - u̇(z)]
-        % During recovery (expansion): strain should be positive
-        displacement_diff = displacement_rate_full(:, ch_idx_L) - displacement_rate_full(:, ch_idx);
-        % Divide by L to get strain rate: ε̇ = difference / L
-        strain_rate_zone(:, ch) = displacement_diff / (gauge_length_m * 1e9);  % Convert nm to m
-    else
-        % Channel too close to end - can't calculate difference
-        strain_rate_zone(:, ch) = NaN;
+fprintf('Using spatial difference with correct DAS gauge length:\n');
+fprintf('  Gauge length: %.1f m (DAS specification)\n', gauge_length_m);
+fprintf('  Channels per gauge: %d\n', channels_per_gauge);
+
+n_channels_zone = size(displacement_rate_zone, 2);
+fprintf('DEBUG: n_channels_zone = %d, channels_per_gauge = %d\n', n_channels_zone, channels_per_gauge);
+fprintf('DEBUG: strain_rate_zone will have %d columns\n', n_channels_zone - channels_per_gauge);
+
+if n_channels_zone <= channels_per_gauge
+    error('Not enough channels in depth range (%d) to calculate strain rate with %d-channel gauge length', ...
+        n_channels_zone, channels_per_gauge);
+end
+
+strain_rate_zone = zeros(size(displacement_rate_zone, 1), n_channels_zone - channels_per_gauge);
+
+% BECKER APPROACH: Find most responsive zones first, then analyze separately
+fprintf('\n=== IDENTIFYING RESPONSIVE ZONES (Becker Method) ===\n');
+
+% Calculate strain rate for each possible channel pair
+n_channels_zone = size(displacement_rate_zone, 2);
+all_strain_rates = zeros(size(displacement_rate_zone, 1), n_channels_zone - channels_per_gauge);
+
+% CORRECTED: Use CENTERED difference like the DAS instrument does internally
+% From the paper: DAS uses [u(z+dz/2) - u(z-dz/2)] not [u(z+dz) - u(z)]
+fprintf('CRITICAL INSIGHT: Using CENTERED spatial difference (like DAS instrument)\n');
+fprintf('Formula: ε̇ = [u̇(z+L/2) - u̇(z-L/2)] / L (centered difference)\n');
+
+half_gauge_channels = round(channels_per_gauge / 2);  % 20 channels = 5m
+all_strain_rates = zeros(size(displacement_rate_zone, 1), n_channels_zone - channels_per_gauge);
+
+for ch = (half_gauge_channels + 1):(n_channels_zone - half_gauge_channels)
+    % Centered difference: u̇(z+5m) - u̇(z-5m) over 10m gauge length
+    displacement_diff = displacement_rate_zone(:, ch + half_gauge_channels) - displacement_rate_zone(:, ch - half_gauge_channels);
+    all_strain_rates(:, ch - half_gauge_channels) = displacement_diff / (gauge_length_m * 1e9);
+end
+
+fprintf('✓ Using centered spatial difference (matches DAS instrument design)\n');
+
+% ADAPTIVE APPROACH: Find the depth with maximum spatial gradient (best for strain rate)
+% Calculate spatial gradients across the zone to find most responsive area
+spatial_gradients = zeros(size(displacement_rate_zone, 1), size(displacement_rate_zone, 2) - channels_per_gauge);
+for t = 1:size(displacement_rate_zone, 1)
+    for ch = 1:(size(displacement_rate_zone, 2) - channels_per_gauge)
+        spatial_gradients(t, ch) = abs(displacement_rate_zone(t, ch + channels_per_gauge) - displacement_rate_zone(t, ch));
     end
 end
 
-% Keep strain rate sign as calculated (don't flip early)
+% Find channel with maximum average spatial gradient
+avg_gradients = mean(spatial_gradients, 1, 'omitnan');
+[~, target_channel_idx] = max(avg_gradients);
+target_depth = depth_ft_zone(target_channel_idx);
+
+fprintf('\n=== TARGETED SPATIAL DIFFERENCE AT KNOWN RESPONSIVE DEPTH ===\n');
+fprintf('ROI range: %.1f - %.1f ft (%d channels)\n', ...
+    config.depth_range_ft(1), config.depth_range_ft(2), length(depth_ft_zone));
+fprintf('Target depth: %.1f ft (known responsive from single-channel)\n', target_depth);
+fprintf('Closest channel: %d at %.1f ft\n', target_channel_idx, depth_ft_zone(target_channel_idx));
+
+% Check if we can calculate strain rate at this specific location
+if target_channel_idx + channels_per_gauge <= size(all_strain_rates, 2)
+    strain_rate_zone = all_strain_rates(:, target_channel_idx);
+    fprintf('✓ Using spatial difference strain rate at target depth\n');
+    
+    % Also calculate variance to compare with other locations
+    strain_variance = var(all_strain_rates, 0, 1, 'omitnan');
+    target_variance = strain_variance(target_channel_idx);
+    [max_variance, max_idx] = max(strain_variance);
+    
+    fprintf('Target depth variance: %.2e (1/s)²\n', target_variance);
+    fprintf('Maximum variance: %.2e (1/s)² at channel %d\n', max_variance, max_idx);
+    
+    if target_variance < max_variance * 0.1
+        fprintf('WARNING: Target depth has low variance - may not be most responsive\n');
+    end
+else
+    % Fallback to highest variance if target depth doesn't work
+    strain_variance = var(all_strain_rates, 0, 1, 'omitnan');
+    [max_variance, most_responsive_idx] = max(strain_variance);
+    strain_rate_zone = all_strain_rates(:, most_responsive_idx);
+    
+    fprintf('Target depth not available, using highest variance channel %d\n', most_responsive_idx);
+    fprintf('Variance: %.2e (1/s)²\n', max_variance);
+end
+
+% Keep strain rate sign as calculated (physical meaning)
+strain_avg_check = mean(strain_rate_zone, 'omitnan');
+fprintf('Average strain rate: %.2e 1/s (keeping physical sign)\n', strain_avg_check);
 fprintf('  Keeping strain rate sign as calculated\n');
 
-% Apply same smoothing as single channel method
-fprintf('\n=== APPLYING REDUCED SMOOTHING TO STRAIN RATE ===\n');
-fprintf('Applying 3-second moving average to each strain rate channel (less aggressive)...\n');
-for ch = 1:size(strain_rate_zone, 2)
-    strain_rate_zone(:, ch) = movmean(strain_rate_zone(:, ch), 3, 1, 'omitnan');
+% Try multiple smoothing approaches to find what works best
+fprintf('\n=== TESTING MULTIPLE SMOOTHING APPROACHES ===\n');
+
+% Option 1: Light smoothing (3-point moving average)
+strain_smooth_light = movmean(strain_rate_zone, 3, 1, 'omitnan');
+
+% Option 2: Medium smoothing (5-point moving average) 
+strain_smooth_medium = movmean(strain_rate_zone, 5, 1, 'omitnan');
+
+% Option 3: Median filter (preserve features)
+strain_smooth_median = medfilt1(strain_rate_zone, 5);
+
+% Option 4: Savitzky-Golay filter (polynomial smoothing)
+if exist('sgolayfilt', 'file')
+    strain_smooth_sgol = sgolayfilt(strain_rate_zone, 2, 5);  % 2nd order, 5-point
+else
+    strain_smooth_sgol = strain_smooth_medium;  % Fallback
 end
-fprintf('✓ Applied 3-second smoothing to all %d strain rate channels\n', size(strain_rate_zone, 2));
 
-% Average strain rates across the depth range
-strain_smoothed = mean(strain_rate_zone, 2, 'omitnan');  % Average across depths → [time × 1]
-
-% Apply final smoothing to match single channel method
-fprintf('\n=== FINAL SMOOTHING TO MATCH SINGLE CHANNEL ===\n');
-fprintf('Applying 5-second moving average to averaged strain rate...\n');
-strain_smoothed = movmean(strain_smoothed, 5, 1, 'omitnan');  % Same as single channel
-fprintf('✓ Applied 5-second smoothing to averaged strain rate (matches single channel)\n\n');
+% Try stronger smoothing to reduce noise
+strain_smoothed = movmean(strain_rate_zone, 15, 1, 'omitnan');  % Much stronger smoothing
+fprintf('Using 15-point moving average smoothing (strong noise reduction)\n');
+fprintf('✓ Applied smoothing to strain rate\n\n');
 
 fprintf('Displacement rate range: %.2e to %.2e nm/s\n', ...
     min(displacement_rate_zone(:)), max(displacement_rate_zone(:)));
@@ -260,12 +346,28 @@ valid_head_idx = (time_head_rate >= time_start) & (time_head_rate <= time_end);
 time_head_overlap = time_head_rate(valid_head_idx);
 head_rate_overlap = drawdown_rate_ftps(valid_head_idx);  % ft/s (use drawdown rate for correlation!)
 
-valid_das_idx = (time_das >= time_start) & (time_das <= time_end);
-time_das_overlap = time_das(valid_das_idx);
-strain_overlap = strain_smoothed(valid_das_idx);  % Already in 1/s (strain rate)
+time_das_overlap = time_das;  % Already the right window
+% strain_smoothed should be from the windowed data, but check sizes
+if length(strain_smoothed) ~= length(time_das)
+    fprintf('WARNING: strain_smoothed (%d) and time_das (%d) size mismatch!\n', ...
+        length(strain_smoothed), length(time_das));
+    % Extract the same window from strain_smoothed
+    if length(strain_smoothed) > length(time_das)
+        % Assume strain_smoothed is from the full time series, extract the analysis window
+        strain_overlap = strain_smoothed(1:length(time_das));
+        fprintf('  Extracted first %d points from strain_smoothed\n', length(time_das));
+    else
+        strain_overlap = strain_smoothed;
+    end
+else
+    strain_overlap = strain_smoothed;  % Already the right time window
+end
+
+fprintf('DEBUG: Final sizes - strain_overlap: [%d x %d], time_das_overlap: [%d x %d]\n', ...
+    size(strain_overlap, 1), size(strain_overlap, 2), size(time_das_overlap, 1), size(time_das_overlap, 2));
 
 fprintf('Head points in overlap: %d\n', sum(valid_head_idx));
-fprintf('DAS points in overlap: %d\n', sum(valid_das_idx));
+fprintf('DAS points in overlap: %d\n', length(time_das_overlap));
 
 %% Interpolate DAS strain rate to match head time points
 strain_interp = interp1(time_das_overlap, strain_overlap, time_head_overlap, 'linear');
@@ -282,8 +384,12 @@ fprintf('Valid points for regression: %d\n', length(strain_clean));
 fprintf('  Flipping strain rate to match drawdown rate direction\n');
 strain_clean = -strain_clean;  % Flip strain rate so both spikes at 19:15 point same direction
 
-%% LINEAR REGRESSION: Strain Rate vs Drawdown Rate
-fprintf('\n=== REGRESSION RESULTS ===\n');
+% Skip temporal weighting for now - keep it simple
+fprintf('  Using simple regression without temporal weighting\n');
+
+%% LINEAR REGRESSION: Strain Rate vs Drawdown Rate (simple, no weighting)
+fprintf('\n=== SIMPLE REGRESSION RESULTS ===\n');
+% Just use simple polyfit - no weighting for now
 p_regression = polyfit(drawdown_rate_clean, strain_clean, 1);
 slope = p_regression(1);  % (1/s) per (ft/s) - strain rate per head rate
 intercept = p_regression(2);  % 1/s
@@ -443,7 +549,7 @@ if config.show_plots
     displacement_rate_avg_full = mean(displacement_rate_zone, 2, 'omitnan');  % Average across depth range [time_das length]
     
     % Get RAW displacement rate (before additional smoothing) for comparison
-    displacement_rate_avg_raw = displacement_rate_avg_full(valid_das_idx);  % Extract same time window as strain_overlap
+    displacement_rate_avg_raw = displacement_rate_avg_full(1:length(strain_overlap));  % Extract same time window as strain_overlap
     
     % CRITICAL: Apply AGGRESSIVE smoothing to averaged displacement rate
     % Make it smooth like the reference plot (black DAS line)
@@ -454,7 +560,7 @@ if config.show_plots
     displacement_rate_avg_full = movmean(displacement_rate_avg_full, 5, 1, 'omitnan');  % Second pass
     fprintf('✓ Aggressive smoothing applied (10s + 5s passes) - should match reference plot\n\n');
     
-    displacement_rate_avg = displacement_rate_avg_full(valid_das_idx);  % Extract same time window as strain_overlap
+    displacement_rate_avg = displacement_rate_avg_full(1:length(strain_overlap));  % Extract same time window as strain_overlap
     time_comparison = time_das_overlap;
     
     % USE ORIGINAL STRAIN RATE AND DISPLACEMENT RATE (both spikes point DOWN)

@@ -9,7 +9,7 @@ end
 % Set up ROI analysis configuration
 lr_config = struct();
 lr_config.zone = 'z5';
-lr_config.depth_range_ft = [250, 320];  % Smaller, focused ROI around pumping zone
+lr_config.depth_range_ft = [270, 330];  % Larger range to ensure enough channels for overlapping gauge calculations
 lr_config.timing_correction_sec = 30.3;  % Fine-tune: shift drawdown rate 15s more LEFT to align peaks perfectly
 lr_config.show_plots = true;  % Set to false for cleaner output
 
