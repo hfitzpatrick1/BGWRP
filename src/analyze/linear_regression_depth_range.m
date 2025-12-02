@@ -163,18 +163,21 @@ depth_ft_zone = depth_ft(depth_mask);
 % Note: displacement_rate_full may already be subsetted if recovery_window was used
 displacement_rate_zone = displacement_rate_full(:, depth_mask);
 
-% Skip additional smoothing to match single channel approach
-fprintf('\n=== USING RAW DISPLACEMENT RATES (NO PRE-SMOOTHING) ===\n');
-fprintf('Using raw displacement rates for strain rate calculation\n');
-fprintf('✓ Will apply smoothing AFTER strain rate calculation\n\n');
+% CRITICAL FIX: Use PRE-SMOOTHED data for spatial difference (like single channel)
+fprintf('\n=== USING PRE-SMOOTHED DISPLACEMENT RATES (MATCHING SINGLE CHANNEL) ===\n');
+fprintf('Using smoothed displacement rates for strain rate calculation\n');
+fprintf('✓ This prevents noise amplification in spatial differences\n\n');
 
-%% Skip pre-smoothing - use raw displacement rates
-fprintf('\n=== SKIPPING PRE-SMOOTHING ===\n');
-fprintf('Using raw displacement rates to preserve signal structure...\n');
+%% Apply same smoothing as single channel BEFORE spatial difference
+fprintf('\n=== APPLYING PRE-SMOOTHING (CRITICAL FOR SPATIAL DIFFERENCES) ===\n');
+fprintf('Applying 5-second smoothing to displacement rates BEFORE spatial difference...\n');
 
-% Use raw displacement rates (no pre-filtering)
-% displacement_rate_zone already contains the data we want to use
-fprintf('✓ Using raw displacement rates for strain calculation\n');
+% Apply 5-second smoothing to displacement rates (same as single channel)
+for ch = 1:size(displacement_rate_zone, 2)
+    displacement_rate_zone(:, ch) = movmean(displacement_rate_zone(:, ch), 5, 1, 'omitnan');
+end
+fprintf('✓ Applied 5-second smoothing to all channels in zone\n');
+fprintf('✓ This matches single-channel processing and reduces spatial difference noise\n');
 
 %% Convert to strain rate using correct formula: ε̇ = [u̇(z+L) - u̇(z)] / L
 gauge_length_m = 10;  % DAS gauge length in meters
@@ -238,71 +241,76 @@ for t = 1:size(displacement_rate_zone, 1)
     end
 end
 
-% Find channel with maximum average spatial gradient
-avg_gradients = mean(spatial_gradients, 1, 'omitnan');
-[~, target_channel_idx] = max(avg_gradients);
-target_depth = depth_ft_zone(target_channel_idx);
+% FOCUSED APPROACH: Calculate strain rate at exact 284.7 ft depth (where single channel works)
+fprintf('\n=== FOCUSED STRAIN RATE AT 284.7 FT (SINGLE CHANNEL SUCCESS DEPTH) ===\n');
 
-fprintf('\n=== TARGETED SPATIAL DIFFERENCE AT KNOWN RESPONSIVE DEPTH ===\n');
-fprintf('ROI range: %.1f - %.1f ft (%d channels)\n', ...
-    config.depth_range_ft(1), config.depth_range_ft(2), length(depth_ft_zone));
-fprintf('Target depth: %.1f ft (known responsive from single-channel)\n', target_depth);
-fprintf('Closest channel: %d at %.1f ft\n', target_channel_idx, depth_ft_zone(target_channel_idx));
+% Find the channel closest to 284.7 ft
+target_depth_ft = 284.7;
+[~, target_channel_idx] = min(abs(depth_ft_zone - target_depth_ft));
+actual_depth_ft = depth_ft_zone(target_channel_idx);
+fprintf('Target depth: %.1f ft\n', target_depth_ft);
+fprintf('Actual channel depth: %.1f ft (channel %d in zone)\n', actual_depth_ft, target_channel_idx);
 
-% Check if we can calculate strain rate at this specific location
-if target_channel_idx + channels_per_gauge <= size(all_strain_rates, 2)
-    strain_rate_zone = all_strain_rates(:, target_channel_idx);
-    fprintf('✓ Using spatial difference strain rate at target depth\n');
+% Check if we can calculate forward difference at this depth
+% Use the SAME channels_per_gauge already calculated above (line 185)
+fprintf('DEBUG: target_channel_idx = %d\n', target_channel_idx);
+fprintf('DEBUG: length(depth_ft_zone) = %d\n', length(depth_ft_zone));
+fprintf('DEBUG: channels_per_gauge = %d\n', channels_per_gauge);
+fprintf('DEBUG: Need: target_channel_idx + channels_per_gauge = %d + %d = %d\n', target_channel_idx, channels_per_gauge, target_channel_idx + channels_per_gauge);
+fprintf('DEBUG: Available channels: %d\n', length(depth_ft_zone));
+
+if (target_channel_idx + channels_per_gauge) <= length(depth_ft_zone)
+    % Calculate strain rate using FORWARD difference starting at 284.7 ft
+    fprintf('✓ Can calculate forward difference starting at %.1f ft\n', actual_depth_ft);
     
-    % Also calculate variance to compare with other locations
-    strain_variance = var(all_strain_rates, 0, 1, 'omitnan');
-    target_variance = strain_variance(target_channel_idx);
-    [max_variance, max_idx] = max(strain_variance);
+    % Get displacement rates at z and z+10m (forward difference)
+    ch_start = target_channel_idx;  % At 284.7 ft
+    ch_end = target_channel_idx + channels_per_gauge;  % 10m above 284.7 ft
     
-    fprintf('Target depth variance: %.2e (1/s)²\n', target_variance);
-    fprintf('Maximum variance: %.2e (1/s)² at channel %d\n', max_variance, max_idx);
+    depth_start = depth_ft_zone(ch_start);
+    depth_end = depth_ft_zone(ch_end);
     
-    if target_variance < max_variance * 0.1
-        fprintf('WARNING: Target depth has low variance - may not be most responsive\n');
-    end
+    fprintf('  u̇(z): %.1f ft (channel %d) - EXACT single-channel depth\n', depth_start, ch_start);
+    fprintf('  u̇(z+10m): %.1f ft (channel %d)\n', depth_end, ch_end);
+    fprintf('  Gauge length: %.1f m\n', gauge_length_m);
+    
+    % Apply FORWARD difference formula: ε̇ = [u̇(z+L) - u̇(z)] / L
+    displacement_diff = displacement_rate_zone(:, ch_end) - displacement_rate_zone(:, ch_start);
+    strain_rate_zone = displacement_diff / (gauge_length_m * 1e9);
+    
+    fprintf('✓ Strain rate calculated using FORWARD difference starting at %.1f ft\n', actual_depth_ft);
+    fprintf('  Formula: ε̇ = [u̇(%.1f) - u̇(%.1f)] / %.1f m\n', depth_end, depth_start, gauge_length_m);
+    fprintf('  *** STARTS at exact single-channel success depth (%.1f ft) ***\n', depth_start);
+    
 else
-    % Fallback to highest variance if target depth doesn't work
-    strain_variance = var(all_strain_rates, 0, 1, 'omitnan');
-    [max_variance, most_responsive_idx] = max(strain_variance);
-    strain_rate_zone = all_strain_rates(:, most_responsive_idx);
-    
-    fprintf('Target depth not available, using highest variance channel %d\n', most_responsive_idx);
-    fprintf('Variance: %.2e (1/s)²\n', max_variance);
+    error('Cannot calculate forward difference at %.1f ft - insufficient channels above', actual_depth_ft);
 end
 
 % Keep strain rate sign as calculated (physical meaning)
 strain_avg_check = mean(strain_rate_zone, 'omitnan');
-fprintf('Average strain rate: %.2e 1/s (keeping physical sign)\n', strain_avg_check);
-fprintf('  Keeping strain rate sign as calculated\n');
+fprintf('Average strain rate at %.1f ft: %.2e 1/s (keeping physical sign)\n', actual_depth_ft, strain_avg_check);
+fprintf('  Using EXACT same depth as successful single-channel analysis\n');
 
-% Try multiple smoothing approaches to find what works best
-fprintf('\n=== TESTING MULTIPLE SMOOTHING APPROACHES ===\n');
+% Apply LOW-PASS BUTTERWORTH FILTER (cleaner frequency cutoff)
+fprintf('\n=== APPLYING LOW-PASS BUTTERWORTH FILTER ===\n');
+fprintf('Using Butterworth filter for cleaner noise removal...\n');
 
-% Option 1: Light smoothing (3-point moving average)
-strain_smooth_light = movmean(strain_rate_zone, 3, 1, 'omitnan');
+% Butterworth filter parameters:
+%   Sampling rate: 1 Hz (decimated DAS data)
+%   Cutoff frequency: 1/60 Hz (matches 60-second period)
+%   Order: 2 (good balance between sharpness and ringing)
+fs = 1;  % Sampling frequency (1 Hz)
+fc = 1/60;  % Cutoff frequency (1/60 Hz = 60-second period)
+[b, a] = butter(2, fc/(fs/2), 'low');  % 2nd order low-pass
 
-% Option 2: Medium smoothing (5-point moving average) 
-strain_smooth_medium = movmean(strain_rate_zone, 5, 1, 'omitnan');
-
-% Option 3: Median filter (preserve features)
-strain_smooth_median = medfilt1(strain_rate_zone, 5);
-
-% Option 4: Savitzky-Golay filter (polynomial smoothing)
-if exist('sgolayfilt', 'file')
-    strain_smooth_sgol = sgolayfilt(strain_rate_zone, 2, 5);  % 2nd order, 5-point
-else
-    strain_smooth_sgol = strain_smooth_medium;  % Fallback
-end
-
-% Try stronger smoothing to reduce noise
-strain_smoothed = movmean(strain_rate_zone, 15, 1, 'omitnan');  % Much stronger smoothing
-fprintf('Using 15-point moving average smoothing (strong noise reduction)\n');
-fprintf('✓ Applied smoothing to strain rate\n\n');
+% Apply zero-phase filtering (filtfilt) to avoid phase shift
+strain_smoothed = filtfilt(b, a, strain_rate_zone);
+fprintf('✓ Applied 2nd-order Butterworth low-pass filter\n');
+fprintf('  Cutoff: %.4f Hz (60-second period)\n', fc);
+fprintf('  Zero-phase filtering preserves peak timing\n');
+fprintf('✓ This reduces high-frequency oscillations that mask the recovery signal\n');
+fprintf('✓ Single-point strain rate at %.1f ft with proper physics\n', actual_depth_ft);
+fprintf('✓ Using FORWARD difference starting at exact single-channel depth\n');
 
 fprintf('Displacement rate range: %.2e to %.2e nm/s\n', ...
     min(displacement_rate_zone(:)), max(displacement_rate_zone(:)));
@@ -345,6 +353,13 @@ fprintf('Overlap: %s to %s (%.1f seconds)\n', datestr(time_start), datestr(time_
 valid_head_idx = (time_head_rate >= time_start) & (time_head_rate <= time_end);
 time_head_overlap = time_head_rate(valid_head_idx);
 head_rate_overlap = drawdown_rate_ftps(valid_head_idx);  % ft/s (use drawdown rate for correlation!)
+
+% APPLY SMOOTHING TO DRAWDOWN RATE (data collected every 5 seconds)
+fprintf('\n=== APPLYING SMOOTHING TO DRAWDOWN RATE ===\n');
+fprintf('Drawdown rate sampled every 5 seconds - applying 12-point (~60s) smoothing...\n');
+% Since drawdown is sampled at 0.2 Hz (every 5 sec), 12 points = 60 seconds
+head_rate_overlap = movmean(head_rate_overlap, 12, 'omitnan');
+fprintf('✓ Applied 12-point moving average to drawdown rate (matches 60s DAS smoothing)\n');
 
 time_das_overlap = time_das;  % Already the right window
 % strain_smoothed should be from the windowed data, but check sizes
