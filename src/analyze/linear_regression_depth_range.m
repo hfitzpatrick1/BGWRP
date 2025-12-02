@@ -198,13 +198,8 @@ for ch = 1:n_channels_zone
     end
 end
 
-% Check if strain rates are mostly negative - if so, flip sign
-% During recovery, both head rate and strain rate should be positive
-strain_avg_check = mean(strain_rate_zone(:), 'omitnan');
-if strain_avg_check < 0
-    fprintf('  WARNING: Average strain rate is negative, flipping sign for recovery convention\n');
-    strain_rate_zone = -strain_rate_zone;  % Flip sign so strain is positive during recovery
-end
+% Keep strain rate sign as calculated (don't flip early)
+fprintf('  Keeping strain rate sign as calculated\n');
 
 % Apply same smoothing as single channel method
 fprintf('\n=== APPLYING REDUCED SMOOTHING TO STRAIN RATE ===\n');
@@ -278,14 +273,14 @@ strain_interp = interp1(time_das_overlap, strain_overlap, time_head_overlap, 'li
 % Remove any NaN values
 valid_idx = ~isnan(strain_interp) & ~isnan(head_rate_overlap);
 strain_clean = strain_interp(valid_idx);
-drawdown_rate_clean = -head_rate_overlap(valid_idx);  % Convert to drawdown rate (negative head rate)
+drawdown_rate_clean = head_rate_overlap(valid_idx);  % Flip so drawdown spike at 19:15 points UP
 time_clean = time_head_overlap(valid_idx);
 
 fprintf('Valid points for regression: %d\n', length(strain_clean));
 
 % Flip strain rate to match drawdown rate direction
 fprintf('  Flipping strain rate to match drawdown rate direction\n');
-strain_clean = -strain_clean;  % Flip strain rate to match drawdown rate
+strain_clean = -strain_clean;  % Flip strain rate so both spikes at 19:15 point same direction
 
 %% LINEAR REGRESSION: Strain Rate vs Drawdown Rate
 fprintf('\n=== REGRESSION RESULTS ===\n');
@@ -339,7 +334,7 @@ results.R_squared = R_squared;
 results.RMSE = RMSE;
 results.strain_rate = strain_clean;
 results.head_rate = drawdown_rate_clean;  % Store head rate, not drawdown rate
-results.drawdown_rate = -drawdown_rate_clean;  % Also store drawdown rate for reference
+results.drawdown_rate = drawdown_rate_clean;  % Also store drawdown rate for reference
 results.time = time_clean;
 results.timing_correction = config.timing_correction_sec;
 results.test_name = test_name;
@@ -411,7 +406,7 @@ if config.show_plots
     ax.YColor = [0.4660 0.6740 0.1880];
     
     yyaxis right;
-    plot(time_clean, -strain_clean / strain_scale, 'Color', [0 0 0], 'LineWidth', 2.5, 'DisplayName', 'Strain Rate');
+    plot(time_clean, strain_clean / strain_scale, 'Color', [0 0 0], 'LineWidth', 2.5, 'DisplayName', 'Strain Rate');
     ylabel(sprintf('Strain Rate (1/s) ×10^{%d}', round(log10(strain_scale))), 'FontSize', 12, 'FontWeight', 'bold');
     ax.YColor = 'k';
     
@@ -463,7 +458,7 @@ if config.show_plots
     time_comparison = time_das_overlap;
     
     % USE ORIGINAL STRAIN RATE AND DISPLACEMENT RATE (both spikes point DOWN)
-    strain_overlap_display = strain_overlap;  % No flip - match displacement rate direction
+    strain_overlap_display = -strain_overlap;  % Flip strain rate for display to match drawdown rate
     displacement_rate_avg_display = displacement_rate_avg;  % No flip
     
     % Normalize both to same scale for visual comparison (0-1 range)
