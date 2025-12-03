@@ -378,6 +378,9 @@ if exist('mode', 'var') && ischar(mode)
             % Apply 5-second moving mean filter before correlation analysis
             config.smoothing_method = 'matlab_movmean';
             config.matlab_movmean_window = 5;
+            % Apply stronger smoothing to strain rate (AFTER spatial difference)
+            config.strain_rate_smoothing_window = 15;  % 15 seconds (was 5 by default)
+            config.strain_rate_smoothing_method = 'movmean';  % Moving average
             config.apply_concatenation_filter = false;
             config.filter_method = 'none';
             config.chen_denoising = false;

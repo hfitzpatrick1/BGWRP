@@ -123,6 +123,23 @@ else
     error('No depth range specified and no pumping_zone channel available');
 end
 
+% Validate channel availability for spatial difference method
+% For single-channel analysis, we need channel_idx + gauge_length_channels to exist
+if ~use_depth_averaging && ~config.use_displacement_rate
+    gauge_length_m = 10;  % meters
+    gauge_length_channels = round(gauge_length_m / 0.25);  % 40 channels for 10m at 0.25m spacing
+    max_channel_needed = channel_idx + gauge_length_channels;
+    total_channels = length(das_filtered.depth_ft);
+    
+    if max_channel_needed > total_channels
+        error(['Single-channel spatial difference requires channel %d, but only %d channels available.\n' ...
+            'Solution: Either (1) use depth averaging, or (2) choose a shallower channel, or (3) expand depth range upward'], ...
+            max_channel_needed, total_channels);
+    end
+    fprintf('✓ Channel validation: channel %d + %d (gauge) = %d ≤ %d (total channels)\n', ...
+        channel_idx, gauge_length_channels, max_channel_needed, total_channels);
+end
+
 % Now process based on whether we're using a single channel or depth averaging
 if isfield(das_filtered, 'pumping_zone') && isfield(das_filtered.pumping_zone, 'channel_idx')
     % For reference only - actual channel_idx may be different if depth_range specified
@@ -260,22 +277,43 @@ if isfield(das_filtered, 'pumping_zone') && isfield(das_filtered.pumping_zone, '
                 fprintf('  Depth range: %.1f - %.1f ft (%d channels)\n', depth_min_ft, depth_max_ft, n_channels);
                 
             else
-                % Single channel calculation
-                fprintf('  Using single channel: %d (%.1f ft)\n', channel_idx, das_filtered.depth_ft(channel_idx));
+                % Single channel calculation using PROPER BECKER SPATIAL DIFFERENCE METHOD
+                fprintf('  Using single channel with proper spatial difference: %d (%.1f ft)\n', channel_idx, das_filtered.depth_ft(channel_idx));
                 
-                % Get displacement rate at single channel
-                displacement_at_z = displacement_rate_full(time_mask, channel_idx);
+                % For proper Becker method: ε̇(z,t) = [u̇(z+L,t) - u̇(z,t)] / L
+                % Need to get displacement at z and z+L
+                % L = 10m, channel spacing = 0.25m → 40 channels
+                gauge_length_channels = round(gauge_length_m / 0.25);  % Should be 40
+                channel_idx_plus_L = channel_idx + gauge_length_channels;
                 
-                % Calculate strain rate: ε̇(z,t) = u̇(z,t) / L
-                % Each DAS channel already measures strain averaged over the gauge length
+                % Check if we have enough channels
+                if channel_idx_plus_L > size(displacement_rate_full, 2)
+                    error('Not enough channels for spatial difference. Need channel %d but only have %d channels.', ...
+                        channel_idx_plus_L, size(displacement_rate_full, 2));
+                end
+                
+                fprintf('  Spatial difference: channel %d (%.1f ft) to channel %d (%.1f ft)\n', ...
+                    channel_idx, das_filtered.depth_ft(channel_idx), ...
+                    channel_idx_plus_L, das_filtered.depth_ft(channel_idx_plus_L));
+                
+                % Get displacement rates at both positions
+                displacement_at_z = displacement_rate_full(time_mask, channel_idx);  % u̇(z) in nm/s
+                displacement_at_z_plus_L = displacement_rate_full(time_mask, channel_idx_plus_L);  % u̇(z+L) in nm/s
+                
+                % Calculate spatial difference: Δu̇ = u̇(z+L) - u̇(z)
+                delta_displacement = displacement_at_z_plus_L - displacement_at_z;  % nm/s
+                
+                % Calculate strain rate: ε̇ = Δu̇ / L
                 % Unit conversion:
-                %   displacement_at_z is in nm/s
-                %   gauge_length_m = 10 m = 10 * 1e9 nm = 1e10 nm
-                %   strain_rate = (nm/s) / (10 m) = (nm/s) / (1e10 nm) = 1e-10 / s
+                %   delta_displacement is in nm/s
+                %   gauge_length_m = 10 m = 10 × 1e9 nm
+                %   strain_rate = (nm/s) / (10 × 1e9 nm) = (nm/s) / (1e10 nm) = 1e-10 / s
                 % 
                 % This gives strain rate in units of 1/s (per second)
-                strain_smoothed = displacement_at_z / (gauge_length_m * 1e9);  % Units: 1/s
+                strain_smoothed = delta_displacement / (gauge_length_m * 1e9);  % Units: 1/s
                 strain_raw = strain_smoothed;  % Save raw version before smoothing
+                
+                fprintf('  ✓ Using proper Becker spatial difference method (not approximation)\n');
                 
                 % Apply additional smoothing to strain rate (difference can amplify noise)
                 % This makes it look smooth like the drawdown rate plots
@@ -523,19 +561,32 @@ time_clean = time_head_overlap(valid_idx);
 
 fprintf('Valid points for regression: %d\n', length(strain_clean));
 
-% Option to flip signs for visualization (both head and strain to align them)
-if ~isfield(config, 'flip_for_display')
-    config.flip_for_display = true;  % Default: flip both to align visually
+% Check signs and ensure both are in correct recovery convention
+% During RECOVERY: head rising (dh/dt > 0), rock expanding (dε/dt > 0) → both should be POSITIVE
+fprintf('\n=== SIGN CONVENTION CHECK ===\n');
+fprintf('  Mean head rate before adjustment: %.3e m/s\n', mean(head_rate_clean));
+fprintf('  Mean strain rate before adjustment: %.3e 1/s\n', mean(strain_clean));
+
+% During recovery, head rate should be positive (water level rising)
+% If it's negative, the convention is wrong - flip it
+if mean(head_rate_clean) < 0
+    fprintf('  → Head rate is negative, flipping to positive (recovery = rising head)\n');
+    head_rate_clean = -head_rate_clean;
+else
+    fprintf('  ✓ Head rate is positive (correct for recovery)\n');
 end
 
-if config.flip_for_display
-    fprintf('  Flipping both head rate and strain rate signs to align them visually (config.flip_for_display = true)\n');
-    head_rate_clean = -head_rate_clean;  % Flip head rate
-    strain_clean = -strain_clean;  % Flip strain rate
-    fprintf('  Result: Both signals now point in same direction for visual comparison\n');
+% During recovery, strain rate should be positive (rock expanding)  
+% If it's negative, flip it
+if mean(strain_clean) < 0
+    fprintf('  → Strain rate is negative, flipping to positive (recovery = expansion)\n');
+    strain_clean = -strain_clean;
 else
-    fprintf('  Using original signs for both head and strain rate (config.flip_for_display = false)\n');
+    fprintf('  ✓ Strain rate is positive (correct for recovery)\n');
 end
+
+fprintf('  Final signs: head rate %.3e m/s, strain rate %.3e 1/s\n', mean(head_rate_clean), mean(strain_clean));
+fprintf('  Both signals now point in SAME DIRECTION (positive = recovery)\n');
 
 %% LINEAR REGRESSION OR AMPLITUDE ANALYSIS
 % Check if amplitude mode is requested (removes baseline drift)
@@ -750,11 +801,8 @@ if false && config.show_plots  % Disabled - using Figure 21 instead
     
     yyaxis right;
     % Plot strain/displacement at ORIGINAL DAS time points (before interpolation) - this won't change with timing correction
-    % Apply same flip as used in regression for consistency
+    % Signs already corrected in regression section, use as-is
     strain_overlap_display = strain_overlap;
-    if config.flip_for_display && ~config.use_displacement_rate
-        strain_overlap_display = -strain_overlap_display;
-    end
     
     if config.use_displacement_rate
         plot(time_das_overlap, strain_overlap_display, 'Color', [0 0 0], 'LineWidth', 2.5, 'DisplayName', 'Displacement Rate');
@@ -849,7 +897,7 @@ if config.show_plots && ~config.use_displacement_rate && isfield(das_filtered, '
         displacement_smoothed = displacement_at_channel;  % Use as-is
     end
     
-    % Apply flip if configured (for consistency with main plot)
+    % Signs already corrected in regression section - use as-is (no additional flipping needed)
     strain_overlap_display = strain_overlap;
     % Check if strain_overlap_raw exists (it might not if using displacement rate mode)
     if exist('strain_overlap_raw', 'var')
@@ -857,10 +905,7 @@ if config.show_plots && ~config.use_displacement_rate && isfield(das_filtered, '
     else
         strain_overlap_raw_display = strain_overlap;  % Fallback: use smoothed version
     end
-    if config.flip_for_display
-        strain_overlap_display = -strain_overlap_display;
-        strain_overlap_raw_display = -strain_overlap_raw_display;  % Apply same flip to raw
-    end
+    % Both raw and smoothed already have correct signs (positive for recovery)
     
     % Normalize both to same scale for visual comparison (0-1 range)
     strain_norm = (strain_overlap_display - min(strain_overlap_display)) / (max(strain_overlap_display) - min(strain_overlap_display) + eps);
