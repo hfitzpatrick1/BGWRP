@@ -214,6 +214,7 @@ if isfield(das_filtered, 'pumping_zone') && isfield(das_filtered.pumping_zone, '
             end
             
             strain_smoothed = displacement_rate_smoothed;  % Store as strain_smoothed for compatibility (but it's actually displacement rate)
+            strain_raw = displacement_rate_smoothed;  % No raw version available in this path, use smoothed
             fprintf('  Source: smoothed_data (should have 5-second movmean if correlation analysis was run)\n');
             if isfield(das_filtered, 'smoothing_method')
                 fprintf('  Smoothing method: %s', das_filtered.smoothing_method);
@@ -816,8 +817,9 @@ end
 
 % MAIN PLOT (Figure 21): 4-subplot comparison (strain rate vs displacement rate)
 if config.show_plots && ~config.use_displacement_rate && isfield(das_filtered, 'smoothed_data')
-    figure(21); clf;
-    set(gcf, 'Position', [100 100 1600 900], 'Name', sprintf('Strain Rate Analysis - %s (Zone %s) - Single Channel', test_name, upper(config.zone)));
+    try
+        figure(21); clf;
+        set(gcf, 'Position', [100 100 1600 900], 'Name', sprintf('Strain Rate Analysis - %s (Zone %s) - Single Channel', test_name, upper(config.zone)));
     
     % Get displacement rate at same channel for comparison
     % This is already smoothed (5-second movmean from correlation analysis)
@@ -929,9 +931,12 @@ if config.show_plots && ~config.use_displacement_rate && isfield(das_filtered, '
     % BOTTOM LEFT (3): Raw vs Smoothed Comparison (matching ROI layout)
     subplot(2,2,3);
     yyaxis left;
-    plot(time_comparison, displacement_at_channel, 'b-', 'LineWidth', 1.5, 'DisplayName', 'Displacement Rate (raw)');
+    % Extract displacement data for the same time window as strain (19:14-19:17)
+    displacement_subset = displacement_at_channel(1:length(time_das_overlap));
+    displacement_smoothed_subset = displacement_smoothed(1:length(time_das_overlap));
+    plot(time_das_overlap, displacement_subset, 'b-', 'LineWidth', 1.5, 'DisplayName', 'Displacement Rate (raw)');
     hold on;
-    plot(time_comparison, displacement_smoothed, 'c--', 'LineWidth', 2, 'DisplayName', 'Displacement Rate (smoothed)');
+    plot(time_das_overlap, displacement_smoothed_subset, 'c--', 'LineWidth', 2, 'DisplayName', 'Displacement Rate (smoothed)');
     ylabel('Displacement Rate (nm/s)', 'Color', 'b');
     ax = gca;
     ax.YColor = 'b';
@@ -940,8 +945,8 @@ if config.show_plots && ~config.use_displacement_rate && isfield(das_filtered, '
     % Scale strain rate to match ROI plot format (×10^-3)
     strain_scale_plot = 1e-3;  % Display strain rate in units of 10^-3 1/s
     % Use raw strain rate - extract subset and apply SAME transformation as smoothed version
-    if exist('strain_overlap_raw_display', 'var') && length(strain_overlap_raw_display) >= length(time_comparison)
-        strain_raw_subset = strain_overlap_raw_display(1:length(time_comparison));
+    if exist('strain_overlap_raw_display', 'var') && length(strain_overlap_raw_display) >= length(time_das_overlap)
+        strain_raw_subset = strain_overlap_raw_display(1:length(time_das_overlap));
         % The smoothed version is strain_overlap_display, which has already been flipped
         % Apply the exact same flip to raw: if smoothed is negative, raw should be too
         if mean(strain_overlap_display) < 0 && mean(strain_raw_subset) > 0
@@ -949,10 +954,11 @@ if config.show_plots && ~config.use_displacement_rate && isfield(das_filtered, '
         elseif mean(strain_overlap_display) > 0 && mean(strain_raw_subset) < 0
             strain_raw_subset = -strain_raw_subset;  % Flip raw to match smoothed direction  
         end
-        plot(time_comparison, strain_raw_subset / strain_scale_plot, 'Color', [1 0.5 0.5], 'LineWidth', 1.5, 'DisplayName', 'Strain Rate (raw)');
+        plot(time_das_overlap, strain_raw_subset / strain_scale_plot, 'Color', [1 0.5 0.5], 'LineWidth', 1.5, 'DisplayName', 'Strain Rate (raw)');
         hold on;
     end
-    plot(time_comparison, strain_overlap_display / strain_scale_plot, 'r-', 'LineWidth', 2, 'DisplayName', 'Strain Rate (smoothed)');
+    % Use time_das_overlap (which matches strain_overlap_display length) instead of time_comparison
+    plot(time_das_overlap, strain_overlap_display / strain_scale_plot, 'r-', 'LineWidth', 2, 'DisplayName', 'Strain Rate (smoothed)');
     ylabel(sprintf('Strain Rate (×10^{%d})', round(log10(strain_scale_plot))), 'Color', 'r');
     ax.YColor = 'r';
     xlabel('Time UTC');
@@ -963,7 +969,9 @@ if config.show_plots && ~config.use_displacement_rate && isfield(das_filtered, '
     % Plot 4: Head rate overlay for timing reference
     subplot(2,2,4);
     yyaxis left;
-    plot(time_comparison, strain_norm, 'r-', 'LineWidth', 2, 'DisplayName', 'Strain Rate (norm)');
+    % Use time_das_overlap to match other plots
+    strain_norm_subset = strain_norm(1:length(time_das_overlap));
+    plot(time_das_overlap, strain_norm_subset, 'r-', 'LineWidth', 2, 'DisplayName', 'Strain Rate (norm)');
     ylabel('Normalized Strain Rate', 'Color', 'r');
     ax = gca;
     ax.YColor = 'r';
@@ -971,9 +979,9 @@ if config.show_plots && ~config.use_displacement_rate && isfield(das_filtered, '
     yyaxis right;
     % Get head rate for comparison
     if exist('head_rate_clean', 'var') && exist('time_clean', 'var')
-        head_rate_interp = interp1(time_clean, head_rate_clean, time_comparison, 'linear', 'extrap');
+        head_rate_interp = interp1(time_clean, head_rate_clean, time_das_overlap, 'linear', 'extrap');
         head_norm = (head_rate_interp - min(head_rate_interp)) / (max(head_rate_interp) - min(head_rate_interp) + eps);
-        plot(time_comparison, head_norm, 'g-', 'LineWidth', 2, 'DisplayName', 'Head Rate (norm)');
+        plot(time_das_overlap, head_norm, 'g-', 'LineWidth', 2, 'DisplayName', 'Head Rate (norm)');
         ylabel('Normalized Head Rate', 'Color', [0.4660 0.6740 0.1880]);
         ax.YColor = [0.4660 0.6740 0.1880];
     end
@@ -987,6 +995,11 @@ if config.show_plots && ~config.use_displacement_rate && isfield(das_filtered, '
     
     fprintf('\n=== SINGLE CHANNEL 4-SUBPLOT FIGURE GENERATED (Figure 21) ===\n');
     fprintf('  Layout matches ROI analysis for easy comparison\n');
+    catch ME
+        fprintf('\n✗ ERROR generating Figure 21:\n');
+        fprintf('  Message: %s\n', ME.message);
+        fprintf('  Location: %s (line %d)\n', ME.stack(1).name, ME.stack(1).line);
+    end
 end
 
 fprintf('\n✓ Linear regression analysis complete!\n');

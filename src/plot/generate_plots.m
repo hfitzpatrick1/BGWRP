@@ -111,7 +111,7 @@ if isfield(config, 'linear_regression') && config.linear_regression
             if isfield(das_results, test_label) && isfield(head_results, test_label)
                 try
                     % Set up base configuration for linear regression
-                    lr_config.timing_correction_sec = 15;  % Default: 15 seconds backward shift (matches ROI)
+                    lr_config.timing_correction_sec = 8;  % Default: 8 seconds backward shift
                     if isfield(config, 'lr_timing_correction_sec')
                         lr_config.timing_correction_sec = config.lr_timing_correction_sec;
                     end
