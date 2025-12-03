@@ -332,6 +332,7 @@ fc = 1/60;  % Cutoff frequency (1/60 Hz = 60-second period)
 [b, a] = butter(2, fc/(fs/2), 'low');  % 2nd order low-pass
 
 % Apply zero-phase filtering (filtfilt) to avoid phase shift
+strain_raw = strain_rate_zone;  % Save raw version before smoothing
 strain_smoothed = filtfilt(b, a, strain_rate_zone);
 fprintf('✓ Applied 2nd-order Butterworth low-pass filter\n');
 fprintf('  Cutoff: %.4f Hz (60-second period)\n', fc);
@@ -400,12 +401,15 @@ if length(strain_smoothed) ~= length(time_das)
     if length(strain_smoothed) > length(time_das)
         % Assume strain_smoothed is from the full time series, extract the analysis window
         strain_overlap = strain_smoothed(1:length(time_das));
+        strain_overlap_raw = strain_raw(1:length(time_das));  % Also extract raw
         fprintf('  Extracted first %d points from strain_smoothed\n', length(time_das));
     else
         strain_overlap = strain_smoothed;
+        strain_overlap_raw = strain_raw;  % Also get raw
     end
 else
     strain_overlap = strain_smoothed;  % Already the right time window
+    strain_overlap_raw = strain_raw;  % Also get raw
 end
 
 fprintf('DEBUG: Final sizes - strain_overlap: [%d x %d], time_das_overlap: [%d x %d]\n', ...
@@ -622,7 +626,11 @@ if config.show_plots
     yyaxis right;
     % Scale strain rate to match reference plot (×10^-3)
     strain_scale_plot = 1e-3;  % Display strain rate in units of 10^-3 1/s
-    plot(time_comparison, strain_overlap_display / strain_scale_plot, 'r-', 'LineWidth', 2, 'DisplayName', 'Strain Rate');
+    % Get raw strain rate for this time window
+    strain_overlap_raw_display = -strain_overlap_raw(1:length(time_comparison));  % Flip to match strain_overlap_display
+    plot(time_comparison, strain_overlap_raw_display / strain_scale_plot, 'Color', [1 0.5 0.5], 'LineWidth', 1.5, 'DisplayName', 'Strain Rate (raw)');
+    hold on;
+    plot(time_comparison, strain_overlap_display / strain_scale_plot, 'r-', 'LineWidth', 2, 'DisplayName', 'Strain Rate (smoothed)');
     ylabel(sprintf('Strain Rate (×10^{%d})', round(log10(strain_scale_plot))), 'Color', 'r');
     ax.YColor = 'r';
     xlabel('Time UTC');

@@ -37,6 +37,10 @@ config.analysis_windows.PT01c_recovery.end = datetime(2023,10,24,19,19,00,00,'Ti
 config.analysis_windows.PT01c_Recovery_short.start = datetime(2023,10,24,19,14,00,00,'TimeZone','UTC');
 config.analysis_windows.PT01c_Recovery_short.end = datetime(2023,10,24,19,19,00,00,'TimeZone','UTC');
 
+% PT01c_Recovery_short LINEAR REGRESSION focused window (peak signal only)
+config.lr_recovery_window.PT01c_Recovery_short.start = datetime(2023,10,24,19,14,00,00,'TimeZone','UTC');
+config.lr_recovery_window.PT01c_Recovery_short.end = datetime(2023,10,24,19,17,00,00,'TimeZone','UTC');
+
 % PT-01a START OF PUMPING Analysis Window
 % This dataset captures the pump start for PT01a at 16:43 UTC
 config.analysis_windows.PT01a_start_of_pumping.start = datetime(2023,11,07,16,43,00,00,'TimeZone','UTC');

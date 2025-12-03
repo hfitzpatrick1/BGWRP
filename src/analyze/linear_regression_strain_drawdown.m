@@ -255,6 +255,7 @@ if isfield(das_filtered, 'pumping_zone') && isfield(das_filtered.pumping_zone, '
                         strain_smoothed = mean(strain_channels, 2);  % Units: 1/s
                         fprintf('  Method: Mean (default) across %d channels\n', n_channels);
                 end
+                strain_raw = strain_smoothed;  % Save raw version before smoothing (happens later)
                 fprintf('  Depth range: %.1f - %.1f ft (%d channels)\n', depth_min_ft, depth_max_ft, n_channels);
                 
             else
@@ -273,6 +274,7 @@ if isfield(das_filtered, 'pumping_zone') && isfield(das_filtered.pumping_zone, '
                 % 
                 % This gives strain rate in units of 1/s (per second)
                 strain_smoothed = displacement_at_z / (gauge_length_m * 1e9);  % Units: 1/s
+                strain_raw = strain_smoothed;  % Save raw version before smoothing
                 
                 % Apply additional smoothing to strain rate (difference can amplify noise)
                 % This makes it look smooth like the drawdown rate plots
@@ -460,12 +462,20 @@ fprintf('Head rate range: %.4e to %.4e m/s (positive during recovery)\n', min(he
 
 %% Use the SAME time window as Figure 102 (analysis_time window)
 % This ensures we're looking at the exact same time period
-time_start = time_das(1);  % Start of analysis_time window (same as Figure 102)
-time_end = time_das(end);  % End of analysis_time window (same as Figure 102)
-
-fprintf('\n=== TIME WINDOW (Same as Figure 102) ===\n');
-fprintf('Using analysis_time window: %s to %s (%.1f seconds)\n', ...
-    datestr(time_start), datestr(time_end), seconds(time_end - time_start));
+% BUT: If a focused recovery_window is specified in config, use that instead
+if isfield(config, 'recovery_window') && ~isempty(config.recovery_window)
+    time_start = config.recovery_window(1);
+    time_end = config.recovery_window(2);
+    fprintf('\n=== FOCUSED TIME WINDOW (from config) ===\n');
+    fprintf('Using recovery_window: %s to %s (%.1f seconds)\n', ...
+        datestr(time_start), datestr(time_end), seconds(time_end - time_start));
+else
+    time_start = time_das(1);  % Start of analysis_time window (same as Figure 102)
+    time_end = time_das(end);  % End of analysis_time window (same as Figure 102)
+    fprintf('\n=== TIME WINDOW (Same as Figure 102) ===\n');
+    fprintf('Using analysis_time window: %s to %s (%.1f seconds)\n', ...
+        datestr(time_start), datestr(time_end), seconds(time_end - time_start));
+end
 fprintf('DAS time: %s to %s\n', datestr(min(time_das)), datestr(max(time_das)));
 fprintf('Head time (after correction): %s to %s\n', datestr(min(time_head_rate)), datestr(max(time_head_rate)));
 
@@ -474,6 +484,7 @@ fprintf('Head time (after correction): %s to %s\n', datestr(min(time_head_rate))
 valid_strain_idx = (time_strain >= time_start) & (time_strain <= time_end);
 time_das_overlap = time_strain(valid_strain_idx);
 strain_overlap = strain_smoothed(valid_strain_idx);  % Already in 1/s (strain rate)
+strain_overlap_raw = strain_raw(valid_strain_idx);  % Raw strain rate (before smoothing)
 
 % Also get time_das for reference (should match time_strain in this window)
 valid_das_idx = (time_das >= time_start) & (time_das <= time_end);
@@ -673,8 +684,8 @@ if use_amplitude
     results.slope_difference_factor = 2.8434e-07 / slope;
 end
 
-%% PLOTTING
-if config.show_plots
+%% PLOTTING - DISABLE OLD FIGURE 20 (keeping only Figure 21)
+if false && config.show_plots  % Disabled - using Figure 21 instead
     % Use different figure numbers for displacement rate vs strain rate
     if config.use_displacement_rate
         fig_num = 22;  % Displacement rate gets Figure 22
@@ -685,10 +696,10 @@ if config.show_plots
     end
     
     figure(fig_num); clf;
-    set(gcf, 'Position', [50 50 1400 600], 'Name', fig_name);
+    set(gcf, 'Position', [50 50 1600 900], 'Name', fig_name);
     
-    % Left plot: Scatter with regression line
-    subplot(1,2,1);
+    % TOP LEFT (1): Scatter with regression line
+    subplot(2,2,1);
     scatter(head_rate_clean, strain_clean, 20, 'b', 'filled', 'MarkerFaceAlpha', 0.6);
     hold on;
     head_rate_range = linspace(min(head_rate_clean), max(head_rate_clean), 100);
@@ -724,9 +735,9 @@ if config.show_plots
     text(0.05, 0.95, text_str, 'Units', 'normalized', 'VerticalAlignment', 'top', ...
         'BackgroundColor', 'white', 'EdgeColor', 'black', 'FontSize', 10);
     
-    % Right plot: Time series overlay
+    % TOP RIGHT (2): Time series overlay
     % Plot strain at ORIGINAL DAS time points (not interpolated) so it doesn't change with timing correction
-    subplot(1,2,2);
+    subplot(2,2,2);
     yyaxis left;
     % Interpolate head rate to DAS time points for plotting (so both are at same times)
     % Note: head_rate_clean already has flip applied if config.flip_for_display = true
@@ -759,143 +770,223 @@ if config.show_plots
     legend('Location', 'best');
     set(gca, 'FontSize', 11);
     
+    % BOTTOM LEFT (3): Raw vs Smoothed Comparison (placeholder for single channel - just show displacement)
+    subplot(2,2,3);
+    plot(time_das_overlap, strain_overlap, 'k-', 'LineWidth', 2, 'DisplayName', 'Strain Rate');
+    ylabel('Strain Rate (1/s)', 'FontSize', 11, 'FontWeight', 'bold');
+    xlabel('Time UTC', 'FontSize', 11, 'FontWeight', 'bold');
+    title('Strain Rate Time Series', 'FontSize', 13, 'FontWeight', 'bold');
+    legend('Location', 'best');
+    grid on;
+    
+    % BOTTOM RIGHT (4): Normalized comparison for alignment check
+    subplot(2,2,4);
+    % Normalize both signals
+    strain_norm = (strain_overlap - min(strain_overlap)) / (max(strain_overlap) - min(strain_overlap) + eps);
+    head_rate_interp = interp1(time_clean, head_rate_clean, time_das_overlap, 'linear', 'extrap');
+    head_norm = (head_rate_interp - min(head_rate_interp)) / (max(head_rate_interp) - min(head_rate_interp) + eps);
+    
+    yyaxis left;
+    plot(time_das_overlap, strain_norm, 'r-', 'LineWidth', 2, 'DisplayName', 'Strain Rate (norm)');
+    ylabel('Normalized Strain Rate', 'Color', 'r', 'FontSize', 11, 'FontWeight', 'bold');
+    ax = gca;
+    ax.YColor = 'r';
+    
+    yyaxis right;
+    plot(time_das_overlap, head_norm, 'g-', 'LineWidth', 2, 'DisplayName', 'Head Rate (norm)');
+    ylabel('Normalized Head Rate', 'Color', [0.4660 0.6740 0.1880], 'FontSize', 11, 'FontWeight', 'bold');
+    ax.YColor = [0.4660 0.6740 0.1880];
+    
+    xlabel('Time UTC', 'FontSize', 11, 'FontWeight', 'bold');
+    title('Normalized Alignment Check', 'FontSize', 13, 'FontWeight', 'bold');
+    legend('Location', 'best');
+    grid on;
+    
     if config.use_displacement_rate
-        sgtitle(sprintf('Displacement Rate vs Drawdown Rate - %s (Zone %s)', test_name, upper(config.zone)), ...
+        sgtitle(sprintf('Displacement Rate Analysis - %s (Zone %s)', test_name, upper(config.zone)), ...
             'FontSize', 16, 'FontWeight', 'bold');
     else
-        sgtitle(sprintf('Strain Rate vs Drawdown Rate - %s (Zone %s)', test_name, upper(config.zone)), ...
+        sgtitle(sprintf('Strain Rate Analysis - %s (Zone %s) - Single Channel', test_name, upper(config.zone)), ...
             'FontSize', 16, 'FontWeight', 'bold');
     end
     
-    % ADDITIONAL PLOT: Compare strain rate vs displacement rate for visual alignment
-    if ~config.use_displacement_rate && isfield(das_filtered, 'smoothed_data')
-        figure(21); clf;
-        set(gcf, 'Position', [100 100 1400 800], 'Name', sprintf('Strain vs Displacement Comparison (Strain Rate Analysis) - %s', test_name));
-        
-        % Get displacement rate at same channel for comparison
-        % This is already smoothed (5-second movmean from correlation analysis)
-        displacement_at_channel = displacement_rate_full(time_mask, channel_idx);
-        time_comparison = time_strain;
-        
-        % Apply same smoothing to displacement rate as we did to strain rate for fair comparison
-        if isfield(config, 'strain_rate_smoothing_window') && config.strain_rate_smoothing_window > 1
-            % Apply the same post-processing smoothing to displacement rate
-            smoothing_window = config.strain_rate_smoothing_window;
-            smoothing_method = 'movmean';
-            if isfield(config, 'strain_rate_smoothing_method')
-                smoothing_method = config.strain_rate_smoothing_method;
-            end
-            
-            switch lower(smoothing_method)
-                case 'movmean'
-                    displacement_smoothed = movmean(displacement_at_channel, smoothing_window, 'Endpoints', 'shrink');
-                case 'lowpass'
-                    cutoff_freq = 1.0 / smoothing_window;
-                    [b, a] = butter(4, cutoff_freq, 'low');
-                    displacement_smoothed = filtfilt(b, a, displacement_at_channel);
-                otherwise
-                    displacement_smoothed = movmean(displacement_at_channel, smoothing_window, 'Endpoints', 'shrink');
-            end
-        else
-            displacement_smoothed = displacement_at_channel;  % Use as-is
+    fprintf('\n=== OLD PLOT DISABLED ===\n');
+    fprintf('Figure 20: Disabled (using Figure 21 instead)\n');
+end
+
+% MAIN PLOT (Figure 21): 4-subplot comparison (strain rate vs displacement rate)
+if config.show_plots && ~config.use_displacement_rate && isfield(das_filtered, 'smoothed_data')
+    figure(21); clf;
+    set(gcf, 'Position', [100 100 1600 900], 'Name', sprintf('Strain Rate Analysis - %s (Zone %s) - Single Channel', test_name, upper(config.zone)));
+    
+    % Get displacement rate at same channel for comparison
+    % This is already smoothed (5-second movmean from correlation analysis)
+    displacement_at_channel = displacement_rate_full(time_mask, channel_idx);
+    time_comparison = time_strain;
+    
+    % Apply same smoothing to displacement rate as we did to strain rate for fair comparison
+    if isfield(config, 'strain_rate_smoothing_window') && config.strain_rate_smoothing_window > 1
+        % Apply the same post-processing smoothing to displacement rate
+        smoothing_window = config.strain_rate_smoothing_window;
+        smoothing_method = 'movmean';
+        if isfield(config, 'strain_rate_smoothing_method')
+            smoothing_method = config.strain_rate_smoothing_method;
         end
         
-        % Apply flip if configured (for consistency with main plot)
-        strain_overlap_display = strain_overlap;
-        if config.flip_for_display
-            strain_overlap_display = -strain_overlap_display;
+        switch lower(smoothing_method)
+            case 'movmean'
+                displacement_smoothed = movmean(displacement_at_channel, smoothing_window, 'Endpoints', 'shrink');
+            case 'lowpass'
+                cutoff_freq = 1.0 / smoothing_window;
+                [b, a] = butter(4, cutoff_freq, 'low');
+                displacement_smoothed = filtfilt(b, a, displacement_at_channel);
+            otherwise
+                displacement_smoothed = movmean(displacement_at_channel, smoothing_window, 'Endpoints', 'shrink');
         end
-        
-        % Normalize both to same scale for visual comparison (0-1 range)
-        strain_norm = (strain_overlap_display - min(strain_overlap_display)) / (max(strain_overlap_display) - min(strain_overlap_display) + eps);
-        disp_norm_raw = (displacement_at_channel - min(displacement_at_channel)) / (max(displacement_at_channel) - min(displacement_at_channel) + eps);
-        disp_norm_smooth = (displacement_smoothed - min(displacement_smoothed)) / (max(displacement_smoothed) - min(displacement_smoothed) + eps);
-        
-        % Plot 1: Overlay normalized signals (smoothed displacement vs strain)
-        subplot(2,2,1);
-        plot(time_comparison, disp_norm_smooth, 'b-', 'LineWidth', 2, 'DisplayName', 'Displacement Rate (smoothed, normalized)');
-        hold on;
-        plot(time_comparison, strain_norm, 'r-', 'LineWidth', 2, 'DisplayName', 'Strain Rate (normalized)');
-        xlabel('Time UTC');
-        ylabel('Normalized Amplitude (0-1)');
-        title('Normalized Comparison - Same Smoothing Level');
-        legend('Location', 'best');
-        grid on;
-        
-        % Plot 2: Raw displacement vs smoothed strain (shows why they look different)
-        subplot(2,2,2);
-        yyaxis left;
-        plot(time_comparison, displacement_at_channel, 'b-', 'LineWidth', 1.5, 'DisplayName', 'Displacement Rate (raw)');
-        hold on;
-        plot(time_comparison, displacement_smoothed, 'c--', 'LineWidth', 2, 'DisplayName', 'Displacement Rate (smoothed)');
-        ylabel('Displacement Rate (nm/s)', 'Color', 'b');
-        ax = gca;
-        ax.YColor = 'b';
-        
-        yyaxis right;
-        plot(time_comparison, strain_overlap_display, 'r-', 'LineWidth', 2, 'DisplayName', 'Strain Rate');
-        ylabel('Strain Rate (1/s)', 'Color', 'r');
-        ax.YColor = 'r';
-        xlabel('Time UTC');
-        title('Raw vs Smoothed Comparison');
-        legend('Location', 'best');
-        grid on;
-        
-        % Plot 3: Correlation scatter (smoothed displacement vs strain)
-        subplot(2,2,3);
-        % Interpolate to same time points
-        common_time = time_comparison;
-        strain_interp = interp1(time_comparison, strain_overlap_display, common_time, 'linear');
-        disp_interp_smooth = interp1(time_comparison, displacement_smoothed, common_time, 'linear');
-        valid = ~isnan(strain_interp) & ~isnan(disp_interp_smooth);
-        scatter(disp_interp_smooth(valid), strain_interp(valid), 20, 'b', 'filled', 'MarkerFaceAlpha', 0.6);
-        xlabel('Displacement Rate (nm/s, smoothed)');
-        ylabel('Strain Rate (1/s)');
-        corr_val = corr(disp_interp_smooth(valid), strain_interp(valid));
-        title(sprintf('Strain vs Displacement Correlation: R = %.3f', corr_val));
-        grid on;
-        
-        % Add regression line
-        if sum(valid) > 2
-            p = polyfit(disp_interp_smooth(valid), strain_interp(valid), 1);
-            hold on;
-            x_fit = linspace(min(disp_interp_smooth(valid)), max(disp_interp_smooth(valid)), 100);
-            plot(x_fit, polyval(p, x_fit), 'r-', 'LineWidth', 2, 'DisplayName', sprintf('Fit: y=%.2e*x+%.2e', p(1), p(2)));
-            legend('Location', 'best');
-        end
-        
-        % Plot 4: Head rate overlay for timing reference
-        subplot(2,2,4);
-        yyaxis left;
-        plot(time_comparison, strain_norm, 'r-', 'LineWidth', 2, 'DisplayName', 'Strain Rate (norm)');
-        ylabel('Normalized Strain Rate', 'Color', 'r');
-        ax = gca;
-        ax.YColor = 'r';
-        
-        yyaxis right;
-        % Get head rate for comparison
-        if exist('head_rate_clean', 'var') && exist('time_clean', 'var')
-            head_rate_interp = interp1(time_clean, head_rate_clean, time_comparison, 'linear', 'extrap');
-            head_norm = (head_rate_interp - min(head_rate_interp)) / (max(head_rate_interp) - min(head_rate_interp) + eps);
-            plot(time_comparison, head_norm, 'g-', 'LineWidth', 2, 'DisplayName', 'Head Rate (norm)');
-            ylabel('Normalized Head Rate', 'Color', [0.4660 0.6740 0.1880]);
-            ax.YColor = [0.4660 0.6740 0.1880];
-        end
-        xlabel('Time UTC');
-        title('Strain Rate vs Head Rate (normalized for alignment check)');
-        legend('Location', 'best');
-        grid on;
-        
-        sgtitle(sprintf('Strain Rate vs Displacement Rate Comparison - %s', test_name), ...
-            'FontSize', 16, 'FontWeight', 'bold');
-        
-        fprintf('\n=== COMPARISON PLOT GENERATED ===\n');
-        fprintf('Figure 21: Strain rate vs displacement rate comparison\n');
-        fprintf('  Use this to visually check alignment and see why they look different\n');
+    else
+        displacement_smoothed = displacement_at_channel;  % Use as-is
     end
     
-    fprintf('\n=== PLOT GENERATED ===\n');
-    fprintf('Figure 20: Linear regression and time series\n');
+    % Apply flip if configured (for consistency with main plot)
+    strain_overlap_display = strain_overlap;
+    % Check if strain_overlap_raw exists (it might not if using displacement rate mode)
+    if exist('strain_overlap_raw', 'var')
+        strain_overlap_raw_display = strain_overlap_raw;  % Also prepare raw version
+    else
+        strain_overlap_raw_display = strain_overlap;  % Fallback: use smoothed version
+    end
+    if config.flip_for_display
+        strain_overlap_display = -strain_overlap_display;
+        strain_overlap_raw_display = -strain_overlap_raw_display;  % Apply same flip to raw
+    end
+    
+    % Normalize both to same scale for visual comparison (0-1 range)
+    strain_norm = (strain_overlap_display - min(strain_overlap_display)) / (max(strain_overlap_display) - min(strain_overlap_display) + eps);
+    disp_norm_raw = (displacement_at_channel - min(displacement_at_channel)) / (max(displacement_at_channel) - min(displacement_at_channel) + eps);
+    disp_norm_smooth = (displacement_smoothed - min(displacement_smoothed)) / (max(displacement_smoothed) - min(displacement_smoothed) + eps);
+    
+    % ============ TOP ROW ============
+    
+    % TOP LEFT (1): Linear Regression Scatter (Strain Rate vs Drawdown/Head Rate)
+    subplot(2,2,1);
+    scatter(head_rate_clean, strain_clean, 25, 'b', 'filled', 'MarkerFaceAlpha', 0.7);
+    hold on;
+    head_rate_range = linspace(min(head_rate_clean), max(head_rate_clean), 100);
+    plot(head_rate_range, polyval(p_regression, head_rate_range), 'r-', 'LineWidth', 3);
+    hold off;
+    xlabel('Drawdown Rate (m/s)', 'FontSize', 11, 'FontWeight', 'bold');
+    ylabel('Strain Rate (1/s)', 'FontSize', 11, 'FontWeight', 'bold');
+    title(sprintf('Linear Regression: R = %.3f, R^2 = %.3f', R_corr, R_squared), 'FontSize', 13, 'FontWeight', 'bold');
+    grid on;
+    legend('Data', sprintf('Fit: y = %.2e*x + %.2e', slope, intercept), 'Location', 'best');
+    
+    % Add text box with statistics
+    text_str = sprintf('Slope: %.2e\nR: %.3f\nR^2: %.3f\nRMSE: %.2e\nN: %d\nDepth: 285 ft\nChannel: %d', ...
+        slope, R_corr, R_squared, RMSE, length(strain_clean), channel_idx);
+    text(0.05, 0.95, text_str, 'Units', 'normalized', 'VerticalAlignment', 'top', ...
+        'BackgroundColor', 'white', 'EdgeColor', 'black', 'FontSize', 9);
+    
+    % TOP RIGHT (2): Time Series (Drawdown Rate and Strain Rate)
+    subplot(2,2,2);
+    
+    % Determine scaling
+    head_scale = 1e-3;
+    strain_scale = 1e-12;
+    head_max = max(abs(head_rate_clean));
+    strain_max = max(abs(strain_clean));
+    
+    if head_max > 0
+        if head_max < 1e-2, head_scale = 1e-3;
+        elseif head_max < 1e-1, head_scale = 1e-2;
+        else, head_scale = 1e-1;
+        end
+    end
+    if strain_max > 0
+        if strain_max < 1e-11, strain_scale = 1e-12;
+        elseif strain_max < 1e-10, strain_scale = 1e-11;
+        else, strain_scale = 1e-10;
+        end
+    end
+    
+    yyaxis left;
+    plot(time_clean, head_rate_clean / head_scale, 'Color', [0.4660 0.6740 0.1880], 'LineWidth', 2, 'DisplayName', 'Drawdown Rate');
+    ylabel(sprintf('Drawdown Rate (m/s) ×10^{%d}', round(log10(head_scale))), 'FontSize', 11, 'FontWeight', 'bold');
+    ax = gca;
+    ax.YColor = [0.4660 0.6740 0.1880];
+    
+    yyaxis right;
+    plot(time_clean, strain_clean / strain_scale, 'Color', [0 0 0], 'LineWidth', 2.5, 'DisplayName', 'Strain Rate');
+    ylabel(sprintf('Strain Rate (1/s) ×10^{%d}', round(log10(strain_scale))), 'FontSize', 11, 'FontWeight', 'bold');
+    ax.YColor = 'k';
+    
+    xlabel('Date Time UTC', 'FontSize', 11, 'FontWeight', 'bold');
+    title(sprintf('Time Series (%.0fs correction) - Depth 285 ft', config.timing_correction_sec), 'FontSize', 13, 'FontWeight', 'bold');
+    legend('show', 'Location', 'best');
+    grid on;
+    
+    % ============ BOTTOM ROW ============
+    
+    % BOTTOM LEFT (3): Raw vs Smoothed Comparison (matching ROI layout)
+    subplot(2,2,3);
+    yyaxis left;
+    plot(time_comparison, displacement_at_channel, 'b-', 'LineWidth', 1.5, 'DisplayName', 'Displacement Rate (raw)');
+    hold on;
+    plot(time_comparison, displacement_smoothed, 'c--', 'LineWidth', 2, 'DisplayName', 'Displacement Rate (smoothed)');
+    ylabel('Displacement Rate (nm/s)', 'Color', 'b');
+    ax = gca;
+    ax.YColor = 'b';
+    
+    yyaxis right;
+    % Scale strain rate to match ROI plot format (×10^-3)
+    strain_scale_plot = 1e-3;  % Display strain rate in units of 10^-3 1/s
+    % Use raw strain rate - extract subset and apply SAME transformation as smoothed version
+    if exist('strain_overlap_raw_display', 'var') && length(strain_overlap_raw_display) >= length(time_comparison)
+        strain_raw_subset = strain_overlap_raw_display(1:length(time_comparison));
+        % The smoothed version is strain_overlap_display, which has already been flipped
+        % Apply the exact same flip to raw: if smoothed is negative, raw should be too
+        if mean(strain_overlap_display) < 0 && mean(strain_raw_subset) > 0
+            strain_raw_subset = -strain_raw_subset;  % Flip raw to match smoothed direction
+        elseif mean(strain_overlap_display) > 0 && mean(strain_raw_subset) < 0
+            strain_raw_subset = -strain_raw_subset;  % Flip raw to match smoothed direction  
+        end
+        plot(time_comparison, strain_raw_subset / strain_scale_plot, 'Color', [1 0.5 0.5], 'LineWidth', 1.5, 'DisplayName', 'Strain Rate (raw)');
+        hold on;
+    end
+    plot(time_comparison, strain_overlap_display / strain_scale_plot, 'r-', 'LineWidth', 2, 'DisplayName', 'Strain Rate (smoothed)');
+    ylabel(sprintf('Strain Rate (×10^{%d})', round(log10(strain_scale_plot))), 'Color', 'r');
+    ax.YColor = 'r';
+    xlabel('Time UTC');
+    title('Raw vs Smoothed Comparison');
+    legend('Location', 'best');
+    grid on;
+    
+    % Plot 4: Head rate overlay for timing reference
+    subplot(2,2,4);
+    yyaxis left;
+    plot(time_comparison, strain_norm, 'r-', 'LineWidth', 2, 'DisplayName', 'Strain Rate (norm)');
+    ylabel('Normalized Strain Rate', 'Color', 'r');
+    ax = gca;
+    ax.YColor = 'r';
+    
+    yyaxis right;
+    % Get head rate for comparison
+    if exist('head_rate_clean', 'var') && exist('time_clean', 'var')
+        head_rate_interp = interp1(time_clean, head_rate_clean, time_comparison, 'linear', 'extrap');
+        head_norm = (head_rate_interp - min(head_rate_interp)) / (max(head_rate_interp) - min(head_rate_interp) + eps);
+        plot(time_comparison, head_norm, 'g-', 'LineWidth', 2, 'DisplayName', 'Head Rate (norm)');
+        ylabel('Normalized Head Rate', 'Color', [0.4660 0.6740 0.1880]);
+        ax.YColor = [0.4660 0.6740 0.1880];
+    end
+    xlabel('Time UTC');
+    title('Strain Rate vs Head Rate (normalized for alignment check)');
+    legend('Location', 'best');
+    grid on;
+    
+    sgtitle(sprintf('Strain Rate Analysis - %s (Zone %s) - Single Channel', test_name, upper(config.zone)), ...
+        'FontSize', 16, 'FontWeight', 'bold');
+    
+    fprintf('\n=== SINGLE CHANNEL 4-SUBPLOT FIGURE GENERATED (Figure 21) ===\n');
+    fprintf('  Layout matches ROI analysis for easy comparison\n');
 end
 
 fprintf('\n✓ Linear regression analysis complete!\n');

@@ -68,6 +68,10 @@ if isfield(config, 'correlation_analysis') && config.correlation_analysis
                     lr_config.zone = 'z5';  % Default: Zone 5
                     lr_config.show_plots = true;
                     
+                    % Add focused recovery window (same as ROI: 19:14-19:17)
+                    lr_config.recovery_window = [datetime('2023-10-24 19:14:00', 'TimeZone', 'UTC'), ...
+                                                 datetime('2023-10-24 19:17:00', 'TimeZone', 'UTC')];
+                    
                     % Perform linear regression
                     lr_results = linear_regression_strain_drawdown(das_results, head_results, test_label, lr_config);
                     
@@ -107,13 +111,17 @@ if isfield(config, 'linear_regression') && config.linear_regression
             if isfield(das_results, test_label) && isfield(head_results, test_label)
                 try
                     % Set up base configuration for linear regression
-                    lr_config.timing_correction_sec = 8;  % Default: 8 seconds backward shift
+                    lr_config.timing_correction_sec = 15;  % Default: 15 seconds backward shift (matches ROI)
                     if isfield(config, 'lr_timing_correction_sec')
                         lr_config.timing_correction_sec = config.lr_timing_correction_sec;
                     end
                     lr_config.zone = 'z5';  % Default: Zone 5
                     if isfield(config, 'lr_zone')
                         lr_config.zone = config.lr_zone;
+                    end
+                    % Add recovery window if specified
+                    if isfield(config, 'lr_recovery_window')
+                        lr_config.recovery_window = config.lr_recovery_window;
                     end
                     % Depth range analysis (optional)
                     if isfield(config, 'lr_depth_range_ft')

@@ -370,6 +370,11 @@ if exist('mode', 'var') && ischar(mode)
             config.lr_run_both_comparisons = false;  % Only strain rate
             % Enable storage calculation after regression
             config.calculate_storage = true;
+            % Set timing correction to match ROI (15 seconds)
+            config.lr_timing_correction_sec = 15;
+            % Set focused recovery window (SAME as ROI: 19:14-19:17)
+            config.lr_recovery_window = [datetime('2023-10-24 19:14:00', 'TimeZone', 'UTC'), ...
+                                        datetime('2023-10-24 19:17:00', 'TimeZone', 'UTC')];
             % Apply 5-second moving mean filter before correlation analysis
             config.smoothing_method = 'matlab_movmean';
             config.matlab_movmean_window = 5;
@@ -397,6 +402,7 @@ if exist('mode', 'var') && ischar(mode)
             fprintf('Running 5-second moving mean filter + strain rate vs head data correlation analysis (DAS shifted +20s)\n');
             fprintf('  Colorbar bounds: Raw/Displacement ±5 nm/s, Strain ±2 nm/m\n');
             fprintf('  Manual bounds enabled, dynamic_bounds disabled\n');
+            fprintf('  Timing correction: 15s, Recovery window: 19:14-19:17 (matches ROI)\n');
             
         case 'run_linear_regression'
             % Analysis mode for linear regression (run after correlation_analysis)
