@@ -370,16 +370,16 @@ if exist('mode', 'var') && ischar(mode)
             config.lr_run_both_comparisons = false;  % Only strain rate
             % Enable storage calculation after regression
             config.calculate_storage = true;
-            % Set timing correction back to 8 seconds
-            config.lr_timing_correction_sec = 8;
+            % Set timing correction to 9.5 seconds
+            config.lr_timing_correction_sec = 9.5;
             % Set focused recovery window (SAME as ROI: 19:14-19:17)
             config.lr_recovery_window = [datetime('2023-10-24 19:14:00', 'TimeZone', 'UTC'), ...
                                         datetime('2023-10-24 19:17:00', 'TimeZone', 'UTC')];
             % Apply 5-second moving mean filter before correlation analysis
             config.smoothing_method = 'matlab_movmean';
             config.matlab_movmean_window = 5;
-            % Apply stronger smoothing to strain rate (AFTER spatial difference)
-            config.strain_rate_smoothing_window = 15;  % 15 seconds (was 5 by default)
+            % Apply strong smoothing to strain rate (AFTER spatial difference)
+            config.strain_rate_smoothing_window = 30;  % 30 seconds to smooth the noisy signal
             config.strain_rate_smoothing_method = 'movmean';  % Moving average
             config.apply_concatenation_filter = false;
             config.filter_method = 'none';
@@ -848,7 +848,7 @@ if config.run_concatenation  % Run head processing if concatenation is enabled
         % Check _active first, then fall back to base path
         head_input_dir = fullfile(config.base_input, '_active', current_folder, '_head');
         if ~exist(head_input_dir, 'dir')
-            head_input_dir = fullfile(config.base_input, current_folder, '_head');
+        head_input_dir = fullfile(config.base_input, current_folder, '_head');
         end
         
         % Head data output directory 

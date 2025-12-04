@@ -864,7 +864,8 @@ if false && config.show_plots  % Disabled - using Figure 21 instead
 end
 
 % MAIN PLOT (Figure 21): 4-subplot comparison (strain rate vs displacement rate)
-if config.show_plots && ~config.use_displacement_rate && isfield(das_filtered, 'smoothed_data')
+% DISABLED - Using ROI analysis instead!
+if false && config.show_plots && ~config.use_displacement_rate && isfield(das_filtered, 'smoothed_data')
     try
         figure(21); clf;
         set(gcf, 'Position', [100 100 1600 900], 'Name', sprintf('Strain Rate Analysis - %s (Zone %s) - Single Channel', test_name, upper(config.zone)));

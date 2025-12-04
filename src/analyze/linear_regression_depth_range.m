@@ -291,15 +291,44 @@ if (target_channel_idx + channels_per_gauge) <= length(depth_ft_zone)
         all_strain_rates(:, i) = displacement_diff_i / (gauge_length_m * 1e9);
     end
     
-    % Average strain rate across all depths
-    strain_rate_zone = mean(all_strain_rates, 2, 'omitnan');
+    % COHERENCE STACKING (Bourdet-style): Weight by similarity to ensemble
+    fprintf('\n=== COHERENCE STACKING (BOURDET-STYLE) ===\n');
     
-    fprintf('  Calculated strain rate at %d different depths\n', n_valid_points);
+    % Step 1: Calculate ensemble average (simple mean)
+    ensemble_avg = mean(all_strain_rates, 2, 'omitnan');
+    fprintf('  Step 1: Calculated ensemble average (simple mean)\n');
+    
+    % Step 2: Calculate correlation of each depth with ensemble
+    coherence_weights = zeros(n_valid_points, 1);
+    for i = 1:n_valid_points
+        % Correlation coefficient between this depth and ensemble
+        valid_idx = ~isnan(all_strain_rates(:, i)) & ~isnan(ensemble_avg);
+        if sum(valid_idx) > 10  % Need enough points for meaningful correlation
+            R = corrcoef(all_strain_rates(valid_idx, i), ensemble_avg(valid_idx));
+            coherence_weights(i) = abs(R(1, 2));  % Use absolute correlation
+        else
+            coherence_weights(i) = 0;  % Invalid/noisy channel
+        end
+    end
+    
+    % Step 3: Apply weights (normalize so they sum to 1)
+    coherence_weights = coherence_weights / sum(coherence_weights);
+    
+    % Step 4: Calculate weighted average
+    strain_rate_zone = zeros(size(ensemble_avg));
+    for i = 1:n_valid_points
+        strain_rate_zone = strain_rate_zone + coherence_weights(i) * all_strain_rates(:, i);
+    end
+    
+    fprintf('  Step 2: Calculated coherence weights for %d depths\n', n_valid_points);
+    fprintf('  Step 3: Applied coherence weighting\n');
+    fprintf('  Coherence weights range: %.4f to %.4f\n', min(coherence_weights), max(coherence_weights));
+    fprintf('  Mean coherence weight: %.4f (uniform would be %.4f)\n', ...
+        mean(coherence_weights), 1/n_valid_points);
     fprintf('  Depth range: %.1f to %.1f ft\n', depth_ft_zone(1), depth_ft_zone(end-channels_per_gauge));
-    fprintf('  Average strain rate: %.4e 1/s\n', mean(strain_rate_zone));
-    fprintf('  Individual strain rates range: %.4e to %.4e 1/s\n', ...
-        min(mean(all_strain_rates, 1)), max(mean(all_strain_rates, 1)));
-    fprintf('  *** This represents AVERAGE deformation across the responsive zone ***\n');
+    fprintf('  Weighted average strain rate: %.4e 1/s\n', mean(strain_rate_zone));
+    fprintf('  Simple average strain rate: %.4e 1/s\n', mean(ensemble_avg));
+    fprintf('  *** Using COHERENCE STACKING to downweight noisy channels ***\n');
     
     % Also show what single-point strain rate would be at 284.7 ft for comparison
     target_channel_idx = find(abs(depth_ft_zone - actual_depth_ft) < 0.5, 1);
@@ -362,11 +391,36 @@ zone_time_corrected = zone_time - seconds(config.timing_correction_sec);
 % During recovery: drawdown decreases (∂s/∂t < 0), head increases (∂h/∂t > 0)
 % Since s = h_initial - h, we have: ∂h/∂t = -∂s/∂t
 % So we need to negate the drawdown rate to get head rate
-dt_head = diff(seconds(zone_time_corrected - zone_time_corrected(1)));  % Time step (seconds)
-ds = diff(zone_head);  % Drawdown change (ft) - note: this is drawdown, not head!
-drawdown_rate_ftps = ds ./ dt_head;  % Drawdown rate: ∂s/∂t (negative during recovery)
+
+fprintf('\n=== BOURDET DERIVATIVE FOR DRAWDOWN DATA ===\n');
+fprintf('Using central differencing with time-weighting (Bourdet method)\n');
+fprintf('Formula: d'' = (Δt₂/(Δt₁+Δt₂)) × dh/dt|₁ + (Δt₁/(Δt₁+Δt₂)) × dh/dt|₂\n');
+
+% Calculate Bourdet derivative (central differencing with time weighting)
+n_points = length(zone_head);
+drawdown_rate_ftps = zeros(n_points - 2, 1);  % Central diff loses 2 points
+time_head_rate = zone_time_corrected(2:end-1);  % Time at center points
+
+for i = 2:(n_points-1)
+    % Time differences
+    dt1 = seconds(zone_time_corrected(i) - zone_time_corrected(i-1));    % t(i) - t(i-1)
+    dt2 = seconds(zone_time_corrected(i+1) - zone_time_corrected(i));    % t(i+1) - t(i)
+    
+    % Simple derivatives on each side
+    dhdt1 = (zone_head(i) - zone_head(i-1)) / dt1;      % Left derivative
+    dhdt2 = (zone_head(i+1) - zone_head(i)) / dt2;      % Right derivative
+    
+    % Bourdet weighted average (weights by time intervals)
+    weight1 = dt2 / (dt1 + dt2);  % Weight for left derivative
+    weight2 = dt1 / (dt1 + dt2);  % Weight for right derivative
+    
+    drawdown_rate_ftps(i-1) = weight1 * dhdt1 + weight2 * dhdt2;
+end
+
 head_rate_ftps = -drawdown_rate_ftps;  % Head rate: ∂h/∂t = -∂s/∂t (positive during recovery)
-time_head_rate = zone_time_corrected(1:end-1);  % Time vector (one less after diff)
+
+fprintf('✓ Bourdet derivative calculated at %d points (central differencing)\n', length(drawdown_rate_ftps));
+fprintf('  Original points: %d → Bourdet points: %d (lost 2 edge points)\n', n_points, length(drawdown_rate_ftps));
 
 fprintf('Drawdown rate range: %.4e to %.4e ft/s (negative during recovery)\n', min(drawdown_rate_ftps), max(drawdown_rate_ftps));
 fprintf('Head rate range: %.4e to %.4e ft/s (positive during recovery)\n', min(head_rate_ftps), max(head_rate_ftps));
@@ -385,12 +439,13 @@ time_head_overlap = time_head_rate(valid_head_idx);
 ft_to_m = 0.3048;
 head_rate_overlap = drawdown_rate_ftps(valid_head_idx) * ft_to_m;  % m/s (converted from ft/s)
 
-% APPLY SMOOTHING TO DRAWDOWN RATE (data collected every 5 seconds)
-fprintf('\n=== APPLYING SMOOTHING TO DRAWDOWN RATE ===\n');
-fprintf('Drawdown rate sampled every 5 seconds - applying 12-point (~60s) smoothing...\n');
+% ADDITIONAL SMOOTHING (Bourdet already provides smoothing via time-weighting)
+fprintf('\n=== ADDITIONAL SMOOTHING TO BOURDET DERIVATIVE ===\n');
+fprintf('Note: Bourdet derivative already provides noise reduction\n');
+fprintf('Applying light additional smoothing (12-point ~60s) for consistency...\n');
 % Since drawdown is sampled at 0.2 Hz (every 5 sec), 12 points = 60 seconds
 head_rate_overlap = movmean(head_rate_overlap, 12, 'omitnan');
-fprintf('✓ Applied 12-point moving average to drawdown rate\n');
+fprintf('✓ Applied 12-point moving average to Bourdet-smoothed data\n');
 
 time_das_overlap = time_das;  % Already the right window
 % strain_smoothed should be from the windowed data, but check sizes
@@ -552,6 +607,7 @@ if config.show_plots
         else
             strain_scale = 1e-9;
         end
+        fprintf('DEBUG SCALING: strain_max = %.4e, strain_scale = %.4e\n', strain_max, strain_scale);
     end
     
     yyaxis left;
