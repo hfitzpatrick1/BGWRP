@@ -411,44 +411,76 @@ fprintf('Valid points for regression: %d\n', length(strain_clean));
 fprintf('  Flipping strain rate to match drawdown rate direction\n');
 strain_clean = -strain_clean;  % Flip strain rate so both spikes at 19:15 point same direction
 
-% Skip temporal weighting for now - keep it simple
-fprintf('  Using simple regression without temporal weighting\n');
+% TEMPORAL WEIGHTING: Emphasize peak region where alignment is best
+fprintf('  Using TEMPORAL WEIGHTING to emphasize well-aligned peak region\n');
 
-%% LINEAR REGRESSION: Strain Rate vs Drawdown Rate (simple, no weighting)
-fprintf('\n=== SIMPLE REGRESSION RESULTS ===\n');
-% Just use simple polyfit - no weighting for now
-p_regression = polyfit(drawdown_rate_clean, strain_clean, 1);
-slope = p_regression(1);  % (1/s) per (m/s) - strain rate per head rate (same units as single channel!)
-intercept = p_regression(2);  % 1/s
+% Create time-based weights: higher weight for peak region (19:15:00-19:16:00)
+% Lower weight for early part (19:14:00-19:15:00) where strain leads
+peak_start = datetime('2023-10-24 19:15:00', 'TimeZone', 'UTC');
+peak_end = datetime('2023-10-24 19:16:00', 'TimeZone', 'UTC');
 
-% Calculate correlation and R^2
-R_matrix = corrcoef(drawdown_rate_clean, strain_clean);
-R_corr = R_matrix(1,2);
-R_squared = R_corr^2;
+weights = ones(size(time_clean));
+for i = 1:length(time_clean)
+    if time_clean(i) >= peak_start && time_clean(i) <= peak_end
+        weights(i) = 3.0;  % 3x weight for peak region
+    elseif time_clean(i) < peak_start
+        weights(i) = 0.5;  % Downweight early misaligned part
+    else
+        weights(i) = 1.0;  % Normal weight for tail
+    end
+end
 
-% Note: After flipping both signs, slope sign is preserved (both flipped, so ratio stays same)
-% But we want positive slope, so if it's negative, flip strain rate again
+fprintf('    Peak region (19:15-19:16): weight = 3.0\n');
+fprintf('    Early part (before 19:15): weight = 0.5\n');
+fprintf('    Tail (after 19:16): weight = 1.0\n');
+
+%% LINEAR REGRESSION: Strain Rate vs Drawdown Rate (with temporal weighting)
+fprintf('\n=== WEIGHTED REGRESSION RESULTS ===\n');
+
+% Weighted least squares regression
+% Minimize: sum(weights .* (y - (mx + b))^2)
+X = [drawdown_rate_clean, ones(size(drawdown_rate_clean))];
+W = diag(weights);
+coeffs = (X' * W * X) \ (X' * W * strain_clean);
+slope = coeffs(1);
+intercept = coeffs(2);
+
+% Calculate weighted correlation and R^2
+strain_predicted = drawdown_rate_clean * slope + intercept;
+ss_res = sum(weights .* (strain_clean - strain_predicted).^2);
+ss_tot = sum(weights .* (strain_clean - mean(strain_clean)).^2);
+R_squared = 1 - (ss_res / ss_tot);
+R_corr = sqrt(R_squared) * sign(slope);
+
+% Check slope sign and re-calculate if needed
 if slope < 0
     fprintf('  Slope is negative (%.4e), flipping strain rate sign to get positive slope\n', slope);
     strain_clean = -strain_clean;
-    p_regression = polyfit(drawdown_rate_clean, strain_clean, 1);
-    slope = p_regression(1);
-    intercept = p_regression(2);
-    R_matrix = corrcoef(drawdown_rate_clean, strain_clean);
-    R_corr = R_matrix(1,2);
-    R_squared = R_corr^2;
+    % Recalculate weighted regression
+    coeffs = (X' * W * X) \ (X' * W * strain_clean);
+    slope = coeffs(1);
+    intercept = coeffs(2);
+    strain_predicted = drawdown_rate_clean * slope + intercept;
+    ss_res = sum(weights .* (strain_clean - strain_predicted).^2);
+    ss_tot = sum(weights .* (strain_clean - mean(strain_clean)).^2);
+    R_squared = 1 - (ss_res / ss_tot);
+    R_corr = sqrt(R_squared) * sign(slope);
 end
+
+% Store p_regression for compatibility with plotting code
+p_regression = [slope, intercept];
 
 % Calculate residuals and RMSE
 strain_predicted = polyval(p_regression, drawdown_rate_clean);
 residuals = strain_clean - strain_predicted;
 RMSE = sqrt(mean(residuals.^2));
 
-fprintf('Slope: %.4e (1/s) per (ft/s)\n', slope);
-fprintf('Intercept: %.4e 1/s\n', intercept);
-fprintf('Correlation (R): %.4f\n', R_corr);
-fprintf('R^2: %.4f\n', R_squared);
-fprintf('RMSE: %.4e 1/s\n', RMSE);
+fprintf('\nRegression results:\n');
+fprintf('  Slope: %.4e (1/s) per (ft/s)\n', slope);
+fprintf('  Intercept: %.4e 1/s\n', intercept);
+fprintf('  Correlation (R): %.4f\n', R_corr);
+fprintf('  R^2: %.4f\n', R_squared);
+fprintf('  RMSE: %.4e 1/s\n', RMSE);
 
 % Quality assessment
 if R_squared > 0.5

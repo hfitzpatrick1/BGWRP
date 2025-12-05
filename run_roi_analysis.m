@@ -10,12 +10,12 @@ end
 lr_config = struct();
 lr_config.zone = 'z5';
 lr_config.depth_range_ft = [250, 350];  % Full range around most responsive zone (matching R²=0.715 result)
-lr_config.timing_correction_sec = 15;  % 15s timing (from this morning's R²=0.685 result)
+lr_config.timing_correction_sec = 13.5;  % Testing 13s timing
 lr_config.show_plots = true;  % Set to false for cleaner output
 
-% Focus on PEAK REGION for best R² (0.534)
+% Focus on PEAK REGION for best correlation
 lr_config.recovery_window = [datetime('2023-10-24 19:14:00', 'TimeZone', 'UTC'), ...
-                            datetime('2023-10-24 19:17:00', 'TimeZone', 'UTC')];
+                            datetime('2023-10-24 19:16:30', 'TimeZone', 'UTC')];
 
 fprintf('=== RUNNING ROI STRAIN RATE ANALYSIS (260-310 ft) ===\n');
 fprintf('Depth range: %.0f-%.0f ft (narrower range around 284.7 ft target)\n', lr_config.depth_range_ft(1), lr_config.depth_range_ft(2));
