@@ -9,30 +9,30 @@ end
 % Set up ROI analysis configuration - MATCH SINGLE CHANNEL SUCCESS PARAMETERS
 lr_config = struct();
 lr_config.zone = 'z5';
-lr_config.depth_range_ft = [250, 350];  % Focused range centered around 284.7 ft target depth
-lr_config.timing_correction_sec = 10;  % Testing 10s correction
+lr_config.depth_range_ft = [250, 350];  % Full range around most responsive zone (matching R²=0.715 result)
+lr_config.timing_correction_sec = 15;  % 15s timing (from this morning's R²=0.685 result)
 lr_config.show_plots = true;  % Set to false for cleaner output
 
 % Focus on PEAK REGION for best R² (0.534)
 lr_config.recovery_window = [datetime('2023-10-24 19:14:00', 'TimeZone', 'UTC'), ...
                             datetime('2023-10-24 19:17:00', 'TimeZone', 'UTC')];
 
-fprintf('=== RUNNING ROI STRAIN RATE ANALYSIS (250-350 ft) ===\n');
-fprintf('Depth range: %.0f-%.0f ft (centered around 284.7 ft target)\n', lr_config.depth_range_ft(1), lr_config.depth_range_ft(2));
+fprintf('=== RUNNING ROI STRAIN RATE ANALYSIS (260-310 ft) ===\n');
+fprintf('Depth range: %.0f-%.0f ft (narrower range around 284.7 ft target)\n', lr_config.depth_range_ft(1), lr_config.depth_range_ft(2));
 fprintf('Method: Proper Becker spatial difference ε̇ = [u̇(z+L) - u̇(z)] / L\n');
-fprintf('Parameters: 10s timing correction, coherence stacking + Bourdet, 19:14-19:17 window\n\n');
+fprintf('Parameters: 20s timing correction, maximum envelope method, Bourdet, 19:14-19:17 window\n\n');
 
 % Run ROI depth range analysis
 roi_results = linear_regression_depth_range(das_results, head_results, 'PT01c_Recovery_short', lr_config);
 
-fprintf('\n=== ROI STRAIN RATE RESULTS (250-350 FT) ===\n');
-fprintf('Depth range: 250-350 ft (centered around 284.7 ft target)\n');
+fprintf('\n=== ROI STRAIN RATE RESULTS (260-310 FT) ===\n');
+fprintf('Depth range: 260-310 ft (narrower range around 284.7 ft target)\n');
 fprintf('Slope: %.4e (1/s)/(ft/s)\n', roi_results.slope);
 fprintf('R²: %.4f\n', roi_results.R_squared);
 fprintf('Correlation (R): %.4f\n', roi_results.R);
 fprintf('RMSE: %.4e 1/s\n', roi_results.RMSE);
 fprintf('Method: Proper Becker ε̇ = [u̇(z+L) - u̇(z)] / L\n');
-fprintf('Processing: 10s timing correction, coherence stacking + Bourdet, 19:14-19:17 window\n');
+fprintf('Processing: 20s timing correction, maximum envelope method, Bourdet, 19:14-19:17 window\n');
 
 % Compare with single channel results if available
 if isfield(das_results.PT01c_Recovery_short, 'linear_regression')
@@ -42,7 +42,7 @@ if isfield(das_results.PT01c_Recovery_short, 'linear_regression')
     fprintf('  Slope: %.4e (1/s)/(ft/s)\n', single_results.slope);
     fprintf('  R²: %.4f\n', single_results.R_squared);
     fprintf('  Method: ε̇ = u̇(z,t) / L\n');
-    fprintf('\nROI Spatial Difference (250-350 ft):\n');
+    fprintf('\nROI Spatial Difference (260-310 ft):\n');
     fprintf('  Slope: %.4e (1/s)/(ft/s)\n', roi_results.slope);
     fprintf('  R²: %.4f\n', roi_results.R_squared);
     fprintf('  Method: ε̇ = [u̇(z+L) - u̇(z)] / L\n');

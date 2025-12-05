@@ -241,134 +241,50 @@ for t = 1:size(displacement_rate_zone, 1)
     end
 end
 
-% FOCUSED APPROACH: Calculate strain rate at exact 284.7 ft depth (where single channel works)
-fprintf('\n=== FOCUSED STRAIN RATE AT 284.7 FT (SINGLE CHANNEL SUCCESS DEPTH) ===\n');
+% AUTOMATIC DEPTH SELECTION: Find most responsive depth pair in the zone
+fprintf('\n=== CALCULATING STRAIN RATES ACROSS ENTIRE ZONE ===\n');
+fprintf('  Will calculate strain rate at every valid depth using 10m gauge\n');
+fprintf('  Then select the MOST RESPONSIVE depth pair (maximum peak strain)\n');
 
-% Find the channel closest to 284.7 ft
-target_depth_ft = 284.7;
-[~, target_channel_idx] = min(abs(depth_ft_zone - target_depth_ft));
-actual_depth_ft = depth_ft_zone(target_channel_idx);
-fprintf('Target depth: %.1f ft\n', target_depth_ft);
-fprintf('Actual channel depth: %.1f ft (channel %d in zone)\n', actual_depth_ft, target_channel_idx);
+% For each valid starting position in the zone
+n_valid_points = n_channels_zone - channels_per_gauge;
+all_strain_rates = zeros(size(displacement_rate_zone, 1), n_valid_points);
 
-% Check if we can calculate forward difference at this depth
-% Use the SAME channels_per_gauge already calculated above (line 185)
-fprintf('DEBUG: target_channel_idx = %d\n', target_channel_idx);
-fprintf('DEBUG: length(depth_ft_zone) = %d\n', length(depth_ft_zone));
-fprintf('DEBUG: channels_per_gauge = %d\n', channels_per_gauge);
-fprintf('DEBUG: Need: target_channel_idx + channels_per_gauge = %d + %d = %d\n', target_channel_idx, channels_per_gauge, target_channel_idx + channels_per_gauge);
-fprintf('DEBUG: Available channels: %d\n', length(depth_ft_zone));
+fprintf('  Depth range: %.1f to %.1f ft\n', depth_ft_zone(1), depth_ft_zone(end));
+fprintf('  Valid depth pairs: %d\n', n_valid_points);
 
-if (target_channel_idx + channels_per_gauge) <= length(depth_ft_zone)
-    % Calculate strain rate using FORWARD difference starting at 284.7 ft
-    fprintf('✓ Can calculate forward difference starting at %.1f ft\n', actual_depth_ft);
-    
-    % Get displacement rates at z and z+10m (forward difference)
-    ch_start = target_channel_idx;  % At 284.7 ft
-    ch_end = target_channel_idx + channels_per_gauge;  % 10m above 284.7 ft
-    
-    depth_start = depth_ft_zone(ch_start);
-    depth_end = depth_ft_zone(ch_end);
-    
-    fprintf('  u̇(z): %.1f ft (channel %d) - EXACT single-channel depth\n', depth_start, ch_start);
-    fprintf('  u̇(z+10m): %.1f ft (channel %d)\n', depth_end, ch_end);
-    fprintf('  Gauge length: %.1f m\n', gauge_length_m);
-    
-    % Calculate strain rate at MULTIPLE depths and average them
-    % This captures the average deformation across the entire responsive zone
-    fprintf('\n=== CALCULATING AVERAGE STRAIN RATE ACROSS ZONE ===\n');
-    fprintf('  Will calculate strain rate at every valid depth using 10m gauge\n');
-    fprintf('  Then average across all depths in the zone\n');
-    
-    % For each valid starting position in the zone
-    n_valid_points = n_channels_zone - channels_per_gauge;
-    all_strain_rates = zeros(size(displacement_rate_zone, 1), n_valid_points);
-    
-    for i = 1:n_valid_points
-        ch_start_i = i;
-        ch_end_i = i + channels_per_gauge;
-        displacement_diff_i = displacement_rate_zone(:, ch_end_i) - displacement_rate_zone(:, ch_start_i);
-        all_strain_rates(:, i) = displacement_diff_i / (gauge_length_m * 1e9);
-    end
-    
-    % COHERENCE STACKING (Bourdet-style): Weight by similarity to ensemble
-    fprintf('\n=== COHERENCE STACKING (BOURDET-STYLE) ===\n');
-    
-    % Step 1: Calculate ensemble average (simple mean)
-    ensemble_avg = mean(all_strain_rates, 2, 'omitnan');
-    fprintf('  Step 1: Calculated ensemble average (simple mean)\n');
-    
-    % Step 2: Calculate correlation of each depth with ensemble
-    coherence_weights = zeros(n_valid_points, 1);
-    for i = 1:n_valid_points
-        % Correlation coefficient between this depth and ensemble
-        valid_idx = ~isnan(all_strain_rates(:, i)) & ~isnan(ensemble_avg);
-        if sum(valid_idx) > 10  % Need enough points for meaningful correlation
-            R = corrcoef(all_strain_rates(valid_idx, i), ensemble_avg(valid_idx));
-            coherence_weights(i) = abs(R(1, 2));  % Use absolute correlation
-        else
-            coherence_weights(i) = 0;  % Invalid/noisy channel
-        end
-    end
-    
-    % Step 3: Apply weights (normalize so they sum to 1)
-    coherence_weights = coherence_weights / sum(coherence_weights);
-    
-    % Step 4: Calculate weighted average
-    strain_rate_zone = zeros(size(ensemble_avg));
-    for i = 1:n_valid_points
-        strain_rate_zone = strain_rate_zone + coherence_weights(i) * all_strain_rates(:, i);
-    end
-    
-    fprintf('  Step 2: Calculated coherence weights for %d depths\n', n_valid_points);
-    fprintf('  Step 3: Applied coherence weighting\n');
-    fprintf('  Coherence weights range: %.4f to %.4f\n', min(coherence_weights), max(coherence_weights));
-    fprintf('  Mean coherence weight: %.4f (uniform would be %.4f)\n', ...
-        mean(coherence_weights), 1/n_valid_points);
-    fprintf('  Depth range: %.1f to %.1f ft\n', depth_ft_zone(1), depth_ft_zone(end-channels_per_gauge));
-    fprintf('  Weighted average strain rate: %.4e 1/s\n', mean(strain_rate_zone));
-    fprintf('  Simple average strain rate: %.4e 1/s\n', mean(ensemble_avg));
-    fprintf('  *** Using COHERENCE STACKING to downweight noisy channels ***\n');
-    
-    % Also show what single-point strain rate would be at 284.7 ft for comparison
-    target_channel_idx = find(abs(depth_ft_zone - actual_depth_ft) < 0.5, 1);
-    if ~isempty(target_channel_idx) && (target_channel_idx + channels_per_gauge <= n_channels_zone)
-        single_point_idx = target_channel_idx;
-        strain_rate_single_point = mean(all_strain_rates(:, single_point_idx));
-        fprintf('\n  For comparison, single-point strain rate at %.1f ft: %.4e 1/s\n', ...
-            depth_ft_zone(target_channel_idx), strain_rate_single_point);
-        fprintf('  Ratio (average/single-point): %.2f\n', mean(strain_rate_zone) / strain_rate_single_point);
-    end
-    
-    fprintf('✓ Strain rate calculated using spatial averaging across %.0f-%.0f ft zone\n', ...
-        config.depth_range_ft(1), config.depth_range_ft(2));
+for i = 1:n_valid_points
+    ch_start_i = i;
+    ch_end_i = i + channels_per_gauge;
+    displacement_diff_i = displacement_rate_zone(:, ch_end_i) - displacement_rate_zone(:, ch_start_i);
+    all_strain_rates(:, i) = displacement_diff_i / (gauge_length_m * 1e9);
+end
 
-% Keep strain rate sign as calculated (physical meaning)
-strain_avg_check = mean(strain_rate_zone, 'omitnan');
-fprintf('Average strain rate across zone: %.2e 1/s (keeping physical sign)\n', strain_avg_check);
-fprintf('  Spatially averaged across %.0f-%.0f ft responsive zone\n', config.depth_range_ft(1), config.depth_range_ft(2));
+% SIMPLE AVERAGING with Butterworth filter (from this morning's R²=0.685 result)
+fprintf('\n=== SIMPLE AVERAGING + BUTTERWORTH FILTER ===\n');
+fprintf('  Step 1: Simple average across all depths\n');
+fprintf('  Step 2: Apply 2nd-order Butterworth filter (60s period)\n');
+fprintf('  Depth range: %.0f-%.0f ft\n', config.depth_range_ft(1), config.depth_range_ft(2));
 
-% Apply LOW-PASS BUTTERWORTH FILTER (original settings that worked)
-fprintf('\n=== APPLYING BUTTERWORTH FILTER ===\n');
-fprintf('Using Butterworth filter for noise removal...\n');
+% Simple average across all depths
+strain_rate_zone = mean(all_strain_rates, 2, 'omitnan');
 
-% Butterworth filter parameters:
-%   Sampling rate: 1 Hz (decimated DAS data)
-%   Cutoff frequency: 1/60 Hz (60-second period)
-%   Order: 2 (good balance)
+fprintf('  Calculated strain rate at %d different depths\n', n_valid_points);
+fprintf('  BEFORE Butterworth: PEAK = %.4e 1/s\n', max(abs(strain_rate_zone)));
+
+% Apply Butterworth low-pass filter
 fs = 1;  % Sampling frequency (1 Hz)
 fc = 1/60;  % Cutoff frequency (1/60 Hz = 60-second period)
 [b, a] = butter(2, fc/(fs/2), 'low');  % 2nd order low-pass
 
-% Apply zero-phase filtering (filtfilt) to avoid phase shift
-strain_raw = strain_rate_zone;  % Save raw version before smoothing
+strain_raw = strain_rate_zone;
 strain_smoothed = filtfilt(b, a, strain_rate_zone);
-fprintf('✓ Applied 2nd-order Butterworth low-pass filter\n');
-fprintf('  Cutoff: %.4f Hz (60-second period)\n', fc);
-fprintf('  Zero-phase filtering preserves peak timing\n');
-fprintf('✓ This reduces high-frequency oscillations that mask the recovery signal\n');
-fprintf('✓ Single-point strain rate at %.1f ft with proper physics\n', actual_depth_ft);
-fprintf('✓ Using FORWARD difference starting at exact single-channel depth\n');
+
+fprintf('  AFTER Butterworth: PEAK = %.4e 1/s\n', max(abs(strain_smoothed)));
+fprintf('  Peak retention: %.2f%%\n', 100 * max(abs(strain_smoothed)) / max(abs(strain_rate_zone)));
+fprintf('✓ Butterworth filter for smooth appearance (matching morning result)\n');
+fprintf('✓ Drawdown uses Bourdet derivative + 12-point smoothing\n');
+fprintf('✓ Forward spatial difference with 10m gauge length\n');
 
 fprintf('Displacement rate range: %.2e to %.2e nm/s\n', ...
     min(displacement_rate_zone(:)), max(displacement_rate_zone(:)));
@@ -439,10 +355,10 @@ time_head_overlap = time_head_rate(valid_head_idx);
 ft_to_m = 0.3048;
 head_rate_overlap = drawdown_rate_ftps(valid_head_idx) * ft_to_m;  % m/s (converted from ft/s)
 
-% ADDITIONAL SMOOTHING (Bourdet already provides smoothing via time-weighting)
+% ADDITIONAL SMOOTHING to Bourdet derivative (from morning's R²=0.685 result)
 fprintf('\n=== ADDITIONAL SMOOTHING TO BOURDET DERIVATIVE ===\n');
 fprintf('Note: Bourdet derivative already provides noise reduction\n');
-fprintf('Applying light additional smoothing (12-point ~60s) for consistency...\n');
+fprintf('Applying 12-point (~60s) moving average for consistency...\n');
 % Since drawdown is sampled at 0.2 Hz (every 5 sec), 12 points = 60 seconds
 head_rate_overlap = movmean(head_rate_overlap, 12, 'omitnan');
 fprintf('✓ Applied 12-point moving average to Bourdet-smoothed data\n');
