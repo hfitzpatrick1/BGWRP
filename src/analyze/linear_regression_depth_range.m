@@ -280,7 +280,7 @@ fprintf('  BEFORE Butterworth: PEAK = %.4e 1/s\n', max(abs(strain_rate_zone)));
 
 % Apply Butterworth low-pass filter
 fs = 1;  % Sampling frequency (1 Hz)
-fc = 1/90;  % Cutoff frequency (1/90 Hz = 90-second period) - balanced smoothing
+fc = 1/60;  % Cutoff frequency (1/60 Hz = 60-second period) - preserves more structure
 [b, a] = butter(2, fc/(fs/2), 'low');  % 2nd order low-pass
 
 strain_raw = strain_rate_zone;
@@ -362,13 +362,14 @@ time_head_overlap = time_head_rate(valid_head_idx);
 ft_to_m = 0.3048;
 head_rate_overlap = drawdown_rate_ftps(valid_head_idx) * ft_to_m;  % m/s (converted from ft/s)
 
-% ADDITIONAL SMOOTHING to Bourdet derivative (from morning's R²=0.685 result)
+% ADDITIONAL SMOOTHING to Bourdet derivative - MATCH STRAIN RATE SMOOTHING
 fprintf('\n=== ADDITIONAL SMOOTHING TO BOURDET DERIVATIVE ===\n');
 fprintf('Note: Bourdet derivative already provides noise reduction\n');
-fprintf('Applying 6-point (~30s) moving average for faster response...\n');
-% Since drawdown is sampled at 0.2 Hz (every 5 sec), 6 points = 30 seconds
-head_rate_overlap = movmean(head_rate_overlap, 6, 'omitnan');
-fprintf('✓ Applied 6-point moving average to Bourdet-smoothed data\n');
+fprintf('Applying 12-point (~60s) moving average to MATCH strain rate Butterworth period...\n');
+% Since drawdown is sampled at 0.2 Hz (every 5 sec), 12 points = 60 seconds
+% This matches the 60s Butterworth filter applied to strain rate
+head_rate_overlap = movmean(head_rate_overlap, 12, 'omitnan');
+fprintf('✓ Applied 12-point moving average to match 60s strain rate smoothing\n');
 
 time_das_overlap = time_das;  % Already the right window
 % strain_smoothed should be from the windowed data, but check sizes
