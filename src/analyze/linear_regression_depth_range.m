@@ -280,7 +280,7 @@ fprintf('  BEFORE Butterworth: PEAK = %.4e 1/s\n', max(abs(strain_rate_zone)));
 
 % Apply Butterworth low-pass filter
 fs = 1;  % Sampling frequency (1 Hz)
-fc = 1/60;  % Cutoff frequency (1/60 Hz = 60-second period)
+fc = 1/90;  % Cutoff frequency (1/90 Hz = 90-second period) - balanced smoothing
 [b, a] = butter(2, fc/(fs/2), 'low');  % 2nd order low-pass
 
 strain_raw = strain_rate_zone;
@@ -365,10 +365,10 @@ head_rate_overlap = drawdown_rate_ftps(valid_head_idx) * ft_to_m;  % m/s (conver
 % ADDITIONAL SMOOTHING to Bourdet derivative (from morning's R²=0.685 result)
 fprintf('\n=== ADDITIONAL SMOOTHING TO BOURDET DERIVATIVE ===\n');
 fprintf('Note: Bourdet derivative already provides noise reduction\n');
-fprintf('Applying 12-point (~60s) moving average for consistency...\n');
-% Since drawdown is sampled at 0.2 Hz (every 5 sec), 12 points = 60 seconds
-head_rate_overlap = movmean(head_rate_overlap, 12, 'omitnan');
-fprintf('✓ Applied 12-point moving average to Bourdet-smoothed data\n');
+fprintf('Applying 6-point (~30s) moving average for faster response...\n');
+% Since drawdown is sampled at 0.2 Hz (every 5 sec), 6 points = 30 seconds
+head_rate_overlap = movmean(head_rate_overlap, 6, 'omitnan');
+fprintf('✓ Applied 6-point moving average to Bourdet-smoothed data\n');
 
 time_das_overlap = time_das;  % Already the right window
 % strain_smoothed should be from the windowed data, but check sizes
@@ -581,14 +581,9 @@ if config.show_plots
     legend('show', 'Location', 'best');
     grid on;
     
-    % Overall title with smoothing status
-    if isfield(das_filtered, 'smoothing_method')
-        smoothing_title = sprintf(' | Smoothing: %s', smoothing_info);
-    else
-        smoothing_title = ' | ⚠ NO SMOOTHING';
-    end
-    sgtitle(sprintf('Strain Rate vs Drawdown Rate - %s (Zone %s) - DEPTH RANGE %.0f-%.0f ft%s', ...
-        strrep(test_name, '_', '\_'), upper(config.zone), config.depth_range_ft(1), config.depth_range_ft(2), smoothing_title), ...
+    % Overall title - concise and descriptive
+    sgtitle(sprintf('Poroelastic Storage Analysis: PT-01c Zone %s (%.0f-%.0f ft)', ...
+        config.zone(2), config.depth_range_ft(1), config.depth_range_ft(2)), ...
         'FontSize', 16, 'FontWeight', 'bold');
     
     % REMOVE SEPARATE FIGURE - Now consolidated into main figure

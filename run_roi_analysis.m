@@ -10,7 +10,7 @@ end
 lr_config = struct();
 lr_config.zone = 'z5';
 lr_config.depth_range_ft = [250, 350];  % Full range around most responsive zone (matching R²=0.715 result)
-lr_config.timing_correction_sec = 13.5;  % Testing 13s timing
+lr_config.timing_correction_sec = 15;  % Testing 15s timing
 lr_config.show_plots = true;  % Set to false for cleaner output
 
 % Focus on PEAK REGION for best correlation
