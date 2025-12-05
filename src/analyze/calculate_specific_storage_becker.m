@@ -133,11 +133,14 @@ end
 % Apply Poisson's ratio correction: Convert axial strain to volumetric strain
 % DAS measures axial strain εzz, but poroelasticity needs volumetric strain εkk
 % For isotropic, confined aquifer: εkk = εzz × (1 + 2ν/(1-ν))
-if isfield(config, 'poisson_ratio') && config.poisson_ratio > 0
+% NOTE: DISABLED for anisotropic aquifers (sedimentary formations)
+%       In stratified aquifers, the isotropic Poisson correction is not valid
+if isfield(config, 'apply_poisson_correction') && config.apply_poisson_correction && isfield(config, 'poisson_ratio') && config.poisson_ratio > 0
     nu = config.poisson_ratio;
     poisson_correction = 1 + (2*nu)/(1-nu);
     
-    fprintf('\n📐 APPLYING POISSON''S RATIO CORRECTION 📐\n');
+    fprintf('\n📐 APPLYING POISSON''S RATIO CORRECTION (ISOTROPIC) 📐\n');
+    fprintf('  ⚠ WARNING: This assumes ISOTROPIC aquifer conditions\n');
     fprintf('  DAS measures: Axial strain rate (∂εzz/∂t)\n');
     fprintf('  Poroelasticity needs: Volumetric strain rate (∂εkk/∂t)\n');
     fprintf('  Poisson''s ratio (ν): %.2f\n', nu);
@@ -149,6 +152,11 @@ if isfield(config, 'poisson_ratio') && config.poisson_ratio > 0
     
     fprintf('  Corrected slope: %.4e (1/s)/(ft/s)\n', slope_raw);
     fprintf('  ✓ Now represents volumetric strain rate\n');
+else
+    fprintf('\n📐 POISSON CORRECTION: DISABLED 📐\n');
+    fprintf('  Aquifer is ANISOTROPIC (stratified sediments)\n');
+    fprintf('  Using vertical strain directly without isotropic correction\n');
+    fprintf('  This is appropriate for confined, stratified aquifers\n');
 end
 
 % Check if we're using head rate or drawdown rate
