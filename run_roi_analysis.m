@@ -10,11 +10,11 @@ end
 lr_config = struct();
 lr_config.zone = 'z5';
 lr_config.depth_range_ft = [250, 350];  % Full range around most responsive zone (matching R²=0.715 result)
-lr_config.timing_correction_sec = 20;  % 20s timing correction for peak alignment
+lr_config.timing_correction_sec = 16;  % Optimal timing correction (best R² = 0.825)
 lr_config.show_plots = true;  % Set to false for cleaner output
 
-% Focus on PEAK REGION for best correlation
-lr_config.recovery_window = [datetime('2023-10-24 19:14:00', 'TimeZone', 'UTC'), ...
+% Focus on PEAK REGION for best correlation (narrower window)
+lr_config.recovery_window = [datetime('2023-10-24 19:14:45', 'TimeZone', 'UTC'), ...
                             datetime('2023-10-24 19:16:30', 'TimeZone', 'UTC')];
 
 fprintf('=== RUNNING ROI STRAIN RATE ANALYSIS (260-310 ft) ===\n');

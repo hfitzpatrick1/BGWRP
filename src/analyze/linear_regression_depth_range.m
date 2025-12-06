@@ -260,10 +260,10 @@ for i = 1:n_valid_points
     all_strain_rates(:, i) = displacement_diff_i / (gauge_length_m * 1e9);
 end
 
-% MAXIMUM ENVELOPE with Butterworth filter (to get ~10^-11 magnitude with good R²)
-fprintf('\n=== MAXIMUM ENVELOPE + BUTTERWORTH FILTER ===\n');
+% MAXIMUM ENVELOPE with MOVING AVERAGE (to match Bourdet-style smoothing on head data)
+fprintf('\n=== MAXIMUM ENVELOPE + MOVING AVERAGE SMOOTHING ===\n');
 fprintf('  Step 1: Maximum envelope across all depths (preserves peak)\n');
-fprintf('  Step 2: Apply 2nd-order Butterworth filter (60s period)\n');
+fprintf('  Step 2: Apply 60-second moving average (matching head data smoothing)\n');
 fprintf('  Depth range: %.0f-%.0f ft\n', config.depth_range_ft(1), config.depth_range_ft(2));
 
 % Take maximum absolute value at each time point across all depths
@@ -276,22 +276,21 @@ for t = 1:length(strain_rate_zone)
 end
 
 fprintf('  Calculated maximum envelope at %d depths\n', n_valid_points);
-fprintf('  BEFORE Butterworth: PEAK = %.4e 1/s\n', max(abs(strain_rate_zone)));
+fprintf('  BEFORE smoothing: PEAK = %.4e 1/s\n', max(abs(strain_rate_zone)));
 
-% Apply Butterworth low-pass filter
-fs = 1;  % Sampling frequency (1 Hz)
-fc = 1/60;  % Cutoff frequency (1/60 Hz = 60-second period) - preserves more structure
-[b, a] = butter(2, fc/(fs/2), 'low');  % 2nd order low-pass
-
+% Apply moving average smoothing to match head data processing
+% Both signals now use moving average (consistent with Bourdet philosophy)
+% Use DOUBLE-PASS with lighter second pass to balance smoothness with peak preservation
 strain_raw = strain_rate_zone;
-strain_smoothed = filtfilt(b, a, strain_rate_zone);
+strain_smoothed = movmean(strain_rate_zone, 60, 'omitnan');  % First pass: 60s
+strain_smoothed = movmean(strain_smoothed, 15, 'omitnan');   % Second pass: 15s (lighter to preserve peak)
 
-fprintf('  AFTER Butterworth: PEAK = %.4e 1/s\n', max(abs(strain_smoothed)));
+fprintf('  AFTER double-pass moving average (60s + 15s): PEAK = %.4e 1/s\n', max(abs(strain_smoothed)));
 fprintf('  Peak retention: %.2f%%\n', 100 * max(abs(strain_smoothed)) / max(abs(strain_rate_zone)));
-fprintf('✓ Maximum envelope preserves ~10^-11 magnitude\n');
-fprintf('✓ Butterworth filter provides smooth appearance\n');
-fprintf('✓ Drawdown uses Bourdet derivative + 12-point smoothing\n');
-fprintf('✓ Forward spatial difference with 10m gauge length\n');
+fprintf('✓ Double-pass (60s+15s) provides smoothness with better peak preservation\n');
+fprintf('✓ Lighter second pass (15s vs 30s) retains more peak amplitude\n');
+fprintf('✓ Drawdown uses Bourdet derivative + 60s moving average\n');
+fprintf('✓ Strain rate uses optimized double-pass for smooth appearance\n');
 
 fprintf('Displacement rate range: %.2e to %.2e nm/s\n', ...
     min(displacement_rate_zone(:)), max(displacement_rate_zone(:)));
@@ -515,13 +514,15 @@ if config.show_plots
     
     % TOP LEFT (1): Linear Regression Scatter
     subplot(2,2,1);
-    scatter(drawdown_rate_clean, strain_clean, 20, 'b', 'filled', 'MarkerFaceAlpha', 0.6);
+    % Use consistent strain rate scaling (×10^-11) to match time series plot
+    strain_scale_scatter = 1e-11;
+    scatter(drawdown_rate_clean, strain_clean / strain_scale_scatter, 20, 'b', 'filled', 'MarkerFaceAlpha', 0.6);
     hold on;
     head_rate_range = linspace(min(drawdown_rate_clean), max(drawdown_rate_clean), 100);
-    plot(head_rate_range, polyval(p_regression, head_rate_range), 'r-', 'LineWidth', 3);
+    plot(head_rate_range, polyval(p_regression, head_rate_range) / strain_scale_scatter, 'r-', 'LineWidth', 3);
     hold off;
     xlabel('Drawdown Rate (ft/s)', 'FontSize', 12, 'FontWeight', 'bold');
-    ylabel('Strain Rate (1/s)', 'FontSize', 12, 'FontWeight', 'bold');
+    ylabel('Strain Rate (1/s) ×10^{-11}', 'FontSize', 12, 'FontWeight', 'bold');
     title(sprintf('Linear Regression: R = %.3f, R^2 = %.3f', R_corr, R_squared), 'FontSize', 14);
     grid on;
     legend('Data', sprintf('Fit: y = %.2e*x + %.2e', slope, intercept), 'Location', 'best');
@@ -536,35 +537,16 @@ if config.show_plots
     subplot(2,2,2);
     
     % Determine appropriate scaling factors for display
-    head_scale = 1e-3;  % Head rate typically in 10^-3 ft/s
-    strain_scale = 1e-12;  % Strain rate typically in 10^-12 1/s
+    head_scale = 1e-4;  % Head rate displayed as 10^-4 m/s for readability
+    strain_scale = 1e-11;  % Strain rate displayed as 10^-11 1/s for readability
     
-    % Check actual ranges to determine best scaling
+    % Fixed scaling for consistency across all plots
     head_max = max(abs(drawdown_rate_clean));
     strain_max = max(abs(strain_clean));
     
-    if head_max > 0
-        if head_max < 1e-2
-            head_scale = 1e-3;
-        elseif head_max < 1e-1
-            head_scale = 1e-2;
-        else
-            head_scale = 1e-1;
-        end
-    end
-    
-    if strain_max > 0
-        if strain_max < 1e-11
-            strain_scale = 1e-12;
-        elseif strain_max < 1e-10
-            strain_scale = 1e-11;
-        elseif strain_max < 1e-9
-            strain_scale = 1e-10;
-        else
-            strain_scale = 1e-9;
-        end
-        fprintf('DEBUG SCALING: strain_max = %.4e, strain_scale = %.4e\n', strain_max, strain_scale);
-    end
+    % Force both scales to be fixed for consistency
+    fprintf('DEBUG SCALING: head_max = %.4e, using fixed head_scale = %.4e\n', head_max, head_scale);
+    fprintf('DEBUG SCALING: strain_max = %.4e, using fixed strain_scale = %.4e\n', strain_max, strain_scale);
     
     yyaxis left;
     plot(time_clean, drawdown_rate_clean / head_scale, 'Color', [0.4660 0.6740 0.1880], 'LineWidth', 2.5, 'DisplayName', 'Drawdown Rate');
@@ -631,17 +613,17 @@ if config.show_plots
     ax.YColor = 'b';
     
     yyaxis right;
-    % Scale strain rate to match reference plot (×10^-3)
-    strain_scale_plot = 1e-3;  % Display strain rate in units of 10^-3 1/s
+    % Scale strain rate to match other plots (×10^-11)
+    strain_scale_plot = 1e-11;  % Display strain rate in units of 10^-11 1/s (consistent with all plots)
     % Get raw strain rate for this time window
     strain_overlap_raw_display = -strain_overlap_raw(1:length(time_comparison));  % Flip to match strain_overlap_display
     plot(time_comparison, strain_overlap_raw_display / strain_scale_plot, 'Color', [1 0.5 0.5], 'LineWidth', 1.5, 'DisplayName', 'Strain Rate (raw)');
     hold on;
     plot(time_comparison, strain_overlap_display / strain_scale_plot, 'r-', 'LineWidth', 2, 'DisplayName', 'Strain Rate (smoothed)');
-    ylabel(sprintf('Strain Rate (×10^{%d})', round(log10(strain_scale_plot))), 'Color', 'r');
+    ylabel(sprintf('Strain Rate (1/s) ×10^{-11}'), 'Color', 'r', 'FontSize', 12, 'FontWeight', 'bold');
     ax.YColor = 'r';
-    xlabel('Time UTC');
-    title('Raw vs Smoothed Comparison');
+    xlabel('Time UTC', 'FontSize', 12, 'FontWeight', 'bold');
+    title('Raw vs Smoothed Comparison', 'FontSize', 14);
     legend('Location', 'best');
     grid on;
     
