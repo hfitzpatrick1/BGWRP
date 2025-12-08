@@ -510,28 +510,69 @@ results.n_channels = n_channels;
 
 %% PLOTTING
 if config.show_plots
+    % Check if SI units are requested
+    use_si_units = isfield(config, 'use_si_units') && config.use_si_units;
+    
+    % Unit conversions
+    ft_to_m = 0.3048;  % 1 ft = 0.3048 m
+    
+    if use_si_units
+        % Convert to SI units
+        drawdown_rate_plot = drawdown_rate_clean * ft_to_m;  % ft/s to m/s
+        head_rate_range_plot = linspace(min(drawdown_rate_plot), max(drawdown_rate_plot), 100);
+        depth_range_m = config.depth_range_ft * ft_to_m;
+        
+        % Convert slope from (1/s)/(ft/s) to (1/s)/(m/s)
+        slope_si = slope / ft_to_m;  % Divide by conversion factor
+        intercept_si = intercept;  % Intercept doesn't change (already in 1/s)
+        
+        % Units for labels
+        drawdown_units = 'm/s';
+        depth_units = 'm';
+        title_depth = sprintf('%.0f-%.0f %s', depth_range_m(1), depth_range_m(2), depth_units);
+    else
+        % Use imperial units
+        drawdown_rate_plot = drawdown_rate_clean;
+        head_rate_range_plot = linspace(min(drawdown_rate_plot), max(drawdown_rate_plot), 100);
+        depth_range_plot = config.depth_range_ft;
+        
+        slope_si = slope;
+        intercept_si = intercept;
+        
+        drawdown_units = 'ft/s';
+        depth_units = 'ft';
+        title_depth = sprintf('%.0f-%.0f %s', depth_range_plot(1), depth_range_plot(2), depth_units);
+    end
+    
     figure('Name', sprintf('Depth-Range Linear Regression: %s', test_name), 'Position', [50, 50, 1600, 900]);
     
     % TOP LEFT (1): Linear Regression Scatter
     subplot(2,2,1);
     % Use consistent strain rate scaling (×10^-11) to match time series plot
     strain_scale_scatter = 1e-11;
-    scatter(drawdown_rate_clean, strain_clean / strain_scale_scatter, 20, 'b', 'filled', 'MarkerFaceAlpha', 0.6);
+    scatter(drawdown_rate_plot, strain_clean / strain_scale_scatter, 20, 'b', 'filled', 'MarkerFaceAlpha', 0.6);
     hold on;
-    head_rate_range = linspace(min(drawdown_rate_clean), max(drawdown_rate_clean), 100);
-    plot(head_rate_range, polyval(p_regression, head_rate_range) / strain_scale_scatter, 'r-', 'LineWidth', 3);
+    plot(head_rate_range_plot, (slope_si * head_rate_range_plot + intercept_si) / strain_scale_scatter, 'r-', 'LineWidth', 3);
     hold off;
-    xlabel('Drawdown Rate (ft/s)', 'FontSize', 12, 'FontWeight', 'bold');
+    xlabel(sprintf('Drawdown Rate (%s)', drawdown_units), 'FontSize', 12, 'FontWeight', 'bold');
     ylabel('Strain Rate (1/s) ×10^{-11}', 'FontSize', 12, 'FontWeight', 'bold');
     title(sprintf('Linear Regression: R = %.3f, R^2 = %.3f', R_corr, R_squared), 'FontSize', 14);
     grid on;
-    legend('Data', sprintf('Fit: y = %.2e*x + %.2e', slope, intercept), 'Location', 'best');
+    legend('Data', sprintf('Fit: y = %.2e*x + %.2e', slope_si, intercept_si), 'Location', 'best');
     
     % Add text box with statistics
+    if use_si_units
+        text_str = sprintf('Slope: %.2e\nR: %.3f\nR^2: %.3f\nRMSE: %.2e\nN: %d\nDepth: %.0f-%.0f m\nChannels: %d', ...
+            slope_si, R_corr, R_squared, RMSE, length(strain_clean), depth_range_m(1), depth_range_m(2), n_channels);
+    else
     text_str = sprintf('Slope: %.2e\nR: %.3f\nR^2: %.3f\nRMSE: %.2e\nN: %d\nDepth: %.0f-%.0f ft\nChannels: %d', ...
         slope, R_corr, R_squared, RMSE, length(strain_clean), config.depth_range_ft(1), config.depth_range_ft(2), n_channels);
+    end
     text(0.05, 0.95, text_str, 'Units', 'normalized', 'VerticalAlignment', 'top', ...
         'BackgroundColor', 'white', 'EdgeColor', 'black', 'FontSize', 10);
+    
+    % Add subplot label (a)
+    text(-0.1, 1.05, '(a)', 'Units', 'normalized', 'FontSize', 16, 'FontWeight', 'bold');
     
     % TOP RIGHT (2): Time series overlay
     subplot(2,2,2);
@@ -541,7 +582,7 @@ if config.show_plots
     strain_scale = 1e-11;  % Strain rate displayed as 10^-11 1/s for readability
     
     % Fixed scaling for consistency across all plots
-    head_max = max(abs(drawdown_rate_clean));
+    head_max = max(abs(drawdown_rate_plot));
     strain_max = max(abs(strain_clean));
     
     % Force both scales to be fixed for consistency
@@ -549,7 +590,7 @@ if config.show_plots
     fprintf('DEBUG SCALING: strain_max = %.4e, using fixed strain_scale = %.4e\n', strain_max, strain_scale);
     
     yyaxis left;
-    plot(time_clean, drawdown_rate_clean / head_scale, 'Color', [0.4660 0.6740 0.1880], 'LineWidth', 2.5, 'DisplayName', 'Drawdown Rate');
+    plot(time_clean, drawdown_rate_plot / head_scale, 'Color', [0.4660 0.6740 0.1880], 'LineWidth', 2.5, 'DisplayName', 'Drawdown Rate');
     ylabel(sprintf('Drawdown Rate (m/s) ×10^{%d}', round(log10(head_scale))), 'FontSize', 12, 'FontWeight', 'bold');
     ax = gca;
     ax.YColor = [0.4660 0.6740 0.1880];
@@ -560,13 +601,16 @@ if config.show_plots
     ax.YColor = 'k';
     
     xlabel('Date Time UTC', 'FontSize', 12, 'FontWeight', 'bold');
-    title(sprintf('Time Series (%.0fs correction) - Depth %.0f-%.0f ft', config.timing_correction_sec, config.depth_range_ft(1), config.depth_range_ft(2)), 'FontSize', 14);
+    title(sprintf('Time Series (%.0fs correction) - Depth %s', config.timing_correction_sec, title_depth), 'FontSize', 14);
     legend('show', 'Location', 'best');
     grid on;
     
+    % Add subplot label (b)
+    text(-0.1, 1.05, '(b)', 'Units', 'normalized', 'FontSize', 16, 'FontWeight', 'bold');
+    
     % Overall title - concise and descriptive
-    sgtitle(sprintf('Poroelastic Storage Analysis: PT-01c Zone %s (%.0f-%.0f ft)', ...
-        config.zone(2), config.depth_range_ft(1), config.depth_range_ft(2)), ...
+    sgtitle(sprintf('Poroelastic Storage Analysis: PT-01c Zone %s (%s)', ...
+        config.zone(2), title_depth), ...
         'FontSize', 16, 'FontWeight', 'bold');
     
     % REMOVE SEPARATE FIGURE - Now consolidated into main figure
@@ -627,6 +671,9 @@ if config.show_plots
     legend('Location', 'best');
     grid on;
     
+    % Add subplot label (c)
+    text(-0.1, 1.05, '(c)', 'Units', 'normalized', 'FontSize', 16, 'FontWeight', 'bold');
+    
     % BOTTOM RIGHT (4): Head rate overlay for timing reference
     subplot(2,2,4);
     yyaxis left;
@@ -648,6 +695,9 @@ if config.show_plots
     title('Strain Rate vs Head Rate (normalized for alignment check)');
     legend('Location', 'best');
     grid on;
+    
+    % Add subplot label (d)
+    text(-0.1, 1.05, '(d)', 'Units', 'normalized', 'FontSize', 16, 'FontWeight', 'bold');
     
     fprintf('\n=== 4-SUBPLOT FIGURE GENERATED ===\n');
     fprintf('  Top Left: Linear Regression (Strain vs Drawdown)\n');
