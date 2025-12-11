@@ -336,7 +336,7 @@ config.aquifer_thickness_ft = 400;      % Saturated thickness (ft)
 config.aquifer_thickness_m = 122;       % Saturated thickness (m)
 
 %% Unit System Configuration
-config.use_si_units = true;  % Set to true for SI units (m, m/s), false for imperial (ft, ft/min)
+config.use_si_units = false;  % Set to true for SI units (m, m/s), false for imperial (ft, ft/min)
 
 fprintf('✓ Batch configuration loaded (PT01a_start_of_pumping, PT01b_start_of_pumping, PT01c_start_of_pumping, PT01c_recovery, PT01a_Recovery_short, PT01b_Recovery_short, and PT01c_Recovery_short with corrected bounds)\n');
 
