@@ -340,7 +340,7 @@ if exist('mode', 'var') && ischar(mode)
         fprintf('Running MATLAB movmean + 0.35 Hz grid removal\n');
         
     case 'run_filter_matlab_movmean_5sec'
-        % Run MATLAB movmean filter with 5-second window (5 samples at 1Hz)
+        % Run MATLAB movmean filter with 5-second window only (simple smoothing)
         config.run_tdms_conversion = false;
         config.run_concatenation = false;
         config.run_timing_extraction = false;
@@ -348,13 +348,13 @@ if exist('mode', 'var') && ischar(mode)
         config.save_charts = false;
         config.smoothing_method = 'matlab_movmean';  % Use MATLAB movmean
         config.matlab_movmean_window = 5;           % 5-second window (5 samples)
-        % Reset other filtering
+        % Reset other filtering - NO common mode removal
         config.apply_concatenation_filter = false;
         config.filter_method = 'none';
         config.chen_denoising = false;
         % NOTE: 50x correction applied in analyze_das_data.m for decimation loss
         config.apply_sampling_freq_correction = true;
-        fprintf('Running MATLAB movmean filter (5-second window, 50x correction)\n');
+        fprintf('Running MATLAB movmean filter (5-second window only)\n');
             
         case 'run_correlation_analysis'
             % Analysis mode with strain rate vs head data correlation

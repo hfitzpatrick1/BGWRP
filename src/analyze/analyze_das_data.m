@@ -251,6 +251,18 @@ for i = 1:length(test_labels)
         % Use new unified filter system
         addpath(fullfile(fileparts(mfilename('fullpath')), '..', 'filter'));
         
+        % Apply spatial common mode removal if enabled (removes vertical banding)
+        if isfield(config, 'apply_spatial_common_mode_removal') && config.apply_spatial_common_mode_removal
+            fprintf('  Applying spatial common mode removal (removes vertical bands)...\n');
+            fprintf('    Original data range: [%.3f, %.3f] nm/s\n', min(data1Hz(:)), max(data1Hz(:)));
+            data_before_cm_removal = data1Hz;
+            % At each time point, subtract the spatial average (average across all channels)
+            spatial_mean = mean(data1Hz, 2, 'omitnan');  % Average across channels (dim 2)
+            data1Hz = data1Hz - repmat(spatial_mean, 1, size(data1Hz, 2));  % Subtract from all channels
+            fprintf('    After spatial common mode removal: [%.3f, %.3f] nm/s\n', min(data1Hz(:)), max(data1Hz(:)));
+            fprintf('    Removed common mode component with range: [%.3f, %.3f] nm/s\n', min(spatial_mean), max(spatial_mean));
+        end
+        
         switch lower(smoothing_method)
             case 'movmean'
                 % Use config window if specified, otherwise use calculated smooth_window

@@ -287,9 +287,9 @@ for i = 1:length(test_labels)
     analysis_start = das_data.analysis_time(1);
     analysis_end = das_data.analysis_time(end);
     
-    % Override for Figure 2 (Displacement Rate) - use shorter time window for poster
-    fig2_start = datetime('2023-10-24 19:14:30', 'TimeZone', 'UTC');
-    fig2_end = datetime('2023-10-24 19:17:30', 'TimeZone', 'UTC');
+    % Figure 2 time window - use analysis window from config
+    fig2_start = analysis_start;
+    fig2_end = analysis_end;
     
     % Get head data if available
     head_data = [];
@@ -365,10 +365,10 @@ for i = 1:length(test_labels)
     actual_min = min(das_data.smoothed_data(:));
     actual_max = max(das_data.smoothed_data(:));
     chart_logger('    Figure 101: Actual data range: [%.3f, %.3f] nm/s', actual_min, actual_max);
-    chart_logger('    Figure 101: Advisor''s range: [-0.25, 0.15] nm/s');
+    chart_logger('    Figure 101: Target range: [-0.35, 0.1] nm/s');
     
-    % Match advisor's data range: use [-0.25, 0.15] nm/s
-    raw_bounds = [-0.25, 0.15];
+    % Match updated displacement rate range: use [-0.6, 0.05] nm/s
+    raw_bounds = [-0.6, 0.05];
     clim(raw_bounds);
     chart_logger('    Figure 101: Fixed colorbar bounds: [%.2f, %.2f] nm/s', raw_bounds(1), raw_bounds(2));
     
@@ -452,7 +452,7 @@ for i = 1:length(test_labels)
     
     % Set displacement rate bounds for Figure 102 subplot 1 (waterfall)
     % Match advisor's data range: use [-0.25, 0.15] nm/s
-    disp_bounds = [-0.25, 0.15];
+    disp_bounds = [-0.6, 0.05];
     set(gca, 'clim', disp_bounds);
     chart_logger('    Figure 102 subplot 1: Fixed displacement rate colorbar bounds: [%.2f, %.2f] nm/s', disp_bounds(1), disp_bounds(2));
     
@@ -520,9 +520,9 @@ for i = 1:length(test_labels)
                         plot(das_data.analysis_time, das_data.analysis_strain_rate, 'Color', [0 0 0], 'LineStyle', '-', 'LineWidth', 1.2, 'DisplayName', 'Displacement Rate PM-07 z1');
                         ylabel('Displacement Rate (nm/s)');
                         % Set fixed bounds for Figure 102 subplot 2
-                        ylim([-0.3, 0.15]);
+                        ylim([-0.6, 0.05]);
                         chart_logger('    Plotted averaged drawdown rate from %d monitoring zones', length(monitoring_zones));
-                        chart_logger('    Figure 102 subplot 2: Fixed displacement rate y-axis bounds: [-0.3, 0.15] nm/s');
+                        chart_logger('    Figure 102 subplot 2: Fixed displacement rate y-axis bounds: [-0.35, 0.1] nm/s');
                     end
                 else
                     % Plot multiple monitoring zones (excluding pw)
@@ -562,9 +562,9 @@ for i = 1:length(test_labels)
                     plot(das_data.analysis_time, das_data.analysis_strain_rate, 'Color', [0 0 0], 'LineStyle', '-', 'LineWidth', 1.2, 'DisplayName', 'Displacement Rate PM-07 z1');
                     ylabel('Displacement Rate (nm/s)');
                     % Set fixed bounds for Figure 102 subplot 2
-                    ylim([-0.3, 0.15]);
+                    ylim([-0.6, 0.05]);
                     chart_logger('    Plotted monitoring well drawdown rate data from zones: %s', strjoin(monitoring_zones, ', '));
-                    chart_logger('    Figure 102 subplot 2: Fixed displacement rate y-axis bounds: [-0.3, 0.15] nm/s');
+                    chart_logger('    Figure 102 subplot 2: Fixed displacement rate y-axis bounds: [-0.35, 0.1] nm/s');
                 end
             else
                 % No valid head data, just plot DAS
@@ -572,7 +572,7 @@ for i = 1:length(test_labels)
                 xlim([fig2_start fig2_end]);  % Use shorter time window for poster
                 ylabel('Displacement Rate (nm/s)');
                 xlabel('Date Time UTC');
-                ylim([-0.3, 0.15]);  % Fixed bounds for Figure 102 subplot 2
+                ylim([-0.6, 0.05]);  % Fixed bounds for Figure 102 subplot 2
             end
         else
             % No head data, just plot DAS
@@ -580,7 +580,7 @@ for i = 1:length(test_labels)
             xlim([fig2_start fig2_end]);  % Use shorter time window for poster
             ylabel('Displacement Rate (nm/s)');
             xlabel('Date Time UTC');
-            ylim([-0.35,0.15]);  % Fixed bounds for Figure 102 subplot 2
+            ylim([-0.6,0.05]);  % Fixed bounds for Figure 102 subplot 2
         end
     else
         % No head data, just plot DAS
@@ -588,7 +588,7 @@ for i = 1:length(test_labels)
         xlim([fig2_start fig2_end]);  % Use shorter time window for poster
         ylabel('Displacement Rate (nm/s)');
         xlabel('Date Time UTC');
-        ylim([-0.35,0.15]);  % Fixed bounds for Figure 102 subplot 2
+        ylim([-0.6,0.05]);  % Fixed bounds for Figure 102 subplot 2
     end
     if use_si_units
         channel_depth_m = das_data.pumping_zone.channel_depth_ft * ft_to_m;
@@ -626,8 +626,8 @@ for i = 1:length(test_labels)
             ylabel('Displacement Rate (nm/s)');
             
             % Set fixed bounds for Figure 102 subplot 3 to match subplot 2
-            ylim([-0.3, 0.15]);
-            chart_logger('    Figure 102 subplot 3: Fixed displacement rate y-axis bounds: [-0.3, 0.15] nm/s');
+            ylim([-0.6, 0.05]);
+            chart_logger('    Figure 102 subplot 3: Fixed displacement rate y-axis bounds: [-0.35, 0.1] nm/s');
             
             title('Pumping Well (pw) Drawdown');
             grid on;
@@ -734,7 +734,7 @@ for i = 1:length(test_labels)
                 yyaxis right;
                 plot(das_data.analysis_time, das_data.analysis_strain_rate, 'Color', [0 0 0], 'LineStyle', '-', 'LineWidth', 2, 'DisplayName', 'Displacement Rate PM-07 z1');
                 ylabel('Displacement Rate (nm/s)', 'FontSize', 14);
-                ylim([-0.3, 0.15]);
+                ylim([-0.6, 0.05]);
             end
         end
     end
