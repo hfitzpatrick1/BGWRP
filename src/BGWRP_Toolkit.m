@@ -340,7 +340,7 @@ if exist('mode', 'var') && ischar(mode)
         fprintf('Running MATLAB movmean + 0.35 Hz grid removal\n');
         
     case 'run_filter_matlab_movmean_5sec'
-        % Run MATLAB movmean filter with 5-second window only (simple smoothing)
+        % Run MATLAB movmean filter with 5-second window + reference channel + F-K filter
         config.run_tdms_conversion = false;
         config.run_concatenation = false;
         config.run_timing_extraction = false;
@@ -348,13 +348,18 @@ if exist('mode', 'var') && ischar(mode)
         config.save_charts = false;
         config.smoothing_method = 'matlab_movmean';  % Use MATLAB movmean
         config.matlab_movmean_window = 5;           % 5-second window (5 samples)
-        % Reset other filtering - NO common mode removal
-        config.apply_concatenation_filter = false;
-        config.filter_method = 'none';
+        config.apply_reference_channel_subtraction = true;  % Subtract reference channel (preserves local signals)
+        config.reference_channel_idx = [];  % Auto-select channel at 200 ft (away from 350-400 ft pumping zone)
+        config.flip_displacement_rate_sign = true;  % Flip sign of displacement rate (invert data)
+        % Apply F-K filter after smoothing to remove common mode noise
+        config.apply_concatenation_filter = true;
+        config.filter_method = 'chen_stage3';  % F-K filter for common mode removal
+        config.chen_fk_strength = 0.02;  % Chen paper default
+        config.chen_fk_preserve_signal = 0.8;  % Preserve signal strength
         config.chen_denoising = false;
         % NOTE: 50x correction applied in analyze_das_data.m for decimation loss
         config.apply_sampling_freq_correction = true;
-        fprintf('Running MATLAB movmean filter (5-second window only)\n');
+        fprintf('Running MATLAB movmean (5-sec) + reference channel + F-K filter\n');
             
         case 'run_correlation_analysis'
             % Analysis mode with strain rate vs head data correlation

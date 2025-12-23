@@ -263,6 +263,38 @@ for i = 1:length(test_labels)
             fprintf('    Removed common mode component with range: [%.3f, %.3f] nm/s\n', min(spatial_mean), max(spatial_mean));
         end
         
+        % Apply spatial median common mode removal if enabled (more robust, preserves signal better)
+        if isfield(config, 'apply_spatial_median_removal') && config.apply_spatial_median_removal
+            fprintf('  Applying spatial median common mode removal (robust, preserves signal)...\n');
+            fprintf('    Original data range: [%.3f, %.3f] nm/s\n', min(data1Hz(:)), max(data1Hz(:)));
+            % At each time point, subtract the spatial median (median across all channels)
+            % This is more robust to outliers and preserves local signals better
+            spatial_median = median(data1Hz, 2, 'omitnan');  % Median across channels (dim 2)
+            data1Hz = data1Hz - repmat(spatial_median, 1, size(data1Hz, 2));  % Subtract from all channels
+            fprintf('    After spatial median removal: [%.3f, %.3f] nm/s\n', min(data1Hz(:)), max(data1Hz(:)));
+            fprintf('    Removed common mode component (median) with range: [%.3f, %.3f] nm/s\n', min(spatial_median), max(spatial_median));
+        end
+        
+        % Apply reference channel subtraction if enabled (subtract a channel far from signal)
+        if isfield(config, 'apply_reference_channel_subtraction') && config.apply_reference_channel_subtraction
+            fprintf('  Applying reference channel subtraction (preserves local signals)...\n');
+            fprintf('    Original data range: [%.3f, %.3f] nm/s\n', min(data1Hz(:)), max(data1Hz(:)));
+            % Use a channel far from the pumping zone (e.g., shallow or deep) as reference
+            % This captures common mode but not local signals
+            if isfield(config, 'reference_channel_idx') && ~isempty(config.reference_channel_idx)
+                ref_ch_idx = config.reference_channel_idx;
+            else
+                % Default: use channel at 200 ft (shallow, away from pumping zone at 350-400 ft)
+                ref_depth_ft = 200;
+                [~, ref_ch_idx] = min(abs(depth_ft - ref_depth_ft));
+            end
+            fprintf('    Using reference channel %d at %.1f ft\n', ref_ch_idx, depth_ft(ref_ch_idx));
+            reference_signal = data1Hz(:, ref_ch_idx);  % Reference channel time series
+            data1Hz = data1Hz - repmat(reference_signal, 1, size(data1Hz, 2));  % Subtract from all channels
+            fprintf('    After reference channel subtraction: [%.3f, %.3f] nm/s\n', min(data1Hz(:)), max(data1Hz(:)));
+            fprintf('    Reference channel range: [%.3f, %.3f] nm/s\n', min(reference_signal), max(reference_signal));
+        end
+        
         switch lower(smoothing_method)
             case 'movmean'
                 % Use config window if specified, otherwise use calculated smooth_window
@@ -332,6 +364,13 @@ for i = 1:length(test_labels)
             actual_window = smooth_window;
         end
         fprintf('  Applied %s smoothing (window: %d)\n', smoothing_method, actual_window);
+        
+        % Apply F-K filter after smoothing if enabled (removes common mode noise)
+        if isfield(config, 'filter_method') && strcmp(config.filter_method, 'chen_stage3')
+            fprintf('  Applying F-K filter after smoothing (common mode removal)...\n');
+            smoothed_data = apply_filter(smoothed_data, 'chen_stage3', config);
+            fprintf('  F-K filter complete\n');
+        end
     end
     
     % DEBUG: Check data after smoothing
@@ -385,8 +424,24 @@ for i = 1:length(test_labels)
     das_results.(test_label).pumping_zone.channel_idx = channel_idx;
     das_results.(test_label).pumping_zone.channel_depth_ft = depth_ft(channel_idx);
     das_results.(test_label).analysis_time = time_array_shifted(analysis_mask);  % Use shifted time
+    
+    % Check data range in analysis window only (not full dataset)
+    analysis_window_data = das_results.(test_label).smoothed_data(analysis_mask, :);
+    fprintf('  Analysis window data range: [%.3f, %.3f] nm/s\n', min(analysis_window_data(:)), max(analysis_window_data(:)));
+    
     % Extract analysis_strain_rate from smoothed_data (amplitude preserved via downsample())
-    das_results.(test_label).analysis_strain_rate = das_results.(test_label).smoothed_data(analysis_mask, channel_idx);
+    analysis_strain_rate = das_results.(test_label).smoothed_data(analysis_mask, channel_idx);
+    
+    % Flip sign if requested (for sign convention correction)
+    if isfield(config, 'flip_displacement_rate_sign') && config.flip_displacement_rate_sign
+        fprintf('  Flipping displacement rate sign (multiplying by -1)...\n');
+        analysis_strain_rate = -analysis_strain_rate;
+        das_results.(test_label).smoothed_data = -das_results.(test_label).smoothed_data;
+        analysis_window_data = -analysis_window_data;
+        fprintf('  After sign flip - Analysis window range: [%.3f, %.3f] nm/s\n', min(analysis_window_data(:)), max(analysis_window_data(:)));
+    end
+    
+    das_results.(test_label).analysis_strain_rate = analysis_strain_rate;
             
     fprintf('  ✓ DAS analysis completed for %s\n', test_label);
     fprintf('    Representative channel: %d at %.1f ft\n', channel_idx, depth_ft(channel_idx));

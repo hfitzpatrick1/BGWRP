@@ -365,10 +365,10 @@ for i = 1:length(test_labels)
     actual_min = min(das_data.smoothed_data(:));
     actual_max = max(das_data.smoothed_data(:));
     chart_logger('    Figure 101: Actual data range: [%.3f, %.3f] nm/s', actual_min, actual_max);
-    chart_logger('    Figure 101: Target range: [-0.35, 0.1] nm/s');
+    chart_logger('    Figure 101: Target range: [-0.55, 0.2] nm/s');
     
-    % Match updated displacement rate range: use [-0.6, 0.05] nm/s
-    raw_bounds = [-0.6, 0.05];
+    % Match PT-01b style: use [-0.55, 0.2] nm/s for colorbar
+    raw_bounds = [-0.55, 0.2];
     clim(raw_bounds);
     chart_logger('    Figure 101: Fixed colorbar bounds: [%.2f, %.2f] nm/s', raw_bounds(1), raw_bounds(2));
     
@@ -451,10 +451,10 @@ for i = 1:length(test_labels)
     apply_plot_config(analysis_time_array, depth_data, analysis_smoothed_data', config, 'waterfall');
     
     % Set displacement rate bounds for Figure 102 subplot 1 (waterfall)
-    % Match advisor's data range: use [-0.25, 0.15] nm/s
-    disp_bounds = [-0.6, 0.05];
+    % Use config bounds for displacement rate
+    disp_bounds = get_plot_bounds(das_data, 'displacement_rate', config, test_label);
     set(gca, 'clim', disp_bounds);
-    chart_logger('    Figure 102 subplot 1: Fixed displacement rate colorbar bounds: [%.2f, %.2f] nm/s', disp_bounds(1), disp_bounds(2));
+    chart_logger('    Figure 102 subplot 1: Displacement rate colorbar bounds: [%.2f, %.2f] nm/s', disp_bounds(1), disp_bounds(2));
     
     % Colormap is set by apply_plot_config, but ensure consistency for colorbar
     if isfield(config, 'colormap_name') && isfield(config, 'colormap_resolution')
@@ -469,9 +469,11 @@ for i = 1:length(test_labels)
     c7 = colorbar; 
     c7.Location = "northoutside";
     c7.Ruler.TickLabelFormat = '%g nm/s';
+    c7.FontSize = 11;
     grid on; 
     set(gca,'layer','top');
-    ylabel(depth_label);
+    set(gca, 'FontSize', 11);
+    ylabel(depth_label, 'FontSize', 12);
     axis ij;
     % Apply configurable depth axis bounds
     depth_bounds = get_plot_bounds([], 'depth_axis', config, test_label);
@@ -483,11 +485,11 @@ for i = 1:length(test_labels)
     chart_logger('    Applied depth axis bounds: [%.0f, %.0f] ft', depth_bounds(1), depth_bounds(2));
     end
     xlim([fig2_start fig2_end]);  % Use shorter time window for poster
-    xlabel('Date Time UTC');
-    title(sprintf('DAS Displacement Rate - Test %s', upper(test_label)));
+    xlabel('Date Time UTC', 'FontSize', 12);
+    title(sprintf('DAS Displacement Rate - Test %s', upper(test_label)), 'FontSize', 13, 'FontWeight', 'bold');
     
     % Add subplot label (a)
-    text(-0.08, 1.05, '(a)', 'Units', 'normalized', 'FontSize', 16, 'FontWeight', 'bold');
+    text(-0.08, 1.05, '(a)', 'Units', 'normalized', 'FontSize', 14, 'FontWeight', 'bold');
     
     % Subplot 2: Monitoring Wells (middle)
     subplot('Position', [0.08, 0.39, 0.88, 0.24]);  % [left, bottom, width, height] - added spacing
@@ -517,12 +519,13 @@ for i = 1:length(test_labels)
                         ylabel(rate_label);
                         
                         yyaxis right;
-                        plot(das_data.analysis_time, das_data.analysis_strain_rate, 'Color', [0 0 0], 'LineStyle', '-', 'LineWidth', 1.2, 'DisplayName', 'Displacement Rate PM-07 z1');
-                        ylabel('Displacement Rate (nm/s)');
-                        % Set fixed bounds for Figure 102 subplot 2
-                        ylim([-0.6, 0.05]);
+                        plot(das_data.analysis_time, das_data.analysis_strain_rate, 'Color', [0 0 0], 'LineStyle', '-', 'LineWidth', 1.5, 'DisplayName', 'Displacement Rate PM-07 z1');
+                        ylabel('Displacement Rate (nm/s)', 'FontSize', 11);
+                        % Use config bounds for displacement rate line
+                        das_bounds = get_plot_bounds([], 'displacement_rate_line', config, test_label);
+                        ylim(das_bounds);
                         chart_logger('    Plotted averaged drawdown rate from %d monitoring zones', length(monitoring_zones));
-                        chart_logger('    Figure 102 subplot 2: Fixed displacement rate y-axis bounds: [-0.35, 0.1] nm/s');
+                        chart_logger('    Figure 102 subplot 2: Displacement rate y-axis bounds: [%.2f, %.2f] nm/s', das_bounds(1), das_bounds(2));
                     end
                 else
                     % Plot multiple monitoring zones (excluding pw)
@@ -546,60 +549,68 @@ for i = 1:length(test_labels)
                             % Convert head levels to drawdown rate for better comparison with displacement rate
                             [drawdown_rate, rate_time] = calculate_drawdown_rate(zone_data.recovery_data.Date, zone_data.recovery_data.Drawdownft, 'ft_per_min');
                             plot(rate_time, drawdown_rate * rate_conversion, ...
-                                'Color', zone_color, 'LineStyle', '-', 'LineWidth', 1.2, ...
+                                'Color', zone_color, 'LineStyle', '-', 'LineWidth', 1.5, ...
                                 'DisplayName', sprintf('Drawdown Rate %s', zone_name));
                         end
                     end
                     hold off;
                     xlim([fig2_start fig2_end]);  % Use shorter time window for poster
-                    xlabel('Date Time UTC');
-                    ylabel(rate_label);
+                    xlabel('Date Time UTC', 'FontSize', 12);
+                    ylabel(rate_label, 'FontSize', 11);
+                    % Use config bounds for monitoring well drawdown rate
+                    head_bounds = get_plot_bounds([], 'head_data', config, test_label);
+                    ylim(head_bounds);
                     if length(monitoring_zones) > 1
-                        legend('show');
+                        legend('show', 'Location', 'best', 'FontSize', 10);
                     end
                     
                     yyaxis right;
-                    plot(das_data.analysis_time, das_data.analysis_strain_rate, 'Color', [0 0 0], 'LineStyle', '-', 'LineWidth', 1.2, 'DisplayName', 'Displacement Rate PM-07 z1');
-                    ylabel('Displacement Rate (nm/s)');
-                    % Set fixed bounds for Figure 102 subplot 2
-                    ylim([-0.6, 0.05]);
+                    plot(das_data.analysis_time, das_data.analysis_strain_rate, 'Color', [0 0 0], 'LineStyle', '-', 'LineWidth', 1.5, 'DisplayName', 'Displacement Rate PM-07 z1');
+                    ylabel('Displacement Rate (nm/s)', 'FontSize', 11);
+                    % Use config bounds for displacement rate line
+                    das_bounds = get_plot_bounds([], 'displacement_rate_line', config, test_label);
+                    ylim(das_bounds);
                     chart_logger('    Plotted monitoring well drawdown rate data from zones: %s', strjoin(monitoring_zones, ', '));
-                    chart_logger('    Figure 102 subplot 2: Fixed displacement rate y-axis bounds: [-0.35, 0.1] nm/s');
+                    chart_logger('    Figure 102 subplot 2: Displacement rate y-axis bounds: [%.2f, %.2f] nm/s', das_bounds(1), das_bounds(2));
                 end
             else
                 % No valid head data, just plot DAS
-                plot(das_data.analysis_time, das_data.analysis_strain_rate, 'Color', [0 0 0], 'LineStyle', '-', 'LineWidth', 1.2, 'DisplayName', 'Displacement Rate PM-07 z1');
+                plot(das_data.analysis_time, das_data.analysis_strain_rate, 'Color', [0 0 0], 'LineStyle', '-', 'LineWidth', 1.5, 'DisplayName', 'Displacement Rate PM-07 z1');
                 xlim([fig2_start fig2_end]);  % Use shorter time window for poster
-                ylabel('Displacement Rate (nm/s)');
-                xlabel('Date Time UTC');
-                ylim([-0.6, 0.05]);  % Fixed bounds for Figure 102 subplot 2
+                ylabel('Displacement Rate (nm/s)', 'FontSize', 11);
+                xlabel('Date Time UTC', 'FontSize', 12);
+                das_bounds = get_plot_bounds([], 'displacement_rate_line', config, test_label);
+                ylim(das_bounds);
             end
         else
             % No head data, just plot DAS
-            plot(das_data.analysis_time, das_data.analysis_strain_rate, 'Color', [0 0 0], 'LineStyle', '-', 'LineWidth', 1.2, 'DisplayName', 'Displacement Rate PM-07 z1');
+            plot(das_data.analysis_time, das_data.analysis_strain_rate, 'Color', [0 0 0], 'LineStyle', '-', 'LineWidth', 1.5, 'DisplayName', 'Displacement Rate PM-07 z1');
             xlim([fig2_start fig2_end]);  % Use shorter time window for poster
-            ylabel('Displacement Rate (nm/s)');
-            xlabel('Date Time UTC');
-            ylim([-0.6,0.05]);  % Fixed bounds for Figure 102 subplot 2
+            ylabel('Displacement Rate (nm/s)', 'FontSize', 11);
+            xlabel('Date Time UTC', 'FontSize', 12);
+            das_bounds = get_plot_bounds([], 'displacement_rate_line', config, test_label);
+            ylim(das_bounds);
         end
     else
         % No head data, just plot DAS
-        plot(das_data.analysis_time, das_data.analysis_strain_rate, 'Color', [0 0 0], 'LineStyle', '-', 'LineWidth', 1.2, 'DisplayName', 'Displacement Rate PM-07 z1');
+        plot(das_data.analysis_time, das_data.analysis_strain_rate, 'Color', [0 0 0], 'LineStyle', '-', 'LineWidth', 1.5, 'DisplayName', 'Displacement Rate PM-07 z1');
         xlim([fig2_start fig2_end]);  % Use shorter time window for poster
-        ylabel('Displacement Rate (nm/s)');
-        xlabel('Date Time UTC');
-        ylim([-0.6,0.05]);  % Fixed bounds for Figure 102 subplot 2
+        ylabel('Displacement Rate (nm/s)', 'FontSize', 11);
+        xlabel('Date Time UTC', 'FontSize', 12);
+        das_bounds = get_plot_bounds([], 'displacement_rate_line', config, test_label);
+        ylim(das_bounds);
     end
     if use_si_units
         channel_depth_m = das_data.pumping_zone.channel_depth_ft * ft_to_m;
-        title(sprintf('Monitoring Wells - Representative Channel (%.0f m)', channel_depth_m));
+        title(sprintf('Monitoring Wells - Representative Channel (%.0f m)', channel_depth_m), 'FontSize', 13, 'FontWeight', 'bold');
     else
-    title(sprintf('Monitoring Wells - Representative Channel (%.0f ft)', das_data.pumping_zone.channel_depth_ft));
+        title(sprintf('Monitoring Wells - Representative Channel (%.0f ft)', das_data.pumping_zone.channel_depth_ft), 'FontSize', 13, 'FontWeight', 'bold');
     end
+    set(gca, 'FontSize', 11);
     grid on;
     
     % Add subplot label (b)
-    text(-0.08, 1.05, '(b)', 'Units', 'normalized', 'FontSize', 16, 'FontWeight', 'bold');
+    text(-0.08, 1.05, '(b)', 'Units', 'normalized', 'FontSize', 14, 'FontWeight', 'bold');
     
     % Subplot 3: Pumping Well (bottom)
     subplot('Position', [0.08, 0.08, 0.88, 0.24]);  % [left, bottom, width, height] - added spacing
@@ -611,30 +622,30 @@ for i = 1:length(test_labels)
             yyaxis left;
             % Convert head levels to drawdown rate for better comparison with displacement rate
             [drawdown_rate, rate_time] = calculate_drawdown_rate(pw_data.recovery_data.Date, pw_data.recovery_data.Drawdownft, 'ft_per_min');
-            plot(rate_time, drawdown_rate * rate_conversion, 'Color', [0.0000 1.0000 1.0000], 'LineStyle', '-', 'LineWidth', 0.8, 'DisplayName', 'Drawdown Rate pw');
+            plot(rate_time, drawdown_rate * rate_conversion, 'Color', [0.0000 1.0000 1.0000], 'LineStyle', '-', 'LineWidth', 1.5, 'DisplayName', 'Drawdown Rate pw');
             xlim([fig2_start fig2_end]);  % Use shorter time window for poster
-            xlabel('Date Time UTC');
-            ylabel(sprintf('Pumping Well %s', rate_label));
-            if use_si_units
-                ylim([0, 0.12]);  % Set explicit bounds for pumping well drawdown rate (m/s)
-            else
-                ylim([0, 25]);  % Set explicit bounds for pumping well drawdown rate (ft/min)
-            end
+            xlabel('Date Time UTC', 'FontSize', 12);
+            ylabel(sprintf('Pumping Well %s', rate_label), 'FontSize', 11);
+            % Use config bounds for pumping well drawdown rate
+            pw_bounds = get_plot_bounds([], 'pw_head_data', config, test_label);
+            ylim(pw_bounds);
             
             yyaxis right;
-            plot(das_data.analysis_time, das_data.analysis_strain_rate, 'Color', [0 0 0], 'LineStyle', '-', 'LineWidth', 1.2, 'DisplayName', 'Displacement Rate PM-07 z1');
-            ylabel('Displacement Rate (nm/s)');
+            plot(das_data.analysis_time, das_data.analysis_strain_rate, 'Color', [0 0 0], 'LineStyle', '-', 'LineWidth', 1.5, 'DisplayName', 'Displacement Rate PM-07 z1');
+            ylabel('Displacement Rate (nm/s)', 'FontSize', 11);
             
-            % Set fixed bounds for Figure 102 subplot 3 to match subplot 2
-            ylim([-0.6, 0.05]);
-            chart_logger('    Figure 102 subplot 3: Fixed displacement rate y-axis bounds: [-0.35, 0.1] nm/s');
+            % Use config bounds for displacement rate line to match subplot 2
+            das_bounds = get_plot_bounds([], 'displacement_rate_line', config, test_label);
+            ylim(das_bounds);
+            chart_logger('    Figure 102 subplot 3: Displacement rate y-axis bounds: [%.2f, %.2f] nm/s', das_bounds(1), das_bounds(2));
             
-            title('Pumping Well (pw) Drawdown');
+            title('Pumping Well (pw) Drawdown', 'FontSize', 13, 'FontWeight', 'bold');
+            set(gca, 'FontSize', 11);
             grid on;
-            legend('show', 'Location', 'best');
+            legend('show', 'Location', 'best', 'FontSize', 10);
             
             % Add subplot label (c)
-            text(-0.08, 1.05, '(c)', 'Units', 'normalized', 'FontSize', 16, 'FontWeight', 'bold');
+            text(-0.08, 1.05, '(c)', 'Units', 'normalized', 'FontSize', 14, 'FontWeight', 'bold');
             
             chart_logger('    Plotted pumping well (pw) drawdown rate data');
         else
@@ -734,7 +745,7 @@ for i = 1:length(test_labels)
                 yyaxis right;
                 plot(das_data.analysis_time, das_data.analysis_strain_rate, 'Color', [0 0 0], 'LineStyle', '-', 'LineWidth', 2, 'DisplayName', 'Displacement Rate PM-07 z1');
                 ylabel('Displacement Rate (nm/s)', 'FontSize', 14);
-                ylim([-0.6, 0.05]);
+                ylim([-0.55, 0.2]);
             end
         end
     end

@@ -79,6 +79,18 @@ switch lower(data_type)
         bounds = [-2, 0];
     case 'depth_axis'
         bounds = [175, 665];  % Default depth range for all pump tests
+    case 'head_data'
+        bounds = [-0.1, 0.1];  % Default drawdown rate bounds (ft/min)
+    case 'pw_head_data'
+        bounds = [0, 30];  % Default pumping well drawdown rate bounds (ft/min)
+    case 'displacement_rate_line'
+        bounds = [-0.3, 0.1];  % Default DAS displacement rate line bounds (nm/s)
+    case 'strain_line'
+        bounds = [-0.2, 0.2];  % Default DAS strain line bounds (nm/m)
+    case 'head_data_strain'
+        bounds = [-0.1, 0.1];  % Default head level bounds for strain plots (ft)
+    case 'pw_head_strain'
+        bounds = [-2, 2];  % Default pumping well head level bounds for strain plots (ft)
     otherwise
         bounds = [-1, 1];
 end
