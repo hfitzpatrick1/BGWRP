@@ -622,7 +622,7 @@ for i = 1:length(test_labels)
             yyaxis left;
             % Convert head levels to drawdown rate for better comparison with displacement rate
             [drawdown_rate, rate_time] = calculate_drawdown_rate(pw_data.recovery_data.Date, pw_data.recovery_data.Drawdownft, 'ft_per_min');
-            plot(rate_time, drawdown_rate * rate_conversion, 'Color', [0.0000 1.0000 1.0000], 'LineStyle', '-', 'LineWidth', 1.5, 'DisplayName', 'Drawdown Rate pw');
+            plot(rate_time, -drawdown_rate * rate_conversion, 'Color', [0.0000 1.0000 1.0000], 'LineStyle', '-', 'LineWidth', 1.5, 'DisplayName', 'Drawdown Rate pw');
             xlim([fig2_start fig2_end]);  % Use shorter time window for poster
             xlabel('Date Time UTC', 'FontSize', 12);
             ylabel(sprintf('Pumping Well %s', rate_label), 'FontSize', 11);
