@@ -53,8 +53,9 @@ config.analysis_windows.PT01b_start_of_pumping.end = datetime(2023,10,31,15,34,0
 
 % PT01b_Recovery_short analysis window
 % This dataset captures the recovery period from 19:26 to 19:36 UTC
-config.analysis_windows.PT01b_Recovery_short.start = datetime(2023,10,31,19,26,00,00,'TimeZone','UTC');
-config.analysis_windows.PT01b_Recovery_short.end = datetime(2023,10,31,19,36,00,00,'TimeZone','UTC');
+% Using focused window 19:29:00 to 19:32:00 for analysis and regression
+config.analysis_windows.PT01b_Recovery_short.start = datetime(2023,10,31,19,29,00,00,'TimeZone','UTC');
+config.analysis_windows.PT01b_Recovery_short.end = datetime(2023,10,31,19,32,00,00,'TimeZone','UTC');
 
 %% Zone Filtering Configuration (per dataset)
 % PT-01a START OF PUMPING configurations (NEW DATASET)
