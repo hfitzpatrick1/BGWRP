@@ -251,6 +251,11 @@ for i = 1:length(test_labels)
         % Use new unified filter system
         addpath(fullfile(fileparts(mfilename('fullpath')), '..', 'filter'));
         
+        % Apply bad channel masking if enabled (removes horizontal artifacts)
+        if isfield(config, 'mask_bad_channels') && config.mask_bad_channels
+            data1Hz = mask_bad_channels(data1Hz, depth_ft, config);
+        end
+        
         % Apply spatial common mode removal if enabled (removes vertical banding)
         if isfield(config, 'apply_spatial_common_mode_removal') && config.apply_spatial_common_mode_removal
             fprintf('  Applying spatial common mode removal (removes vertical bands)...\n');
