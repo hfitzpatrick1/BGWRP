@@ -40,7 +40,7 @@ lr_config.depth_range_ft = [340, 440];  % 100 ft range around pumping zone
 % Timing correction - adjust head data timing relative to DAS
 % Negative values shift head data FORWARD (earlier in time)
 % Positive values shift head data BACKWARD (later in time)
-lr_config.timing_correction_sec = 0;  % Shift head data forward by 20 seconds
+lr_config.timing_correction_sec = -50;  % Shift head data later by 60 seconds to align peaks
 
 % Recovery window - use focused 3-minute peak signal period
 % This matches the analysis window used in Figure 102
