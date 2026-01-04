@@ -59,9 +59,9 @@ config.analysis_windows.PT01b_Recovery_short.end = datetime(2023,10,31,19,32,00,
 
 % PT01a_Recovery_short analysis window
 % This dataset captures the recovery period from 20:34 to 20:54 UTC
-% Using focused window 20:45:00 to 20:48:00 for analysis and regression (3-minute window)
-config.analysis_windows.PT01a_Recovery_short.start = datetime(2023,11,07,20,45,00,00,'TimeZone','UTC');
-config.analysis_windows.PT01a_Recovery_short.end = datetime(2023,11,07,20,48,00,00,'TimeZone','UTC');
+% Using focused window 20:44:30 to 20:47:30 for analysis and regression (3-minute window)
+config.analysis_windows.PT01a_Recovery_short.start = datetime(2023,11,07,20,44,30,00,'TimeZone','UTC');
+config.analysis_windows.PT01a_Recovery_short.end = datetime(2023,11,07,20,47,30,00,'TimeZone','UTC');
 
 %% Zone Filtering Configuration (per dataset)
 % PT-01a START OF PUMPING configurations (NEW DATASET)
@@ -203,8 +203,8 @@ config.manual_bounds.PT01a_Recovery_short.strain.max = 0.20;
 % Line chart Y-axis bounds (for subplot line charts paired with waterfall charts)
 config.manual_bounds.PT01a_Recovery_short.head_data.min = -0.0001;          % Drawdown rate m/s (Figure 2 subplot 2) - monitoring wells only
 config.manual_bounds.PT01a_Recovery_short.head_data.max = 0.0004;
-config.manual_bounds.PT01a_Recovery_short.pw_head_data.min = -1;          % PW drawdown rate (Figure 2 subplot 3)
-config.manual_bounds.PT01a_Recovery_short.pw_head_data.max = 55;
+config.manual_bounds.PT01a_Recovery_short.pw_head_data.min = -0.01;          % PW drawdown rate m/s (Figure 2 subplot 3)
+config.manual_bounds.PT01a_Recovery_short.pw_head_data.max = 0.25;
 config.manual_bounds.PT01a_Recovery_short.displacement_rate_line.min = -0.55;  % DAS displacement rate nm/s (subplot 2 & 3)
 config.manual_bounds.PT01a_Recovery_short.displacement_rate_line.max = 0.2;
 config.manual_bounds.PT01a_Recovery_short.strain_line.min = -0.2;        % DAS strain nm/m (matches waterfall)
