@@ -201,8 +201,8 @@ config.manual_bounds.PT01a_Recovery_short.strain.min = -0.2;          % Figure 3
 config.manual_bounds.PT01a_Recovery_short.strain.max = 0.20;
 
 % Line chart Y-axis bounds (for subplot line charts paired with waterfall charts)
-config.manual_bounds.PT01a_Recovery_short.head_data.min = -0.02;          % Drawdown rate ft/min (Figure 2 subplot 2) - monitoring wells only
-config.manual_bounds.PT01a_Recovery_short.head_data.max = 0.08;
+config.manual_bounds.PT01a_Recovery_short.head_data.min = -0.0001;          % Drawdown rate m/s (Figure 2 subplot 2) - monitoring wells only
+config.manual_bounds.PT01a_Recovery_short.head_data.max = 0.0004;
 config.manual_bounds.PT01a_Recovery_short.pw_head_data.min = -1;          % PW drawdown rate (Figure 2 subplot 3)
 config.manual_bounds.PT01a_Recovery_short.pw_head_data.max = 55;
 config.manual_bounds.PT01a_Recovery_short.displacement_rate_line.min = -0.55;  % DAS displacement rate nm/s (subplot 2 & 3)
