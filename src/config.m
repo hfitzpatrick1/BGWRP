@@ -57,6 +57,12 @@ config.analysis_windows.PT01b_start_of_pumping.end = datetime(2023,10,31,15,34,0
 config.analysis_windows.PT01b_Recovery_short.start = datetime(2023,10,31,19,29,00,00,'TimeZone','UTC');
 config.analysis_windows.PT01b_Recovery_short.end = datetime(2023,10,31,19,32,00,00,'TimeZone','UTC');
 
+% PT01a_Recovery_short analysis window
+% This dataset captures the recovery period from 20:34 to 20:54 UTC
+% Using focused window 20:45:00 to 20:48:00 for analysis and regression (3-minute window)
+config.analysis_windows.PT01a_Recovery_short.start = datetime(2023,11,07,20,45,00,00,'TimeZone','UTC');
+config.analysis_windows.PT01a_Recovery_short.end = datetime(2023,11,07,20,48,00,00,'TimeZone','UTC');
+
 %% Zone Filtering Configuration (per dataset)
 % PT-01a START OF PUMPING configurations (NEW DATASET)
 config.waterfall_zones.PT01a_start_of_pumping.min_depth = 260;
@@ -189,8 +195,8 @@ config.manual_bounds.PT01c_Recovery_short.pw_head_strain.max = 1;
 % Recovery bounds for PT01a dataset
 config.manual_bounds.PT01a_Recovery_short.raw_data.min = -0.1;        % Figure 1: Raw data waterfall
 config.manual_bounds.PT01a_Recovery_short.raw_data.max = 0.3;
-config.manual_bounds.PT01a_Recovery_short.displacement_rate.min = 0.04; % Figure 2: Displacement rate main colorbar
-config.manual_bounds.PT01a_Recovery_short.displacement_rate.max = 0.22;
+config.manual_bounds.PT01a_Recovery_short.displacement_rate.min = -0.55; % Figure 2: Displacement rate main colorbar
+config.manual_bounds.PT01a_Recovery_short.displacement_rate.max = 0.2;
 config.manual_bounds.PT01a_Recovery_short.strain.min = -0.2;          % Figure 3: Strain main colorbar
 config.manual_bounds.PT01a_Recovery_short.strain.max = 0.20;
 
@@ -199,8 +205,8 @@ config.manual_bounds.PT01a_Recovery_short.head_data.min = -0.02;          % Draw
 config.manual_bounds.PT01a_Recovery_short.head_data.max = 0.08;
 config.manual_bounds.PT01a_Recovery_short.pw_head_data.min = -1;          % PW drawdown rate (Figure 2 subplot 3)
 config.manual_bounds.PT01a_Recovery_short.pw_head_data.max = 55;
-config.manual_bounds.PT01a_Recovery_short.displacement_rate_line.min = -0.3;  % DAS displacement rate nm/s (subplot 2 & 3)
-config.manual_bounds.PT01a_Recovery_short.displacement_rate_line.max = 0;
+config.manual_bounds.PT01a_Recovery_short.displacement_rate_line.min = -0.55;  % DAS displacement rate nm/s (subplot 2 & 3)
+config.manual_bounds.PT01a_Recovery_short.displacement_rate_line.max = 0.2;
 config.manual_bounds.PT01a_Recovery_short.strain_line.min = -0.2;        % DAS strain nm/m (matches waterfall)
 config.manual_bounds.PT01a_Recovery_short.strain_line.max = 0.2;
 config.manual_bounds.PT01a_Recovery_short.head_data_strain.min = 0;   % Head levels ft (Figure 3 subplot 2) - monitoring wells only
