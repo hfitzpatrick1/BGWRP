@@ -53,15 +53,8 @@ config.analysis_windows.PT01b_start_of_pumping.end = datetime(2023,10,31,15,34,0
 
 % PT01b_Recovery_short analysis window
 % This dataset captures the recovery period from 19:26 to 19:36 UTC
-% Using focused window 19:29:00 to 19:32:00 for analysis and regression
-config.analysis_windows.PT01b_Recovery_short.start = datetime(2023,10,31,19,29,00,00,'TimeZone','UTC');
-config.analysis_windows.PT01b_Recovery_short.end = datetime(2023,10,31,19,32,00,00,'TimeZone','UTC');
-
-% PT01a_Recovery_short analysis window
-% This dataset captures the recovery period from 20:34 to 20:54 UTC
-% Using focused window 20:44:00 to 20:47:30 for Figures 101-103 plots
-config.analysis_windows.PT01a_Recovery_short.start = datetime(2023,11,07,20,44,00,00,'TimeZone','UTC');
-config.analysis_windows.PT01a_Recovery_short.end = datetime(2023,11,07,20,47,30,00,'TimeZone','UTC');
+config.analysis_windows.PT01b_Recovery_short.start = datetime(2023,10,31,19,26,00,00,'TimeZone','UTC');
+config.analysis_windows.PT01b_Recovery_short.end = datetime(2023,10,31,19,36,00,00,'TimeZone','UTC');
 
 %% Zone Filtering Configuration (per dataset)
 % PT-01a START OF PUMPING configurations (NEW DATASET)
@@ -195,18 +188,18 @@ config.manual_bounds.PT01c_Recovery_short.pw_head_strain.max = 1;
 % Recovery bounds for PT01a dataset
 config.manual_bounds.PT01a_Recovery_short.raw_data.min = -0.1;        % Figure 1: Raw data waterfall
 config.manual_bounds.PT01a_Recovery_short.raw_data.max = 0.3;
-config.manual_bounds.PT01a_Recovery_short.displacement_rate.min = -0.55; % Figure 2: Displacement rate main colorbar
-config.manual_bounds.PT01a_Recovery_short.displacement_rate.max = 0.2;
+config.manual_bounds.PT01a_Recovery_short.displacement_rate.min = 0.04; % Figure 2: Displacement rate main colorbar
+config.manual_bounds.PT01a_Recovery_short.displacement_rate.max = 0.22;
 config.manual_bounds.PT01a_Recovery_short.strain.min = -0.2;          % Figure 3: Strain main colorbar
 config.manual_bounds.PT01a_Recovery_short.strain.max = 0.20;
 
 % Line chart Y-axis bounds (for subplot line charts paired with waterfall charts)
-config.manual_bounds.PT01a_Recovery_short.head_data.min = -0.0001;          % Drawdown rate m/s (Figure 2 subplot 2) - monitoring wells only
-config.manual_bounds.PT01a_Recovery_short.head_data.max = 0.0004;
-config.manual_bounds.PT01a_Recovery_short.pw_head_data.min = -0.01;          % PW drawdown rate m/s (Figure 2 subplot 3)
-config.manual_bounds.PT01a_Recovery_short.pw_head_data.max = 0.25;
-config.manual_bounds.PT01a_Recovery_short.displacement_rate_line.min = -0.55;  % DAS displacement rate nm/s (subplot 2 & 3)
-config.manual_bounds.PT01a_Recovery_short.displacement_rate_line.max = 0.2;
+config.manual_bounds.PT01a_Recovery_short.head_data.min = -0.02;          % Drawdown rate ft/min (Figure 2 subplot 2) - monitoring wells only
+config.manual_bounds.PT01a_Recovery_short.head_data.max = 0.08;
+config.manual_bounds.PT01a_Recovery_short.pw_head_data.min = -1;          % PW drawdown rate (Figure 2 subplot 3)
+config.manual_bounds.PT01a_Recovery_short.pw_head_data.max = 55;
+config.manual_bounds.PT01a_Recovery_short.displacement_rate_line.min = -0.3;  % DAS displacement rate nm/s (subplot 2 & 3)
+config.manual_bounds.PT01a_Recovery_short.displacement_rate_line.max = 0;
 config.manual_bounds.PT01a_Recovery_short.strain_line.min = -0.2;        % DAS strain nm/m (matches waterfall)
 config.manual_bounds.PT01a_Recovery_short.strain_line.max = 0.2;
 config.manual_bounds.PT01a_Recovery_short.head_data_strain.min = 0;   % Head levels ft (Figure 3 subplot 2) - monitoring wells only
@@ -266,28 +259,28 @@ config.manual_bounds.PT01b_start_of_pumping.pw_head_strain.max = 1.0;
 
 % ===== PT01b_Recovery_short bounds =====
 % Recovery bounds for PT01b dataset
-config.manual_bounds.PT01b_Recovery_short.raw_data.min = -0.5;        % Figure 1: Raw data waterfall
-config.manual_bounds.PT01b_Recovery_short.raw_data.max = 0.1;
-config.manual_bounds.PT01b_Recovery_short.displacement_rate.min = -0.5; % Figure 2: Displacement rate main colorbar
-config.manual_bounds.PT01b_Recovery_short.displacement_rate.max = 0.1;
-config.manual_bounds.PT01b_Recovery_short.strain.min = -0.2;          % Figure 3: Strain main colorbar
-config.manual_bounds.PT01b_Recovery_short.strain.max = 0.2;
+config.manual_bounds.PT01b_Recovery_short.raw_data.min = -2;        % Figure 1: Raw data waterfall
+config.manual_bounds.PT01b_Recovery_short.raw_data.max = 2;
+config.manual_bounds.PT01b_Recovery_short.displacement_rate.min = -0.25; % Figure 2: Displacement rate main colorbar
+config.manual_bounds.PT01b_Recovery_short.displacement_rate.max = 0.15;
+config.manual_bounds.PT01b_Recovery_short.strain.min = -2;          % Figure 3: Strain main colorbar
+config.manual_bounds.PT01b_Recovery_short.strain.max = 0;
 
 % Line chart Y-axis bounds (for subplot line charts paired with waterfall charts)
-config.manual_bounds.PT01b_Recovery_short.head_data.min = -0.0001;          % Drawdown rate m/s (Figure 2 subplot 2) - monitoring wells only
-config.manual_bounds.PT01b_Recovery_short.head_data.max = 0.0003;
-config.manual_bounds.PT01b_Recovery_short.pw_head_data.min = -0.025;          % PW drawdown rate m/s (Figure 2 subplot 3) [flipped sign]
-config.manual_bounds.PT01b_Recovery_short.pw_head_data.max = 0.076;
-config.manual_bounds.PT01b_Recovery_short.displacement_rate_line.min = -0.5;  % DAS displacement rate nm/s (subplot 2 & 3)
-config.manual_bounds.PT01b_Recovery_short.displacement_rate_line.max = -0.3;
-config.manual_bounds.PT01b_Recovery_short.strain_line.min = -0.2;        % DAS strain nm/m (matches waterfall)
-config.manual_bounds.PT01b_Recovery_short.strain_line.max = 0.2;
-config.manual_bounds.PT01b_Recovery_short.head_data_strain.min = -0.0001;   % Head levels m/s (Figure 3 subplot 2) - monitoring wells only
-config.manual_bounds.PT01b_Recovery_short.head_data_strain.max = 0.0003;
+config.manual_bounds.PT01b_Recovery_short.head_data.min = -1;          % Drawdown rate ft/min (Figure 2 subplot 2) - monitoring wells only
+config.manual_bounds.PT01b_Recovery_short.head_data.max = 1;
+config.manual_bounds.PT01b_Recovery_short.pw_head_data.min = -1;          % PW drawdown rate (Figure 2 subplot 3)
+config.manual_bounds.PT01b_Recovery_short.pw_head_data.max = 1;
+config.manual_bounds.PT01b_Recovery_short.displacement_rate_line.min = -0.3;  % DAS displacement rate nm/s (subplot 2 & 3)
+config.manual_bounds.PT01b_Recovery_short.displacement_rate_line.max = 0;
+config.manual_bounds.PT01b_Recovery_short.strain_line.min = -1;        % DAS strain nm/m (matches waterfall)
+config.manual_bounds.PT01b_Recovery_short.strain_line.max = 1;
+config.manual_bounds.PT01b_Recovery_short.head_data_strain.min = -1;   % Head levels ft (Figure 3 subplot 2) - monitoring wells only
+config.manual_bounds.PT01b_Recovery_short.head_data_strain.max = 1;
 config.manual_bounds.PT01b_Recovery_short.depth_axis.min = 200;           % Depth axis ft
 config.manual_bounds.PT01b_Recovery_short.depth_axis.max = 665;
-config.manual_bounds.PT01b_Recovery_short.pw_head_strain.min = -0.025;     % Pumping well drawdown rate m/s (Figure 3 subplot 3) [flipped sign]
-config.manual_bounds.PT01b_Recovery_short.pw_head_strain.max = 0.076;
+config.manual_bounds.PT01b_Recovery_short.pw_head_strain.min = -1;     % Pumping well head levels ft (Figure 3 subplot 3)
+config.manual_bounds.PT01b_Recovery_short.pw_head_strain.max = 1;
 
 %% Head Data Zone Configuration (per dataset)
 % PT01a START OF PUMPING zone configuration  
@@ -332,8 +325,7 @@ config.shading_method = 'interp';
 config.colormap_name = 'jet';
 config.colormap_resolution = 256;
 config.disable_analysis_smoothing = false;
-config.smoothing_method = 'matlab_movmean';  % Apply moving mean
-config.matlab_movmean_window = 30;  % 30-second window (at 1Hz sampling)
+config.smoothing_method = 'none';
 
 %% Storage Analysis Parameters (Traditional Pump Test Values for Comparison)
 % From PT-01A Step Drawdown Test (10/24/23)
@@ -342,9 +334,6 @@ config.traditional_K_ft_day = 22.68;    % Hydraulic conductivity from traditiona
 config.traditional_S = 4.206e-5;        % Storativity from traditional analysis
 config.aquifer_thickness_ft = 400;      % Saturated thickness (ft)
 config.aquifer_thickness_m = 122;       % Saturated thickness (m)
-
-%% Unit System Configuration
-config.use_si_units = true;  % Set to true for SI units (m, m/s), false for imperial (ft, ft/min)
 
 fprintf('✓ Batch configuration loaded (PT01a_start_of_pumping, PT01b_start_of_pumping, PT01c_start_of_pumping, PT01c_recovery, PT01a_Recovery_short, PT01b_Recovery_short, and PT01c_Recovery_short with corrected bounds)\n');
 

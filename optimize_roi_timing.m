@@ -83,15 +83,3 @@ roi_results = linear_regression_depth_range(das_results, head_results, 'PT01c_Re
 fprintf('\n✓ Timing optimization complete! Use %ds for best R².\n', optimal_timing);
 
 
-
-
-
-
-
-
-
-
-
-
-
-

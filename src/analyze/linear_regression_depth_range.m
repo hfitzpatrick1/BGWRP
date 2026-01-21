@@ -357,9 +357,9 @@ fprintf('Overlap: %s to %s (%.1f seconds)\n', datestr(time_start), datestr(time_
 % Extract data only within overlapping window
 valid_head_idx = (time_head_rate >= time_start) & (time_head_rate <= time_end);
 time_head_overlap = time_head_rate(valid_head_idx);
-% Convert head rate from ft/s to m/s (to match single channel units!)
+% Convert drawdown rate from ft/s to m/s (to match single channel units!)
 ft_to_m = 0.3048;
-head_rate_overlap = head_rate_ftps(valid_head_idx) * ft_to_m;  % m/s (converted from ft/s)
+head_rate_overlap = drawdown_rate_ftps(valid_head_idx) * ft_to_m;  % m/s (converted from ft/s)
 
 % ADDITIONAL SMOOTHING to Bourdet derivative - MATCH STRAIN RATE SMOOTHING
 fprintf('\n=== ADDITIONAL SMOOTHING TO BOURDET DERIVATIVE ===\n');
@@ -390,10 +390,6 @@ else
     strain_overlap_raw = strain_raw;  % Also get raw
 end
 
-% Flip strain data for recovery (aquifer expanding = positive strain rate)
-strain_overlap = -strain_overlap;
-strain_overlap_raw = -strain_overlap_raw;
-
 fprintf('DEBUG: Final sizes - strain_overlap: [%d x %d], time_das_overlap: [%d x %d]\n', ...
     size(strain_overlap, 1), size(strain_overlap, 2), size(time_das_overlap, 1), size(time_das_overlap, 2));
 
@@ -406,50 +402,51 @@ strain_interp = interp1(time_das_overlap, strain_overlap, time_head_overlap, 'li
 % Remove any NaN values
 valid_idx = ~isnan(strain_interp) & ~isnan(head_rate_overlap);
 strain_clean = strain_interp(valid_idx);
-head_rate_clean = head_rate_overlap(valid_idx);  % Using head rate (positive during recovery)
+drawdown_rate_clean = head_rate_overlap(valid_idx);  % Flip so drawdown spike at 19:15 points UP
 time_clean = time_head_overlap(valid_idx);
 
 fprintf('Valid points for regression: %d\n', length(strain_clean));
 
-% Flip head rate to positive for recovery
-head_rate_clean = -head_rate_clean;
+% Flip strain rate to match drawdown rate direction
+fprintf('  Flipping strain rate to match drawdown rate direction\n');
+strain_clean = -strain_clean;  % Flip strain rate so both spikes at 19:15 point same direction
 
 % TEMPORAL WEIGHTING: Emphasize peak region where alignment is best
 fprintf('  Using TEMPORAL WEIGHTING to emphasize well-aligned peak region\n');
 
-% Create time-based weights: higher weight for peak region (19:15:00-19:16:00)
-% Lower weight for early part (19:14:00-19:15:00) where strain leads
-peak_start = datetime('2023-10-24 19:15:00', 'TimeZone', 'UTC');
-peak_end = datetime('2023-10-24 19:16:00', 'TimeZone', 'UTC');
+% Create time-based weights: higher weight for peak region (19:15:30-19:16:15)
+% Lower weight for early part (19:14:45-19:15:30) where strain rate may lead slightly
+peak_start = datetime('2023-10-24 19:15:30', 'TimeZone', 'UTC');
+peak_end = datetime('2023-10-24 19:16:15', 'TimeZone', 'UTC');
 
 weights = ones(size(time_clean));
 for i = 1:length(time_clean)
     if time_clean(i) >= peak_start && time_clean(i) <= peak_end
         weights(i) = 3.0;  % 3x weight for peak region
     elseif time_clean(i) < peak_start
-        weights(i) = 0.5;  % Downweight early misaligned part
+        weights(i) = 0.5;  % Downweight early rising edge
     else
-        weights(i) = 1.0;  % Normal weight for tail
+        weights(i) = 1.5;  % Higher weight for tail (still good alignment)
     end
 end
 
-fprintf('    Peak region (19:15-19:16): weight = 3.0\n');
-fprintf('    Early part (before 19:15): weight = 0.5\n');
-fprintf('    Tail (after 19:16): weight = 1.0\n');
+fprintf('    Peak region (19:15:30-19:16:15): weight = 3.0\n');
+fprintf('    Early rising edge (before 19:15:30): weight = 0.5\n');
+fprintf('    Tail (after 19:16:15): weight = 1.5\n');
 
 %% LINEAR REGRESSION: Strain Rate vs Drawdown Rate (with temporal weighting)
 fprintf('\n=== WEIGHTED REGRESSION RESULTS ===\n');
 
 % Weighted least squares regression
 % Minimize: sum(weights .* (y - (mx + b))^2)
-X = [head_rate_clean, ones(size(head_rate_clean))];
+X = [drawdown_rate_clean, ones(size(drawdown_rate_clean))];
 W = diag(weights);
 coeffs = (X' * W * X) \ (X' * W * strain_clean);
 slope = coeffs(1);
 intercept = coeffs(2);
 
 % Calculate weighted correlation and R^2
-strain_predicted = head_rate_clean * slope + intercept;
+strain_predicted = drawdown_rate_clean * slope + intercept;
 ss_res = sum(weights .* (strain_clean - strain_predicted).^2);
 ss_tot = sum(weights .* (strain_clean - mean(strain_clean)).^2);
 R_squared = 1 - (ss_res / ss_tot);
@@ -463,7 +460,7 @@ if slope < 0
     coeffs = (X' * W * X) \ (X' * W * strain_clean);
     slope = coeffs(1);
     intercept = coeffs(2);
-    strain_predicted = head_rate_clean * slope + intercept;
+    strain_predicted = drawdown_rate_clean * slope + intercept;
     ss_res = sum(weights .* (strain_clean - strain_predicted).^2);
     ss_tot = sum(weights .* (strain_clean - mean(strain_clean)).^2);
     R_squared = 1 - (ss_res / ss_tot);
@@ -474,7 +471,7 @@ end
 p_regression = [slope, intercept];
 
 % Calculate residuals and RMSE
-strain_predicted = polyval(p_regression, head_rate_clean);
+strain_predicted = polyval(p_regression, drawdown_rate_clean);
 residuals = strain_clean - strain_predicted;
 RMSE = sqrt(mean(residuals.^2));
 
@@ -501,7 +498,8 @@ results.R = R_corr;
 results.R_squared = R_squared;
 results.RMSE = RMSE;
 results.strain_rate = strain_clean;
-results.head_rate = head_rate_clean;  % Store head rate (positive during recovery)
+results.head_rate = drawdown_rate_clean;  % Store head rate, not drawdown rate
+results.drawdown_rate = drawdown_rate_clean;  % Also store drawdown rate for reference
 results.time = time_clean;
 results.timing_correction = config.timing_correction_sec;
 results.test_name = test_name;
@@ -512,69 +510,28 @@ results.n_channels = n_channels;
 
 %% PLOTTING
 if config.show_plots
-    % Check if SI units are requested
-    use_si_units = isfield(config, 'use_si_units') && config.use_si_units;
-    
-    % Unit conversions
-    ft_to_m = 0.3048;  % 1 ft = 0.3048 m
-    
-    if use_si_units
-        % Convert to SI units
-        head_rate_plot = head_rate_clean * ft_to_m;  % ft/s to m/s
-        head_rate_range_plot = linspace(min(head_rate_plot), max(head_rate_plot), 100);
-        depth_range_m = config.depth_range_ft * ft_to_m;
-        
-        % Convert slope from (1/s)/(ft/s) to (1/s)/(m/s)
-        slope_si = slope / ft_to_m;  % Divide by conversion factor
-        intercept_si = intercept;  % Intercept doesn't change (already in 1/s)
-        
-        % Units for labels
-        head_rate_units = 'm/s';
-        depth_units = 'm';
-        title_depth = sprintf('%.0f-%.0f %s', depth_range_m(1), depth_range_m(2), depth_units);
-    else
-        % Use imperial units
-        head_rate_plot = head_rate_clean;
-        head_rate_range_plot = linspace(min(head_rate_plot), max(head_rate_plot), 100);
-        depth_range_plot = config.depth_range_ft;
-        
-        slope_si = slope;
-        intercept_si = intercept;
-        
-        head_rate_units = 'ft/s';
-        depth_units = 'ft';
-        title_depth = sprintf('%.0f-%.0f %s', depth_range_plot(1), depth_range_plot(2), depth_units);
-    end
-    
     figure('Name', sprintf('Depth-Range Linear Regression: %s', test_name), 'Position', [50, 50, 1600, 900]);
     
     % TOP LEFT (1): Linear Regression Scatter
     subplot(2,2,1);
     % Use consistent strain rate scaling (×10^-11) to match time series plot
     strain_scale_scatter = 1e-11;
-    scatter(head_rate_plot, strain_clean / strain_scale_scatter, 20, 'b', 'filled', 'MarkerFaceAlpha', 0.6);
+    scatter(drawdown_rate_clean, strain_clean / strain_scale_scatter, 20, 'b', 'filled', 'MarkerFaceAlpha', 0.6);
     hold on;
-    plot(head_rate_range_plot, (slope_si * head_rate_range_plot + intercept_si) / strain_scale_scatter, 'r-', 'LineWidth', 3);
+    head_rate_range = linspace(min(drawdown_rate_clean), max(drawdown_rate_clean), 100);
+    plot(head_rate_range, polyval(p_regression, head_rate_range) / strain_scale_scatter, 'r-', 'LineWidth', 3);
     hold off;
-    xlabel(sprintf('Head Rate (%s)', head_rate_units), 'FontSize', 12, 'FontWeight', 'bold');
+    xlabel('Drawdown Rate (ft/s)', 'FontSize', 12, 'FontWeight', 'bold');
     ylabel('Strain Rate (1/s) ×10^{-11}', 'FontSize', 12, 'FontWeight', 'bold');
     title(sprintf('Linear Regression: R = %.3f, R^2 = %.3f', R_corr, R_squared), 'FontSize', 14);
     grid on;
-    legend('Data', sprintf('Fit: y = %.2e*x + %.2e', slope_si, intercept_si), 'Location', 'best');
+    legend('Data', sprintf('Fit: y = %.2e*x + %.2e', slope, intercept), 'Location', 'best');
     
     % Add text box with statistics
-    if use_si_units
-        text_str = sprintf('Slope: %.2e\nR: %.3f\nR^2: %.3f\nRMSE: %.2e\nN: %d\nDepth: %.0f-%.0f m\nChannels: %d', ...
-            slope_si, R_corr, R_squared, RMSE, length(strain_clean), depth_range_m(1), depth_range_m(2), n_channels);
-    else
     text_str = sprintf('Slope: %.2e\nR: %.3f\nR^2: %.3f\nRMSE: %.2e\nN: %d\nDepth: %.0f-%.0f ft\nChannels: %d', ...
         slope, R_corr, R_squared, RMSE, length(strain_clean), config.depth_range_ft(1), config.depth_range_ft(2), n_channels);
-    end
     text(0.05, 0.95, text_str, 'Units', 'normalized', 'VerticalAlignment', 'top', ...
         'BackgroundColor', 'white', 'EdgeColor', 'black', 'FontSize', 10);
-    
-    % Add subplot label (a)
-    text(-0.1, 1.05, '(a)', 'Units', 'normalized', 'FontSize', 16, 'FontWeight', 'bold');
     
     % TOP RIGHT (2): Time series overlay
     subplot(2,2,2);
@@ -584,7 +541,7 @@ if config.show_plots
     strain_scale = 1e-11;  % Strain rate displayed as 10^-11 1/s for readability
     
     % Fixed scaling for consistency across all plots
-    head_max = max(abs(head_rate_plot));
+    head_max = max(abs(drawdown_rate_clean));
     strain_max = max(abs(strain_clean));
     
     % Force both scales to be fixed for consistency
@@ -592,8 +549,8 @@ if config.show_plots
     fprintf('DEBUG SCALING: strain_max = %.4e, using fixed strain_scale = %.4e\n', strain_max, strain_scale);
     
     yyaxis left;
-    plot(time_clean, head_rate_plot / head_scale, 'Color', [0.4660 0.6740 0.1880], 'LineWidth', 2.5, 'DisplayName', 'Head Rate');
-    ylabel(sprintf('Head Rate (m/s) ×10^{%d}', round(log10(head_scale))), 'FontSize', 12, 'FontWeight', 'bold');
+    plot(time_clean, drawdown_rate_clean / head_scale, 'Color', [0.4660 0.6740 0.1880], 'LineWidth', 2.5, 'DisplayName', 'Drawdown Rate');
+    ylabel(sprintf('Drawdown Rate (m/s) ×10^{%d}', round(log10(head_scale))), 'FontSize', 12, 'FontWeight', 'bold');
     ax = gca;
     ax.YColor = [0.4660 0.6740 0.1880];
     
@@ -603,18 +560,13 @@ if config.show_plots
     ax.YColor = 'k';
     
     xlabel('Date Time UTC', 'FontSize', 12, 'FontWeight', 'bold');
-    title(sprintf('Time Series (%.0fs correction) - Depth %s', config.timing_correction_sec, title_depth), 'FontSize', 14);
+    title(sprintf('Time Series (%.0fs correction) - Depth %.0f-%.0f ft', config.timing_correction_sec, config.depth_range_ft(1), config.depth_range_ft(2)), 'FontSize', 14);
     legend('show', 'Location', 'best');
     grid on;
     
-    % Add subplot label (b)
-    text(-0.1, 1.05, '(b)', 'Units', 'normalized', 'FontSize', 16, 'FontWeight', 'bold');
-    
     % Overall title - concise and descriptive
-    % Extract well name from test_name (e.g., PT01b_Recovery_short -> PT-01b)
-    well_name = strrep(strtok(test_name, '_'), 'PT0', 'PT-0');
-    sgtitle(sprintf('Poroelastic Storage Analysis: %s Zone %s (%s)', ...
-        well_name, config.zone(2), title_depth), ...
+    sgtitle(sprintf('Poroelastic Storage Analysis: PT-01c Zone %s (%.0f-%.0f ft)', ...
+        config.zone(2), config.depth_range_ft(1), config.depth_range_ft(2)), ...
         'FontSize', 16, 'FontWeight', 'bold');
     
     % REMOVE SEPARATE FIGURE - Now consolidated into main figure
@@ -641,8 +593,8 @@ if config.show_plots
     displacement_rate_avg = displacement_rate_avg_full(1:length(strain_overlap));  % Extract same time window as strain_overlap
     time_comparison = time_das_overlap;
     
-    % Use strain rate as-is (already flipped earlier in processing)
-    strain_overlap_display = strain_overlap;  % Already flipped for recovery
+    % Display strain rate FLIPPED UP to match drawdown rate orientation
+    strain_overlap_display = -strain_overlap;  % Flip so strain rate points UP like drawdown rate
     displacement_rate_avg_display = displacement_rate_avg;  % No flip
     
     % Normalize both to same scale for visual comparison (0-1 range)
@@ -664,7 +616,7 @@ if config.show_plots
     % Scale strain rate to match other plots (×10^-11)
     strain_scale_plot = 1e-11;  % Display strain rate in units of 10^-11 1/s (consistent with all plots)
     % Get raw strain rate for this time window
-    strain_overlap_raw_display = strain_overlap_raw(1:length(time_comparison));  % Already flipped for recovery
+    strain_overlap_raw_display = -strain_overlap_raw(1:length(time_comparison));  % Flip to match strain_overlap_display
     plot(time_comparison, strain_overlap_raw_display / strain_scale_plot, 'Color', [1 0.5 0.5], 'LineWidth', 1.5, 'DisplayName', 'Strain Rate (raw)');
     hold on;
     plot(time_comparison, strain_overlap_display / strain_scale_plot, 'r-', 'LineWidth', 2, 'DisplayName', 'Strain Rate (smoothed)');
@@ -675,21 +627,18 @@ if config.show_plots
     legend('Location', 'best');
     grid on;
     
-    % Add subplot label (c)
-    text(-0.1, 1.05, '(c)', 'Units', 'normalized', 'FontSize', 16, 'FontWeight', 'bold');
-    
     % BOTTOM RIGHT (4): Head rate overlay for timing reference
     subplot(2,2,4);
     yyaxis left;
-    plot(time_comparison, 1 - strain_norm, 'r-', 'LineWidth', 2, 'DisplayName', 'Strain Rate (norm)');
+    plot(time_comparison, strain_norm, 'r-', 'LineWidth', 2, 'DisplayName', 'Strain Rate (norm)');
     ylabel('Normalized Strain Rate', 'Color', 'r');
     ax = gca;
     ax.YColor = 'r';
     
     yyaxis right;
     % Get head rate for comparison
-    if exist('head_rate_clean', 'var') && exist('time_clean', 'var')
-        head_rate_interp = interp1(time_clean, head_rate_clean, time_comparison, 'linear', 'extrap');
+    if exist('drawdown_rate_clean', 'var') && exist('time_clean', 'var')
+        head_rate_interp = interp1(time_clean, drawdown_rate_clean, time_comparison, 'linear', 'extrap');
         head_norm = (head_rate_interp - min(head_rate_interp)) / (max(head_rate_interp) - min(head_rate_interp) + eps);
         plot(time_comparison, head_norm, 'g-', 'LineWidth', 2, 'DisplayName', 'Head Rate (norm)');
         ylabel('Normalized Head Rate', 'Color', [0.4660 0.6740 0.1880]);
@@ -699,9 +648,6 @@ if config.show_plots
     title('Strain Rate vs Head Rate (normalized for alignment check)');
     legend('Location', 'best');
     grid on;
-    
-    % Add subplot label (d)
-    text(-0.1, 1.05, '(d)', 'Units', 'normalized', 'FontSize', 16, 'FontWeight', 'bold');
     
     fprintf('\n=== 4-SUBPLOT FIGURE GENERATED ===\n');
     fprintf('  Top Left: Linear Regression (Strain vs Drawdown)\n');

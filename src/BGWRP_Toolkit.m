@@ -340,7 +340,7 @@ if exist('mode', 'var') && ischar(mode)
         fprintf('Running MATLAB movmean + 0.35 Hz grid removal\n');
         
     case 'run_filter_matlab_movmean_5sec'
-        % Run MATLAB movmean filter with 5-second window + reference channel + F-K filter
+        % Run MATLAB movmean filter with 5-second window (5 samples at 1Hz)
         config.run_tdms_conversion = false;
         config.run_concatenation = false;
         config.run_timing_extraction = false;
@@ -348,18 +348,13 @@ if exist('mode', 'var') && ischar(mode)
         config.save_charts = false;
         config.smoothing_method = 'matlab_movmean';  % Use MATLAB movmean
         config.matlab_movmean_window = 5;           % 5-second window (5 samples)
-        config.apply_reference_channel_subtraction = true;  % Subtract reference channel (preserves local signals)
-        config.reference_channel_idx = [];  % Auto-select channel at 200 ft (away from 350-400 ft pumping zone)
-        config.flip_displacement_rate_sign = true;  % Flip sign of displacement rate (invert data)
-        % Apply F-K filter after smoothing to remove common mode noise
-        config.apply_concatenation_filter = true;
-        config.filter_method = 'chen_stage3';  % F-K filter for common mode removal
-        config.chen_fk_strength = 0.02;  % Chen paper default
-        config.chen_fk_preserve_signal = 0.8;  % Preserve signal strength
+        % Reset other filtering
+        config.apply_concatenation_filter = false;
+        config.filter_method = 'none';
         config.chen_denoising = false;
         % NOTE: 50x correction applied in analyze_das_data.m for decimation loss
         config.apply_sampling_freq_correction = true;
-        fprintf('Running MATLAB movmean (5-sec) + reference channel + F-K filter\n');
+        fprintf('Running MATLAB movmean filter (5-second window, 50x correction)\n');
             
         case 'run_correlation_analysis'
             % Analysis mode with strain rate vs head data correlation
@@ -377,14 +372,14 @@ if exist('mode', 'var') && ischar(mode)
             config.calculate_storage = true;
             % Set timing correction to 9.5 seconds
             config.lr_timing_correction_sec = 9.5;
-            % Set focused recovery window (SAME as ROI: 19:14-19:17)
-            config.lr_recovery_window = [datetime('2023-10-24 19:14:00', 'TimeZone', 'UTC'), ...
-                                        datetime('2023-10-24 19:17:00', 'TimeZone', 'UTC')];
-            % Apply 5-second moving mean filter before correlation analysis
+            % Set focused recovery window (NARROWED: 19:14:45-19:16:30 to focus on rising edge + peak)
+            config.lr_recovery_window = [datetime('2023-10-24 19:14:45', 'TimeZone', 'UTC'), ...
+                                        datetime('2023-10-24 19:16:30', 'TimeZone', 'UTC')];
+            % Apply stronger smoothing to reduce noise while preserving peaks
             config.smoothing_method = 'matlab_movmean';
-            config.matlab_movmean_window = 5;
-            % Apply strong smoothing to strain rate (AFTER spatial difference)
-            config.strain_rate_smoothing_window = 30;  % 30 seconds to smooth the noisy signal
+            config.matlab_movmean_window = 10;  % 10 seconds to balance noise reduction and spike preservation
+            % Apply ADDITIONAL smoothing to strain rate (AFTER spatial difference) - PT01a is very noisy
+            config.strain_rate_smoothing_window = 15;  % 15 seconds (lighter than before to preserve peak)
             config.strain_rate_smoothing_method = 'movmean';  % Moving average
             config.apply_concatenation_filter = false;
             config.filter_method = 'none';
