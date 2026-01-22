@@ -368,8 +368,8 @@ for i = 1:length(test_labels)
     chart_logger('    Figure 101: Actual data range: [%.3f, %.3f] nm/s', actual_min, actual_max);
     chart_logger('    Figure 101: Advisor''s range: [-0.25, 0.15] nm/s');
     
-    % Colorbar bounds optimized for PT01a data
-    raw_bounds = [0.05, 0.25];
+    % Colorbar bounds optimized for PT01a data (blue background at baseline)
+    raw_bounds = [0.095, 0.24];
     clim(raw_bounds);
     chart_logger('    Figure 101: Fixed colorbar bounds: [%.2f, %.2f] nm/s', raw_bounds(1), raw_bounds(2));
     
@@ -403,7 +403,7 @@ for i = 1:length(test_labels)
     
     % Set focused time window for PT01a
     if strcmpi(test_label, 'PT01a_Recovery_short')
-        xlim([datetime('2023-11-07 20:44:00', 'TimeZone', 'UTC'), datetime('2023-11-07 20:47:30', 'TimeZone', 'UTC')]);
+        xlim([datetime('2023-11-07 20:44:30', 'TimeZone', 'UTC'), datetime('2023-11-07 20:47:30', 'TimeZone', 'UTC')]);
     else
         xlim([analysis_start analysis_end]);
     end
@@ -435,8 +435,8 @@ for i = 1:length(test_labels)
     apply_plot_config(analysis_time_array, das_data.depth_ft, analysis_smoothed_data', config, 'waterfall');
     
     % Set displacement rate bounds for Figure 102 subplot 1 (waterfall)
-    % Optimized for PT01a data
-    disp_bounds = [0.05, 0.25];
+    % Optimized for PT01a data (blue background at baseline)
+    disp_bounds = [0.095, 0.24];
     set(gca, 'clim', disp_bounds);
     chart_logger('    Figure 102 subplot 1: Fixed displacement rate colorbar bounds: [%.2f, %.2f] nm/s', disp_bounds(1), disp_bounds(2));
     
@@ -464,7 +464,7 @@ for i = 1:length(test_labels)
     
     % Set focused time window for PT01a
     if strcmpi(test_label, 'PT01a_Recovery_short')
-        xlim([datetime('2023-11-07 20:44:00', 'TimeZone', 'UTC'), datetime('2023-11-07 20:47:30', 'TimeZone', 'UTC')]);
+        xlim([datetime('2023-11-07 20:44:30', 'TimeZone', 'UTC'), datetime('2023-11-07 20:47:30', 'TimeZone', 'UTC')]);
     else
         xlim([analysis_start analysis_end]);
     end
@@ -495,11 +495,11 @@ for i = 1:length(test_labels)
                         [drawdown_rate, rate_time] = calculate_drawdown_rate(averaged_data.Date, averaged_data.Drawdownft, 'ft_per_min');
                         plot(rate_time, drawdown_rate, 'DisplayName', 'Drawdown Rate (avg)');
                         if strcmpi(test_label, 'PT01a_Recovery_short')
-                            xlim([datetime('2023-11-07 20:44:00', 'TimeZone', 'UTC'), datetime('2023-11-07 20:47:30', 'TimeZone', 'UTC')]);
+                            xlim([datetime('2023-11-07 20:44:30', 'TimeZone', 'UTC'), datetime('2023-11-07 20:47:30', 'TimeZone', 'UTC')]);
                         else
                             % Set focused time window for PT01a
     if strcmpi(test_label, 'PT01a_Recovery_short')
-        xlim([datetime('2023-11-07 20:44:00', 'TimeZone', 'UTC'), datetime('2023-11-07 20:47:30', 'TimeZone', 'UTC')]);
+        xlim([datetime('2023-11-07 20:44:30', 'TimeZone', 'UTC'), datetime('2023-11-07 20:47:30', 'TimeZone', 'UTC')]);
     else
         xlim([analysis_start analysis_end]);
     end
@@ -543,11 +543,11 @@ for i = 1:length(test_labels)
                     end
                     hold off;
                     if strcmpi(test_label, 'PT01a_Recovery_short')
-                        xlim([datetime('2023-11-07 20:44:00', 'TimeZone', 'UTC'), datetime('2023-11-07 20:47:30', 'TimeZone', 'UTC')]);
+                        xlim([datetime('2023-11-07 20:44:30', 'TimeZone', 'UTC'), datetime('2023-11-07 20:47:30', 'TimeZone', 'UTC')]);
                     else
                         % Set focused time window for PT01a
     if strcmpi(test_label, 'PT01a_Recovery_short')
-        xlim([datetime('2023-11-07 20:44:00', 'TimeZone', 'UTC'), datetime('2023-11-07 20:47:30', 'TimeZone', 'UTC')]);
+        xlim([datetime('2023-11-07 20:44:30', 'TimeZone', 'UTC'), datetime('2023-11-07 20:47:30', 'TimeZone', 'UTC')]);
     else
         xlim([analysis_start analysis_end]);
     end
@@ -570,11 +570,11 @@ for i = 1:length(test_labels)
                 % No valid head data, just plot DAS
                 plot(das_data.analysis_time, das_data.analysis_strain_rate, 'Color', [0 0 0], 'LineStyle', '-', 'LineWidth', 1.2, 'DisplayName', 'DAS');
                 if strcmpi(test_label, 'PT01a_Recovery_short')
-                    xlim([datetime('2023-11-07 20:44:00', 'TimeZone', 'UTC'), datetime('2023-11-07 20:47:30', 'TimeZone', 'UTC')]);
+                    xlim([datetime('2023-11-07 20:44:30', 'TimeZone', 'UTC'), datetime('2023-11-07 20:47:30', 'TimeZone', 'UTC')]);
                 else
                     % Set focused time window for PT01a
     if strcmpi(test_label, 'PT01a_Recovery_short')
-        xlim([datetime('2023-11-07 20:44:00', 'TimeZone', 'UTC'), datetime('2023-11-07 20:47:30', 'TimeZone', 'UTC')]);
+        xlim([datetime('2023-11-07 20:44:30', 'TimeZone', 'UTC'), datetime('2023-11-07 20:47:30', 'TimeZone', 'UTC')]);
     else
         xlim([analysis_start analysis_end]);
     end
@@ -588,7 +588,7 @@ for i = 1:length(test_labels)
             plot(das_data.analysis_time, das_data.analysis_strain_rate, 'Color', [0 0 0], 'LineStyle', '-', 'LineWidth', 1.2, 'DisplayName', 'DAS');
             % Set focused time window for PT01a
     if strcmpi(test_label, 'PT01a_Recovery_short')
-        xlim([datetime('2023-11-07 20:44:00', 'TimeZone', 'UTC'), datetime('2023-11-07 20:47:30', 'TimeZone', 'UTC')]);
+        xlim([datetime('2023-11-07 20:44:30', 'TimeZone', 'UTC'), datetime('2023-11-07 20:47:30', 'TimeZone', 'UTC')]);
     else
         xlim([analysis_start analysis_end]);
     end
@@ -601,7 +601,7 @@ for i = 1:length(test_labels)
         plot(das_data.analysis_time, das_data.analysis_strain_rate, 'Color', [0 0 0], 'LineStyle', '-', 'LineWidth', 1.2, 'DisplayName', 'DAS');
         % Set focused time window for PT01a
     if strcmpi(test_label, 'PT01a_Recovery_short')
-        xlim([datetime('2023-11-07 20:44:00', 'TimeZone', 'UTC'), datetime('2023-11-07 20:47:30', 'TimeZone', 'UTC')]);
+        xlim([datetime('2023-11-07 20:44:30', 'TimeZone', 'UTC'), datetime('2023-11-07 20:47:30', 'TimeZone', 'UTC')]);
     else
         xlim([analysis_start analysis_end]);
     end
@@ -624,11 +624,11 @@ for i = 1:length(test_labels)
             [drawdown_rate, rate_time] = calculate_drawdown_rate(pw_data.recovery_data.Date, pw_data.recovery_data.Drawdownft, 'ft_per_min');
             plot(rate_time, drawdown_rate, 'Color', [0.0000 1.0000 1.0000], 'LineStyle', '-', 'LineWidth', 0.8, 'DisplayName', 'Pumping Well Drawdown Rate');
             if strcmpi(test_label, 'PT01a_Recovery_short')
-                xlim([datetime('2023-11-07 20:44:00', 'TimeZone', 'UTC'), datetime('2023-11-07 20:47:30', 'TimeZone', 'UTC')]);
+                xlim([datetime('2023-11-07 20:44:30', 'TimeZone', 'UTC'), datetime('2023-11-07 20:47:30', 'TimeZone', 'UTC')]);
             else
                 % Set focused time window for PT01a
     if strcmpi(test_label, 'PT01a_Recovery_short')
-        xlim([datetime('2023-11-07 20:44:00', 'TimeZone', 'UTC'), datetime('2023-11-07 20:47:30', 'TimeZone', 'UTC')]);
+        xlim([datetime('2023-11-07 20:44:30', 'TimeZone', 'UTC'), datetime('2023-11-07 20:47:30', 'TimeZone', 'UTC')]);
     else
         xlim([analysis_start analysis_end]);
     end
@@ -774,7 +774,7 @@ for i = 1:length(test_labels)
     
     % Set focused time window for PT01a
     if strcmpi(test_label, 'PT01a_Recovery_short')
-        xlim([datetime('2023-11-07 20:44:00', 'TimeZone', 'UTC'), datetime('2023-11-07 20:47:30', 'TimeZone', 'UTC')]);
+        xlim([datetime('2023-11-07 20:44:30', 'TimeZone', 'UTC'), datetime('2023-11-07 20:47:30', 'TimeZone', 'UTC')]);
     else
         xlim([analysis_start analysis_end]);
     end
@@ -802,11 +802,11 @@ for i = 1:length(test_labels)
                         yyaxis left;
                         plot(averaged_data.Date, averaged_data.Drawdownft, 'DisplayName', 'Head (avg)');
                         if strcmpi(test_label, 'PT01a_Recovery_short')
-                            xlim([datetime('2023-11-07 20:44:00', 'TimeZone', 'UTC'), datetime('2023-11-07 20:47:30', 'TimeZone', 'UTC')]);
+                            xlim([datetime('2023-11-07 20:44:30', 'TimeZone', 'UTC'), datetime('2023-11-07 20:47:30', 'TimeZone', 'UTC')]);
                         else
                             % Set focused time window for PT01a
     if strcmpi(test_label, 'PT01a_Recovery_short')
-        xlim([datetime('2023-11-07 20:44:00', 'TimeZone', 'UTC'), datetime('2023-11-07 20:47:30', 'TimeZone', 'UTC')]);
+        xlim([datetime('2023-11-07 20:44:30', 'TimeZone', 'UTC'), datetime('2023-11-07 20:47:30', 'TimeZone', 'UTC')]);
     else
         xlim([analysis_start analysis_end]);
     end
@@ -848,11 +848,11 @@ for i = 1:length(test_labels)
                     end
                     hold off;
                     if strcmpi(test_label, 'PT01a_Recovery_short')
-                        xlim([datetime('2023-11-07 20:44:00', 'TimeZone', 'UTC'), datetime('2023-11-07 20:47:30', 'TimeZone', 'UTC')]);
+                        xlim([datetime('2023-11-07 20:44:30', 'TimeZone', 'UTC'), datetime('2023-11-07 20:47:30', 'TimeZone', 'UTC')]);
                     else
                         % Set focused time window for PT01a
     if strcmpi(test_label, 'PT01a_Recovery_short')
-        xlim([datetime('2023-11-07 20:44:00', 'TimeZone', 'UTC'), datetime('2023-11-07 20:47:30', 'TimeZone', 'UTC')]);
+        xlim([datetime('2023-11-07 20:44:30', 'TimeZone', 'UTC'), datetime('2023-11-07 20:47:30', 'TimeZone', 'UTC')]);
     else
         xlim([analysis_start analysis_end]);
     end
@@ -876,7 +876,7 @@ for i = 1:length(test_labels)
                 plot(filtered_time_strain, filtered_strain_data(:, das_data.pumping_zone.channel_idx)/10, 'Color', [0 0 0], 'LineStyle', '-', 'LineWidth', 1.2, 'DisplayName', 'DAS');
                 % Set focused time window for PT01a
     if strcmpi(test_label, 'PT01a_Recovery_short')
-        xlim([datetime('2023-11-07 20:44:00', 'TimeZone', 'UTC'), datetime('2023-11-07 20:47:30', 'TimeZone', 'UTC')]);
+        xlim([datetime('2023-11-07 20:44:30', 'TimeZone', 'UTC'), datetime('2023-11-07 20:47:30', 'TimeZone', 'UTC')]);
     else
         xlim([analysis_start analysis_end]);
     end
@@ -889,7 +889,7 @@ for i = 1:length(test_labels)
             plot(filtered_time_strain, filtered_strain_data(:, das_data.pumping_zone.channel_idx)/10, 'Color', [0 0 0], 'LineStyle', '-', 'LineWidth', 1.2, 'DisplayName', 'DAS');
             % Set focused time window for PT01a
     if strcmpi(test_label, 'PT01a_Recovery_short')
-        xlim([datetime('2023-11-07 20:44:00', 'TimeZone', 'UTC'), datetime('2023-11-07 20:47:30', 'TimeZone', 'UTC')]);
+        xlim([datetime('2023-11-07 20:44:30', 'TimeZone', 'UTC'), datetime('2023-11-07 20:47:30', 'TimeZone', 'UTC')]);
     else
         xlim([analysis_start analysis_end]);
     end
@@ -901,7 +901,7 @@ for i = 1:length(test_labels)
         plot(filtered_time_strain, filtered_strain_data(:, das_data.pumping_zone.channel_idx)/10, 'Color', [0 0 0], 'LineStyle', '-', 'LineWidth', 1.2, 'DisplayName', 'DAS');
         % Set focused time window for PT01a
     if strcmpi(test_label, 'PT01a_Recovery_short')
-        xlim([datetime('2023-11-07 20:44:00', 'TimeZone', 'UTC'), datetime('2023-11-07 20:47:30', 'TimeZone', 'UTC')]);
+        xlim([datetime('2023-11-07 20:44:30', 'TimeZone', 'UTC'), datetime('2023-11-07 20:47:30', 'TimeZone', 'UTC')]);
     else
         xlim([analysis_start analysis_end]);
     end
@@ -921,11 +921,11 @@ for i = 1:length(test_labels)
             yyaxis left;
             plot(pw_data.recovery_data.Date, pw_data.recovery_data.Drawdownft, 'Color', [0.0000 1.0000 1.0000], 'LineStyle', '-', 'LineWidth', 0.8, 'DisplayName', 'Pumping Well Head');
             if strcmpi(test_label, 'PT01a_Recovery_short')
-                xlim([datetime('2023-11-07 20:44:00', 'TimeZone', 'UTC'), datetime('2023-11-07 20:47:30', 'TimeZone', 'UTC')]);
+                xlim([datetime('2023-11-07 20:44:30', 'TimeZone', 'UTC'), datetime('2023-11-07 20:47:30', 'TimeZone', 'UTC')]);
             else
                 % Set focused time window for PT01a
     if strcmpi(test_label, 'PT01a_Recovery_short')
-        xlim([datetime('2023-11-07 20:44:00', 'TimeZone', 'UTC'), datetime('2023-11-07 20:47:30', 'TimeZone', 'UTC')]);
+        xlim([datetime('2023-11-07 20:44:30', 'TimeZone', 'UTC'), datetime('2023-11-07 20:47:30', 'TimeZone', 'UTC')]);
     else
         xlim([analysis_start analysis_end]);
     end
@@ -1025,7 +1025,7 @@ for i = 1:length(test_labels)
     %             hold off;
     %             % Set focused time window for PT01a
     if strcmpi(test_label, 'PT01a_Recovery_short')
-        xlim([datetime('2023-11-07 20:44:00', 'TimeZone', 'UTC'), datetime('2023-11-07 20:47:30', 'TimeZone', 'UTC')]);
+        xlim([datetime('2023-11-07 20:44:30', 'TimeZone', 'UTC'), datetime('2023-11-07 20:47:30', 'TimeZone', 'UTC')]);
     else
         xlim([analysis_start analysis_end]);
     end
@@ -1094,7 +1094,7 @@ for i = 1:length(test_labels)
     %             hold off;
     %             % Set focused time window for PT01a
     if strcmpi(test_label, 'PT01a_Recovery_short')
-        xlim([datetime('2023-11-07 20:44:00', 'TimeZone', 'UTC'), datetime('2023-11-07 20:47:30', 'TimeZone', 'UTC')]);
+        xlim([datetime('2023-11-07 20:44:30', 'TimeZone', 'UTC'), datetime('2023-11-07 20:47:30', 'TimeZone', 'UTC')]);
     else
         xlim([analysis_start analysis_end]);
     end
