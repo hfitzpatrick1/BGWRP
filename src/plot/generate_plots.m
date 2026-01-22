@@ -334,8 +334,13 @@ for i = 1:length(test_labels)
         return;
     end
     
+    % Filter data to analysis window BEFORE plotting
+    analysis_mask_fig101 = das_data.time_array >= analysis_start & das_data.time_array <= analysis_end;
+    filtered_time = das_data.time_array(analysis_mask_fig101);
+    filtered_data = das_data.smoothed_data(analysis_mask_fig101, :);
+    
     % Apply configurable plotting method to test pixelation sources
-    apply_plot_config(das_data.time_array, das_data.depth_ft, das_data.smoothed_data', config, 'waterfall');
+    apply_plot_config(filtered_time, das_data.depth_ft, filtered_data', config, 'waterfall');
     
     % Overlay head data if available
     if ~isempty(head_data) && isfield(head_data, 'zones')
@@ -639,8 +644,13 @@ for i = 1:length(test_labels)
     end
     
     subplot(3,1,1);
+    % Filter strain data to analysis window BEFORE plotting
+    strain_mask_fig103 = iTdas >= analysis_start & iTdas <= analysis_end;
+    filtered_time_strain = iTdas(strain_mask_fig103);
+    filtered_strain_data = dintdata(strain_mask_fig103, :);
+    
     % Apply configurable plotting method to test pixelation sources
-    apply_plot_config(iTdas, das_data.depth_ft, dintdata'/10, config, 'waterfall');
+    apply_plot_config(filtered_time_strain, das_data.depth_ft, filtered_strain_data'/10, config, 'waterfall');
     
     % Set strain bounds using actual plotted data (dintdata/10)
     if ~isempty(unified_bounds) && isfield(unified_bounds, 'strain')
@@ -729,7 +739,7 @@ for i = 1:length(test_labels)
                         ylabel('Head (ft)');
                         
                         yyaxis right;
-                        plot(iTdas, dintdata(:, das_data.pumping_zone.channel_idx)/10, 'Color', [0 0 0], 'LineStyle', '-', 'LineWidth', 1.2, 'DisplayName', 'DAS');
+                        plot(filtered_time_strain, filtered_strain_data(:, das_data.pumping_zone.channel_idx)/10, 'Color', [0 0 0], 'LineStyle', '-', 'LineWidth', 1.2, 'DisplayName', 'DAS');
                         ylabel('Strain (nm/m)');
                         chart_logger('    Plotted averaged head data from %d monitoring zones', length(monitoring_zones));
                         
@@ -769,7 +779,7 @@ for i = 1:length(test_labels)
                     end
                     
                     yyaxis right;
-                    plot(iTdas, dintdata(:, das_data.pumping_zone.channel_idx)/10, 'Color', [0 0 0], 'LineStyle', '-', 'LineWidth', 1.2, 'DisplayName', 'DAS');
+                    plot(filtered_time_strain, filtered_strain_data(:, das_data.pumping_zone.channel_idx)/10, 'Color', [0 0 0], 'LineStyle', '-', 'LineWidth', 1.2, 'DisplayName', 'DAS');
                     ylabel('Strain (nm/m)');
                     chart_logger('    Plotted monitoring well head data from zones: %s', strjoin(monitoring_zones, ', '));
                     
@@ -778,7 +788,7 @@ for i = 1:length(test_labels)
                 end
             else
                 % No valid head data, just plot strain
-                plot(iTdas, dintdata(:, das_data.pumping_zone.channel_idx)/10, 'Color', [0 0 0], 'LineStyle', '-', 'LineWidth', 1.2, 'DisplayName', 'DAS');
+                plot(filtered_time_strain, filtered_strain_data(:, das_data.pumping_zone.channel_idx)/10, 'Color', [0 0 0], 'LineStyle', '-', 'LineWidth', 1.2, 'DisplayName', 'DAS');
                 xlim([analysis_start analysis_end]);
                 ylabel('Strain (nm/m)');
                 xlabel('Date Time UTC');
@@ -786,14 +796,14 @@ for i = 1:length(test_labels)
             end
         else
             % No head data, just plot strain
-            plot(iTdas, dintdata(:, das_data.pumping_zone.channel_idx)/10, 'Color', [0 0 0], 'LineStyle', '-', 'LineWidth', 1.2, 'DisplayName', 'DAS');
+            plot(filtered_time_strain, filtered_strain_data(:, das_data.pumping_zone.channel_idx)/10, 'Color', [0 0 0], 'LineStyle', '-', 'LineWidth', 1.2, 'DisplayName', 'DAS');
             xlim([analysis_start analysis_end]);
             ylabel('Strain (nm/m)');
             xlabel('Date Time UTC');
         end
     else
         % No head data, just plot strain
-        plot(iTdas, dintdata(:, das_data.pumping_zone.channel_idx)/10, 'Color', [0 0 0], 'LineStyle', '-', 'LineWidth', 1.2, 'DisplayName', 'DAS');
+        plot(filtered_time_strain, filtered_strain_data(:, das_data.pumping_zone.channel_idx)/10, 'Color', [0 0 0], 'LineStyle', '-', 'LineWidth', 1.2, 'DisplayName', 'DAS');
         xlim([analysis_start analysis_end]);
         ylabel('Strain (nm/m)');
         xlabel('Date Time UTC');
@@ -819,7 +829,7 @@ for i = 1:length(test_labels)
             ylim(pw_bounds);
             
             yyaxis right;
-            plot(iTdas, dintdata(:, das_data.pumping_zone.channel_idx)/10, 'Color', [0 0 0], 'LineStyle', '-', 'LineWidth', 1.2, 'DisplayName', 'DAS');
+            plot(filtered_time_strain, filtered_strain_data(:, das_data.pumping_zone.channel_idx)/10, 'Color', [0 0 0], 'LineStyle', '-', 'LineWidth', 1.2, 'DisplayName', 'DAS');
             ylabel('Strain (nm/m)');
             
             % Apply only the DAS bounds (right Y-axis) to match subplot 2, keep left Y-axis (head data) separate
