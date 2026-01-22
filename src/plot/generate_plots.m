@@ -369,7 +369,7 @@ for i = 1:length(test_labels)
     chart_logger('    Figure 101: Advisor''s range: [-0.25, 0.15] nm/s');
     
     % Colorbar bounds optimized for PT01a data
-    raw_bounds = [0.05, 0.3];
+    raw_bounds = [0.05, 0.25];
     clim(raw_bounds);
     chart_logger('    Figure 101: Fixed colorbar bounds: [%.2f, %.2f] nm/s', raw_bounds(1), raw_bounds(2));
     
@@ -436,7 +436,7 @@ for i = 1:length(test_labels)
     
     % Set displacement rate bounds for Figure 102 subplot 1 (waterfall)
     % Optimized for PT01a data
-    disp_bounds = [0.05, 0.3];
+    disp_bounds = [0.05, 0.25];
     set(gca, 'clim', disp_bounds);
     chart_logger('    Figure 102 subplot 1: Fixed displacement rate colorbar bounds: [%.2f, %.2f] nm/s', disp_bounds(1), disp_bounds(2));
     

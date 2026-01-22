@@ -59,8 +59,8 @@ config.analysis_windows.PT01b_Recovery_short.end = datetime(2023,10,31,19,32,00,
 
 % PT01a_Recovery_short analysis window
 % This dataset captures the recovery period from 20:34 to 20:54 UTC
-% Using focused window 20:44:00 to 20:47:30 for Figures 101-103 plots
-config.analysis_windows.PT01a_Recovery_short.start = datetime(2023,11,07,20,44,00,00,'TimeZone','UTC');
+% Using focused window 20:44:30 to 20:47:30 for Figures 101-103 plots
+config.analysis_windows.PT01a_Recovery_short.start = datetime(2023,11,07,20,44,30,00,'TimeZone','UTC');
 config.analysis_windows.PT01a_Recovery_short.end = datetime(2023,11,07,20,47,30,00,'TimeZone','UTC');
 
 %% Zone Filtering Configuration (per dataset)

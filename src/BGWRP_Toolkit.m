@@ -375,17 +375,17 @@ if exist('mode', 'var') && ischar(mode)
             % Set focused recovery window (NARROWED: 19:14:45-19:16:30 to focus on rising edge + peak)
             config.lr_recovery_window = [datetime('2023-10-24 19:14:45', 'TimeZone', 'UTC'), ...
                                         datetime('2023-10-24 19:16:30', 'TimeZone', 'UTC')];
-            % Apply moderate smoothing to match PT01c appearance
+            % Apply smoothing for cleaner signal visualization
             config.smoothing_method = 'matlab_movmean';
-            config.matlab_movmean_window = 10;  % 10 seconds - balance signal and detail
-            % Apply moderate smoothing to strain rate
+            config.matlab_movmean_window = 10;  % 10 seconds
+            % Apply smoothing to strain rate
             config.strain_rate_smoothing_window = 10;  % 10 seconds
             config.strain_rate_smoothing_method = 'movmean';  % Moving average
             config.apply_concatenation_filter = false;
             config.filter_method = 'none';
             config.chen_denoising = false;
-            % Shift DAS time forward by 20 seconds to align with head data
-            config.das_time_shift_seconds = 20;
+            % Shift DAS time forward by 88 seconds to align with head data
+            config.das_time_shift_seconds = 88;
             % ENABLE sampling frequency correction for strain rate calculation
             config.apply_sampling_freq_correction = true;
             % Set colorbar limits for displacement rate (nm/s) and strain (nm/m)
@@ -420,11 +420,11 @@ if exist('mode', 'var') && ischar(mode)
             config.use_amplitude = true;  % Uses amplitude (max - min) instead of raw values
             % Use same smoothing as correlation analysis
             config.smoothing_method = 'matlab_movmean';
-            config.matlab_movmean_window = 5;
+            config.matlab_movmean_window = 10;  % 10-second smoothing
             config.apply_concatenation_filter = false;
             config.filter_method = 'none';
             config.chen_denoising = false;
-            config.das_time_shift_seconds = 20;
+            config.das_time_shift_seconds = 88;  % Shift DAS forward 88 seconds
             % ENABLE sampling frequency correction for strain rate calculation
             % NOTE: 50x correction applied in analyze_das_data.m
             config.apply_sampling_freq_correction = true;
