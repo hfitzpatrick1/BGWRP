@@ -400,7 +400,14 @@ for i = 1:length(test_labels)
     depth_bounds = get_plot_bounds([], 'depth_axis', config, test_label);
     ylim(depth_bounds);
     chart_logger('    Applied depth axis bounds: [%.0f, %.0f] ft', depth_bounds(1), depth_bounds(2));
-    xlim([analysis_start analysis_end]);  % Filter to analysis window
+    
+    % Set focused time window for PT01a
+    if strcmpi(test_label, 'PT01a_Recovery_short')
+        xlim([datetime('2023-11-07 20:44:00', 'TimeZone', 'UTC'), datetime('2023-11-07 20:47:30', 'TimeZone', 'UTC')]);
+    else
+        xlim([analysis_start analysis_end]);
+    end
+    
     xlabel('Date Time UTC');
     title(sprintf('Raw Data - Test %s', upper(test_label)));
     
@@ -454,7 +461,14 @@ for i = 1:length(test_labels)
     depth_bounds = get_plot_bounds([], 'depth_axis', config, test_label);
     ylim(depth_bounds);
     chart_logger('    Applied depth axis bounds: [%.0f, %.0f] ft', depth_bounds(1), depth_bounds(2));
-    xlim([analysis_start analysis_end]);
+    
+    % Set focused time window for PT01a
+    if strcmpi(test_label, 'PT01a_Recovery_short')
+        xlim([datetime('2023-11-07 20:44:00', 'TimeZone', 'UTC'), datetime('2023-11-07 20:47:30', 'TimeZone', 'UTC')]);
+    else
+        xlim([analysis_start analysis_end]);
+    end
+    
     xlabel('Date Time UTC');
     title(sprintf('DAS Displacement Rate - Test %s', upper(test_label)));
     
@@ -480,7 +494,11 @@ for i = 1:length(test_labels)
                         % Convert head levels to drawdown rate for better comparison with displacement rate
                         [drawdown_rate, rate_time] = calculate_drawdown_rate(averaged_data.Date, averaged_data.Drawdownft, 'ft_per_min');
                         plot(rate_time, drawdown_rate, 'DisplayName', 'Drawdown Rate (avg)');
-                        xlim([analysis_start analysis_end]);
+                        if strcmpi(test_label, 'PT01a_Recovery_short')
+                            xlim([datetime('2023-11-07 20:44:00', 'TimeZone', 'UTC'), datetime('2023-11-07 20:47:30', 'TimeZone', 'UTC')]);
+                        else
+                            xlim([analysis_start analysis_end]);
+                        end
                         xlabel('Date Time UTC');
                         ylabel('Drawdown Rate (ft/min)');
                         
@@ -519,7 +537,11 @@ for i = 1:length(test_labels)
                         end
                     end
                     hold off;
-                    xlim([analysis_start analysis_end]);
+                    if strcmpi(test_label, 'PT01a_Recovery_short')
+                        xlim([datetime('2023-11-07 20:44:00', 'TimeZone', 'UTC'), datetime('2023-11-07 20:47:30', 'TimeZone', 'UTC')]);
+                    else
+                        xlim([analysis_start analysis_end]);
+                    end
                     xlabel('Date Time UTC');
                     ylabel('Drawdown Rate (ft/min)');
                     if length(monitoring_zones) > 1
@@ -537,7 +559,11 @@ for i = 1:length(test_labels)
             else
                 % No valid head data, just plot DAS
                 plot(das_data.analysis_time, das_data.analysis_strain_rate, 'Color', [0 0 0], 'LineStyle', '-', 'LineWidth', 1.2, 'DisplayName', 'DAS');
-                xlim([analysis_start analysis_end]);
+                if strcmpi(test_label, 'PT01a_Recovery_short')
+                    xlim([datetime('2023-11-07 20:44:00', 'TimeZone', 'UTC'), datetime('2023-11-07 20:47:30', 'TimeZone', 'UTC')]);
+                else
+                    xlim([analysis_start analysis_end]);
+                end
                 ylabel('Displacement Rate (nm/s)');
                 xlabel('Date Time UTC');
                 ylim([-0.25, 0.15]);  % Fixed bounds for Figure 102 subplot 2
@@ -572,7 +598,11 @@ for i = 1:length(test_labels)
             % Convert head levels to drawdown rate for better comparison with displacement rate
             [drawdown_rate, rate_time] = calculate_drawdown_rate(pw_data.recovery_data.Date, pw_data.recovery_data.Drawdownft, 'ft_per_min');
             plot(rate_time, drawdown_rate, 'Color', [0.0000 1.0000 1.0000], 'LineStyle', '-', 'LineWidth', 0.8, 'DisplayName', 'Pumping Well Drawdown Rate');
-            xlim([analysis_start analysis_end]);
+            if strcmpi(test_label, 'PT01a_Recovery_short')
+                xlim([datetime('2023-11-07 20:44:00', 'TimeZone', 'UTC'), datetime('2023-11-07 20:47:30', 'TimeZone', 'UTC')]);
+            else
+                xlim([analysis_start analysis_end]);
+            end
             xlabel('Date Time UTC');
             ylabel('Pumping Well Drawdown Rate (ft/min)');
             
@@ -711,7 +741,14 @@ for i = 1:length(test_labels)
     depth_bounds = get_plot_bounds([], 'depth_axis', config, test_label);
     ylim(depth_bounds);
     chart_logger('    Applied depth axis bounds: [%.0f, %.0f] ft', depth_bounds(1), depth_bounds(2));
-    xlim([analysis_start analysis_end]);
+    
+    % Set focused time window for PT01a
+    if strcmpi(test_label, 'PT01a_Recovery_short')
+        xlim([datetime('2023-11-07 20:44:00', 'TimeZone', 'UTC'), datetime('2023-11-07 20:47:30', 'TimeZone', 'UTC')]);
+    else
+        xlim([analysis_start analysis_end]);
+    end
+    
     xlabel('Date Time UTC');
     title(sprintf('DAS Strain - Test %s', upper(test_label)));
     
@@ -734,7 +771,11 @@ for i = 1:length(test_labels)
                     if ~isempty(averaged_data)
                         yyaxis left;
                         plot(averaged_data.Date, averaged_data.Drawdownft, 'DisplayName', 'Head (avg)');
-                        xlim([analysis_start analysis_end]);
+                        if strcmpi(test_label, 'PT01a_Recovery_short')
+                            xlim([datetime('2023-11-07 20:44:00', 'TimeZone', 'UTC'), datetime('2023-11-07 20:47:30', 'TimeZone', 'UTC')]);
+                        else
+                            xlim([analysis_start analysis_end]);
+                        end
                         xlabel('Date Time UTC');
                         ylabel('Head (ft)');
                         
@@ -771,7 +812,11 @@ for i = 1:length(test_labels)
                         end
                     end
                     hold off;
-                    xlim([analysis_start analysis_end]);
+                    if strcmpi(test_label, 'PT01a_Recovery_short')
+                        xlim([datetime('2023-11-07 20:44:00', 'TimeZone', 'UTC'), datetime('2023-11-07 20:47:30', 'TimeZone', 'UTC')]);
+                    else
+                        xlim([analysis_start analysis_end]);
+                    end
                     xlabel('Date Time UTC');
                     ylabel('Head (ft)');
                     if length(monitoring_zones) > 1
@@ -820,7 +865,11 @@ for i = 1:length(test_labels)
             
             yyaxis left;
             plot(pw_data.recovery_data.Date, pw_data.recovery_data.Drawdownft, 'Color', [0.0000 1.0000 1.0000], 'LineStyle', '-', 'LineWidth', 0.8, 'DisplayName', 'Pumping Well Head');
-            xlim([analysis_start analysis_end]);
+            if strcmpi(test_label, 'PT01a_Recovery_short')
+                xlim([datetime('2023-11-07 20:44:00', 'TimeZone', 'UTC'), datetime('2023-11-07 20:47:30', 'TimeZone', 'UTC')]);
+            else
+                xlim([analysis_start analysis_end]);
+            end
             xlabel('Date Time UTC');
             ylabel('Pumping Well Head (ft)');
             
