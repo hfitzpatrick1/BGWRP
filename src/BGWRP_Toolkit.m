@@ -377,9 +377,9 @@ if exist('mode', 'var') && ischar(mode)
                                         datetime('2023-10-24 19:16:30', 'TimeZone', 'UTC')];
             % Apply smoothing for cleaner signal visualization
             config.smoothing_method = 'matlab_movmean';
-            config.matlab_movmean_window = 10;  % 10 seconds
+            config.matlab_movmean_window = 15;  % 15 seconds
             % Apply smoothing to strain rate
-            config.strain_rate_smoothing_window = 10;  % 10 seconds
+            config.strain_rate_smoothing_window = 15;  % 15 seconds
             config.strain_rate_smoothing_method = 'movmean';  % Moving average
             config.apply_concatenation_filter = false;
             config.filter_method = 'none';
@@ -418,9 +418,9 @@ if exist('mode', 'var') && ischar(mode)
             config.lr_run_both_comparisons = false;  % Default: only strain rate
             % Use amplitude mode (change in strain rate = max - min) to match advisor
             config.use_amplitude = true;  % Uses amplitude (max - min) instead of raw values
-            % Use same smoothing as correlation analysis
+            % Use temporal smoothing (gentle approach to reduce banding)
             config.smoothing_method = 'matlab_movmean';
-            config.matlab_movmean_window = 10;  % 10-second smoothing
+            config.matlab_movmean_window = 15;  % 15-second smoothing (gentle)
             config.apply_concatenation_filter = false;
             config.filter_method = 'none';
             config.chen_denoising = false;
