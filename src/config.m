@@ -193,10 +193,10 @@ config.manual_bounds.PT01c_Recovery_short.pw_head_strain.max = 1;
 
 % ===== PT01a_Recovery_short bounds (restored) =====
 % Recovery bounds for PT01a dataset
-config.manual_bounds.PT01a_Recovery_short.raw_data.min = -0.1;        % Figure 1: Raw data waterfall
+config.manual_bounds.PT01a_Recovery_short.raw_data.min = 0.05;        % Figure 101: Raw data waterfall
 config.manual_bounds.PT01a_Recovery_short.raw_data.max = 0.3;
-config.manual_bounds.PT01a_Recovery_short.displacement_rate.min = -0.55; % Figure 2: Displacement rate main colorbar
-config.manual_bounds.PT01a_Recovery_short.displacement_rate.max = 0.2;
+config.manual_bounds.PT01a_Recovery_short.displacement_rate.min = 0.05; % Figure 102: Displacement rate main colorbar
+config.manual_bounds.PT01a_Recovery_short.displacement_rate.max = 0.3;
 config.manual_bounds.PT01a_Recovery_short.strain.min = -0.2;          % Figure 3: Strain main colorbar
 config.manual_bounds.PT01a_Recovery_short.strain.max = 0.20;
 
@@ -205,8 +205,8 @@ config.manual_bounds.PT01a_Recovery_short.head_data.min = -0.0001;          % Dr
 config.manual_bounds.PT01a_Recovery_short.head_data.max = 0.0004;
 config.manual_bounds.PT01a_Recovery_short.pw_head_data.min = -0.01;          % PW drawdown rate m/s (Figure 2 subplot 3)
 config.manual_bounds.PT01a_Recovery_short.pw_head_data.max = 0.25;
-config.manual_bounds.PT01a_Recovery_short.displacement_rate_line.min = -0.55;  % DAS displacement rate nm/s (subplot 2 & 3)
-config.manual_bounds.PT01a_Recovery_short.displacement_rate_line.max = 0.2;
+config.manual_bounds.PT01a_Recovery_short.displacement_rate_line.min = 0.05;  % DAS displacement rate nm/s (subplot 2 & 3 right y-axis)
+config.manual_bounds.PT01a_Recovery_short.displacement_rate_line.max = 0.25;
 config.manual_bounds.PT01a_Recovery_short.strain_line.min = -0.2;        % DAS strain nm/m (matches waterfall)
 config.manual_bounds.PT01a_Recovery_short.strain_line.max = 0.2;
 config.manual_bounds.PT01a_Recovery_short.head_data_strain.min = 0;   % Head levels ft (Figure 3 subplot 2) - monitoring wells only

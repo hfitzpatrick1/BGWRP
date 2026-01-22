@@ -375,11 +375,11 @@ if exist('mode', 'var') && ischar(mode)
             % Set focused recovery window (NARROWED: 19:14:45-19:16:30 to focus on rising edge + peak)
             config.lr_recovery_window = [datetime('2023-10-24 19:14:45', 'TimeZone', 'UTC'), ...
                                         datetime('2023-10-24 19:16:30', 'TimeZone', 'UTC')];
-            % Apply stronger smoothing to reduce noise while preserving peaks
+            % Apply moderate smoothing to match PT01c appearance
             config.smoothing_method = 'matlab_movmean';
-            config.matlab_movmean_window = 10;  % 10 seconds to balance noise reduction and spike preservation
-            % Apply ADDITIONAL smoothing to strain rate (AFTER spatial difference) - PT01a is very noisy
-            config.strain_rate_smoothing_window = 15;  % 15 seconds (lighter than before to preserve peak)
+            config.matlab_movmean_window = 10;  % 10 seconds - balance signal and detail
+            % Apply moderate smoothing to strain rate
+            config.strain_rate_smoothing_window = 10;  % 10 seconds
             config.strain_rate_smoothing_method = 'movmean';  % Moving average
             config.apply_concatenation_filter = false;
             config.filter_method = 'none';
