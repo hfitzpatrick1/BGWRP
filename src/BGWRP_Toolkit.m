@@ -384,8 +384,8 @@ if exist('mode', 'var') && ischar(mode)
             config.apply_concatenation_filter = false;
             config.filter_method = 'none';
             config.chen_denoising = false;
-            % Shift DAS time forward by 88 seconds to align with head data
-            config.das_time_shift_seconds = 88;
+            % Shift DAS time forward by 90 seconds to align with head data
+            config.das_time_shift_seconds = 90;
             % ENABLE sampling frequency correction for strain rate calculation
             config.apply_sampling_freq_correction = true;
             % Set colorbar limits for displacement rate (nm/s) and strain (nm/m)
@@ -424,7 +424,7 @@ if exist('mode', 'var') && ischar(mode)
             config.apply_concatenation_filter = false;
             config.filter_method = 'none';
             config.chen_denoising = false;
-            config.das_time_shift_seconds = 88;  % Shift DAS forward 88 seconds
+            config.das_time_shift_seconds = 90;  % Shift DAS forward 90 seconds
             % ENABLE sampling frequency correction for strain rate calculation
             % NOTE: 50x correction applied in analyze_das_data.m
             config.apply_sampling_freq_correction = true;

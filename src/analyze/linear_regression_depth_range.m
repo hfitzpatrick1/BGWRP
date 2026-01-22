@@ -630,16 +630,20 @@ if config.show_plots
     % BOTTOM RIGHT (4): Head rate overlay for timing reference
     subplot(2,2,4);
     yyaxis left;
-    plot(time_comparison, strain_norm, 'r-', 'LineWidth', 2, 'DisplayName', 'Strain Rate (norm)');
+    % Use absolute value for strain rate to make it positive
+    strain_norm_abs = abs(strain_overlap_display);
+    strain_norm_abs = (strain_norm_abs - min(strain_norm_abs)) / (max(strain_norm_abs) - min(strain_norm_abs) + eps);
+    plot(time_comparison, strain_norm_abs, 'r-', 'LineWidth', 2, 'DisplayName', 'Strain Rate (norm)');
     ylabel('Normalized Strain Rate', 'Color', 'r');
     ax = gca;
     ax.YColor = 'r';
     
     yyaxis right;
-    % Get head rate for comparison
+    % Get head rate for comparison - use absolute value to make it positive
     if exist('drawdown_rate_clean', 'var') && exist('time_clean', 'var')
         head_rate_interp = interp1(time_clean, drawdown_rate_clean, time_comparison, 'linear', 'extrap');
-        head_norm = (head_rate_interp - min(head_rate_interp)) / (max(head_rate_interp) - min(head_rate_interp) + eps);
+        head_rate_abs = abs(head_rate_interp);
+        head_norm = (head_rate_abs - min(head_rate_abs)) / (max(head_rate_abs) - min(head_rate_abs) + eps);
         plot(time_comparison, head_norm, 'g-', 'LineWidth', 2, 'DisplayName', 'Head Rate (norm)');
         ylabel('Normalized Head Rate', 'Color', [0.4660 0.6740 0.1880]);
         ax.YColor = [0.4660 0.6740 0.1880];
