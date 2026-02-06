@@ -68,7 +68,22 @@ try
     % mode = 'run_correlation_analysis_20sec';  % 20-second (2000 samples)
     % mode = 'run_correlation_analysis_25sec';  % 25-second (2500 samples)
     
+    % --- DIAGNOSTIC: check before Toolkit ---
+    diag_rogue = fullfile('C:', 'Coding', 'BGWRP', 'data', '_BATCH', '_active', 'PT01a_Recovery_100', 'PT01a_Recovery_short');
+    if exist(diag_rogue, 'dir')
+        console_log('*** DIAG [PRE-TOOLKIT]: ROGUE DIR EXISTS: %s ***\n', diag_rogue);
+    else
+        console_log('DIAG [PRE-TOOLKIT]: No rogue dir (good).\n');
+    end
+    
     BGWRP_Toolkit;
+    
+    % --- DIAGNOSTIC: check after Toolkit ---
+    if exist(diag_rogue, 'dir')
+        console_log('*** DIAG [POST-TOOLKIT]: ROGUE DIR EXISTS: %s ***\n', diag_rogue);
+    else
+        console_log('DIAG [POST-TOOLKIT]: No rogue dir (good).\n');
+    end
     
     console_log('\n✓ Correlation analysis complete!\n\n');
     pause(2);  % Brief pause to see the message
@@ -80,7 +95,21 @@ try
     console_log('  - Regression window: 20:45:15 to 20:46:30 UTC\n');
     console_log('  - Head timing correction: 14 seconds backward\n\n');
     
+    % --- DIAGNOSTIC: check before ROI ---
+    if exist(diag_rogue, 'dir')
+        console_log('*** DIAG [PRE-ROI]: ROGUE DIR EXISTS: %s ***\n', diag_rogue);
+    else
+        console_log('DIAG [PRE-ROI]: No rogue dir (good).\n');
+    end
+    
     run_roi_analysis;
+    
+    % --- DIAGNOSTIC: check after ROI ---
+    if exist(diag_rogue, 'dir')
+        console_log('*** DIAG [POST-ROI]: ROGUE DIR EXISTS: %s ***\n', diag_rogue);
+    else
+        console_log('DIAG [POST-ROI]: No rogue dir (good).\n');
+    end
     
     console_log('\n=== ANALYSIS COMPLETE ===\n');
     console_log('Results saved to workspace as ''roi_results''\n');

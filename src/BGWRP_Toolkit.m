@@ -1888,6 +1888,15 @@ end
 if config.run_data_analysis
     console_log('\n=== STEP 5: DATA ANALYSIS ===\n');
     
+    % --- DIAGNOSTIC: detect rogue nested directory ---
+    % Check if PT01a_Recovery_short appears INSIDE PT01a_Recovery_100
+    diag_rogue_path = fullfile(config.base_input, '_active', 'PT01a_Recovery_100', 'PT01a_Recovery_short');
+    if exist(diag_rogue_path, 'dir')
+        console_log('*** DIAG [STEP5-START]: ROGUE DIR ALREADY EXISTS: %s ***\n', diag_rogue_path);
+    else
+        console_log('DIAG [STEP5-START]: No rogue dir yet (good). Checked: %s\n', diag_rogue_path);
+    end
+    
     % Ensure we have timing configuration
     if ~exist('timing_config', 'var') || isempty(timing_config)
         console_log('⚠ No timing configuration available. Looking for saved config...\n');
@@ -2002,6 +2011,13 @@ if config.run_data_analysis
         end
     end
     
+    % --- DIAGNOSTIC checkpoint 2: after first timing scan ---
+    if exist(diag_rogue_path, 'dir')
+        console_log('*** DIAG [AFTER-TIMING-SCAN-1]: ROGUE DIR APPEARED: %s ***\n', diag_rogue_path);
+    else
+        console_log('DIAG [AFTER-TIMING-SCAN-1]: Still clean.\n');
+    end
+    
     try
         % Initialize timing config for analysis mode
         if ~config.run_timing_extraction
@@ -2063,6 +2079,13 @@ if config.run_data_analysis
             end
         end
         
+        % --- DIAGNOSTIC checkpoint 3: after second timing scan ---
+        if exist(diag_rogue_path, 'dir')
+            console_log('*** DIAG [AFTER-TIMING-SCAN-2]: ROGUE DIR APPEARED: %s ***\n', diag_rogue_path);
+        else
+            console_log('DIAG [AFTER-TIMING-SCAN-2]: Still clean.\n');
+        end
+        
         available_tests = fieldnames(timing_config);
         if isempty(available_tests)
             console_log('⚠ No timing data available for analysis\n');
@@ -2081,6 +2104,13 @@ if config.run_data_analysis
             console_log('Running head data analysis...\n');
             head_results = analyze_head_data(timing_config, available_tests, config);
             
+            % --- DIAGNOSTIC checkpoint 4: after head analysis ---
+            if exist(diag_rogue_path, 'dir')
+                console_log('*** DIAG [AFTER-HEAD-ANALYSIS]: ROGUE DIR APPEARED: %s ***\n', diag_rogue_path);
+            else
+                console_log('DIAG [AFTER-HEAD-ANALYSIS]: Still clean.\n');
+            end
+            
             % Analyze DAS data
             console_log('Running DAS data analysis...\n');
             
@@ -2093,11 +2123,25 @@ if config.run_data_analysis
             end
             
             das_results = analyze_das_data(timing_config, available_tests, config);
+            
+            % --- DIAGNOSTIC checkpoint 5: after DAS analysis ---
+            if exist(diag_rogue_path, 'dir')
+                console_log('*** DIAG [AFTER-DAS-ANALYSIS]: ROGUE DIR APPEARED: %s ***\n', diag_rogue_path);
+            else
+                console_log('DIAG [AFTER-DAS-ANALYSIS]: Still clean.\n');
+            end
         end
         
         % Generate plots
         console_log('Generating analysis plots...\n');
         plot_results = generate_plots(head_results, das_results, config);
+        
+        % --- DIAGNOSTIC checkpoint 6: after plot generation ---
+        if exist(diag_rogue_path, 'dir')
+            console_log('*** DIAG [AFTER-PLOTS]: ROGUE DIR APPEARED: %s ***\n', diag_rogue_path);
+        else
+            console_log('DIAG [AFTER-PLOTS]: Still clean.\n');
+        end
         
         console_log('✓ Data analysis completed successfully\n');
         

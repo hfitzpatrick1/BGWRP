@@ -62,14 +62,14 @@ if strcmp(message, 'init')
     return;
     
 elseif strcmp(message, 'close')
-    if session_active && log_file_handle ~= -1
+    if ~isempty(session_active) && session_active && ~isempty(log_file_handle) && log_file_handle ~= -1
         % Write session footer directly to chart log file
         fprintf(log_file_handle, '\n=====================================\n');
         fprintf(log_file_handle, 'Session ended: %s\n', datestr(now));
         fprintf(log_file_handle, '=== END CHART LOGGING SESSION ===\n');
         
         fclose(log_file_handle);
-        console_log('📊 Chart log saved: %s\n', fullfile(log_directory, log_filename));
+        console_log('Chart log saved: %s\n', fullfile(log_directory, log_filename));
         
         % Reset persistent variables
         log_file_handle = [];
