@@ -286,14 +286,26 @@ end
 fprintf('  Calculated maximum envelope at %d depths\n', n_valid_points);
 fprintf('  BEFORE additional smoothing: PEAK = %.4e 1/s\n', max(abs(strain_rate_zone)));
 
-% Apply 40-second smoothing
-% Data already has 50-second moving average from main analysis
+% Apply smoothing (default 40 seconds, or dataset-specific)
+% Data already has preprocessing smoothing from main analysis
 strain_raw = strain_rate_zone;
-strain_smoothed = movmean(strain_rate_zone, 40, 'omitnan');  % 40-second smoothing
 
-fprintf('  AFTER 40-second moving average: PEAK = %.4e 1/s\n', max(abs(strain_smoothed)));
+% Check for dataset-specific regression smoothing configuration
+regression_smooth_samples = 40;  % Default for 1 Hz data
+if isfield(config, 'dataset_smoothing') && isfield(config.dataset_smoothing, test_name)
+    ds_config = config.dataset_smoothing.(test_name);
+    if isfield(ds_config, 'fs') && isfield(ds_config, 'regression_window_sec')
+        regression_smooth_samples = round(ds_config.regression_window_sec * ds_config.fs);
+        fprintf('  Using dataset-specific regression smoothing: %d seconds = %d samples at %d Hz\n', ...
+            ds_config.regression_window_sec, regression_smooth_samples, ds_config.fs);
+    end
+end
+
+strain_smoothed = movmean(strain_rate_zone, regression_smooth_samples, 'omitnan');
+
+fprintf('  AFTER %d-sample moving average: PEAK = %.4e 1/s\n', regression_smooth_samples, max(abs(strain_smoothed)));
 fprintf('  Peak retention: %.2f%%\n', 100 * max(abs(strain_smoothed)) / max(abs(strain_rate_zone)));
-fprintf('✓ 40-second smoothing\n');
+fprintf('✓ Regression smoothing applied (%d samples)\n', regression_smooth_samples);
 
 fprintf('Displacement rate range: %.2e to %.2e nm/s\n', ...
     min(displacement_rate_zone(:)), max(displacement_rate_zone(:)));

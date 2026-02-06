@@ -8,6 +8,7 @@
 % Output: Final 1Hz MAT files + timing configuration
 
 % clear all; % REMOVED - this was clearing input config struct!
+
 fprintf('=== TDMS BATCH PROCESSING PIPELINE ===\n');
 
 %% Setup paths

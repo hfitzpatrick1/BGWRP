@@ -20,6 +20,7 @@ das_results.timing = timing_config;
 
 %% Simple DAS parameters (based on PM07_PT01c_Simple.m approach)
 % Configurable smoothing parameters
+% NOTE: This default is overridden by dataset-specific config later
 default_smooth_window = 10;
 if isfield(config, 'smoothing_window_factor')
     smooth_window = round(default_smooth_window * config.smoothing_window_factor);
@@ -236,6 +237,34 @@ for i = 1:length(test_labels)
     
     n_samples = size(data1Hz, 1);
     time_array = data_start + seconds(0:n_samples-1);
+    
+    % Check for dataset-specific smoothing configuration
+    fprintf('  DEBUG: Checking dataset-specific smoothing for test_label="%s"\n', test_label);
+    if isfield(config, 'dataset_smoothing')
+        fprintf('    DEBUG: config.dataset_smoothing exists\n');
+        if isfield(config.dataset_smoothing, test_label)
+            fprintf('    DEBUG: Found config for %s\n', test_label);
+            ds_config = config.dataset_smoothing.(test_label);
+            if isfield(ds_config, 'fs') && isfield(ds_config, 'preprocessing_window_sec')
+                % Convert smoothing window from seconds to samples based on sampling rate
+                smooth_window = round(ds_config.preprocessing_window_sec * ds_config.fs);
+                % Override the global config with dataset-specific value
+                config.matlab_movmean_window = smooth_window;
+                fprintf('  ✓ Using dataset-specific smoothing: %d seconds = %d samples at %d Hz\n', ...
+                    ds_config.preprocessing_window_sec, smooth_window, ds_config.fs);
+            else
+                fprintf('    DEBUG: Missing fs or preprocessing_window_sec fields\n');
+            end
+        else
+            fprintf('    DEBUG: No config found for test_label="%s"\n', test_label);
+            if isfield(config, 'dataset_smoothing')
+                available = fieldnames(config.dataset_smoothing);
+                fprintf('    DEBUG: Available configs: %s\n', strjoin(available, ', '));
+            end
+        end
+    else
+        fprintf('    DEBUG: config.dataset_smoothing does NOT exist\n');
+    end
             
     % Apply configurable smoothing (from simple script approach)
     if isfield(config, 'disable_analysis_smoothing') && config.disable_analysis_smoothing

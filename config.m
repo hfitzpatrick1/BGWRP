@@ -327,6 +327,34 @@ config.colormap_resolution = 256;
 config.disable_analysis_smoothing = false;
 config.smoothing_method = 'none';
 
+%% Per-Dataset Smoothing Configuration
+% Dataset-specific smoothing parameters (in SECONDS, not samples)
+% These override global mode settings for specific datasets
+
+% PT01a_Recovery_short (1 Hz data) - UPPERCASE to match test_label
+config.dataset_smoothing.PT01A_RECOVERY_SHORT.fs = 1;  % Sampling rate (Hz)
+config.dataset_smoothing.PT01A_RECOVERY_SHORT.preprocessing_window_sec = 50;  % Analysis smoothing
+config.dataset_smoothing.PT01A_RECOVERY_SHORT.strain_rate_window_sec = 50;    % Strain rate smoothing
+config.dataset_smoothing.PT01A_RECOVERY_SHORT.regression_window_sec = 40;     % Linear regression smoothing
+
+% PT01a_Recovery_100 (100 Hz data) - UPPERCASE to match test_label
+config.dataset_smoothing.PT01A_RECOVERY_100.fs = 100;  % Sampling rate (Hz)
+config.dataset_smoothing.PT01A_RECOVERY_100.preprocessing_window_sec = 50;    % Analysis smoothing
+config.dataset_smoothing.PT01A_RECOVERY_100.strain_rate_window_sec = 50;      % Strain rate smoothing
+config.dataset_smoothing.PT01A_RECOVERY_100.regression_window_sec = 40;       % Linear regression smoothing
+
+% PT01c_Recovery_short (1 Hz data) - UPPERCASE to match test_label  
+config.dataset_smoothing.PT01C_RECOVERY_SHORT.fs = 1;  % Sampling rate (Hz)
+config.dataset_smoothing.PT01C_RECOVERY_SHORT.preprocessing_window_sec = 50;
+config.dataset_smoothing.PT01C_RECOVERY_SHORT.strain_rate_window_sec = 50;
+config.dataset_smoothing.PT01C_RECOVERY_SHORT.regression_window_sec = 40;
+
+% PT01b_Recovery_short (1 Hz data) - UPPERCASE to match test_label
+config.dataset_smoothing.PT01B_RECOVERY_SHORT.fs = 1;  % Sampling rate (Hz)
+config.dataset_smoothing.PT01B_RECOVERY_SHORT.preprocessing_window_sec = 50;
+config.dataset_smoothing.PT01B_RECOVERY_SHORT.strain_rate_window_sec = 50;
+config.dataset_smoothing.PT01B_RECOVERY_SHORT.regression_window_sec = 40;
+
 %% Storage Analysis Parameters (Traditional Pump Test Values for Comparison)
 % From PT-01A Step Drawdown Test (10/24/23)
 config.traditional_T_ft2_day = 9073.6;  % Transmissivity from traditional analysis
