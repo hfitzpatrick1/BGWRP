@@ -250,12 +250,14 @@ for i = 1:length(test_labels)
     time_array = data_start + seconds(0:n_samples-1);
     
     % Check for dataset-specific smoothing configuration
-    console_log('  DEBUG: Checking dataset-specific smoothing for test_label="%s"\n', test_label);
+    % Keys are stored in UPPERCASE (e.g., PT01A_RECOVERY_SHORT), so convert test_label
+    test_label_upper = upper(strrep(test_label, ' ', '_'));
+    console_log('  DEBUG: Checking dataset-specific smoothing for test_label="%s" (key="%s")\n', test_label, test_label_upper);
     if isfield(config, 'dataset_smoothing')
         console_log('    DEBUG: config.dataset_smoothing exists\n');
-        if isfield(config.dataset_smoothing, test_label)
-            console_log('    DEBUG: Found config for %s\n', test_label);
-            ds_config = config.dataset_smoothing.(test_label);
+        if isfield(config.dataset_smoothing, test_label_upper)
+            console_log('    DEBUG: Found config for %s\n', test_label_upper);
+            ds_config = config.dataset_smoothing.(test_label_upper);
             if isfield(ds_config, 'fs') && isfield(ds_config, 'preprocessing_window_sec')
                 % Convert smoothing window from seconds to samples based on sampling rate
                 smooth_window = round(ds_config.preprocessing_window_sec * ds_config.fs);
@@ -267,7 +269,7 @@ for i = 1:length(test_labels)
                 console_log('    DEBUG: Missing fs or preprocessing_window_sec fields\n');
             end
         else
-            console_log('    DEBUG: No config found for test_label="%s"\n', test_label);
+            console_log('    DEBUG: No config found for key="%s" (from test_label="%s")\n', test_label_upper, test_label);
             if isfield(config, 'dataset_smoothing')
                 available = fieldnames(config.dataset_smoothing);
                 console_log('    DEBUG: Available configs: %s\n', strjoin(available, ', '));
