@@ -23,13 +23,12 @@ clear all;
 close all;
 clc;
 
-% Initialize console logging
+% Initialize console logging (overwrites same file each run)
 log_dir = fullfile('C:', 'Coding', 'BGWRP', 'data', '_BATCH', '_log');
 if ~exist(log_dir, 'dir')
     mkdir(log_dir);
 end
-timestamp = datestr(now, 'yyyy-mm-dd_HH-MM-SS');
-log_path = fullfile(log_dir, sprintf('console_log_%s.txt', timestamp));
+log_path = fullfile(log_dir, 'console_log.txt');
 
 % Add src to path for console_log
 script_dir = fileparts(mfilename('fullpath'));

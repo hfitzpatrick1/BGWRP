@@ -92,8 +92,8 @@ timestamped_message = sprintf('[%s] %s', timestamp, formatted_message);
 % Write to console (always)
 console_log('%s\n', timestamped_message);
 
-% Write to log file (if session active)
-if session_active && ~isempty(log_file_handle) && log_file_handle ~= -1
+% Write to log file (if session active and initialized)
+if ~isempty(session_active) && session_active && ~isempty(log_file_handle) && log_file_handle ~= -1
     fprintf(log_file_handle, '%s\n', timestamped_message);
     % Flush to ensure immediate write
     if exist('OCTAVE_VERSION', 'builtin')

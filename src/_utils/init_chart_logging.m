@@ -10,32 +10,20 @@ function init_chart_logging(config)
 % Usage:
 %   init_chart_logging(config);
 
-try
-    chart_logger('init', config);
-    chart_logger('=== CHART GENERATION SESSION STARTED ===');
-    chart_logger('Configuration loaded successfully');
-    
-    % Log key configuration settings
-    if isfield(config, 'dynamic_bounds')
-        chart_logger('Dynamic bounds: %s', logical_to_string(config.dynamic_bounds));
-    end
-    
-    if isfield(config, 'plot_method')
-        chart_logger('Plot method: %s', config.plot_method);
-    end
-    
-    if isfield(config, 'colormap_name')
-        chart_logger('Colormap: %s', config.colormap_name);
-    end
-    
-    if isfield(config, 'save_charts')
-        chart_logger('Save charts: %s', logical_to_string(config.save_charts));
-    end
-    
-    chart_logger('Chart logging ready');
-    
-catch ME
-    warning('BGWRP:ChartLogging', 'Chart logging initialization failed: %s', ME.message);
+% Chart log file disabled - all chart_logger output goes to console_log instead
+% To re-enable, uncomment: chart_logger('init', config);
+console_log('=== CHART GENERATION SESSION STARTED ===\n');
+if isfield(config, 'dynamic_bounds')
+    console_log('Dynamic bounds: %s\n', logical_to_string(config.dynamic_bounds));
+end
+if isfield(config, 'plot_method')
+    console_log('Plot method: %s\n', config.plot_method);
+end
+if isfield(config, 'colormap_name')
+    console_log('Colormap: %s\n', config.colormap_name);
+end
+if isfield(config, 'save_charts')
+    console_log('Save charts: %s\n', logical_to_string(config.save_charts));
 end
 
 end
