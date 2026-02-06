@@ -339,8 +339,11 @@ for i = 1:length(test_labels)
     filtered_time = das_data.time_array(analysis_mask_fig101);
     filtered_data = das_data.smoothed_data(analysis_mask_fig101, :);
     
+    % Convert depth from feet to meters
+    depth_m = das_data.depth_ft * 0.3048;
+    
     % Apply configurable plotting method to test pixelation sources
-    apply_plot_config(filtered_time, das_data.depth_ft, filtered_data', config, 'waterfall');
+    apply_plot_config(filtered_time, depth_m, filtered_data', config, 'waterfall');
     
     % Overlay head data if available
     if ~isempty(head_data) && isfield(head_data, 'zones')
@@ -369,7 +372,7 @@ for i = 1:length(test_labels)
     chart_logger('    Figure 101: Advisor''s range: [-0.25, 0.15] nm/s');
     
     % Colorbar bounds optimized for PT01a data (blue background at baseline)
-    raw_bounds = [0.095, 0.24];
+    raw_bounds = [0, 0.2];
     clim(raw_bounds);
     chart_logger('    Figure 101: Fixed colorbar bounds: [%.2f, %.2f] nm/s', raw_bounds(1), raw_bounds(2));
     
@@ -394,15 +397,16 @@ for i = 1:length(test_labels)
     c1.Ruler.TickLabelFormat = '%g nm/s';
     grid on; 
     set(gca,'layer','top');
-    ylabel('Depth (ft)');
+    ylabel('Depth (m)');
     axis ij;
-    % Apply configurable depth axis bounds
+    % Apply configurable depth axis bounds and convert to meters
     depth_bounds = get_plot_bounds([], 'depth_axis', config, test_label);
-    ylim(depth_bounds);
-    chart_logger('    Applied depth axis bounds: [%.0f, %.0f] ft', depth_bounds(1), depth_bounds(2));
+    depth_bounds_m = depth_bounds * 0.3048;
+    ylim(depth_bounds_m);
+    chart_logger('    Applied depth axis bounds: [%.0f, %.0f] m', depth_bounds_m(1), depth_bounds_m(2));
     
-    % Set focused time window for PT01a
-    if strcmpi(test_label, 'PT01a_Recovery_short')
+    % Set focused time window for PT01a (recognize both 1Hz and 100Hz datasets)
+    if contains(test_label, 'PT01a', 'IgnoreCase', true)
         xlim([datetime('2023-11-07 20:44:30', 'TimeZone', 'UTC'), datetime('2023-11-07 20:47:30', 'TimeZone', 'UTC')]);
     else
         xlim([analysis_start analysis_end]);
@@ -432,11 +436,13 @@ for i = 1:length(test_labels)
     analysis_mask = das_data.time_array >= analysis_start & das_data.time_array <= analysis_end;
     analysis_smoothed_data = das_data.smoothed_data(analysis_mask, :);
     analysis_time_array = das_data.time_array(analysis_mask);
-    apply_plot_config(analysis_time_array, das_data.depth_ft, analysis_smoothed_data', config, 'waterfall');
+    % Convert depth from feet to meters
+    depth_m = das_data.depth_ft * 0.3048;
+    apply_plot_config(analysis_time_array, depth_m, analysis_smoothed_data', config, 'waterfall');
     
     % Set displacement rate bounds for Figure 102 subplot 1 (waterfall)
     % Optimized for PT01a data (blue background at baseline)
-    disp_bounds = [0.095, 0.24];
+    disp_bounds = [0.1, 0.22];
     set(gca, 'clim', disp_bounds);
     chart_logger('    Figure 102 subplot 1: Fixed displacement rate colorbar bounds: [%.2f, %.2f] nm/s', disp_bounds(1), disp_bounds(2));
     
@@ -455,22 +461,23 @@ for i = 1:length(test_labels)
     c7.Ruler.TickLabelFormat = '%g nm/s';
     grid on; 
     set(gca,'layer','top');
-    ylabel('Depth (ft)');
+    ylabel('Depth (m)');
     axis ij;
-    % Apply configurable depth axis bounds
+    % Apply configurable depth axis bounds and convert to meters
     depth_bounds = get_plot_bounds([], 'depth_axis', config, test_label);
-    ylim(depth_bounds);
-    chart_logger('    Applied depth axis bounds: [%.0f, %.0f] ft', depth_bounds(1), depth_bounds(2));
+    depth_bounds_m = depth_bounds * 0.3048;
+    ylim(depth_bounds_m);
+    chart_logger('    Applied depth axis bounds: [%.0f, %.0f] m', depth_bounds_m(1), depth_bounds_m(2));
     
-    % Set focused time window for PT01a
-    if strcmpi(test_label, 'PT01a_Recovery_short')
+    % Set focused time window for PT01a (recognize both 1Hz and 100Hz datasets)
+    if contains(test_label, 'PT01a', 'IgnoreCase', true)
         xlim([datetime('2023-11-07 20:44:30', 'TimeZone', 'UTC'), datetime('2023-11-07 20:47:30', 'TimeZone', 'UTC')]);
     else
         xlim([analysis_start analysis_end]);
     end
     
     xlabel('Date Time UTC');
-    title(sprintf('DAS Displacement Rate - Test %s', upper(test_label)));
+    title(sprintf('DAS Displacement Rate - Test %s', strrep(upper(test_label), '_', ' ')));
     
     subplot(3,1,2);
     if ~isempty(head_data)
@@ -492,28 +499,31 @@ for i = 1:length(test_labels)
                     if ~isempty(averaged_data)
                         yyaxis left;
                         % Convert head levels to drawdown rate for better comparison with displacement rate
-                        [drawdown_rate, rate_time] = calculate_drawdown_rate(averaged_data.Date, averaged_data.Drawdownft, 'ft_per_min');
+                        [drawdown_rate_ftmin, rate_time] = calculate_drawdown_rate(averaged_data.Date, averaged_data.Drawdownft, 'ft_per_min');
+                        % Convert from ft/min to m/s: 1 ft/min = 0.3048/60 m/s = 0.00508 m/s
+                        drawdown_rate = drawdown_rate_ftmin * 0.00508;
                         plot(rate_time, drawdown_rate, 'DisplayName', 'Drawdown Rate (avg)');
-                        if strcmpi(test_label, 'PT01a_Recovery_short')
+                        if contains(test_label, 'PT01a', 'IgnoreCase', true)
                             xlim([datetime('2023-11-07 20:44:30', 'TimeZone', 'UTC'), datetime('2023-11-07 20:47:30', 'TimeZone', 'UTC')]);
                         else
-                            % Set focused time window for PT01a
-    if strcmpi(test_label, 'PT01a_Recovery_short')
+                            % Set focused time window for PT01a (recognize both 1Hz and 100Hz datasets)
+    if contains(test_label, 'PT01a', 'IgnoreCase', true)
         xlim([datetime('2023-11-07 20:44:30', 'TimeZone', 'UTC'), datetime('2023-11-07 20:47:30', 'TimeZone', 'UTC')]);
     else
         xlim([analysis_start analysis_end]);
     end
                         end
                         xlabel('Date Time UTC');
-                        ylabel('Drawdown Rate (ft/min)');
+                        ylabel('Drawdown Rate (m/s)');
                         
                         yyaxis right;
-                        plot(das_data.analysis_time, das_data.analysis_strain_rate, 'Color', [0 0 0], 'LineStyle', '-', 'LineWidth', 1.2, 'DisplayName', 'DAS');
+                        plot(das_data.analysis_time, das_data.analysis_strain_rate, 'Color', [0 0 0], 'LineStyle', '-', 'LineWidth', 1.2, 'DisplayName', 'Displacement Rate PM-07 z1');
                         ylabel('Displacement Rate (nm/s)');
                         % Set fixed bounds for Figure 102 subplot 2
-                        ylim([0.05, 0.25]);
+                        ylim([0.11, 0.18]);
+                        legend('show', 'Location', 'best');
                         chart_logger('    Plotted averaged drawdown rate from %d monitoring zones', length(monitoring_zones));
-                        chart_logger('    Figure 102 subplot 2: Fixed displacement rate y-axis bounds: [0.05, 0.25] nm/s');
+                        chart_logger('    Figure 102 subplot 2: Fixed displacement rate y-axis bounds: [0.11, 0.18] nm/s');
                     end
                 else
                     % Plot multiple monitoring zones (excluding pw)
@@ -535,7 +545,9 @@ for i = 1:length(test_labels)
                                 zone_color = [0 0 0];
                             end
                             % Convert head levels to drawdown rate for better comparison with displacement rate
-                            [drawdown_rate, rate_time] = calculate_drawdown_rate(zone_data.recovery_data.Date, zone_data.recovery_data.Drawdownft, 'ft_per_min');
+                            [drawdown_rate_ftmin, rate_time] = calculate_drawdown_rate(zone_data.recovery_data.Date, zone_data.recovery_data.Drawdownft, 'ft_per_min');
+                            % Convert from ft/min to m/s: 1 ft/min = 0.3048/60 m/s = 0.00508 m/s
+                            drawdown_rate = drawdown_rate_ftmin * 0.00508;
                             plot(rate_time, drawdown_rate, ...
                                 'Color', zone_color, 'LineStyle', '-', 'LineWidth', 1.2, ...
                                 'DisplayName', sprintf('Drawdown Rate %s', zone_name));
@@ -545,35 +557,36 @@ for i = 1:length(test_labels)
                     if strcmpi(test_label, 'PT01a_Recovery_short')
                         xlim([datetime('2023-11-07 20:44:30', 'TimeZone', 'UTC'), datetime('2023-11-07 20:47:30', 'TimeZone', 'UTC')]);
                     else
-                        % Set focused time window for PT01a
-    if strcmpi(test_label, 'PT01a_Recovery_short')
+                        % Set focused time window for PT01a (recognize both 1Hz and 100Hz datasets)
+    if contains(test_label, 'PT01a', 'IgnoreCase', true)
         xlim([datetime('2023-11-07 20:44:30', 'TimeZone', 'UTC'), datetime('2023-11-07 20:47:30', 'TimeZone', 'UTC')]);
     else
         xlim([analysis_start analysis_end]);
     end
                     end
                     xlabel('Date Time UTC');
-                    ylabel('Drawdown Rate (ft/min)');
+                    ylabel('Drawdown Rate (m/s)');
                     if length(monitoring_zones) > 1
                         legend('show');
                     end
                     
                     yyaxis right;
-                    plot(das_data.analysis_time, das_data.analysis_strain_rate, 'Color', [0 0 0], 'LineStyle', '-', 'LineWidth', 1.2, 'DisplayName', 'DAS');
+                    plot(das_data.analysis_time, das_data.analysis_strain_rate, 'Color', [0 0 0], 'LineStyle', '-', 'LineWidth', 1.2, 'DisplayName', 'Displacement Rate PM-07 z1');
                     ylabel('Displacement Rate (nm/s)');
                     % Set fixed bounds for Figure 102 subplot 2
-                    ylim([0.05, 0.25]);
+                    ylim([0.11, 0.18]);
+                    legend('show', 'Location', 'best');
                     chart_logger('    Plotted monitoring well drawdown rate data from zones: %s', strjoin(monitoring_zones, ', '));
-                    chart_logger('    Figure 102 subplot 2: Fixed displacement rate y-axis bounds: [0.05, 0.25] nm/s');
+                    chart_logger('    Figure 102 subplot 2: Fixed displacement rate y-axis bounds: [0.11, 0.18] nm/s');
                 end
             else
                 % No valid head data, just plot DAS
-                plot(das_data.analysis_time, das_data.analysis_strain_rate, 'Color', [0 0 0], 'LineStyle', '-', 'LineWidth', 1.2, 'DisplayName', 'DAS');
+                plot(das_data.analysis_time, das_data.analysis_strain_rate, 'Color', [0 0 0], 'LineStyle', '-', 'LineWidth', 1.2, 'DisplayName', 'Displacement Rate PM-07 z1');
                 if strcmpi(test_label, 'PT01a_Recovery_short')
                     xlim([datetime('2023-11-07 20:44:30', 'TimeZone', 'UTC'), datetime('2023-11-07 20:47:30', 'TimeZone', 'UTC')]);
                 else
-                    % Set focused time window for PT01a
-    if strcmpi(test_label, 'PT01a_Recovery_short')
+                    % Set focused time window for PT01a (recognize both 1Hz and 100Hz datasets)
+    if contains(test_label, 'PT01a', 'IgnoreCase', true)
         xlim([datetime('2023-11-07 20:44:30', 'TimeZone', 'UTC'), datetime('2023-11-07 20:47:30', 'TimeZone', 'UTC')]);
     else
         xlim([analysis_start analysis_end]);
@@ -581,35 +594,35 @@ for i = 1:length(test_labels)
                 end
                 ylabel('Displacement Rate (nm/s)');
                 xlabel('Date Time UTC');
-                ylim([0.05, 0.25]);  % Fixed bounds for Figure 102 subplot 2
+                ylim([0.11, 0.18]);  % Fixed bounds for Figure 102 subplot 2
             end
         else
             % No head data, just plot DAS
-            plot(das_data.analysis_time, das_data.analysis_strain_rate, 'Color', [0 0 0], 'LineStyle', '-', 'LineWidth', 1.2, 'DisplayName', 'DAS');
-            % Set focused time window for PT01a
-    if strcmpi(test_label, 'PT01a_Recovery_short')
+            plot(das_data.analysis_time, das_data.analysis_strain_rate, 'Color', [0 0 0], 'LineStyle', '-', 'LineWidth', 1.2, 'DisplayName', 'Displacement Rate PM-07 z1');
+            % Set focused time window for PT01a (recognize both 1Hz and 100Hz datasets)
+    if contains(test_label, 'PT01a', 'IgnoreCase', true)
         xlim([datetime('2023-11-07 20:44:30', 'TimeZone', 'UTC'), datetime('2023-11-07 20:47:30', 'TimeZone', 'UTC')]);
     else
         xlim([analysis_start analysis_end]);
     end
             ylabel('Displacement Rate (nm/s)');
             xlabel('Date Time UTC');
-            ylim([-0.5, 0.5]);  % Fixed bounds for Figure 102 subplot 2 (with 2x correction)
+            ylim([0.11, 0.18]);  % Fixed bounds for Figure 102 subplot 2
         end
     else
         % No head data, just plot DAS
-        plot(das_data.analysis_time, das_data.analysis_strain_rate, 'Color', [0 0 0], 'LineStyle', '-', 'LineWidth', 1.2, 'DisplayName', 'DAS');
-        % Set focused time window for PT01a
-    if strcmpi(test_label, 'PT01a_Recovery_short')
+        plot(das_data.analysis_time, das_data.analysis_strain_rate, 'Color', [0 0 0], 'LineStyle', '-', 'LineWidth', 1.2, 'DisplayName', 'Displacement Rate PM-07 z1');
+        % Set focused time window for PT01a (recognize both 1Hz and 100Hz datasets)
+    if contains(test_label, 'PT01a', 'IgnoreCase', true)
         xlim([datetime('2023-11-07 20:44:30', 'TimeZone', 'UTC'), datetime('2023-11-07 20:47:30', 'TimeZone', 'UTC')]);
     else
         xlim([analysis_start analysis_end]);
     end
         ylabel('Displacement Rate (nm/s)');
         xlabel('Date Time UTC');
-        ylim([-0.5, 0.5]);  % Fixed bounds for Figure 102 subplot 2 (with 2x correction)
+        ylim([0.11, 0.18]);  % Fixed bounds for Figure 102 subplot 2
     end
-    title(sprintf('Monitoring Wells - Representative Channel (%.0f ft)', das_data.pumping_zone.channel_depth_ft));
+    title('Drawdown Rate & Displacement Rate at PM-07');
     grid on;
     
     % Third subplot: Pumping Well (pw) data
@@ -621,30 +634,33 @@ for i = 1:length(test_labels)
             
             yyaxis left;
             % Convert head levels to drawdown rate for better comparison with displacement rate
-            [drawdown_rate, rate_time] = calculate_drawdown_rate(pw_data.recovery_data.Date, pw_data.recovery_data.Drawdownft, 'ft_per_min');
-            plot(rate_time, drawdown_rate, 'Color', [0.0000 1.0000 1.0000], 'LineStyle', '-', 'LineWidth', 0.8, 'DisplayName', 'Pumping Well Drawdown Rate');
+            [drawdown_rate_ftmin, rate_time] = calculate_drawdown_rate(pw_data.recovery_data.Date, pw_data.recovery_data.Drawdownft, 'ft_per_min');
+            % Convert from ft/min to m/s: 1 ft/min = 0.3048/60 m/s = 0.00508 m/s
+            drawdown_rate = drawdown_rate_ftmin * 0.00508;
+            plot(rate_time, drawdown_rate, 'Color', [0.0000 1.0000 1.0000], 'LineStyle', '-', 'LineWidth', 0.8, 'DisplayName', 'Drawdown Rate PT-01a');
             if strcmpi(test_label, 'PT01a_Recovery_short')
                 xlim([datetime('2023-11-07 20:44:30', 'TimeZone', 'UTC'), datetime('2023-11-07 20:47:30', 'TimeZone', 'UTC')]);
             else
-                % Set focused time window for PT01a
-    if strcmpi(test_label, 'PT01a_Recovery_short')
+                % Set focused time window for PT01a (recognize both 1Hz and 100Hz datasets)
+    if contains(test_label, 'PT01a', 'IgnoreCase', true)
         xlim([datetime('2023-11-07 20:44:30', 'TimeZone', 'UTC'), datetime('2023-11-07 20:47:30', 'TimeZone', 'UTC')]);
     else
         xlim([analysis_start analysis_end]);
     end
             end
             xlabel('Date Time UTC');
-            ylabel('Pumping Well Drawdown Rate (ft/min)');
+            ylabel('Drawdown Rate (m/s)');
             
             yyaxis right;
-            plot(das_data.analysis_time, das_data.analysis_strain_rate, 'Color', [0 0 0], 'LineStyle', '-', 'LineWidth', 1.2, 'DisplayName', 'DAS');
+            plot(das_data.analysis_time, das_data.analysis_strain_rate, 'Color', [0 0 0], 'LineStyle', '-', 'LineWidth', 1.2, 'DisplayName', 'Displacement Rate PM-07 z1');
             ylabel('Displacement Rate (nm/s)');
             
             % Set fixed bounds for Figure 102 subplot 3 to match subplot 2
-            ylim([0.05, 0.25]);
-            chart_logger('    Figure 102 subplot 3: Fixed displacement rate y-axis bounds: [0.05, 0.25] nm/s');
+            ylim([0.11, 0.18]);
+            chart_logger('    Figure 102 subplot 3: Fixed displacement rate y-axis bounds: [0.11, 0.18] nm/s');
             
-            title('Pumping Well (pw) Drawdown');
+            legend('show', 'Location', 'best');
+            title('Drawdown Rate at PT-01a & Displacement Rate at PM-07');
             grid on;
             chart_logger('    Plotted pumping well (pw) drawdown rate data');
         else
@@ -772,8 +788,8 @@ for i = 1:length(test_labels)
     ylim(depth_bounds);
     chart_logger('    Applied depth axis bounds: [%.0f, %.0f] ft', depth_bounds(1), depth_bounds(2));
     
-    % Set focused time window for PT01a
-    if strcmpi(test_label, 'PT01a_Recovery_short')
+    % Set focused time window for PT01a (recognize both 1Hz and 100Hz datasets)
+    if contains(test_label, 'PT01a', 'IgnoreCase', true)
         xlim([datetime('2023-11-07 20:44:30', 'TimeZone', 'UTC'), datetime('2023-11-07 20:47:30', 'TimeZone', 'UTC')]);
     else
         xlim([analysis_start analysis_end]);
@@ -801,11 +817,11 @@ for i = 1:length(test_labels)
                     if ~isempty(averaged_data)
                         yyaxis left;
                         plot(averaged_data.Date, averaged_data.Drawdownft, 'DisplayName', 'Head (avg)');
-                        if strcmpi(test_label, 'PT01a_Recovery_short')
+                        if contains(test_label, 'PT01a', 'IgnoreCase', true)
                             xlim([datetime('2023-11-07 20:44:30', 'TimeZone', 'UTC'), datetime('2023-11-07 20:47:30', 'TimeZone', 'UTC')]);
                         else
-                            % Set focused time window for PT01a
-    if strcmpi(test_label, 'PT01a_Recovery_short')
+                            % Set focused time window for PT01a (recognize both 1Hz and 100Hz datasets)
+    if contains(test_label, 'PT01a', 'IgnoreCase', true)
         xlim([datetime('2023-11-07 20:44:30', 'TimeZone', 'UTC'), datetime('2023-11-07 20:47:30', 'TimeZone', 'UTC')]);
     else
         xlim([analysis_start analysis_end]);
@@ -850,8 +866,8 @@ for i = 1:length(test_labels)
                     if strcmpi(test_label, 'PT01a_Recovery_short')
                         xlim([datetime('2023-11-07 20:44:30', 'TimeZone', 'UTC'), datetime('2023-11-07 20:47:30', 'TimeZone', 'UTC')]);
                     else
-                        % Set focused time window for PT01a
-    if strcmpi(test_label, 'PT01a_Recovery_short')
+                        % Set focused time window for PT01a (recognize both 1Hz and 100Hz datasets)
+    if contains(test_label, 'PT01a', 'IgnoreCase', true)
         xlim([datetime('2023-11-07 20:44:30', 'TimeZone', 'UTC'), datetime('2023-11-07 20:47:30', 'TimeZone', 'UTC')]);
     else
         xlim([analysis_start analysis_end]);
@@ -874,8 +890,8 @@ for i = 1:length(test_labels)
             else
                 % No valid head data, just plot strain
                 plot(filtered_time_strain, filtered_strain_data(:, das_data.pumping_zone.channel_idx)/10, 'Color', [0 0 0], 'LineStyle', '-', 'LineWidth', 1.2, 'DisplayName', 'DAS');
-                % Set focused time window for PT01a
-    if strcmpi(test_label, 'PT01a_Recovery_short')
+                % Set focused time window for PT01a (recognize both 1Hz and 100Hz datasets)
+    if contains(test_label, 'PT01a', 'IgnoreCase', true)
         xlim([datetime('2023-11-07 20:44:30', 'TimeZone', 'UTC'), datetime('2023-11-07 20:47:30', 'TimeZone', 'UTC')]);
     else
         xlim([analysis_start analysis_end]);
@@ -887,8 +903,8 @@ for i = 1:length(test_labels)
         else
             % No head data, just plot strain
             plot(filtered_time_strain, filtered_strain_data(:, das_data.pumping_zone.channel_idx)/10, 'Color', [0 0 0], 'LineStyle', '-', 'LineWidth', 1.2, 'DisplayName', 'DAS');
-            % Set focused time window for PT01a
-    if strcmpi(test_label, 'PT01a_Recovery_short')
+            % Set focused time window for PT01a (recognize both 1Hz and 100Hz datasets)
+    if contains(test_label, 'PT01a', 'IgnoreCase', true)
         xlim([datetime('2023-11-07 20:44:30', 'TimeZone', 'UTC'), datetime('2023-11-07 20:47:30', 'TimeZone', 'UTC')]);
     else
         xlim([analysis_start analysis_end]);
@@ -899,8 +915,8 @@ for i = 1:length(test_labels)
     else
         % No head data, just plot strain
         plot(filtered_time_strain, filtered_strain_data(:, das_data.pumping_zone.channel_idx)/10, 'Color', [0 0 0], 'LineStyle', '-', 'LineWidth', 1.2, 'DisplayName', 'DAS');
-        % Set focused time window for PT01a
-    if strcmpi(test_label, 'PT01a_Recovery_short')
+        % Set focused time window for PT01a (recognize both 1Hz and 100Hz datasets)
+    if contains(test_label, 'PT01a', 'IgnoreCase', true)
         xlim([datetime('2023-11-07 20:44:30', 'TimeZone', 'UTC'), datetime('2023-11-07 20:47:30', 'TimeZone', 'UTC')]);
     else
         xlim([analysis_start analysis_end]);
@@ -923,8 +939,8 @@ for i = 1:length(test_labels)
             if strcmpi(test_label, 'PT01a_Recovery_short')
                 xlim([datetime('2023-11-07 20:44:30', 'TimeZone', 'UTC'), datetime('2023-11-07 20:47:30', 'TimeZone', 'UTC')]);
             else
-                % Set focused time window for PT01a
-    if strcmpi(test_label, 'PT01a_Recovery_short')
+                % Set focused time window for PT01a (recognize both 1Hz and 100Hz datasets)
+    if contains(test_label, 'PT01a', 'IgnoreCase', true)
         xlim([datetime('2023-11-07 20:44:30', 'TimeZone', 'UTC'), datetime('2023-11-07 20:47:30', 'TimeZone', 'UTC')]);
     else
         xlim([analysis_start analysis_end]);
@@ -1023,8 +1039,8 @@ for i = 1:length(test_labels)
     %                 end
     %             end
     %             hold off;
-    %             % Set focused time window for PT01a
-    if strcmpi(test_label, 'PT01a_Recovery_short')
+    %             % Set focused time window for PT01a (recognize both 1Hz and 100Hz datasets)
+    if contains(test_label, 'PT01a', 'IgnoreCase', true)
         xlim([datetime('2023-11-07 20:44:30', 'TimeZone', 'UTC'), datetime('2023-11-07 20:47:30', 'TimeZone', 'UTC')]);
     else
         xlim([analysis_start analysis_end]);
@@ -1092,8 +1108,8 @@ for i = 1:length(test_labels)
     %                 end
     %             end
     %             hold off;
-    %             % Set focused time window for PT01a
-    if strcmpi(test_label, 'PT01a_Recovery_short')
+    %             % Set focused time window for PT01a (recognize both 1Hz and 100Hz datasets)
+    if contains(test_label, 'PT01a', 'IgnoreCase', true)
         xlim([datetime('2023-11-07 20:44:30', 'TimeZone', 'UTC'), datetime('2023-11-07 20:47:30', 'TimeZone', 'UTC')]);
     else
         xlim([analysis_start analysis_end]);

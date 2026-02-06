@@ -114,6 +114,10 @@ switch lower(filter_type)
         else
             error('Common mode removal filter requires time_array in config');
         end
+    
+    case 'resample_antialias'
+        % Apply the same anti-aliasing filter used in decimation (without downsampling)
+        filtered_data = resample_antialias_filter(data, config);
 
     case 'custom'
         filtered_data = apply_custom_filter_chain(data, config);

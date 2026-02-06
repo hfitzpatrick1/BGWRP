@@ -354,6 +354,10 @@ for i = 1:length(test_labels)
                 % Direct MATLAB movmean implementation with configurable window
                 fprintf('  Applying MATLAB movmean filter...\n');
                 smoothed_data = apply_filter(data1Hz, 'matlab_movmean', config);
+            case 'resample_antialias'
+                % Resample anti-aliasing filter (same as decimation uses)
+                fprintf('  Applying resample anti-aliasing filter...\n');
+                smoothed_data = apply_filter(data1Hz, 'resample_antialias', config);
             case 'none'
                 smoothed_data = data1Hz;  % No smoothing
             otherwise

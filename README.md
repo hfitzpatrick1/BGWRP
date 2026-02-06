@@ -7,7 +7,12 @@ A comprehensive MATLAB toolkit for processing and analyzing Distributed Acoustic
 ### Directory Structure
 ```
 BGWRP/
-├── src/                    # Source code
+├── config.m               # Root configuration file
+├── scripts/               # ⭐ Main analysis runner scripts
+│   ├── run_PT01a_thesis_analysis.m    # PT-01a thesis analysis
+│   ├── run_roi_analysis.m              # ROI linear regression
+│   └── run_*.m                         # Other runner scripts
+├── src/                   # Source code (organized by function)
 │   ├── BGWRP_Toolkit.m    # Main processing script (unified entry point)
 │   ├── config.m           # Configuration settings
 │   ├── prepare/           # Data preparation functions
@@ -18,26 +23,48 @@ BGWRP/
 │   ├── analyze/           # Analysis functions
 │   │   ├── analyze_head_data.m
 │   │   ├── analyze_das_data.m
-│   │   ├── discover_datasets.m
-│   │   ├── save_timing_config.m
-│   │   ├── linear_regression_strain_drawdown.m  # Linear regression analysis
-│   │   └── calculate_storage_from_poroelasticity.m  # Storage calculation
+│   │   ├── linear_regression_depth_range.m     # Depth-based regression
+│   │   ├── linear_regression_strain_drawdown.m # Linear regression
+│   │   └── calculate_specific_storage_becker.m # Storage calculation
 │   ├── plot/              # Plotting and visualization
 │   │   ├── generate_plots.m
-│   │   ├── analyze_fft_spectrum.m    # FFT analysis functions
-│   │   ├── plot_fft_analysis.m       # FFT figure generation
-│   │   └── [chart generation functions]
+│   │   ├── plot_*.m                  # Various plotting functions
+│   │   └── [visualization utilities]
+│   ├── filter/            # Advanced filtering and signal processing
+│   │   ├── chen_*.m                  # Chen denoising framework
+│   │   ├── spatial_median_filter.m
+│   │   ├── ensemble_averaging.m
+│   │   └── [other filters]
 │   ├── diagnostic/        # Diagnostic and quality assessment
 │   │   ├── diagnose_file_boundaries.m
-│   │   ├── diagnose_boundaries_enhanced.m
-│   │   ├── diagnose_tdms_metadata.m
+│   │   ├── check_*.m                 # Various diagnostic checks
 │   │   └── analyze_quantization.m
-│   ├── modify/            # Advanced filtering and signal processing
-│   │   ├── chen_denoising.m
-│   │   ├── spatial_filtering.m
-│   │   ├── temporal_filtering.m
-│   │   └── ensemble_averaging.m
-│   └── utils/             # Utility functions
+│   ├── processing/        # 🆕 Data processing pipelines
+│   │   ├── process_*.m               # Processing workflows
+│   │   ├── batch_*.m                 # Batch processing scripts
+│   │   ├── extract_*.m               # Data extraction utilities
+│   │   └── migrate_*.m               # Data migration tools
+│   ├── experiments/       # 🆕 Experimental/test scripts
+│   │   ├── test_*.m                  # Test scripts
+│   │   ├── check_*.m                 # Verification scripts
+│   │   ├── debug_*.m                 # Debug utilities
+│   │   ├── quick_*.m                 # Quick test scripts
+│   │   └── optimize_*.m              # Optimization experiments
+│   ├── export/            # 🆕 Export utilities
+│   │   ├── export_*.m                # Various export functions
+│   │   └── create_pump_schedule*.m
+│   ├── weight_adjustment/ # 🆕 Temporal weighting functions
+│   │   ├── add_*_weights.m
+│   │   └── weight_*.m
+│   ├── correction/        # 🆕 Data correction utilities
+│   │   ├── flatten_*.m
+│   │   ├── shift_*.m
+│   │   ├── renormalize_*.m
+│   │   └── fix_*.m
+│   └── _utils/            # Utility functions
+│       ├── chart_logger.m
+│       ├── detect_file_type.m
+│       └── [helper functions]
 ├── data/
 │   └── _BATCH/            # Processing workspace (configurable)
 │       ├── [input_dirs]/  # Raw TDMS files organized by test
@@ -80,9 +107,21 @@ Edit `src/config.m` to set:
 
 ## Quick Start
 
-### Setup
+### For Thesis Analysis (PT-01a)
 ```matlab
+% Navigate to scripts directory
+cd('C:\Coding\BGWRP\scripts')
+
+% Run complete PT-01a thesis analysis
+run_PT01a_thesis_analysis
+```
+
+### For General Processing
+```matlab
+% Navigate to src directory
 cd('C:\Coding\BGWRP\src')
+
+% Use BGWRP_Toolkit with various modes (see below)
 ```
 
 ### Basic Commands

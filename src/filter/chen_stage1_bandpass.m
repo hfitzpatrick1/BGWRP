@@ -37,25 +37,50 @@ high_norm = min(high_norm, 0.99); % Stay below Nyquist
 
 try
     % Design bandpass filter
+    fprintf('      Designing filter: fs=%.1f Hz, Nyquist=%.2f Hz\n', fs, nyquist);
+    fprintf('      Normalized frequencies: [%.6f, %.6f]\n', low_norm, high_norm);
     [b, a] = butter(filter_order, [low_norm high_norm], 'bandpass');
+    fprintf('      Filter designed successfully\n');
     
     % Apply filter to each channel
     [num_time, num_channels] = size(data);
+    fprintf('      Data size: [%d time points x %d channels]\n', num_time, num_channels);
+    fprintf('      Data range before filter: [%.3e, %.3e]\n', min(data(:)), max(data(:)));
+    
     filtered_data = zeros(size(data));
+    
+    % Check for NaN/Inf in input data
+    nan_count = sum(isnan(data(:)));
+    inf_count = sum(isinf(data(:)));
+    if nan_count > 0 || inf_count > 0
+        warning('Input data contains %d NaN and %d Inf values - filtering may fail', nan_count, inf_count);
+    end
     
     for ch = 1:num_channels
         % Apply zero-phase filtering to avoid phase distortion
-        filtered_data(:, ch) = filtfilt(b, a, data(:, ch));
+        try
+            filtered_data(:, ch) = filtfilt(b, a, data(:, ch));
+        catch ME_ch
+            warning('Channel %d filtering failed: %s', ch, ME_ch.message);
+            filtered_data(:, ch) = data(:, ch);  % Keep original if filtering fails
+        end
     end
     
-    fprintf('        Bandpass filtering complete\n');
+    fprintf('      Data range after filter: [%.3e, %.3e]\n', min(filtered_data(:)), max(filtered_data(:)));
+    fprintf('      NaN count after filter: %d\n', sum(isnan(filtered_data(:))));
+    fprintf('      Bandpass filtering complete\n');
     
 catch ME
     warning('MATLAB:filterDesignFailed', 'Butterworth filter design failed: %s. Using moving average fallback.', ME.message);
+    fprintf('      Error details: %s\n', ME.message);
+    if ~isempty(ME.stack)
+        fprintf('      At: %s (line %d)\n', ME.stack(1).name, ME.stack(1).line);
+    end
     % Fallback to simple moving average
     window_size = round(fs / high_cutoff);
+    fprintf('      Using fallback moving average (window: %d)\n', window_size);
     filtered_data = movmean(data, window_size, 1);
-    fprintf('        Fallback moving average applied (window: %d)\n', window_size);
+    fprintf('      Fallback complete\n');
 end
 
 end

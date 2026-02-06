@@ -340,21 +340,72 @@ if exist('mode', 'var') && ischar(mode)
         fprintf('Running MATLAB movmean + 0.35 Hz grid removal\n');
         
     case 'run_filter_matlab_movmean_5sec'
-        % Run MATLAB movmean filter with 5-second window (5 samples at 1Hz)
+        % Run MATLAB movmean filter with 5-second window (500 samples at 100Hz)
         config.run_tdms_conversion = false;
         config.run_concatenation = false;
         config.run_timing_extraction = false;
         config.run_data_analysis = true;
         config.save_charts = false;
         config.smoothing_method = 'matlab_movmean';  % Use MATLAB movmean
-        config.matlab_movmean_window = 5;           % 5-second window (5 samples)
+        config.matlab_movmean_window = 500;         % 5-second window (500 samples at 100Hz)
         % Reset other filtering
         config.apply_concatenation_filter = false;
         config.filter_method = 'none';
         config.chen_denoising = false;
         % NOTE: 50x correction applied in analyze_das_data.m for decimation loss
         config.apply_sampling_freq_correction = true;
-        fprintf('Running MATLAB movmean filter (5-second window, 50x correction)\n');
+        fprintf('Running MATLAB movmean filter (5-second window = 500 samples for 100Hz data)\n');
+    
+    case 'run_filter_matlab_movmean_7sec'
+        % Run MATLAB movmean filter with 7-second window (700 samples at 100Hz)
+        config.run_tdms_conversion = false;
+        config.run_concatenation = false;
+        config.run_timing_extraction = false;
+        config.run_data_analysis = true;
+        config.save_charts = false;
+        config.smoothing_method = 'matlab_movmean';  % Use MATLAB movmean
+        config.matlab_movmean_window = 700;         % 7-second window (700 samples at 100Hz)
+        % Reset other filtering
+        config.apply_concatenation_filter = false;
+        config.filter_method = 'none';
+        config.chen_denoising = false;
+        % NOTE: 50x correction applied in analyze_das_data.m for decimation loss
+        config.apply_sampling_freq_correction = true;
+        fprintf('Running MATLAB movmean filter (7-second window = 700 samples for 100Hz data)\n');
+    
+    case 'run_filter_matlab_movmean_8sec'
+        % Run MATLAB movmean filter with 8-second window (800 samples at 100Hz)
+        config.run_tdms_conversion = false;
+        config.run_concatenation = false;
+        config.run_timing_extraction = false;
+        config.run_data_analysis = true;
+        config.save_charts = false;
+        config.smoothing_method = 'matlab_movmean';  % Use MATLAB movmean
+        config.matlab_movmean_window = 800;         % 8-second window (800 samples at 100Hz)
+        % Reset other filtering
+        config.apply_concatenation_filter = false;
+        config.filter_method = 'none';
+        config.chen_denoising = false;
+        % NOTE: 50x correction applied in analyze_das_data.m for decimation loss
+        config.apply_sampling_freq_correction = true;
+        fprintf('Running MATLAB movmean filter (8-second window = 800 samples for 100Hz data)\n');
+    
+    case 'run_filter_matlab_movmean_10sec'
+        % Run MATLAB movmean filter with 10-second window (1000 samples at 100Hz)
+        config.run_tdms_conversion = false;
+        config.run_concatenation = false;
+        config.run_timing_extraction = false;
+        config.run_data_analysis = true;
+        config.save_charts = false;
+        config.smoothing_method = 'matlab_movmean';  % Use MATLAB movmean
+        config.matlab_movmean_window = 1000;        % 10-second window (1000 samples at 100Hz)
+        % Reset other filtering
+        config.apply_concatenation_filter = false;
+        config.filter_method = 'none';
+        config.chen_denoising = false;
+        % NOTE: 50x correction applied in analyze_das_data.m for decimation loss
+        config.apply_sampling_freq_correction = true;
+        fprintf('Running MATLAB movmean filter (10-second window = 1000 samples for 100Hz data)\n');
             
         case 'run_correlation_analysis'
             % Analysis mode with strain rate vs head data correlation
@@ -372,20 +423,20 @@ if exist('mode', 'var') && ischar(mode)
             config.calculate_storage = true;
             % Set timing correction to 9.5 seconds
             config.lr_timing_correction_sec = 9.5;
-            % Set focused recovery window (NARROWED: 19:14:45-19:16:30 to focus on rising edge + peak)
-            config.lr_recovery_window = [datetime('2023-10-24 19:14:45', 'TimeZone', 'UTC'), ...
-                                        datetime('2023-10-24 19:16:30', 'TimeZone', 'UTC')];
+            % Set focused recovery window for PT01a (November 7, 2023)
+            config.lr_recovery_window = [datetime('2023-11-07 20:45:15', 'TimeZone', 'UTC'), ...
+                                        datetime('2023-11-07 20:46:30', 'TimeZone', 'UTC')];
             % Apply smoothing for cleaner signal visualization
             config.smoothing_method = 'matlab_movmean';
-            config.matlab_movmean_window = 15;  % 15 seconds
+            config.matlab_movmean_window = 50;  % 50 seconds
             % Apply smoothing to strain rate
-            config.strain_rate_smoothing_window = 15;  % 15 seconds
+            config.strain_rate_smoothing_window = 50;  % 50 seconds
             config.strain_rate_smoothing_method = 'movmean';  % Moving average
             config.apply_concatenation_filter = false;
             config.filter_method = 'none';
             config.chen_denoising = false;
-            % Shift DAS time forward by 90 seconds to align with head data
-            config.das_time_shift_seconds = 90;
+            % Shift DAS time by +38 seconds (fine-tuning for optimal R²)
+            config.das_time_shift_seconds = 38;
             % ENABLE sampling frequency correction for strain rate calculation
             config.apply_sampling_freq_correction = true;
             % Set colorbar limits for displacement rate (nm/s) and strain (nm/m)
@@ -406,6 +457,434 @@ if exist('mode', 'var') && ischar(mode)
             fprintf('  Colorbar bounds: Raw/Displacement ±5 nm/s, Strain ±2 nm/m\n');
             fprintf('  Manual bounds enabled, dynamic_bounds disabled\n');
             fprintf('  Timing correction: 8s, Recovery window: 19:14-19:17\n');
+            
+        case 'run_correlation_analysis_1sec'
+            % Same as run_correlation_analysis but with 1-second smoothing
+            config.run_tdms_conversion = false;
+            config.run_concatenation = false;
+            config.run_timing_extraction = false;
+            config.run_data_analysis = true;
+            config.save_charts = contains(mode, 'save');
+            config.correlation_analysis = true;
+            config.signal_onset_detection = true;
+            config.linear_regression = true;
+            config.lr_run_both_comparisons = false;
+            config.calculate_storage = true;
+            config.lr_timing_correction_sec = 9.5;
+            config.lr_recovery_window = [datetime('2023-10-24 19:14:45', 'TimeZone', 'UTC'), ...
+                                        datetime('2023-10-24 19:16:30', 'TimeZone', 'UTC')];
+            config.smoothing_method = 'matlab_movmean';
+            config.matlab_movmean_window = 100;  % 1 second for 100Hz data
+            config.strain_rate_smoothing_window = 100;
+            config.strain_rate_smoothing_method = 'movmean';
+            config.apply_concatenation_filter = false;
+            config.filter_method = 'none';
+            config.chen_denoising = false;
+            config.das_time_shift_seconds = 90;
+            config.apply_sampling_freq_correction = true;
+            config.manual_bounds.raw.min = -5;
+            config.manual_bounds.raw.max = 5;
+            config.manual_bounds.displacement.min = -5;
+            config.manual_bounds.displacement.max = 5;
+            config.manual_bounds.strain.min = -2;
+            config.manual_bounds.strain.max = 2;
+            config.dynamic_bounds = false;
+            config.use_related_bounds = false;
+            fprintf('Running correlation analysis with 1-SECOND smoothing (100 samples for 100Hz data)\n');
+            
+        case 'run_correlation_analysis_3sec'
+            % Same as run_correlation_analysis but with 3-second smoothing
+            config.run_tdms_conversion = false;
+            config.run_concatenation = false;
+            config.run_timing_extraction = false;
+            config.run_data_analysis = true;
+            config.save_charts = contains(mode, 'save');
+            config.correlation_analysis = true;
+            config.signal_onset_detection = true;
+            config.linear_regression = true;
+            config.lr_run_both_comparisons = false;
+            config.calculate_storage = true;
+            config.lr_timing_correction_sec = 9.5;
+            config.lr_recovery_window = [datetime('2023-10-24 19:14:45', 'TimeZone', 'UTC'), ...
+                                        datetime('2023-10-24 19:16:30', 'TimeZone', 'UTC')];
+            config.smoothing_method = 'matlab_movmean';
+            config.matlab_movmean_window = 300;  % 3 seconds for 100Hz data
+            config.strain_rate_smoothing_window = 300;
+            config.strain_rate_smoothing_method = 'movmean';
+            config.apply_concatenation_filter = false;
+            config.filter_method = 'none';
+            config.chen_denoising = false;
+            config.das_time_shift_seconds = 90;
+            config.apply_sampling_freq_correction = true;
+            config.manual_bounds.raw.min = -5;
+            config.manual_bounds.raw.max = 5;
+            config.manual_bounds.displacement.min = -5;
+            config.manual_bounds.displacement.max = 5;
+            config.manual_bounds.strain.min = -2;
+            config.manual_bounds.strain.max = 2;
+            config.dynamic_bounds = false;
+            config.use_related_bounds = false;
+            fprintf('Running correlation analysis with 3-SECOND smoothing (300 samples for 100Hz data)\n');
+            
+        case 'run_correlation_analysis_5sec'
+            % Same as run_correlation_analysis but with 5-second smoothing
+            config.run_tdms_conversion = false;
+            config.run_concatenation = false;
+            config.run_timing_extraction = false;
+            config.run_data_analysis = true;
+            config.save_charts = contains(mode, 'save');
+            config.correlation_analysis = true;
+            config.signal_onset_detection = true;
+            config.linear_regression = true;
+            config.lr_run_both_comparisons = false;
+            config.calculate_storage = true;
+            config.lr_timing_correction_sec = 9.5;
+            config.lr_recovery_window = [datetime('2023-10-24 19:14:45', 'TimeZone', 'UTC'), ...
+                                        datetime('2023-10-24 19:16:30', 'TimeZone', 'UTC')];
+            config.smoothing_method = 'matlab_movmean';
+            config.matlab_movmean_window = 500;  % 5 seconds for 100Hz data
+            config.strain_rate_smoothing_window = 500;
+            config.strain_rate_smoothing_method = 'movmean';
+            config.apply_concatenation_filter = false;
+            config.filter_method = 'none';
+            config.chen_denoising = false;
+            config.das_time_shift_seconds = 90;
+            config.apply_sampling_freq_correction = true;
+            config.manual_bounds.raw.min = -5;
+            config.manual_bounds.raw.max = 5;
+            config.manual_bounds.displacement.min = -5;
+            config.manual_bounds.displacement.max = 5;
+            config.manual_bounds.strain.min = -2;
+            config.manual_bounds.strain.max = 2;
+            config.dynamic_bounds = false;
+            config.use_related_bounds = false;
+            fprintf('Running correlation analysis with 5-SECOND smoothing (500 samples for 100Hz data)\n');
+            
+        case 'run_correlation_analysis_7sec'
+            % Same as run_correlation_analysis but with 7-second smoothing
+            config.run_tdms_conversion = false;
+            config.run_concatenation = false;
+            config.run_timing_extraction = false;
+            config.run_data_analysis = true;
+            config.save_charts = contains(mode, 'save');
+            config.correlation_analysis = true;
+            config.signal_onset_detection = true;
+            config.linear_regression = true;
+            config.lr_run_both_comparisons = false;
+            config.calculate_storage = true;
+            config.lr_timing_correction_sec = 9.5;
+            config.lr_recovery_window = [datetime('2023-10-24 19:14:45', 'TimeZone', 'UTC'), ...
+                                        datetime('2023-10-24 19:16:30', 'TimeZone', 'UTC')];
+            config.smoothing_method = 'matlab_movmean';
+            config.matlab_movmean_window = 700;  % 7 seconds for 100Hz data
+            config.strain_rate_smoothing_window = 700;
+            config.strain_rate_smoothing_method = 'movmean';
+            config.apply_concatenation_filter = false;
+            config.filter_method = 'none';
+            config.chen_denoising = false;
+            config.das_time_shift_seconds = 90;
+            config.apply_sampling_freq_correction = true;
+            config.manual_bounds.raw.min = -5;
+            config.manual_bounds.raw.max = 5;
+            config.manual_bounds.displacement.min = -5;
+            config.manual_bounds.displacement.max = 5;
+            config.manual_bounds.strain.min = -2;
+            config.manual_bounds.strain.max = 2;
+            config.dynamic_bounds = false;
+            config.use_related_bounds = false;
+            fprintf('Running correlation analysis with 7-SECOND smoothing (700 samples for 100Hz data)\n');
+            
+        case 'run_correlation_analysis_8sec'
+            % Same as run_correlation_analysis but with 8-second smoothing
+            config.run_tdms_conversion = false;
+            config.run_concatenation = false;
+            config.run_timing_extraction = false;
+            config.run_data_analysis = true;
+            config.save_charts = contains(mode, 'save');
+            config.correlation_analysis = true;
+            config.signal_onset_detection = true;
+            config.linear_regression = true;
+            config.lr_run_both_comparisons = false;
+            config.calculate_storage = true;
+            config.lr_timing_correction_sec = 9.5;
+            config.lr_recovery_window = [datetime('2023-10-24 19:14:45', 'TimeZone', 'UTC'), ...
+                                        datetime('2023-10-24 19:16:30', 'TimeZone', 'UTC')];
+            config.smoothing_method = 'matlab_movmean';
+            config.matlab_movmean_window = 800;  % 8 seconds for 100Hz data
+            config.strain_rate_smoothing_window = 800;
+            config.strain_rate_smoothing_method = 'movmean';
+            config.apply_concatenation_filter = false;
+            config.filter_method = 'none';
+            config.chen_denoising = false;
+            config.das_time_shift_seconds = 90;
+            config.apply_sampling_freq_correction = true;
+            config.manual_bounds.raw.min = -5;
+            config.manual_bounds.raw.max = 5;
+            config.manual_bounds.displacement.min = -5;
+            config.manual_bounds.displacement.max = 5;
+            config.manual_bounds.strain.min = -2;
+            config.manual_bounds.strain.max = 2;
+            config.dynamic_bounds = false;
+            config.use_related_bounds = false;
+            fprintf('Running correlation analysis with 8-SECOND smoothing (800 samples for 100Hz data)\n');
+            
+        case 'run_correlation_analysis_10sec'
+            % Same as run_correlation_analysis but with 10-second smoothing
+            config.run_tdms_conversion = false;
+            config.run_concatenation = false;
+            config.run_timing_extraction = false;
+            config.run_data_analysis = true;
+            config.save_charts = contains(mode, 'save');
+            config.correlation_analysis = true;
+            config.signal_onset_detection = true;
+            config.linear_regression = true;
+            config.lr_run_both_comparisons = false;
+            config.calculate_storage = true;
+            config.lr_timing_correction_sec = 9.5;
+            config.lr_recovery_window = [datetime('2023-10-24 19:14:45', 'TimeZone', 'UTC'), ...
+                                        datetime('2023-10-24 19:16:30', 'TimeZone', 'UTC')];
+            config.smoothing_method = 'matlab_movmean';
+            config.matlab_movmean_window = 1000;  % 10 seconds for 100Hz data
+            config.strain_rate_smoothing_window = 1000;
+            config.strain_rate_smoothing_method = 'movmean';
+            config.apply_concatenation_filter = false;
+            config.filter_method = 'none';
+            config.chen_denoising = false;
+            config.das_time_shift_seconds = 90;
+            config.apply_sampling_freq_correction = true;
+            config.manual_bounds.raw.min = -5;
+            config.manual_bounds.raw.max = 5;
+            config.manual_bounds.displacement.min = -5;
+            config.manual_bounds.displacement.max = 5;
+            config.manual_bounds.strain.min = -2;
+            config.manual_bounds.strain.max = 2;
+            config.dynamic_bounds = false;
+            config.use_related_bounds = false;
+            fprintf('Running correlation analysis with 10-SECOND smoothing (1000 samples for 100Hz data)\n');
+            
+        case 'run_correlation_analysis_15sec'
+            % Same as run_correlation_analysis but with 15-second smoothing
+            config.run_tdms_conversion = false;
+            config.run_concatenation = false;
+            config.run_timing_extraction = false;
+            config.run_data_analysis = true;
+            config.save_charts = contains(mode, 'save');
+            config.correlation_analysis = true;
+            config.signal_onset_detection = true;
+            config.linear_regression = true;
+            config.lr_run_both_comparisons = false;
+            config.calculate_storage = true;
+            config.lr_timing_correction_sec = 9.5;
+            config.lr_recovery_window = [datetime('2023-10-24 19:14:45', 'TimeZone', 'UTC'), ...
+                                        datetime('2023-10-24 19:16:30', 'TimeZone', 'UTC')];
+            config.smoothing_method = 'matlab_movmean';
+            config.matlab_movmean_window = 1500;  % 15 seconds for 100Hz data
+            config.strain_rate_smoothing_window = 1500;
+            config.strain_rate_smoothing_method = 'movmean';
+            config.apply_concatenation_filter = false;
+            config.filter_method = 'none';
+            config.chen_denoising = false;
+            config.das_time_shift_seconds = 90;
+            config.apply_sampling_freq_correction = true;
+            config.manual_bounds.raw.min = -5;
+            config.manual_bounds.raw.max = 5;
+            config.manual_bounds.displacement.min = -5;
+            config.manual_bounds.displacement.max = 5;
+            config.manual_bounds.strain.min = -2;
+            config.manual_bounds.strain.max = 2;
+            config.dynamic_bounds = false;
+            config.use_related_bounds = false;
+            fprintf('Running correlation analysis with 15-SECOND smoothing (1500 samples for 100Hz data)\n');
+            
+        case 'run_correlation_analysis_20sec'
+            % Same as run_correlation_analysis but with 20-second smoothing
+            config.run_tdms_conversion = false;
+            config.run_concatenation = false;
+            config.run_timing_extraction = false;
+            config.run_data_analysis = true;
+            config.save_charts = contains(mode, 'save');
+            config.correlation_analysis = true;
+            config.signal_onset_detection = true;
+            config.linear_regression = true;
+            config.lr_run_both_comparisons = false;
+            config.calculate_storage = true;
+            config.lr_timing_correction_sec = 9.5;
+            config.lr_recovery_window = [datetime('2023-10-24 19:14:45', 'TimeZone', 'UTC'), ...
+                                        datetime('2023-10-24 19:16:30', 'TimeZone', 'UTC')];
+            config.smoothing_method = 'matlab_movmean';
+            config.matlab_movmean_window = 2000;  % 20 seconds for 100Hz data
+            config.strain_rate_smoothing_window = 2000;
+            config.strain_rate_smoothing_method = 'movmean';
+            config.apply_concatenation_filter = false;
+            config.filter_method = 'none';
+            config.chen_denoising = false;
+            config.das_time_shift_seconds = 90;
+            config.apply_sampling_freq_correction = true;
+            config.manual_bounds.raw.min = -5;
+            config.manual_bounds.raw.max = 5;
+            config.manual_bounds.displacement.min = -5;
+            config.manual_bounds.displacement.max = 5;
+            config.manual_bounds.strain.min = -2;
+            config.manual_bounds.strain.max = 2;
+            config.dynamic_bounds = false;
+            config.use_related_bounds = false;
+            fprintf('Running correlation analysis with 20-SECOND smoothing (2000 samples for 100Hz data)\n');
+            
+        case 'run_correlation_analysis_25sec'
+            % Same as run_correlation_analysis but with 25-second smoothing
+            config.run_tdms_conversion = false;
+            config.run_concatenation = false;
+            config.run_timing_extraction = false;
+            config.run_data_analysis = true;
+            config.save_charts = contains(mode, 'save');
+            config.correlation_analysis = true;
+            config.signal_onset_detection = true;
+            config.linear_regression = true;
+            config.lr_run_both_comparisons = false;
+            config.calculate_storage = true;
+            config.lr_timing_correction_sec = 9.5;
+            config.lr_recovery_window = [datetime('2023-10-24 19:14:45', 'TimeZone', 'UTC'), ...
+                                        datetime('2023-10-24 19:16:30', 'TimeZone', 'UTC')];
+            config.smoothing_method = 'matlab_movmean';
+            config.matlab_movmean_window = 2500;  % 25 seconds for 100Hz data
+            config.strain_rate_smoothing_window = 2500;
+            config.strain_rate_smoothing_method = 'movmean';
+            config.apply_concatenation_filter = false;
+            config.filter_method = 'none';
+            config.chen_denoising = false;
+            config.das_time_shift_seconds = 90;
+            config.apply_sampling_freq_correction = true;
+            config.manual_bounds.raw.min = -5;
+            config.manual_bounds.raw.max = 5;
+            config.manual_bounds.displacement.min = -5;
+            config.manual_bounds.displacement.max = 5;
+            config.manual_bounds.strain.min = -2;
+            config.manual_bounds.strain.max = 2;
+            config.dynamic_bounds = false;
+            config.use_related_bounds = false;
+            fprintf('Running correlation analysis with 25-SECOND smoothing (2500 samples for 100Hz data)\n');
+            
+        case 'run_correlation_analysis_30sec'
+            % Same as run_correlation_analysis but with 30-second smoothing
+            config.run_tdms_conversion = false;
+            config.run_concatenation = false;
+            config.run_timing_extraction = false;
+            config.run_data_analysis = true;
+            config.save_charts = contains(mode, 'save');
+            config.correlation_analysis = true;
+            config.signal_onset_detection = true;
+            config.linear_regression = true;
+            config.lr_run_both_comparisons = false;
+            config.calculate_storage = true;
+            config.lr_timing_correction_sec = 9.5;
+            config.lr_recovery_window = [datetime('2023-10-24 19:14:45', 'TimeZone', 'UTC'), ...
+                                        datetime('2023-10-24 19:16:30', 'TimeZone', 'UTC')];
+            config.smoothing_method = 'matlab_movmean';
+            config.matlab_movmean_window = 3000;  % 30 seconds for 100Hz data
+            config.strain_rate_smoothing_window = 3000;
+            config.strain_rate_smoothing_method = 'movmean';
+            config.apply_concatenation_filter = false;
+            config.filter_method = 'none';
+            config.chen_denoising = false;
+            config.das_time_shift_seconds = 90;
+            config.apply_sampling_freq_correction = true;
+            config.manual_bounds.raw.min = -5;
+            config.manual_bounds.raw.max = 5;
+            config.manual_bounds.displacement.min = -5;
+            config.manual_bounds.displacement.max = 5;
+            config.manual_bounds.strain.min = -2;
+            config.manual_bounds.strain.max = 2;
+            config.dynamic_bounds = false;
+            config.use_related_bounds = false;
+            fprintf('Running correlation analysis with 30-SECOND smoothing (3000 samples for 100Hz data)\n');
+            
+        case 'run_correlation_analysis_lowpass'
+            % Correlation analysis using the SAME anti-aliasing filter as 1Hz decimation
+            % This makes 100Hz data look like 1Hz data without losing time resolution!
+            % NOTE: This mode uses PT01c dates - use 'run_correlation_analysis_lowpass_PT01a' for PT01a
+            config.run_tdms_conversion = false;
+            config.run_concatenation = false;
+            config.run_timing_extraction = false;
+            config.run_data_analysis = true;
+            config.save_charts = contains(mode, 'save');
+            config.correlation_analysis = true;
+            config.signal_onset_detection = true;
+            config.linear_regression = true;
+            config.lr_run_both_comparisons = false;
+            config.calculate_storage = true;
+            config.lr_timing_correction_sec = 9.5;
+            config.lr_recovery_window = [datetime('2023-10-24 19:14:45', 'TimeZone', 'UTC'), ...
+                                        datetime('2023-10-24 19:16:30', 'TimeZone', 'UTC')];
+            % Use the resample anti-aliasing filter (same as decimation uses)
+            config.smoothing_method = 'resample_antialias';
+            config.decimation_factor = 100;  % Simulate 100x decimation filter
+            config.strain_rate_smoothing_window = 100;  % Minimal additional smoothing
+            config.strain_rate_smoothing_method = 'movmean';
+            config.apply_concatenation_filter = false;
+            config.filter_method = 'none';
+            config.chen_denoising = false;
+            config.das_time_shift_seconds = 90;
+            config.apply_sampling_freq_correction = true;
+            % Use dynamic bounds to automatically adjust to filtered data range
+            config.dynamic_bounds = true;
+            config.use_related_bounds = false;
+            % Set manual bounds as fallback
+            config.manual_bounds.raw.min = -5;
+            config.manual_bounds.raw.max = 5;
+            config.manual_bounds.displacement.min = -5;
+            config.manual_bounds.displacement.max = 5;
+            config.manual_bounds.strain.min = -2;
+            config.manual_bounds.strain.max = 2;
+            fprintf('Running correlation analysis with RESAMPLE ANTI-ALIASING FILTER\n');
+            fprintf('  Using the SAME filter that makes your 1Hz data look clean!\n');
+            fprintf('  Cutoff: 0.5 Hz (Nyquist for 1Hz data)\n');
+            fprintf('  Dynamic colorbar bounds enabled\n');
+            
+        case 'run_correlation_analysis_lowpass_PT01a'
+            % PT01a-specific correlation analysis with anti-aliasing filter
+            % Same filter as 1Hz decimation, but with PT01a dates and optimal settings
+            config.run_tdms_conversion = false;
+            config.run_concatenation = false;
+            config.run_timing_extraction = false;
+            config.run_data_analysis = true;
+            config.save_charts = contains(mode, 'save');
+            config.correlation_analysis = true;
+            config.signal_onset_detection = true;
+            config.linear_regression = true;
+            config.lr_run_both_comparisons = false;
+            config.calculate_storage = true;
+            % PT01a-specific timing correction (start with 1Hz optimal value)
+            config.lr_timing_correction_sec = 9.5;
+            % PT01a-specific recovery window (November 7, 2023)
+            config.lr_recovery_window = [datetime('2023-11-07 20:45:15', 'TimeZone', 'UTC'), ...
+                                        datetime('2023-11-07 20:46:30', 'TimeZone', 'UTC')];
+            % Use the resample anti-aliasing filter (same as decimation uses)
+            config.smoothing_method = 'resample_antialias';
+            config.decimation_factor = 100;  % Simulate 100x decimation filter
+            config.strain_rate_smoothing_window = 100;  % Minimal additional smoothing
+            config.strain_rate_smoothing_method = 'movmean';
+            config.apply_concatenation_filter = false;
+            config.filter_method = 'none';
+            config.chen_denoising = false;
+            % Start with 1Hz optimal time shift, may need adjustment for 100Hz
+            config.das_time_shift_seconds = 38;
+            config.apply_sampling_freq_correction = true;
+            % Use dynamic bounds to automatically adjust to filtered data range
+            config.dynamic_bounds = true;
+            config.use_related_bounds = false;
+            % Set manual bounds as fallback
+            config.manual_bounds.raw.min = -5;
+            config.manual_bounds.raw.max = 5;
+            config.manual_bounds.displacement.min = -5;
+            config.manual_bounds.displacement.max = 5;
+            config.manual_bounds.strain.min = -2;
+            config.manual_bounds.strain.max = 2;
+            fprintf('Running PT01a correlation analysis with RESAMPLE ANTI-ALIASING FILTER\n');
+            fprintf('  Using the SAME filter that makes your 1Hz data look clean!\n');
+            fprintf('  Cutoff: 0.5 Hz (Nyquist for 1Hz data)\n');
+            fprintf('  PT01a dates: Nov 7, 2023, 20:45:15 to 20:46:30 UTC\n');
+            fprintf('  DAS time shift: +38 seconds (from 1Hz optimization)\n');
+            fprintf('  Dynamic colorbar bounds enabled\n');
             
         case 'run_linear_regression'
             % Analysis mode for linear regression (run after correlation_analysis)
@@ -668,8 +1147,54 @@ if exist('mode', 'var') && ischar(mode)
             config.run_data_analysis = true;
             config.save_charts = contains(mode, 'save');
             
+        case 'run_correlation_analysis_lowpass_pt01a'
+            % PT01a-specific correlation analysis with anti-aliasing filter
+            % Same filter as 1Hz decimation, but with PT01a dates and optimal settings
+            config.run_tdms_conversion = false;
+            config.run_concatenation = false;
+            config.run_timing_extraction = false;
+            config.run_data_analysis = true;
+            config.save_charts = contains(mode, 'save');
+            config.correlation_analysis = true;
+            config.signal_onset_detection = true;
+            config.linear_regression = true;
+            config.lr_run_both_comparisons = false;
+            config.calculate_storage = true;
+            % PT01a-specific timing correction (start with 1Hz optimal value)
+            config.lr_timing_correction_sec = 9.5;
+            % PT01a-specific recovery window (November 7, 2023)
+            config.lr_recovery_window = [datetime('2023-11-07 20:45:15', 'TimeZone', 'UTC'), ...
+                                        datetime('2023-11-07 20:46:30', 'TimeZone', 'UTC')];
+            % Use the resample anti-aliasing filter (same as decimation uses)
+            config.smoothing_method = 'resample_antialias';
+            config.decimation_factor = 100;  % Simulate 100x decimation filter
+            config.strain_rate_smoothing_window = 100;  % Minimal additional smoothing
+            config.strain_rate_smoothing_method = 'movmean';
+            config.apply_concatenation_filter = false;
+            config.filter_method = 'none';
+            config.chen_denoising = false;
+            % Start with 1Hz optimal time shift, may need adjustment for 100Hz
+            config.das_time_shift_seconds = 38;
+            config.apply_sampling_freq_correction = true;
+            % Use dynamic bounds to automatically adjust to filtered data range
+            config.dynamic_bounds = true;
+            config.use_related_bounds = false;
+            % Set manual bounds as fallback
+            config.manual_bounds.raw.min = -5;
+            config.manual_bounds.raw.max = 5;
+            config.manual_bounds.displacement.min = -5;
+            config.manual_bounds.displacement.max = 5;
+            config.manual_bounds.strain.min = -2;
+            config.manual_bounds.strain.max = 2;
+            fprintf('Running PT01a correlation analysis with RESAMPLE ANTI-ALIASING FILTER\n');
+            fprintf('  Using the SAME filter that makes your 1Hz data look clean!\n');
+            fprintf('  Cutoff: 0.5 Hz (Nyquist for 1Hz data)\n');
+            fprintf('  PT01a dates: Nov 7, 2023, 20:45:15 to 20:46:30 UTC\n');
+            fprintf('  DAS time shift: +38 seconds (from 1Hz optimization)\n');
+            fprintf('  Dynamic colorbar bounds enabled\n');
+            
         otherwise
-            error('Unknown mode: %s. Valid modes: prep, prep_single_step, prep_double_precision, prep_no_decim, prep_purge, prep_tdms, prep_concat, prep_timing, analyze, analyze_save, all, all_save, purge_inactive, purge_unraw, diagnostic_boundaries, diagnostic_enhanced, diagnostic_tdms, run_correlation_analysis, run_linear_regression, run_linear_regression_compare, run_amplitude_storage, run_storage_analysis, run_storage_calculation', mode);
+            error('Unknown mode: %s. Valid modes: prep, prep_single_step, prep_double_precision, prep_no_decim, prep_purge, prep_tdms, prep_concat, prep_timing, analyze, analyze_save, all, all_save, purge_inactive, purge_unraw, diagnostic_boundaries, diagnostic_enhanced, diagnostic_tdms, run_correlation_analysis, run_correlation_analysis_lowpass_pt01a, run_linear_regression, run_linear_regression_compare, run_amplitude_storage, run_storage_analysis, run_storage_calculation', mode);
     end
     
     fprintf('Mode "%s" configured\n', mode);

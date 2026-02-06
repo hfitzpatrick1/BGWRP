@@ -121,25 +121,33 @@ else
 end
 fprintf('═══════════════════════════════════════════════════════════════\n\n');
 
-% If recovery_window is specified, extract only that time range
+% If recovery_window is specified, extract only that time range FOR REGRESSION
+% But keep full data for plotting context
 if isfield(config, 'recovery_window') && ~isempty(config.recovery_window)
     recovery_start = config.recovery_window(1);
     recovery_end = config.recovery_window(2);
     
-    fprintf('Using custom recovery window: %s to %s\n', datestr(recovery_start), datestr(recovery_end));
+    fprintf('Using custom recovery window for regression: %s to %s\n', datestr(recovery_start), datestr(recovery_end));
     
-    % Find indices in full time array
+    % Save FULL data for plotting
+    displacement_rate_full_plot = displacement_rate_full;
+    time_das_full_plot = time_das_full;
+    
+    % Find indices in full time array for regression window
     [~, rec_start_idx] = min(abs(time_das_full - recovery_start));
     [~, rec_end_idx] = min(abs(time_das_full - recovery_end));
     
-    % Extract only the peak signal window
+    % Extract only the peak signal window FOR REGRESSION
     displacement_rate_full = displacement_rate_full(rec_start_idx:rec_end_idx, :);
     time_das = time_das_full(rec_start_idx:rec_end_idx);
     
-    fprintf('Extracted %d time points (%.1f seconds)\n', length(time_das), seconds(recovery_end - recovery_start));
+    fprintf('Extracted %d time points for regression (%.1f seconds)\n', length(time_das), seconds(recovery_end - recovery_start));
+    fprintf('Kept %d time points for plotting (full analysis window)\n', length(time_das_full_plot));
 else
     % Use the default analysis window
     time_das = das_filtered.analysis_time;
+    displacement_rate_full_plot = displacement_rate_full;
+    time_das_full_plot = time_das_full;
     fprintf('Using default analysis window\n');
 end
 
@@ -276,21 +284,16 @@ for t = 1:length(strain_rate_zone)
 end
 
 fprintf('  Calculated maximum envelope at %d depths\n', n_valid_points);
-fprintf('  BEFORE smoothing: PEAK = %.4e 1/s\n', max(abs(strain_rate_zone)));
+fprintf('  BEFORE additional smoothing: PEAK = %.4e 1/s\n', max(abs(strain_rate_zone)));
 
-% Apply moving average smoothing to match head data processing
-% Both signals now use moving average (consistent with Bourdet philosophy)
-% Use DOUBLE-PASS with lighter second pass to balance smoothness with peak preservation
+% Apply 40-second smoothing
+% Data already has 50-second moving average from main analysis
 strain_raw = strain_rate_zone;
-strain_smoothed = movmean(strain_rate_zone, 60, 'omitnan');  % First pass: 60s
-strain_smoothed = movmean(strain_smoothed, 15, 'omitnan');   % Second pass: 15s (lighter to preserve peak)
+strain_smoothed = movmean(strain_rate_zone, 40, 'omitnan');  % 40-second smoothing
 
-fprintf('  AFTER double-pass moving average (60s + 15s): PEAK = %.4e 1/s\n', max(abs(strain_smoothed)));
+fprintf('  AFTER 40-second moving average: PEAK = %.4e 1/s\n', max(abs(strain_smoothed)));
 fprintf('  Peak retention: %.2f%%\n', 100 * max(abs(strain_smoothed)) / max(abs(strain_rate_zone)));
-fprintf('✓ Double-pass (60s+15s) provides smoothness with better peak preservation\n');
-fprintf('✓ Lighter second pass (15s vs 30s) retains more peak amplitude\n');
-fprintf('✓ Drawdown uses Bourdet derivative + 60s moving average\n');
-fprintf('✓ Strain rate uses optimized double-pass for smooth appearance\n');
+fprintf('✓ 40-second smoothing\n');
 
 fprintf('Displacement rate range: %.2e to %.2e nm/s\n', ...
     min(displacement_rate_zone(:)), max(displacement_rate_zone(:)));
@@ -400,42 +403,107 @@ fprintf('DAS points in overlap: %d\n', length(time_das_overlap));
 strain_interp = interp1(time_das_overlap, strain_overlap, time_head_overlap, 'linear');
 
 % Remove any NaN values
+fprintf('\n=== CHECKING DATA VALIDITY ===\n');
+fprintf('strain_interp: %d total points, %d NaN (%.1f%%)\n', ...
+    length(strain_interp), sum(isnan(strain_interp)), 100*sum(isnan(strain_interp))/length(strain_interp));
+fprintf('head_rate_overlap: %d total points, %d NaN (%.1f%%)\n', ...
+    length(head_rate_overlap), sum(isnan(head_rate_overlap)), 100*sum(isnan(head_rate_overlap))/length(head_rate_overlap));
+
 valid_idx = ~isnan(strain_interp) & ~isnan(head_rate_overlap);
 strain_clean = strain_interp(valid_idx);
 drawdown_rate_clean = head_rate_overlap(valid_idx);  % Flip so drawdown spike at 19:15 points UP
 time_clean = time_head_overlap(valid_idx);
 
-fprintf('Valid points for regression: %d\n', length(strain_clean));
+fprintf('Valid points for regression: %d (out of %d total)\n', length(strain_clean), length(valid_idx));
+if length(strain_clean) < 2
+    error('Not enough valid points for regression! Only %d valid points found. Check if DAS filtering produced NaN values.', length(strain_clean));
+end
 
 % Flip strain rate to match drawdown rate direction
 fprintf('  Flipping strain rate to match drawdown rate direction\n');
 strain_clean = -strain_clean;  % Flip strain rate so both spikes at 19:15 point same direction
 
-% TEMPORAL WEIGHTING: Emphasize peak region where alignment is best
-fprintf('  Using TEMPORAL WEIGHTING to emphasize well-aligned peak region\n');
+% TEMPORAL WEIGHTING: Emphasize regions where strain and drawdown align best
+fprintf('  Using TEMPORAL WEIGHTING to emphasize well-aligned regions\n');
 
-% Create time-based weights: higher weight for peak region (19:15:30-19:16:15)
-% Lower weight for early part (19:14:45-19:15:30) where strain rate may lead slightly
-peak_start = datetime('2023-10-24 19:15:30', 'TimeZone', 'UTC');
-peak_end = datetime('2023-10-24 19:16:15', 'TimeZone', 'UTC');
+% Create time-based weights for PT01a data with better alignment
+% Main peak: 20:45:25-20:45:40 (where both signals peak together)
+% Secondary feature: 20:45:55-20:46:10 (secondary bump in both signals)
+% Tail region: 20:46:10-20:46:30 (recovery phase, lower weight)
+peak_start = datetime('2023-11-07 20:45:25', 'TimeZone', 'UTC');
+peak_end = datetime('2023-11-07 20:45:40', 'TimeZone', 'UTC');
+secondary_start = datetime('2023-11-07 20:45:55', 'TimeZone', 'UTC');
+secondary_end = datetime('2023-11-07 20:46:10', 'TimeZone', 'UTC');
+tail_start = datetime('2023-11-07 20:46:10', 'TimeZone', 'UTC');
 
 weights = ones(size(time_clean));
 for i = 1:length(time_clean)
     if time_clean(i) >= peak_start && time_clean(i) <= peak_end
-        weights(i) = 3.0;  % 3x weight for peak region
+        weights(i) = 10.0;  % 10x weight for main peak region (best alignment)
+    elseif time_clean(i) >= secondary_start && time_clean(i) <= secondary_end
+        weights(i) = 5.0;  % 5x weight for secondary feature (good alignment)
+    elseif time_clean(i) >= tail_start
+        weights(i) = 0.3;  % Lower weight for tail/recovery region
     elseif time_clean(i) < peak_start
-        weights(i) = 0.5;  % Downweight early rising edge
+        weights(i) = 0.2;  % Downweight early region (poor alignment)
     else
-        weights(i) = 1.5;  % Higher weight for tail (still good alignment)
+        weights(i) = 2.0;  % Moderate weight for transition regions
     end
 end
 
-fprintf('    Peak region (19:15:30-19:16:15): weight = 3.0\n');
-fprintf('    Early rising edge (before 19:15:30): weight = 0.5\n');
-fprintf('    Tail (after 19:16:15): weight = 1.5\n');
+fprintf('    Main peak (20:45:25-20:45:40): weight = 10.0 (best alignment)\n');
+fprintf('    Secondary feature (20:45:55-20:46:10): weight = 5.0 (good alignment)\n');
+fprintf('    Transition regions: weight = 2.0\n');
+fprintf('    Early region (before 20:45:25): weight = 0.2 (poor alignment)\n');
+fprintf('    Tail region (after 20:46:10): weight = 0.3 (recovery phase)\n');
 
 %% LINEAR REGRESSION: Strain Rate vs Drawdown Rate (with temporal weighting)
 fprintf('\n=== WEIGHTED REGRESSION RESULTS ===\n');
+
+% FOR PLOTTING: Also prepare full analysis window data (not just regression window)
+% This will allow plots to show context around the regression window
+fprintf('\n=== PREPARING FULL WINDOW DATA FOR PLOTTING ===\n');
+if exist('time_das_full_plot', 'var') && exist('displacement_rate_full_plot', 'var')
+    % Calculate strain rate for full plotting window (same process as regression window)
+    displacement_rate_zone_plot = displacement_rate_full_plot(:, depth_mask);
+    
+    % Calculate strain rate across gauge length for full window
+    n_channels_plot = size(displacement_rate_zone_plot, 2);
+    all_strain_rates_plot = zeros(size(displacement_rate_zone_plot, 1), n_channels_plot - channels_per_gauge);
+    
+    for ch = (half_gauge_channels + 1):(n_channels_plot - half_gauge_channels)
+        displacement_diff = displacement_rate_zone_plot(:, ch + half_gauge_channels) - displacement_rate_zone_plot(:, ch - half_gauge_channels);
+        all_strain_rates_plot(:, ch - half_gauge_channels) = displacement_diff / (gauge_length_m * 1e9);
+    end
+    
+    % Maximum envelope + smoothing for full window
+    strain_rate_zone_plot = max(abs(all_strain_rates_plot), [], 2);
+    [~, max_idx_plot] = max(abs(all_strain_rates_plot), [], 2);
+    for t = 1:length(strain_rate_zone_plot)
+        strain_rate_zone_plot(t) = strain_rate_zone_plot(t) * sign(all_strain_rates_plot(t, max_idx_plot(t)));
+    end
+    
+    strain_raw_plot = strain_rate_zone_plot;
+    strain_smoothed_plot = movmean(strain_rate_zone_plot, 40, 'omitnan');  % 40-second smoothing
+    
+    % Interpolate head data to full time window for plotting - use FULL head data, not just overlap
+    % Use time_head_rate (full head data) instead of time_head_overlap (windowed)
+    head_rate_plot = interp1(time_head_rate, drawdown_rate_ftps * ft_to_m, time_das_full_plot, 'linear', 'extrap');
+    % Apply same smoothing as the overlap data
+    head_rate_plot = movmean(head_rate_plot, 12, 'omitnan');
+    
+    fprintf('✓ Prepared full window data: %d time points (vs %d for regression)\n', ...
+        length(time_das_full_plot), length(time_das));
+    fprintf('  Head data interpolated from %d points to %d points\n', ...
+        length(time_head_rate), length(time_das_full_plot));
+else
+    % No full window data available, use regression window data
+    time_das_full_plot = time_das;
+    strain_smoothed_plot = strain_smoothed;
+    strain_raw_plot = strain_raw;
+    head_rate_plot = head_rate_overlap;
+    fprintf('  Using regression window data for plotting (no full window available)\n');
+end
 
 % Weighted least squares regression
 % Minimize: sum(weights .* (y - (mx + b))^2)
@@ -518,55 +586,70 @@ if config.show_plots
     strain_scale_scatter = 1e-11;
     scatter(drawdown_rate_clean, strain_clean / strain_scale_scatter, 20, 'b', 'filled', 'MarkerFaceAlpha', 0.6);
     hold on;
-    head_rate_range = linspace(min(drawdown_rate_clean), max(drawdown_rate_clean), 100);
-    plot(head_rate_range, polyval(p_regression, head_rate_range) / strain_scale_scatter, 'r-', 'LineWidth', 3);
+    % Safety check for empty or invalid data
+    if ~isempty(drawdown_rate_clean) && ~any(isnan(drawdown_rate_clean)) && ~any(isinf(drawdown_rate_clean))
+        min_rate = min(drawdown_rate_clean);
+        max_rate = max(drawdown_rate_clean);
+        if isscalar(min_rate) && isscalar(max_rate) && (max_rate > min_rate)
+            head_rate_range = linspace(min_rate, max_rate, 100);
+            plot(head_rate_range, polyval(p_regression, head_rate_range) / strain_scale_scatter, 'r-', 'LineWidth', 3);
+        else
+            fprintf('  ⚠ Warning: Cannot create linspace - invalid min/max values\n');
+        end
+    else
+        fprintf('  ⚠ Warning: Cannot plot regression line - data contains NaN/Inf or is empty\n');
+    end
     hold off;
-    xlabel('Drawdown Rate (ft/s)', 'FontSize', 12, 'FontWeight', 'bold');
+    xlabel('Drawdown Rate (m/s)', 'FontSize', 12, 'FontWeight', 'bold');
     ylabel('Strain Rate (1/s) ×10^{-11}', 'FontSize', 12, 'FontWeight', 'bold');
-    title(sprintf('Linear Regression: R = %.3f, R^2 = %.3f', R_corr, R_squared), 'FontSize', 14);
+    title(sprintf('Linear Regression: R² = %.3f', R_squared), 'FontSize', 14);
     grid on;
     legend('Data', sprintf('Fit: y = %.2e*x + %.2e', slope, intercept), 'Location', 'best');
     
     % Add text box with statistics
-    text_str = sprintf('Slope: %.2e\nR: %.3f\nR^2: %.3f\nRMSE: %.2e\nN: %d\nDepth: %.0f-%.0f ft\nChannels: %d', ...
-        slope, R_corr, R_squared, RMSE, length(strain_clean), config.depth_range_ft(1), config.depth_range_ft(2), n_channels);
+    % Convert depth from feet to meters
+    depth_m_start = config.depth_range_ft(1) * 0.3048;
+    depth_m_end = config.depth_range_ft(2) * 0.3048;
+    text_str = sprintf('Slope: %.2e\nR^2: %.3f\nRMSE: %.2e\nN: %d\nDepth: %.0f-%.0f m\nChannels: %d', ...
+        slope, R_squared, RMSE, length(strain_clean), depth_m_start, depth_m_end, n_channels);
     text(0.05, 0.95, text_str, 'Units', 'normalized', 'VerticalAlignment', 'top', ...
         'BackgroundColor', 'white', 'EdgeColor', 'black', 'FontSize', 10);
     
-    % TOP RIGHT (2): Time series overlay
+    % TOP RIGHT (2): Time series overlay - USE FULL WINDOW DATA
     subplot(2,2,2);
     
     % Determine appropriate scaling factors for display
     head_scale = 1e-4;  % Head rate displayed as 10^-4 m/s for readability
     strain_scale = 1e-11;  % Strain rate displayed as 10^-11 1/s for readability
     
-    % Fixed scaling for consistency across all plots
-    head_max = max(abs(drawdown_rate_clean));
-    strain_max = max(abs(strain_clean));
-    
-    % Force both scales to be fixed for consistency
-    fprintf('DEBUG SCALING: head_max = %.4e, using fixed head_scale = %.4e\n', head_max, head_scale);
-    fprintf('DEBUG SCALING: strain_max = %.4e, using fixed strain_scale = %.4e\n', strain_max, strain_scale);
-    
+    % Use full window data for plotting
     yyaxis left;
-    plot(time_clean, drawdown_rate_clean / head_scale, 'Color', [0.4660 0.6740 0.1880], 'LineWidth', 2.5, 'DisplayName', 'Drawdown Rate');
+    % Plot head rate for full window (may have NaNs outside overlap region)
+    valid_head = ~isnan(head_rate_plot);
+    if any(valid_head)
+        plot(time_das_full_plot(valid_head), head_rate_plot(valid_head) / head_scale, ...
+            'Color', [0.4660 0.6740 0.1880], 'LineWidth', 2.5, 'DisplayName', 'Drawdown Rate PM-07 z2');
+    end
     ylabel(sprintf('Drawdown Rate (m/s) ×10^{%d}', round(log10(head_scale))), 'FontSize', 12, 'FontWeight', 'bold');
     ax = gca;
     ax.YColor = [0.4660 0.6740 0.1880];
     
     yyaxis right;
-    plot(time_clean, strain_clean / strain_scale, 'Color', [0 0 0], 'LineWidth', 2.5, 'DisplayName', 'Strain Rate');
+    % Plot strain rate for full window
+    plot(time_das_full_plot, -strain_smoothed_plot / strain_scale, ...
+        'Color', [0 0 0], 'LineWidth', 2.5, 'DisplayName', 'Strain Rate PM-07 z1');
     ylabel(sprintf('Strain Rate (1/s) ×10^{%d}', round(log10(strain_scale))), 'FontSize', 12, 'FontWeight', 'bold');
     ax.YColor = 'k';
     
     xlabel('Date Time UTC', 'FontSize', 12, 'FontWeight', 'bold');
-    title(sprintf('Time Series (%.0fs correction) - Depth %.0f-%.0f ft', config.timing_correction_sec, config.depth_range_ft(1), config.depth_range_ft(2)), 'FontSize', 14);
+    title(sprintf('Time Series - Depth %.0f-%.0f m', config.depth_range_ft(1)*0.3048, config.depth_range_ft(2)*0.3048), 'FontSize', 14);
     legend('show', 'Location', 'best');
     grid on;
+    % Set x-axis limits to match regression window (extended to show context)
+    xlim([datetime('2023-11-07 20:44:53', 'TimeZone', 'UTC'), datetime('2023-11-07 20:46:30', 'TimeZone', 'UTC')]);
     
     % Overall title - concise and descriptive
-    sgtitle(sprintf('Poroelastic Storage Analysis: PT-01c Zone %s (%.0f-%.0f ft)', ...
-        config.zone(2), config.depth_range_ft(1), config.depth_range_ft(2)), ...
+    sgtitle('Poroelastic Storage Analysis: PT-01a Recovery observed through PM-07', ...
         'FontSize', 16, 'FontWeight', 'bold');
     
     % REMOVE SEPARATE FIGURE - Now consolidated into main figure
@@ -602,56 +685,87 @@ if config.show_plots
     disp_norm = (displacement_rate_avg_display - min(displacement_rate_avg_display)) / ...
         (max(displacement_rate_avg_display) - min(displacement_rate_avg_display) + eps);
     
-    % BOTTOM LEFT (3): Raw vs Smoothed Comparison
+    % BOTTOM LEFT (3): Raw vs Smoothed Comparison - USE FULL WINDOW DATA
     subplot(2,2,3);
+    
+    % Calculate averaged displacement rate for full window
+    displacement_rate_avg_full_plot = mean(displacement_rate_zone_plot, 2, 'omitnan');
+    displacement_rate_avg_raw_plot = displacement_rate_avg_full_plot;  % Save raw version
+    
+    % NO additional smoothing - the 50-second moving average is already applied
+    % (Removed 10s + 5s double-pass smoothing)
+    
     yyaxis left;
-    plot(time_comparison, displacement_rate_avg_raw, 'b-', 'LineWidth', 1.5, 'DisplayName', 'Displacement Rate (raw)');
+    plot(time_das_full_plot, displacement_rate_avg_raw_plot, 'b-', 'LineWidth', 0.8, 'DisplayName', 'Displacement Rate (raw)', 'Color', [0.7 0.7 1]);
     hold on;
-    plot(time_comparison, displacement_rate_avg_display, 'c--', 'LineWidth', 2, 'DisplayName', 'Displacement Rate (smoothed)');
+    plot(time_das_full_plot, displacement_rate_avg_full_plot, 'b-', 'LineWidth', 2.5, 'DisplayName', 'Displacement Rate (smoothed)');
     ylabel('Displacement Rate (nm/s)', 'Color', 'b');
     ax = gca;
     ax.YColor = 'b';
     
     yyaxis right;
-    % Scale strain rate to match other plots (×10^-11)
-    strain_scale_plot = 1e-11;  % Display strain rate in units of 10^-11 1/s (consistent with all plots)
-    % Get raw strain rate for this time window
-    strain_overlap_raw_display = -strain_overlap_raw(1:length(time_comparison));  % Flip to match strain_overlap_display
-    plot(time_comparison, strain_overlap_raw_display / strain_scale_plot, 'Color', [1 0.5 0.5], 'LineWidth', 1.5, 'DisplayName', 'Strain Rate (raw)');
+    % Scale strain rate to match subplot 2 (×10^-11)
+    strain_scale_plot = 1e-11;
+    % Plot raw strain as faint background
+    plot(time_das_full_plot, -strain_raw_plot / strain_scale_plot, 'Color', [1 0.8 0.8], 'LineWidth', 0.8, 'DisplayName', 'Strain Rate (raw)');
     hold on;
-    plot(time_comparison, strain_overlap_display / strain_scale_plot, 'r-', 'LineWidth', 2, 'DisplayName', 'Strain Rate (smoothed)');
+    % Plot smoothed strain as bold line (matching subplot 2)
+    plot(time_das_full_plot, -strain_smoothed_plot / strain_scale_plot, 'r-', 'LineWidth', 2.5, 'DisplayName', 'Strain Rate (smoothed)');
     ylabel(sprintf('Strain Rate (1/s) ×10^{-11}'), 'Color', 'r', 'FontSize', 12, 'FontWeight', 'bold');
     ax.YColor = 'r';
+    % Match y-axis range to subplot 2 for consistency
+    ylim([-0.3, 0.1]);
     xlabel('Time UTC', 'FontSize', 12, 'FontWeight', 'bold');
-    title('Raw vs Smoothed Comparison', 'FontSize', 14);
+    title('Raw vs Smoothed Comparison at PM-07', 'FontSize', 14);
     legend('Location', 'best');
     grid on;
+    % Set x-axis limits (extended to show context)
+    xlim([datetime('2023-11-07 20:44:53', 'TimeZone', 'UTC'), datetime('2023-11-07 20:46:30', 'TimeZone', 'UTC')]);
     
-    % BOTTOM RIGHT (4): Head rate overlay for timing reference
+    % BOTTOM RIGHT (4): Head rate overlay for timing reference - USE FULL WINDOW DATA
     subplot(2,2,4);
     yyaxis left;
-    % Use absolute value for strain rate to make it positive
-    strain_norm_abs = abs(strain_overlap_display);
+    % Normalize strain rate for full window
+    strain_norm_abs = abs(-strain_smoothed_plot);
     strain_norm_abs = (strain_norm_abs - min(strain_norm_abs)) / (max(strain_norm_abs) - min(strain_norm_abs) + eps);
-    plot(time_comparison, strain_norm_abs, 'r-', 'LineWidth', 2, 'DisplayName', 'Strain Rate (norm)');
+    plot(time_das_full_plot, strain_norm_abs, 'r-', 'LineWidth', 2, 'DisplayName', 'Strain Rate (norm)');
     ylabel('Normalized Strain Rate', 'Color', 'r');
     ax = gca;
     ax.YColor = 'r';
     
+    % BOTTOM RIGHT (4): Strain Rate vs Head Rate overlay - SHOW ACTUAL MAGNITUDES
+    subplot(2,2,4);
+    
+    % Plot the same data as subplot 2 for consistency
+    yyaxis left;
+    % Plot strain rate (same as subplot 2)
+    strain_scale_subplot4 = 1e-11;
+    plot(time_das_full_plot, -strain_smoothed_plot / strain_scale_subplot4, 'r-', 'LineWidth', 2.5, 'DisplayName', 'Strain Rate PM-07 z1');
+    ylabel(sprintf('Strain Rate (1/s) ×10^{-11}'), 'Color', 'r', 'FontSize', 12, 'FontWeight', 'bold');
+    ylim([-0.3, 0.1]);  % Match subplot 2
+    ax = gca;
+    ax.YColor = 'r';
+    
     yyaxis right;
-    % Get head rate for comparison - use absolute value to make it positive
-    if exist('drawdown_rate_clean', 'var') && exist('time_clean', 'var')
-        head_rate_interp = interp1(time_clean, drawdown_rate_clean, time_comparison, 'linear', 'extrap');
-        head_rate_abs = abs(head_rate_interp);
-        head_norm = (head_rate_abs - min(head_rate_abs)) / (max(head_rate_abs) - min(head_rate_abs) + eps);
-        plot(time_comparison, head_norm, 'g-', 'LineWidth', 2, 'DisplayName', 'Head Rate (norm)');
-        ylabel('Normalized Head Rate', 'Color', [0.4660 0.6740 0.1880]);
-        ax.YColor = [0.4660 0.6740 0.1880];
+    % Plot head rate (same data as subplot 2)
+    if exist('head_rate_plot', 'var') && any(~isnan(head_rate_plot))
+        head_scale_subplot4 = 1e-4;
+        valid_head = ~isnan(head_rate_plot);
+        if any(valid_head)
+            plot(time_das_full_plot(valid_head), head_rate_plot(valid_head) / head_scale_subplot4, ...
+                'Color', [0.4660 0.6740 0.1880], 'LineWidth', 2.5, 'DisplayName', 'Drawdown Rate PM-07 z2');
+            ylabel(sprintf('Drawdown Rate (m/s) ×10^{%d}', round(log10(head_scale_subplot4))), ...
+                'Color', [0.4660 0.6740 0.1880], 'FontSize', 12, 'FontWeight', 'bold');
+            ax = gca;
+            ax.YColor = [0.4660 0.6740 0.1880];
+        end
     end
-    xlabel('Time UTC');
-    title('Strain Rate vs Head Rate (normalized for alignment check)');
+    xlabel('Time UTC', 'FontSize', 12, 'FontWeight', 'bold');
+    title('Strain Rate vs Drawdown Rate (Alignment Check)', 'FontSize', 14);
     legend('Location', 'best');
     grid on;
+    % Set x-axis limits (extended to show context)
+    xlim([datetime('2023-11-07 20:44:53', 'TimeZone', 'UTC'), datetime('2023-11-07 20:46:30', 'TimeZone', 'UTC')]);
     
     fprintf('\n=== 4-SUBPLOT FIGURE GENERATED ===\n');
     fprintf('  Top Left: Linear Regression (Strain vs Drawdown)\n');

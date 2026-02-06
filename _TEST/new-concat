@@ -1,0 +1,43 @@
+%%%%%%%%%% Confidential - Internal Silixa Code Only %%%%%%%%%%
+
+%%% Load Matlab data, concatenate physical strain, and save data as mat file %%%
+
+%% Input Variables
+% File location, directory and filename
+directory       =   'F:\CSULB\FiberStrain\FL500VE001\';
+filesearch      =   '*.mat'; % String to search for files, can be filename or *.mat to find all mat files in a folder
+
+% save data, toggle (1 = Yes, 0 = No), directory to save data, filename
+save_data       =   1;
+save_directory  =   'F:\CSULB\FiberStrain\FL500VE001\';
+output_filename  =   'FL500VE001Concatenated';
+
+%% Run Script
+% Find files
+files           =   dir([directory filesearch]);
+lf              =   length(files);
+
+% Initialize arrays
+full_data       =   [];
+f_ind           =   1:lf;
+cnt             =   0;
+cd(directory);
+
+for nn = f_ind
+    clc
+    cnt             =   cnt + 1;
+    fprintf('Processing File %i of %i\n',cnt,length(f_ind));
+    
+    %% Load and Concatenate Data
+    fprintf('Loading and Concatenating Data...')
+    filename        =   files(nn).name;
+    load(filename,'data')      
+    full_data       =   vertcat(full_data, data);  
+    fprintf('Done\n')
+end
+%% Save data if required
+    if save_data
+        fprintf('Saving MAT File...')
+        save([save_directory output_filename],'full_data','-v7.3')
+        fprintf('Done\n')
+    end 

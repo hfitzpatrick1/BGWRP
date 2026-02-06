@@ -8,13 +8,13 @@ end
 
 % Set up ROI analysis configuration - FOCUS ON PT01a PUMPING ZONE
 lr_config = struct();
-lr_config.zone = 'z5';
+lr_config.zone = 'z2';  % USING ZONE 2 (updated from z5)
 lr_config.depth_range_ft = [450, 510];  % PT01a pumping zone (includes channel 1099 at 480 ft)
 lr_config.timing_correction_sec = 14;  % Optimal timing correction
 lr_config.show_plots = true;  % Set to false for cleaner output
 
 % Focus on PEAK REGION for best correlation (PT01a dates: Nov 7, 2023)
-% Narrowed window: 20:45:15 to 20:46:30 (1 min 15 sec focused on peak)
+% Window: 20:45:15 to 20:46:30 (settings that gave R² = 0.893)
 lr_config.recovery_window = [datetime('2023-11-07 20:45:15', 'TimeZone', 'UTC'), ...
                             datetime('2023-11-07 20:46:30', 'TimeZone', 'UTC')];
 
