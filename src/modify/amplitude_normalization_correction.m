@@ -22,8 +22,8 @@ if ~isfield(options, 'reference_method'), options.reference_method = 'median'; e
 if ~isfield(options, 'test_channels'), options.test_channels = 450:470; end
 if ~isfield(options, 'smoothing'), options.smoothing = false; end
 
-fprintf('=== AMPLITUDE NORMALIZATION CORRECTION ===\n');
-fprintf('Method: %s\n', options.method);
+console_log('=== AMPLITUDE NORMALIZATION CORRECTION ===\n');
+console_log('Method: %s\n', options.method);
 
 % Calculate file segment boundaries
 samples_per_file = 60;  % 1-minute files at 1Hz
@@ -31,14 +31,14 @@ num_segments = floor(size(data, 1) / samples_per_file);
 segment_boundaries = (0:num_segments) * samples_per_file;
 segment_boundaries(end) = size(data, 1); % Ensure last boundary covers all data
 
-fprintf('Processing %d file segments\n', num_segments);
+console_log('Processing %d file segments\n', num_segments);
 
 % Focus on test channels for amplitude calculation
 test_channels = options.test_channels;
 test_channels = test_channels(test_channels <= size(data, 2));
 
 %% Stage 1: Analyze segment amplitudes
-fprintf('\n--- STAGE 1: AMPLITUDE ANALYSIS ---\n');
+console_log('\n--- STAGE 1: AMPLITUDE ANALYSIS ---\n');
 
 segment_stats = [];
 for i = 1:num_segments
@@ -57,14 +57,14 @@ for i = 1:num_segments
         segment_stats(i, :) = [seg_start, seg_end, seg_rms, seg_std, seg_mean_abs, seg_max];
         
         if i <= 10 || mod(i, 20) == 0  % Show first 10 and every 20th
-            fprintf('  Segment %d: RMS=%.4f, STD=%.4f, MaxAbs=%.4f\n', ...
+            console_log('  Segment %d: RMS=%.4f, STD=%.4f, MaxAbs=%.4f\n', ...
                 i, seg_rms, seg_std, seg_max);
         end
     end
 end
 
 if isempty(segment_stats)
-    fprintf('No valid segments found - returning original data\n');
+    console_log('No valid segments found - returning original data\n');
     corrected_data = data;
     return;
 end
@@ -73,26 +73,26 @@ end
 switch lower(options.reference_method)
     case 'median'
         reference_rms = median(segment_stats(:, 3));
-        fprintf('Reference amplitude (median RMS): %.6f\n', reference_rms);
+        console_log('Reference amplitude (median RMS): %.6f\n', reference_rms);
     case 'mean'
         reference_rms = mean(segment_stats(:, 3));
-        fprintf('Reference amplitude (mean RMS): %.6f\n', reference_rms);
+        console_log('Reference amplitude (mean RMS): %.6f\n', reference_rms);
     case 'first'
         reference_rms = segment_stats(1, 3);
-        fprintf('Reference amplitude (first segment RMS): %.6f\n', reference_rms);
+        console_log('Reference amplitude (first segment RMS): %.6f\n', reference_rms);
     otherwise
         reference_rms = median(segment_stats(:, 3));
-        fprintf('Reference amplitude (default median RMS): %.6f\n', reference_rms);
+        console_log('Reference amplitude (default median RMS): %.6f\n', reference_rms);
 end
 
 %% Stage 2: Apply amplitude normalization
-fprintf('\n--- STAGE 2: AMPLITUDE NORMALIZATION ---\n');
+console_log('\n--- STAGE 2: AMPLITUDE NORMALIZATION ---\n');
 
 corrected_data = data; % Start with original data
 
 switch lower(options.method)
     case 'rms_normalize'
-        fprintf('Applying RMS normalization...\n');
+        console_log('Applying RMS normalization...\n');
         
         for i = 1:size(segment_stats, 1)
             seg_start = segment_stats(i, 1);
@@ -108,14 +108,14 @@ switch lower(options.method)
                     corrected_data(seg_start:seg_end, :) * scale_factor;
                 
                 if i <= 5 || mod(i, 25) == 0
-                    fprintf('    Segment %d: scale_factor=%.4f (RMS: %.4f -> %.4f)\n', ...
+                    console_log('    Segment %d: scale_factor=%.4f (RMS: %.4f -> %.4f)\n', ...
                         i, scale_factor, seg_rms, seg_rms * scale_factor);
                 end
             end
         end
         
     case 'adaptive_normalize'
-        fprintf('Applying adaptive normalization with smoothing...\n');
+        console_log('Applying adaptive normalization with smoothing...\n');
         
         % Calculate smooth scaling factors
         raw_factors = reference_rms ./ segment_stats(:, 3);
@@ -123,7 +123,7 @@ switch lower(options.method)
         if options.smoothing && length(raw_factors) > 5
             % Apply smoothing to scaling factors
             smooth_factors = movmean(raw_factors, 5);
-            fprintf('    Applied 5-point smoothing to scaling factors\n');
+            console_log('    Applied 5-point smoothing to scaling factors\n');
         else
             smooth_factors = raw_factors;
         end
@@ -138,13 +138,13 @@ switch lower(options.method)
                     corrected_data(seg_start:seg_end, :) * scale_factor;
                 
                 if i <= 5 || mod(i, 25) == 0
-                    fprintf('    Segment %d: smooth_scale=%.4f\n', i, scale_factor);
+                    console_log('    Segment %d: smooth_scale=%.4f\n', i, scale_factor);
                 end
             end
         end
         
     case 'percentile_normalize'
-        fprintf('Applying percentile-based normalization...\n');
+        console_log('Applying percentile-based normalization...\n');
         
         % Use 90th percentile instead of RMS for robustness
         reference_p90 = median(prctile(abs(data(segment_stats(:,1):segment_stats(:,2), test_channels)), 90, 'all'));
@@ -163,7 +163,7 @@ switch lower(options.method)
                     corrected_data(seg_start:seg_end, :) * scale_factor;
                 
                 if i <= 5 || mod(i, 25) == 0
-                    fprintf('    Segment %d: P90_scale=%.4f\n', i, scale_factor);
+                    console_log('    Segment %d: P90_scale=%.4f\n', i, scale_factor);
                 end
             end
         end
@@ -174,7 +174,7 @@ switch lower(options.method)
 end
 
 %% Stage 3: Validation
-fprintf('\n--- NORMALIZATION VALIDATION ---\n');
+console_log('\n--- NORMALIZATION VALIDATION ---\n');
 
 % Recalculate segment RMS after correction
 post_correction_stats = [];
@@ -197,20 +197,20 @@ corrected_rms_variation = std(post_correction_stats(:, 2)) / mean(post_correctio
 
 reduction_percentage = ((original_rms_variation - corrected_rms_variation) / original_rms_variation) * 100;
 
-fprintf('RMS Variation: %.1f%% -> %.1f%% (%.1f%% reduction)\n', ...
+console_log('RMS Variation: %.1f%% -> %.1f%% (%.1f%% reduction)\n', ...
     original_rms_variation, corrected_rms_variation, reduction_percentage);
 
 % Success criteria
 if reduction_percentage > 70
-    fprintf('✓ NORMALIZATION EXCELLENT: Substantial amplitude variation reduction\n');
+    console_log('✓ NORMALIZATION EXCELLENT: Substantial amplitude variation reduction\n');
 elseif reduction_percentage > 40
-    fprintf('✓ NORMALIZATION GOOD: Significant amplitude variation reduction\n');
+    console_log('✓ NORMALIZATION GOOD: Significant amplitude variation reduction\n');
 elseif reduction_percentage > 15
-    fprintf('⚠ NORMALIZATION PARTIAL: Moderate amplitude variation reduction\n');
+    console_log('⚠ NORMALIZATION PARTIAL: Moderate amplitude variation reduction\n');
 else
-    fprintf('✗ NORMALIZATION MINIMAL: Limited improvement achieved\n');
+    console_log('✗ NORMALIZATION MINIMAL: Limited improvement achieved\n');
 end
 
-fprintf('\n=== AMPLITUDE NORMALIZATION COMPLETE ===\n');
+console_log('\n=== AMPLITUDE NORMALIZATION COMPLETE ===\n');
 
 end

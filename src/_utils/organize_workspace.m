@@ -12,8 +12,8 @@ function workspace_info = organize_workspace(base_path, cleanup_dirs, selective_
 % Output:
 %   workspace_info - Structure with organization results
 
-fprintf('=== ORGANIZING WORKSPACE ===\n');
-fprintf('Base path: %s\n', base_path);
+console_log('=== ORGANIZING WORKSPACE ===\n');
+console_log('Base path: %s\n', base_path);
 
 if nargin < 2
     cleanup_dirs = false;  % Default: don't cleanup existing directories
@@ -29,7 +29,7 @@ workspace_info.input_folders = {};
 workspace_info.processing_dirs = struct();
 
 %% Find input folders with TDMS or MAT files
-fprintf('\nScanning for input folders (mode: %s)...\n', selective_mode);
+console_log('\nScanning for input folders (mode: %s)...\n', selective_mode);
 
 if ~exist(base_path, 'dir')
     error('Base path does not exist: %s', base_path);
@@ -39,7 +39,7 @@ end
 raw_dir = fullfile(base_path, '_raw');
 if ~exist(raw_dir, 'dir')
     mkdir(raw_dir);
-    fprintf('  Created _raw directory for archiving\n');
+    console_log('  Created _raw directory for archiving\n');
 end
 
 % Get all subdirectories in base path (excluding those starting with _)
@@ -71,7 +71,7 @@ for i = 1:length(all_items)
         
         if ~isempty(tdms_files) || ~isempty(mat_files)
             input_folders{end+1} = item.name;
-            fprintf('  Found input folder: %s (%d TDMS in _das, %d MAT in _head)\n', ...
+            console_log('  Found input folder: %s (%d TDMS in _das, %d MAT in _head)\n', ...
                 item.name, length(tdms_files), length(mat_files));
         end
     end
@@ -105,7 +105,7 @@ if exist(active_dir, 'dir')
             
             if ~isempty(tdms_files) || ~isempty(mat_files)
                 input_folders{end+1} = item.name;
-                fprintf('  Found input folder in _active: %s (%d TDMS in _das, %d MAT in _head)\n', ...
+                console_log('  Found input folder in _active: %s (%d TDMS in _das, %d MAT in _head)\n', ...
                     item.name, length(tdms_files), length(mat_files));
             end
         end
@@ -115,12 +115,12 @@ end
 workspace_info.input_folders = input_folders;
 
 if isempty(input_folders)
-    fprintf('  ⚠ No input folders with TDMS/MAT files found\n');
+    console_log('  ⚠ No input folders with TDMS/MAT files found\n');
     return;
 end
 
 %% Create processing directories
-fprintf('\nCreating processing directories...\n');
+console_log('\nCreating processing directories...\n');
 
 processing_dirs = {'_tdms_to_mat', '_combined_head', '_concatenated', '_active'};
 
@@ -132,34 +132,34 @@ for i = 1:length(processing_dirs)
         if cleanup_dirs
             if strcmp(selective_mode, 'selective')
                 % Selective mode: only clean subdirectories matching current input folders
-                fprintf('  Selective cleaning in: %s\n', dir_name);
+                console_log('  Selective cleaning in: %s\n', dir_name);
                 for j = 1:length(input_folders)
                     subfolder_path = fullfile(dir_path, input_folders{j});
                     if exist(subfolder_path, 'dir')
-                        fprintf('    Cleaning %s/%s\n', dir_name, input_folders{j});
+                        console_log('    Cleaning %s/%s\n', dir_name, input_folders{j});
                         rmdir(subfolder_path, 's');
                     end
                 end
             else
                 % Purge mode: clean entire directory (legacy behavior)
-                fprintf('  Purge cleaning directory: %s\n', dir_name);
+                console_log('  Purge cleaning directory: %s\n', dir_name);
                 rmdir(dir_path, 's');
                 mkdir(dir_path);
             end
-            fprintf('  ✓ Cleaned: %s\n', dir_name);
+            console_log('  ✓ Cleaned: %s\n', dir_name);
         else
-            fprintf('  ✓ Using existing: %s\n', dir_name);
+            console_log('  ✓ Using existing: %s\n', dir_name);
         end
     else
         mkdir(dir_path);
-        fprintf('  ✓ Created: %s\n', dir_name);
+        console_log('  ✓ Created: %s\n', dir_name);
     end
     
     workspace_info.processing_dirs.(dir_name(2:end)) = dir_path; % Remove _ prefix for field name
 end
 
 %% Create subdirectories for each input folder
-fprintf('\nCreating subdirectories for input folders...\n');
+console_log('\nCreating subdirectories for input folders...\n');
 
 for i = 1:length(input_folders)
     folder_name = input_folders{i};
@@ -169,15 +169,15 @@ for i = 1:length(input_folders)
         subdir_path = fullfile(base_path, processing_dirs{j}, folder_name);
         if ~exist(subdir_path, 'dir')
             mkdir(subdir_path);
-            fprintf('  Created: %s/%s\n', processing_dirs{j}, folder_name);
+            console_log('  Created: %s/%s\n', processing_dirs{j}, folder_name);
         else
-            fprintf('  ✓ Using existing: %s/%s\n', processing_dirs{j}, folder_name);
+            console_log('  ✓ Using existing: %s/%s\n', processing_dirs{j}, folder_name);
         end
     end
 end
 
 %% Report input files (no copying needed)
-fprintf('\nInput files detected:\n');
+console_log('\nInput files detected:\n');
 
 for i = 1:length(input_folders)
     folder_name = input_folders{i};
@@ -186,7 +186,7 @@ for i = 1:length(input_folders)
     % Report TDMS files
     tdms_files = dir(fullfile(source_path, '*.tdms'));
     if ~isempty(tdms_files)
-        fprintf('  %s: %d TDMS files (will be converted to _tdms_to_mat/%s)\n', ...
+        console_log('  %s: %d TDMS files (will be converted to _tdms_to_mat/%s)\n', ...
             folder_name, length(tdms_files), folder_name);
     end
     
@@ -194,10 +194,10 @@ for i = 1:length(input_folders)
     mat_files = dir(fullfile(source_path, '*.mat'));
     if ~isempty(mat_files)
         if isempty(tdms_files)
-            fprintf('  %s: %d MAT files (will be processed from source)\n', ...
+            console_log('  %s: %d MAT files (will be processed from source)\n', ...
                 folder_name, length(mat_files));
         else
-            fprintf('  %s: %d MAT files (already converted, will use if needed)\n', ...
+            console_log('  %s: %d MAT files (already converted, will use if needed)\n', ...
                 folder_name, length(mat_files));
         end
     end
@@ -206,22 +206,22 @@ end
 %% Archive processed directories (selective mode only)
 if strcmp(selective_mode, 'selective')
     workspace_info.archive_function = @() archive_processed_directories(base_path, input_folders);
-    fprintf('\nNote: After processing, use archive_processed_directories() to move source dirs to _raw\n');
+    console_log('\nNote: After processing, use archive_processed_directories() to move source dirs to _raw\n');
 else
     workspace_info.archive_function = [];
 end
 
 workspace_info.status = 'organized';
 workspace_info.selective_mode = selective_mode;
-fprintf('\n✓ Workspace organization complete\n');
-fprintf('Input folders: %d\n', length(input_folders));
-fprintf('Processing directories created: %d\n', length(processing_dirs));
+console_log('\n✓ Workspace organization complete\n');
+console_log('Input folders: %d\n', length(input_folders));
+console_log('Processing directories created: %d\n', length(processing_dirs));
 
 end
 
 function archive_processed_directories(base_path, processed_folders)
 %ARCHIVE_PROCESSED_DIRECTORIES Move processed source directories to _raw
-fprintf('\n=== ARCHIVING PROCESSED DIRECTORIES ===\n');
+console_log('\n=== ARCHIVING PROCESSED DIRECTORIES ===\n');
 
 raw_dir = fullfile(base_path, '_raw');
 for i = 1:length(processed_folders)
@@ -231,17 +231,17 @@ for i = 1:length(processed_folders)
     
     if exist(source_path, 'dir')
         if exist(archive_path, 'dir')
-            fprintf('  Replacing existing archive: %s\n', folder_name);
+            console_log('  Replacing existing archive: %s\n', folder_name);
             rmdir(archive_path, 's');
         end
         
-        fprintf('  Archiving: %s -> _raw/%s\n', folder_name, folder_name);
+        console_log('  Archiving: %s -> _raw/%s\n', folder_name, folder_name);
         movefile(source_path, archive_path);
-        fprintf('  ✓ Archived: %s\n', folder_name);
+        console_log('  ✓ Archived: %s\n', folder_name);
     else
-        fprintf('  ⚠ Source already moved: %s\n', folder_name);
+        console_log('  ⚠ Source already moved: %s\n', folder_name);
     end
 end
 
-fprintf('✓ Archive complete\n');
+console_log('✓ Archive complete\n');
 end

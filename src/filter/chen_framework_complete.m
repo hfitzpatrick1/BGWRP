@@ -23,7 +23,7 @@ function filtered_data = chen_framework_complete(data, config)
 %   config.chen_fk_strength            - F-K filter strength (default: 0.02)
 %   config.chen_fk_preserve_signal     - Signal preservation 0-1 (default: 0.8)
 
-fprintf('  Chen et al. (2023) 3-stage denoising framework:\n');
+console_log('  Chen et al. (2023) 3-stage denoising framework:\n');
 
 % Get configuration with defaults
 enable_stage1 = get_param(config, 'chen_enable_stage1', true);
@@ -35,26 +35,26 @@ current_data = data;
 
 % Stage 1: Butterworth Bandpass Filter
 if enable_stage1
-    fprintf('    Stage 1: Butterworth bandpass filtering...\n');
+    console_log('    Stage 1: Butterworth bandpass filtering...\n');
     current_data = chen_stage1_bandpass(current_data, config);
 else
-    fprintf('    Stage 1: SKIPPED - Bandpass filtering disabled\n');
+    console_log('    Stage 1: SKIPPED - Bandpass filtering disabled\n');
 end
 
 % Stage 2: Structure-Oriented Median Filter (SOMF)
 if enable_stage2
-    fprintf('    Stage 2: Structure-oriented median filtering...\n');
+    console_log('    Stage 2: Structure-oriented median filtering...\n');
     current_data = chen_stage2_somf(current_data, config);
 else
-    fprintf('    Stage 2: SKIPPED - SOMF filtering disabled\n');
+    console_log('    Stage 2: SKIPPED - SOMF filtering disabled\n');
 end
 
 % Stage 3: F-K Domain Dip Filter
 if enable_stage3
-    fprintf('    Stage 3: F-K domain dip filtering...\n');
+    console_log('    Stage 3: F-K domain dip filtering...\n');
     current_data = chen_stage3_fk(current_data, config);
 else
-    fprintf('    Stage 3: SKIPPED - F-K filtering disabled\n');
+    console_log('    Stage 3: SKIPPED - F-K filtering disabled\n');
 end
 
 filtered_data = current_data;
@@ -64,7 +64,7 @@ original_std = std(data(:));
 filtered_std = std(filtered_data(:));
 snr_improvement = 20 * log10(original_std / filtered_std);
 
-fprintf('  Chen framework complete. SNR improvement: %.1f dB\n', snr_improvement);
+console_log('  Chen framework complete. SNR improvement: %.1f dB\n', snr_improvement);
 
 end
 

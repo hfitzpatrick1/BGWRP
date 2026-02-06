@@ -45,19 +45,19 @@ if nargin >= 2 && isfield(config, 'manual_bounds')
         case 'raw'
             if isfield(config.manual_bounds, 'raw')
                 bounds = [config.manual_bounds.raw.min, config.manual_bounds.raw.max];
-                fprintf('    Using manual bounds for raw: [%.1f, %.1f] nm/s\n', bounds(1), bounds(2));
+                console_log('    Using manual bounds for raw: [%.1f, %.1f] nm/s\n', bounds(1), bounds(2));
                 return;
             end
         case 'displacement'
             if isfield(config.manual_bounds, 'displacement')
                 bounds = [config.manual_bounds.displacement.min, config.manual_bounds.displacement.max];
-                fprintf('    Using manual bounds for displacement: [%.1f, %.1f] nm/s\n', bounds(1), bounds(2));
+                console_log('    Using manual bounds for displacement: [%.1f, %.1f] nm/s\n', bounds(1), bounds(2));
                 return;
             end
         case 'strain'
             if isfield(config.manual_bounds, 'strain')
                 bounds = [config.manual_bounds.strain.min, config.manual_bounds.strain.max];
-                fprintf('    Using manual bounds for strain: [%.1f, %.1f] nm/m\n', bounds(1), bounds(2));
+                console_log('    Using manual bounds for strain: [%.1f, %.1f] nm/m\n', bounds(1), bounds(2));
                 return;
             end
     end

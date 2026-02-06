@@ -12,7 +12,7 @@ function analysis_results = analyze_head_data(timing_config, test_labels, config
 % Outputs:
 %   analysis_results - Structure containing analysis results for all tests
 
-fprintf('=== HEAD DATA ANALYSIS (UNIFIED) ===\n');
+console_log('=== HEAD DATA ANALYSIS (UNIFIED) ===\n');
 
 % Initialize results structure
 analysis_results = struct();
@@ -28,11 +28,11 @@ active_base = fullfile(config.base_input, '_active');
 %% Load and analyze data for each test
 for i = 1:length(test_labels)
     test_label = test_labels{i};
-    fprintf('\n--- Analyzing test %s ---\n', upper(test_label));
+    console_log('\n--- Analyzing test %s ---\n', upper(test_label));
     
     % Get timing info for this test
     if ~isfield(timing_config, test_label)
-        fprintf('  WARNING: No timing data found for test %s\n', test_label);
+        console_log('  WARNING: No timing data found for test %s\n', test_label);
         analysis_results.(test_label).error = 'no_timing_data';
         continue;
     end
@@ -49,7 +49,7 @@ for i = 1:length(test_labels)
     end
     analysis_duration = minutes(analysis_end - analysis_start);
     
-    fprintf('Analysis window: %s to %s (%.1f minutes)\n', ...
+    console_log('Analysis window: %s to %s (%.1f minutes)\n', ...
         analysis_start, analysis_end, analysis_duration);
     
     % Store timing info
@@ -63,25 +63,25 @@ for i = 1:length(test_labels)
     head_file = fullfile(head_dir, 'head_data.mat');
     
     if ~exist(head_file, 'file')
-        fprintf('  ⚠ No head data file found: %s\n', head_file);
+        console_log('  ⚠ No head data file found: %s\n', head_file);
         analysis_results.(test_label).error = 'no_head_data';
         continue;
     end
     
     try
-        fprintf('  Loading combined head data: %s\n', head_file);
+        console_log('  Loading combined head data: %s\n', head_file);
         head_data = load(head_file);
         
         % Validate head data structure
         if ~isfield(head_data, 'Date') || ~isfield(head_data, 'zones')
-            fprintf('  ⚠ Invalid head data structure in %s\n', head_file);
+            console_log('  ⚠ Invalid head data structure in %s\n', head_file);
             analysis_results.(test_label).error = 'invalid_structure';
             continue;
         end
         
         % Get zone names
         zone_names = fieldnames(head_data.zones);
-        fprintf('  Found %d zones: %s\n', length(zone_names), strjoin(zone_names, ', '));
+        console_log('  Found %d zones: %s\n', length(zone_names), strjoin(zone_names, ', '));
         
         % Process each zone
         for z = 1:length(zone_names)
@@ -90,7 +90,7 @@ for i = 1:length(test_labels)
             
             % Validate zone data
             if ~isfield(zone_data, 'Drawdownft') || ~isfield(zone_data, 'Depthft')
-                fprintf('    ⚠ Zone %s missing required fields\n', zone_name);
+                console_log('    ⚠ Zone %s missing required fields\n', zone_name);
                 continue;
             end
             
@@ -118,20 +118,20 @@ for i = 1:length(test_labels)
                 avg_recovery_rate = mean(recovery_rate_ms);
                 analysis_results.(test_label).zones.(zone_name).avg_recovery_rate = avg_recovery_rate;
                 
-                fprintf('    Zone %s (%.1f ft): Avg recovery rate = %.6f m/s (%d points)\n', ...
+                console_log('    Zone %s (%.1f ft): Avg recovery rate = %.6f m/s (%d points)\n', ...
                     zone_name, Depthft, avg_recovery_rate, length(recovery_data.Date));
             else
-                fprintf('    Zone %s: NO DATA IN RECOVERY WINDOW\n', zone_name);
+                console_log('    Zone %s: NO DATA IN RECOVERY WINDOW\n', zone_name);
             end
         end
         
     catch ME
-        fprintf('  ✗ Error processing head data for %s: %s\n', test_label, ME.message);
+        console_log('  ✗ Error processing head data for %s: %s\n', test_label, ME.message);
         analysis_results.(test_label).error = ME.message;
     end
 end
 
-fprintf('\n=== HEAD DATA ANALYSIS COMPLETE ===\n');
+console_log('\n=== HEAD DATA ANALYSIS COMPLETE ===\n');
 
 end
 

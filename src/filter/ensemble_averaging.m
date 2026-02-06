@@ -21,7 +21,7 @@ function filtered_data = ensemble_averaging(data, depth_ft, config)
 % Key insight: Geological responses are spatially coherent across formations,
 % while grid artifacts are spatially random across channels.
 
-    fprintf('Applying multi-channel ensemble averaging...\n');
+    console_log('Applying multi-channel ensemble averaging...\n');
     
     [n_time, n_channels] = size(data);
     filtered_data = data; % Initialize output
@@ -32,7 +32,7 @@ function filtered_data = ensemble_averaging(data, depth_ft, config)
     min_channels = config.ensemble_min_channels;   % Minimum channels per zone
     overlap_ratio = config.ensemble_overlap_ratio; % Zone overlap for smoothing
     
-    fprintf('Zone window: %.1f ft, Signal weight: %.2f, Min channels: %d\n', ...
+    console_log('Zone window: %.1f ft, Signal weight: %.2f, Min channels: %d\n', ...
         zone_window, signal_weight, min_channels);
     
     % Calculate depth range and step
@@ -89,7 +89,7 @@ function filtered_data = ensemble_averaging(data, depth_ft, config)
             end
         end
         
-        fprintf('Zone %d: Depth %.1f-%.1f ft, %d channels, ensemble range [%.3f, %.3f]\n', ...
+        console_log('Zone %d: Depth %.1f-%.1f ft, %d channels, ensemble range [%.3f, %.3f]\n', ...
             zone_count, zone_start, zone_end, length(zone_channels), ...
             min(ensemble_signal), max(ensemble_signal));
     end
@@ -97,7 +97,7 @@ function filtered_data = ensemble_averaging(data, depth_ft, config)
     % Handle any unprocessed channels (edge cases)
     unprocessed = find(~processed_channels);
     if ~isempty(unprocessed)
-        fprintf('Warning: %d channels not processed (insufficient zone coverage)\n', ...
+        console_log('Warning: %d channels not processed (insufficient zone coverage)\n', ...
             length(unprocessed));
         % Apply simple smoothing to unprocessed channels
         for ch = unprocessed
@@ -110,11 +110,11 @@ function filtered_data = ensemble_averaging(data, depth_ft, config)
     filtered_std = std(filtered_data(:));
     noise_reduction = (original_std - filtered_std) / original_std * 100;
     
-    fprintf('Ensemble averaging complete:\n');
-    fprintf('  Processed zones: %d\n', zone_count);
-    fprintf('  Processed channels: %d/%d (%.1f%%)\n', ...
+    console_log('Ensemble averaging complete:\n');
+    console_log('  Processed zones: %d\n', zone_count);
+    console_log('  Processed channels: %d/%d (%.1f%%)\n', ...
         sum(processed_channels), n_channels, sum(processed_channels)/n_channels*100);
-    fprintf('  Noise reduction: %.1f%%\n', noise_reduction);
+    console_log('  Noise reduction: %.1f%%\n', noise_reduction);
     
 end
 

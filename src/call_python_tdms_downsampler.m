@@ -61,7 +61,7 @@ function [success, outputPath, metadata] = call_python_tdms_downsampler(inputFol
     metadata = struct();
     
     if verbose
-        fprintf('=== BGWRP Python TDMS Downsampler Interface ===\n');
+        console_log('=== BGWRP Python TDMS Downsampler Interface ===\n');
     end
     
     %% Configuration
@@ -76,13 +76,13 @@ function [success, outputPath, metadata] = call_python_tdms_downsampler(inputFol
     if ~exist(outputFolder, 'dir')
         mkdir(outputFolder);
         if verbose
-            fprintf('Created output folder: %s\n', outputFolder);
+            console_log('Created output folder: %s\n', outputFolder);
         end
     end
     
     %% Pre-flight checks
     if verbose
-        fprintf('\n--- Pre-flight Checks ---\n');
+        console_log('\n--- Pre-flight Checks ---\n');
     end
     
     % Check Python script
@@ -90,7 +90,7 @@ function [success, outputPath, metadata] = call_python_tdms_downsampler(inputFol
         error('Python TDMS script not found: %s', pythonScript);
     end
     if verbose
-        fprintf('✓ Python script found\n');
+        console_log('✓ Python script found\n');
     end
     
     % Check input folder and TDMS files
@@ -99,7 +99,7 @@ function [success, outputPath, metadata] = call_python_tdms_downsampler(inputFol
         error('No TDMS files found in input folder: %s', inputFolder);
     end
     if verbose
-        fprintf('✓ Found %d TDMS files\n', length(tdmsFiles));
+        console_log('✓ Found %d TDMS files\n', length(tdmsFiles));
     end
     
     % Test Python availability
@@ -108,14 +108,14 @@ function [success, outputPath, metadata] = call_python_tdms_downsampler(inputFol
         error('Python not available with command: %s\nOutput: %s', pythonExe, pythonOutput);
     end
     if verbose
-        fprintf('✓ Python available: %s', strtrim(pythonOutput));
+        console_log('✓ Python available: %s', strtrim(pythonOutput));
     end
     
     %% Prepare Python execution
     if verbose
-        fprintf('\n--- Preparing Python Execution ---\n');
-        fprintf('Note: Current Python script requires interactive input.\n');
-        fprintf('      This function will attempt automated execution.\n');
+        console_log('\n--- Preparing Python Execution ---\n');
+        console_log('Note: Current Python script requires interactive input.\n');
+        console_log('      This function will attempt automated execution.\n');
     end
     
     % Store current directory and change to output folder
@@ -125,9 +125,9 @@ function [success, outputPath, metadata] = call_python_tdms_downsampler(inputFol
     try
         %% Method 1: Direct execution (will likely require user interaction)
         if verbose
-            fprintf('\nAttempting to execute Python script...\n');
-            fprintf('Script: %s\n', pythonScript);
-            fprintf('Working directory: %s\n', pwd);
+            console_log('\nAttempting to execute Python script...\n');
+            console_log('Script: %s\n', pythonScript);
+            console_log('Working directory: %s\n', pwd);
         end
         
         % Construct command with proper arguments for automated script
@@ -140,16 +140,16 @@ function [success, outputPath, metadata] = call_python_tdms_downsampler(inputFol
         end
         
         if verbose
-            fprintf('Command: %s\n', cmd);
-            fprintf('\n--- Python Script Execution ---\n');
+            console_log('Command: %s\n', cmd);
+            console_log('\n--- Python Script Execution ---\n');
         end
         
         % Execute automated script (no user interaction required)
         [status, cmdout] = system(cmd);
         
         if verbose
-            fprintf('Exit status: %d\n', status);
-            fprintf('Output:\n%s\n', cmdout);
+            console_log('Exit status: %d\n', status);
+            console_log('Output:\n%s\n', cmdout);
         end
         
         %% Check for output files
@@ -166,7 +166,7 @@ function [success, outputPath, metadata] = call_python_tdms_downsampler(inputFol
                 outputPath = fullfile(pwd, possibleOutputs{i});
                 foundOutput = true;
                 if verbose
-                    fprintf('✓ Found output file: %s\n', outputPath);
+                    console_log('✓ Found output file: %s\n', outputPath);
                 end
                 break;
             end
@@ -181,11 +181,11 @@ function [success, outputPath, metadata] = call_python_tdms_downsampler(inputFol
                 try
                     metadata = parse_properties_file(metadataFile);
                     if verbose
-                        fprintf('✓ Loaded metadata from properties file\n');
+                        console_log('✓ Loaded metadata from properties file\n');
                     end
                 catch
                     if verbose
-                        fprintf('⚠ Could not parse metadata file\n');
+                        console_log('⚠ Could not parse metadata file\n');
                     end
                 end
             end
@@ -199,13 +199,13 @@ function [success, outputPath, metadata] = call_python_tdms_downsampler(inputFol
             
         else
             if verbose
-                fprintf('⚠ No output files found\n');
+                console_log('⚠ No output files found\n');
             end
         end
         
     catch ME
         if verbose
-            fprintf('Error during execution: %s\n', ME.message);
+            console_log('Error during execution: %s\n', ME.message);
         end
         success = false;
     end
@@ -215,12 +215,12 @@ function [success, outputPath, metadata] = call_python_tdms_downsampler(inputFol
     
     %% Summary
     if verbose
-        fprintf('\n--- Execution Summary ---\n');
-        fprintf('Success: %s\n', matlab.lang.makeValidName(string(success)));
+        console_log('\n--- Execution Summary ---\n');
+        console_log('Success: %s\n', matlab.lang.makeValidName(string(success)));
         if success
-            fprintf('Output file: %s\n', outputPath);
+            console_log('Output file: %s\n', outputPath);
         end
-        fprintf('Processing completed.\n');
+        console_log('Processing completed.\n');
     end
 end
 

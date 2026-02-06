@@ -19,11 +19,11 @@ if length(mat_files) == 1
     try
         loaded_data = load(data_file);
         das_data = loaded_data;
-        fprintf('  Loaded DAS data: %s\n', mat_files(1).name);
+        console_log('  Loaded DAS data: %s\n', mat_files(1).name);
     catch ME
-        fprintf('  Error loading DAS data: %s\n', ME.message);
+        console_log('  Error loading DAS data: %s\n', ME.message);
     end
 else
-    fprintf('  No DAS data found for %s\n', test_label);
+    console_log('  No DAS data found for %s\n', test_label);
 end
 end

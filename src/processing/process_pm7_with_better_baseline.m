@@ -10,9 +10,9 @@ function process_pm7_with_better_baseline(csv_file, zone_name, pump_start_time)
 %   pump_start = datetime(2023,11,7,16,45,0,'TimeZone','UTC');
 %   process_pm7_with_better_baseline('E:/...csv', 'PT-01a Z3', pump_start)
 
-fprintf('=== PM7 TRANSDUCER - IMPROVED BASELINE METHOD ===\n');
-fprintf('Zone: %s\n', zone_name);
-fprintf('Pump start time: %s UTC\n\n', pump_start_time);
+console_log('=== PM7 TRANSDUCER - IMPROVED BASELINE METHOD ===\n');
+console_log('Zone: %s\n', zone_name);
+console_log('Pump start time: %s UTC\n\n', pump_start_time);
 
 %% Load and parse data (same as before)
 fid = fopen(csv_file, 'r');
@@ -41,8 +41,8 @@ pressure_raw = data_table.Pressure_psi;
 temperature = data_table.Temperature_C;
 depth_ft_raw = data_table.Depth_ft;
 
-fprintf('Data loaded: %d points\n', length(timestamps));
-fprintf('Time range: %s to %s UTC\n\n', timestamps(1), timestamps(end));
+console_log('Data loaded: %d points\n', length(timestamps));
+console_log('Time range: %s to %s UTC\n\n', timestamps(1), timestamps(end));
 
 %% Clean data (remove outliers)
 window_size = 50;
@@ -58,7 +58,7 @@ depth_cleaned(outliers) = NaN;
 pressure_cleaned = fillmissing(pressure_cleaned, 'linear', 'MaxGap', 5);
 depth_cleaned = fillmissing(depth_cleaned, 'linear', 'MaxGap', 5);
 
-fprintf('Removed %d outliers\n', sum(outliers));
+console_log('Removed %d outliers\n', sum(outliers));
 
 %% Smooth data
 smooth_window = 21;
@@ -81,12 +81,12 @@ if sum(baseline_mask) < 10
 else
     baseline_depth_ft = mean(depth_final(baseline_mask), 'omitnan');
     baseline_pressure_psi = mean(pressure_final(baseline_mask), 'omitnan');
-    fprintf('Baseline period: %s to %s (%d points)\n', ...
+    console_log('Baseline period: %s to %s (%d points)\n', ...
         timestamps(find(baseline_mask,1)), timestamps(find(baseline_mask,1,'last')), sum(baseline_mask));
 end
 
-fprintf('Baseline depth: %.3f ft\n', baseline_depth_ft);
-fprintf('Baseline pressure: %.3f psi\n\n', baseline_pressure_psi);
+console_log('Baseline depth: %.3f ft\n', baseline_depth_ft);
+console_log('Baseline pressure: %.3f psi\n\n', baseline_pressure_psi);
 
 %% Calculate drawdown relative to improved baseline
 drawdown_ft = depth_final - baseline_depth_ft;
@@ -191,7 +191,7 @@ save(mat_output, 'Date', 'Drawdownft', 'Pressurepsi', 'Depthft', ...
     'DrawdownRate_ft_s', 'Temperature_C', 'baseline_depth_ft', 'baseline_pressure_psi', ...
     'pump_start_time', 'baseline_start', 'baseline_end');
 
-fprintf('\n=== COMPLETE ===\n');
-fprintf('Saved to: %s\n', mat_output);
+console_log('\n=== COMPLETE ===\n');
+console_log('Saved to: %s\n', mat_output);
 
 end

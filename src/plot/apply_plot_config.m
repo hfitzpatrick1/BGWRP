@@ -25,11 +25,11 @@ if isfield(config, 'plot_method')
 end
 
 % DEBUG: Show what plotting method is being used
-fprintf('    PLOT DEBUG: Config has plot_method field: %d\n', isfield(config, 'plot_method'));
+console_log('    PLOT DEBUG: Config has plot_method field: %d\n', isfield(config, 'plot_method'));
 if isfield(config, 'plot_method')
-    fprintf('    PLOT DEBUG: Config plot_method value: "%s"\n', config.plot_method);
+    console_log('    PLOT DEBUG: Config plot_method value: "%s"\n', config.plot_method);
 end
-fprintf('    PLOT DEBUG: Using method "%s"\n', plot_method);
+console_log('    PLOT DEBUG: Using method "%s"\n', plot_method);
 
 % Create plot based on method
 switch lower(plot_method)
@@ -41,7 +41,7 @@ switch lower(plot_method)
         if isfield(config, 'shading_method')
             shading_method = config.shading_method;
         end
-        fprintf('    PLOT DEBUG: Applying shading "%s"\n', shading_method);
+        console_log('    PLOT DEBUG: Applying shading "%s"\n', shading_method);
         shading(shading_method);
         
         % Set edge color

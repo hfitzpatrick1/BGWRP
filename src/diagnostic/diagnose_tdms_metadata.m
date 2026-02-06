@@ -22,8 +22,8 @@ if ~isfield(options, 'sample_interval'), options.sample_interval = 5; end % Anal
 if ~isfield(options, 'use_builtin'), options.use_builtin = true; end % Try MATLAB R2022a+ functions first
 if ~isfield(options, 'summary_only'), options.summary_only = false; end % Brief output mode
 
-fprintf('=== TDMS METADATA DIAGNOSTIC: %s ===\n', dataset_name);
-fprintf('Directory: %s\n', tdms_directory);
+console_log('=== TDMS METADATA DIAGNOSTIC: %s ===\n', dataset_name);
+console_log('Directory: %s\n', tdms_directory);
 
 % Verify directory exists
 if ~exist(tdms_directory, 'dir')
@@ -36,20 +36,20 @@ if isempty(files)
     error('No TDMS files found in directory: %s', tdms_directory);
 end
 
-fprintf('Found %d TDMS files\n', length(files));
+console_log('Found %d TDMS files\n', length(files));
 
 % Select files to analyze (sample subset to avoid overwhelming analysis)
 if length(files) > options.max_files
     file_indices = 1:options.sample_interval:length(files);
     file_indices = file_indices(1:min(options.max_files, length(file_indices)));
-    fprintf('Analyzing %d files (every %d files)\n', length(file_indices), options.sample_interval);
+    console_log('Analyzing %d files (every %d files)\n', length(file_indices), options.sample_interval);
 else
     file_indices = 1:length(files);
-    fprintf('Analyzing all %d files\n', length(file_indices));
+    console_log('Analyzing all %d files\n', length(file_indices));
 end
 
 %% Stage 1: Extract metadata using available methods
-fprintf('\n--- STAGE 1: METADATA EXTRACTION ---\n');
+console_log('\n--- STAGE 1: METADATA EXTRACTION ---\n');
 
 metadata_table = [];
 extraction_method = 'unknown';
@@ -57,20 +57,20 @@ extraction_method = 'unknown';
 % Try MATLAB built-in functions first (R2022a+)
 if options.use_builtin
     try
-        fprintf('Testing MATLAB built-in TDMS functions...\n');
+        console_log('Testing MATLAB built-in TDMS functions...\n');
         test_file = fullfile(tdms_directory, files(1).name);
         
         % Test tdmsinfo
         info = tdmsinfo(test_file);
-        fprintf('✓ tdmsinfo available - using built-in functions\n');
+        console_log('✓ tdmsinfo available - using built-in functions\n');
         extraction_method = 'builtin';
         
         % Extract metadata using built-in functions
         metadata_table = extract_metadata_builtin(files, file_indices, tdms_directory);
         
     catch ME
-        fprintf('✗ Built-in functions not available: %s\n', ME.message);
-        fprintf('  Falling back to Silixa TDMS_Adv_Read...\n');
+        console_log('✗ Built-in functions not available: %s\n', ME.message);
+        console_log('  Falling back to Silixa TDMS_Adv_Read...\n');
         extraction_method = 'silixa';
     end
 end
@@ -78,54 +78,54 @@ end
 % Fallback to Silixa TDMS_Adv_Read
 if strcmp(extraction_method, 'silixa') || strcmp(extraction_method, 'unknown')
     try
-        fprintf('Using Silixa TDMS_Adv_Read for metadata extraction...\n');
+        console_log('Using Silixa TDMS_Adv_Read for metadata extraction...\n');
         metadata_table = extract_metadata_silixa(files, file_indices, tdms_directory);
         extraction_method = 'silixa';
-        fprintf('✓ Silixa extraction successful\n');
+        console_log('✓ Silixa extraction successful\n');
     catch ME
         error('Both extraction methods failed. Last error: %s', ME.message);
     end
 end
 
 %% Stage 2: Analyze metadata variations
-fprintf('\n--- STAGE 2: METADATA ANALYSIS ---\n');
+console_log('\n--- STAGE 2: METADATA ANALYSIS ---\n');
 
 if isempty(metadata_table)
     error('No metadata extracted');
 end
 
-fprintf('Extracted metadata from %d files\n', height(metadata_table));
+console_log('Extracted metadata from %d files\n', height(metadata_table));
 
 % Display metadata table overview
-fprintf('\nMetadata fields found:\n');
+console_log('\nMetadata fields found:\n');
 field_names = metadata_table.Properties.VariableNames;
 for i = 1:length(field_names)
-    fprintf('  %d. %s\n', i, field_names{i});
+    console_log('  %d. %s\n', i, field_names{i});
 end
 
 % Analyze key parameters that could affect amplitude scaling
 analyze_amplitude_parameters(metadata_table);
 
 %% Stage 3: Identify scaling inconsistencies
-fprintf('\n--- STAGE 3: SCALING ANALYSIS ---\n');
+console_log('\n--- STAGE 3: SCALING ANALYSIS ---\n');
 
 % Check for parameters that should inform adaptive scaling
 identify_scaling_parameters(metadata_table);
 
 %% Stage 4: Data Quality Analysis
-fprintf('\n--- STAGE 4: DATA QUALITY ANALYSIS ---\n');
+console_log('\n--- STAGE 4: DATA QUALITY ANALYSIS ---\n');
 
 analyze_data_quality_issues(metadata_table);
 
 %% Stage 5: Recommendations  
-fprintf('\n--- STAGE 5: RECOMMENDATIONS ---\n');
+console_log('\n--- STAGE 5: RECOMMENDATIONS ---\n');
 
 generate_scaling_recommendations(metadata_table, extraction_method);
 
 % Save diagnostic results
 save_diagnostic_results(dataset_name, metadata_table, tdms_directory);
 
-fprintf('\n=== TDMS METADATA DIAGNOSTIC COMPLETE ===\n');
+console_log('\n=== TDMS METADATA DIAGNOSTIC COMPLETE ===\n');
 
 end
 
@@ -141,7 +141,7 @@ for i = 1:length(file_indices)
     filename = files(file_idx).name;
     filepath = fullfile(tdms_directory, filename);
     
-    fprintf('  Processing file %d of %d: %s\n', i, length(file_indices), filename);
+    console_log('  Processing file %d of %d: %s\n', i, length(file_indices), filename);
     
     try
         % Get general info
@@ -195,7 +195,7 @@ for i = 1:length(file_indices)
         metadata_cell{i} = file_metadata;
         
     catch ME
-        fprintf('    ✗ Error processing %s: %s\n', filename, ME.message);
+        console_log('    ✗ Error processing %s: %s\n', filename, ME.message);
         % Create empty entry to maintain indexing
         file_metadata = struct();
         file_metadata.filename = filename;
@@ -220,7 +220,7 @@ for i = 1:length(file_indices)
     filename = files(file_idx).name;
     filepath = fullfile(tdms_directory, filename);
     
-    fprintf('  Processing file %d of %d: %s\n', i, length(file_indices), filename);
+    console_log('  Processing file %d of %d: %s\n', i, length(file_indices), filename);
     
     try
         % Use TDMS_Adv_Read to extract properties only
@@ -252,7 +252,7 @@ for i = 1:length(file_indices)
         metadata_cell{i} = file_metadata;
         
     catch ME
-        fprintf('    ✗ Error processing %s: %s\n', filename, ME.message);
+        console_log('    ✗ Error processing %s: %s\n', filename, ME.message);
         % Create empty entry to maintain indexing
         file_metadata = struct();
         file_metadata.filename = filename;
@@ -270,13 +270,13 @@ end
 function analyze_amplitude_parameters(metadata_table)
 %Analyze parameters that vary between files (potential scaling sources)
 
-fprintf('Analyzing metadata for variations between files...\n');
+console_log('Analyzing metadata for variations between files...\n');
 
 % Separate analysis for numeric and non-numeric fields
 varying_fields = {};
 constant_fields = {};
 
-fprintf('\n=== FIELDS THAT VARY BETWEEN FILES ===\n');
+console_log('\n=== FIELDS THAT VARY BETWEEN FILES ===\n');
 
 for i = 1:width(metadata_table)
     field_name = metadata_table.Properties.VariableNames{i};
@@ -302,12 +302,12 @@ for i = 1:width(metadata_table)
                 else
                     variation_pct = 0;
                 end
-                fprintf('  📊 %s: mean=%.6f, std=%.6f, variation=%.2f%%\n', ...
+                console_log('  📊 %s: mean=%.6f, std=%.6f, variation=%.2f%%\n', ...
                     field_name, mean(valid_values), std(valid_values), variation_pct);
                 
                 % Show actual values if small number of files
                 if length(valid_values) <= 10
-                    fprintf('       Values: [%s]\n', num2str(valid_values', '%.6f '));
+                    console_log('       Values: [%s]\n', num2str(valid_values', '%.6f '));
                 end
                 
                 has_variation = true;
@@ -325,13 +325,13 @@ for i = 1:width(metadata_table)
         end
         
         if length(unique_values) > 1
-            fprintf('  📝 %s: %d different values\n', field_name, length(unique_values));
+            console_log('  📝 %s: %d different values\n', field_name, length(unique_values));
             % Show actual values if reasonable number
             if length(unique_values) <= 5
                 if iscell(values)
-                    fprintf('       Values: %s\n', strjoin(unique_values, ', '));
+                    console_log('       Values: %s\n', strjoin(unique_values, ', '));
                 else
-                    fprintf('       Values: %s\n', strjoin(string(unique_values), ', '));
+                    console_log('       Values: %s\n', strjoin(string(unique_values), ', '));
                 end
             end
             has_variation = true;
@@ -342,14 +342,14 @@ for i = 1:width(metadata_table)
     end
 end
 
-fprintf('\n=== SUMMARY ===\n');
-fprintf('Fields that VARY between files: %d\n', length(varying_fields));
+console_log('\n=== SUMMARY ===\n');
+console_log('Fields that VARY between files: %d\n', length(varying_fields));
 if ~isempty(varying_fields)
-    fprintf('  Variable fields: %s\n', strjoin(varying_fields, ', '));
+    console_log('  Variable fields: %s\n', strjoin(varying_fields, ', '));
 end
 
-fprintf('Fields that are CONSTANT: %d\n', length(constant_fields));
-fprintf('  (Use -verbose flag to see constant fields)\n');
+console_log('Fields that are CONSTANT: %d\n', length(constant_fields));
+console_log('  (Use -verbose flag to see constant fields)\n');
 
 % Highlight critical scaling-related fields that vary
 scaling_keywords = {'calibration', 'gain', 'scale', 'factor', 'unit', 'voltage', 'amplitude', 'offset'};
@@ -366,11 +366,11 @@ for i = 1:length(varying_fields)
 end
 
 if ~isempty(critical_varying_fields)
-    fprintf('\n⚠️  CRITICAL: Scaling-related fields that vary:\n');
+    console_log('\n⚠️  CRITICAL: Scaling-related fields that vary:\n');
     for i = 1:length(critical_varying_fields)
-        fprintf('    → %s\n', critical_varying_fields{i});
+        console_log('    → %s\n', critical_varying_fields{i});
     end
-    fprintf('   These are likely candidates for fixing amplitude variations!\n');
+    console_log('   These are likely candidates for fixing amplitude variations!\n');
 end
 
 end
@@ -378,22 +378,22 @@ end
 function analyze_data_quality_issues(metadata_table)
 %Analyze data quality and processing order implications
 
-fprintf('Analyzing data quality and processing order issues...\n');
+console_log('Analyzing data quality and processing order issues...\n');
 
 %% 1. Native Sampling Rate Analysis
-fprintf('\n=== NATIVE SAMPLING RATE ANALYSIS ===\n');
+console_log('\n=== NATIVE SAMPLING RATE ANALYSIS ===\n');
 
 % Extract sampling frequency information
 if any(strcmp('SamplingFrequency_Hz_', metadata_table.Properties.VariableNames))
     fs_values = metadata_table.SamplingFrequency_Hz_;
     unique_fs = unique(fs_values);
-    fprintf('Sampling Frequency: %.1f Hz', unique_fs(1));
+    console_log('Sampling Frequency: %.1f Hz', unique_fs(1));
     if length(unique_fs) > 1
-        fprintf(' (VARIES: %s)', num2str(unique_fs'));
+        console_log(' (VARIES: %s)', num2str(unique_fs'));
     end
-    fprintf('\n');
+    console_log('\n');
 else
-    fprintf('⚠ No SamplingFrequency_Hz found in metadata\n');
+    console_log('⚠ No SamplingFrequency_Hz found in metadata\n');
     unique_fs = 100; % Assume based on typical values
 end
 
@@ -401,10 +401,10 @@ end
 if any(strcmp('decimated', metadata_table.Properties.VariableNames))
     decimated_values = metadata_table.decimated;
     if any(decimated_values)
-        fprintf('⚠ TDMS files are already decimated (pre-processing occurred)\n');
-        fprintf('  This may indicate aliasing artifacts already present\n');
+        console_log('⚠ TDMS files are already decimated (pre-processing occurred)\n');
+        console_log('  This may indicate aliasing artifacts already present\n');
     else
-        fprintf('✓ TDMS files contain non-decimated data\n');
+        console_log('✓ TDMS files contain non-decimated data\n');
     end
 end
 
@@ -412,68 +412,68 @@ end
 if any(strcmp('PreciseSamplingFrequency_Hz_', metadata_table.Properties.VariableNames))
     precise_fs = unique(metadata_table.PreciseSamplingFrequency_Hz_);
     if precise_fs ~= unique_fs
-        fprintf('⚠ Precise sampling frequency differs: %.6f Hz\n', precise_fs(1));
-        fprintf('  May indicate clock drift or resampling\n');
+        console_log('⚠ Precise sampling frequency differs: %.6f Hz\n', precise_fs(1));
+        console_log('  May indicate clock drift or resampling\n');
     end
 end
 
 %% 2. Data Type and Precision Analysis  
-fprintf('\n=== DATA TYPE AND PRECISION ANALYSIS ===\n');
+console_log('\n=== DATA TYPE AND PRECISION ANALYSIS ===\n');
 
 if any(strcmp('data_type', metadata_table.Properties.VariableNames))
     data_types = metadata_table.data_type;
     unique_types = unique(data_types);
-    fprintf('TDMS Data Type: %d', unique_types(1));
+    console_log('TDMS Data Type: %d', unique_types(1));
     
     % Interpret data type codes
     switch unique_types(1)
         case 2
-            fprintf(' (16-bit signed integer)\n');
+            console_log(' (16-bit signed integer)\n');
             bit_depth = 16;
             is_integer = true;
         case 9  
-            fprintf(' (32-bit floating point)\n');
+            console_log(' (32-bit floating point)\n');
             bit_depth = 32;
             is_integer = false;
         otherwise
-            fprintf(' (unknown type)\n');
+            console_log(' (unknown type)\n');
             bit_depth = 16; % Assume worst case
             is_integer = true;
     end
     
     if is_integer
-        fprintf('✓ Integer data preserves maximum dynamic range\n');
-        fprintf('  Recommendation: Keep as integer until final scaling step\n');
+        console_log('✓ Integer data preserves maximum dynamic range\n');
+        console_log('  Recommendation: Keep as integer until final scaling step\n');
     else
-        fprintf('⚠ Floating point data may have reduced precision\n');
-        fprintf('  Data may have been processed/scaled before TDMS storage\n');
+        console_log('⚠ Floating point data may have reduced precision\n');
+        console_log('  Data may have been processed/scaled before TDMS storage\n');
         end
     else
-    fprintf('⚠ No data type information found\n');
+    console_log('⚠ No data type information found\n');
     bit_depth = 16;
     is_integer = true;
 end
 
 %% 3. Processing Order Impact Analysis
-fprintf('\n=== PROCESSING ORDER IMPACT ANALYSIS ===\n');
+console_log('\n=== PROCESSING ORDER IMPACT ANALYSIS ===\n');
 
 % Calculate theoretical dynamic range
 if is_integer
     max_range = 2^(bit_depth-1);
-    fprintf('Theoretical dynamic range: ±%d counts (%.1f dB)\n', max_range, 20*log10(max_range));
+    console_log('Theoretical dynamic range: ±%d counts (%.1f dB)\n', max_range, 20*log10(max_range));
 else
-    fprintf('Floating point data - dynamic range depends on original source\n');
+    console_log('Floating point data - dynamic range depends on original source\n');
 end
 
 % Analyze current scaling approach impact
-fprintf('\nCurrent pipeline analysis:\n');
-fprintf('1. TDMS → MAT: Apply adc_scalar (1/8192) + physical scaling (×116)\n');
-fprintf('2. MAT → Concatenated: Load, concatenate, decimate\n');
+console_log('\nCurrent pipeline analysis:\n');
+console_log('1. TDMS → MAT: Apply adc_scalar (1/8192) + physical scaling (×116)\n');
+console_log('2. MAT → Concatenated: Load, concatenate, decimate\n');
 
 if is_integer
-    fprintf('\n⚠ POTENTIAL ISSUE: Early floating point conversion\n');
-    fprintf('  Converting to float in step 1 may introduce quantization noise\n');
-    fprintf('  Better: Keep integer precision until after decimation\n');
+    console_log('\n⚠ POTENTIAL ISSUE: Early floating point conversion\n');
+    console_log('  Converting to float in step 1 may introduce quantization noise\n');
+    console_log('  Better: Keep integer precision until after decimation\n');
 end
 
 % Check for file size implications
@@ -482,9 +482,9 @@ if any(strcmp('channel_length', metadata_table.Properties.VariableNames))
     if any(strcmp('num_channels', metadata_table.Properties.VariableNames))
         num_channels = unique(metadata_table.num_channels);
         
-        fprintf('\nMemory analysis:\n');
-        fprintf('  Samples per file: %d\n', samples_per_file(1));
-        fprintf('  Channels: %d\n', num_channels(1));
+        console_log('\nMemory analysis:\n');
+        console_log('  Samples per file: %d\n', samples_per_file(1));
+        console_log('  Channels: %d\n', num_channels(1));
         
         if is_integer
             bytes_per_sample = bit_depth / 8;
@@ -493,45 +493,45 @@ if any(strcmp('channel_length', metadata_table.Properties.VariableNames))
         end
         
         file_size_mb = (samples_per_file(1) * num_channels(1) * bytes_per_sample) / (1024^2);
-        fprintf('  Raw file size: %.1f MB\n', file_size_mb);
+        console_log('  Raw file size: %.1f MB\n', file_size_mb);
         
         % Estimate concatenation memory requirements
         num_files = height(metadata_table);
         total_raw_mb = file_size_mb * num_files;
-        fprintf('  Total raw concatenation memory: %.1f MB\n', total_raw_mb);
+        console_log('  Total raw concatenation memory: %.1f MB\n', total_raw_mb);
         
         if total_raw_mb > 1000
-            fprintf('  ⚠ Large memory requirement for direct concatenation\n');
+            console_log('  ⚠ Large memory requirement for direct concatenation\n');
         else
-            fprintf('  ✓ Reasonable memory requirement for optimal processing\n');
+            console_log('  ✓ Reasonable memory requirement for optimal processing\n');
         end
     end
 end
 
 %% 4. Anti-Aliasing Analysis
-fprintf('\n=== ANTI-ALIASING ANALYSIS ===\n');
+console_log('\n=== ANTI-ALIASING ANALYSIS ===\n');
 
 if exist('unique_fs', 'var')
     nyquist_freq = unique_fs(1) / 2;
-    fprintf('Current Nyquist frequency: %.1f Hz\n', nyquist_freq);
+    console_log('Current Nyquist frequency: %.1f Hz\n', nyquist_freq);
     
     % Check if this looks like already-decimated data
     if unique_fs(1) <= 200
-        fprintf('⚠ Low sampling rate suggests pre-decimation occurred\n');
-        fprintf('  Original acquisition may have been at higher rate\n');
-        fprintf('  Check for aliasing artifacts in frequency domain\n');
+        console_log('⚠ Low sampling rate suggests pre-decimation occurred\n');
+        console_log('  Original acquisition may have been at higher rate\n');
+        console_log('  Check for aliasing artifacts in frequency domain\n');
     else
-        fprintf('✓ Sampling rate suggests minimal pre-decimation\n');
+        console_log('✓ Sampling rate suggests minimal pre-decimation\n');
     end
     
     % Decimation impact analysis
     decimation_factor = 100; % From current pipeline
     final_nyquist = nyquist_freq / decimation_factor;
-    fprintf('After 100x decimation: Nyquist = %.3f Hz\n', final_nyquist);
+    console_log('After 100x decimation: Nyquist = %.3f Hz\n', final_nyquist);
     
     if final_nyquist < 0.1
-        fprintf('⚠ Very low final Nyquist frequency\n');
-        fprintf('  Consider whether 100x decimation is appropriate\n');
+        console_log('⚠ Very low final Nyquist frequency\n');
+        console_log('  Consider whether 100x decimation is appropriate\n');
     end
 end
 
@@ -540,7 +540,7 @@ end
 function identify_scaling_parameters(metadata_table)
 %Identify parameters that should inform adaptive scaling
 
-fprintf('Identifying scaling-relevant parameters...\n');
+console_log('Identifying scaling-relevant parameters...\n');
 
 % Look for fields that might contain scaling information
 scaling_keywords = {'sampling', 'frequency', 'spatial', 'resolution', 'gauge', 'length', ...
@@ -560,12 +560,12 @@ for i = 1:length(field_names)
 end
 
 if ~isempty(scaling_fields)
-    fprintf('Found %d potential scaling parameters:\n', length(scaling_fields));
+    console_log('Found %d potential scaling parameters:\n', length(scaling_fields));
     for i = 1:length(scaling_fields)
-        fprintf('  %s\n', scaling_fields{i});
+        console_log('  %s\n', scaling_fields{i});
     end
 else
-    fprintf('No obvious scaling parameters found in metadata\n');
+    console_log('No obvious scaling parameters found in metadata\n');
 end
 
 end
@@ -573,7 +573,7 @@ end
 function generate_scaling_recommendations(metadata_table, extraction_method)
 %Generate recommendations for adaptive scaling
 
-fprintf('Generating recommendations...\n');
+console_log('Generating recommendations...\n');
 
 % Check if we found varying parameters that could explain amplitude differences
 recommendations = {};
@@ -609,9 +609,9 @@ end
 recommendations{end+1} = 'CURRENT ISSUE: Fixed scaling (adc_scalar=1/8192, data=116*data) ignores per-file conditions';
 recommendations{end+1} = 'RECOMMENDATION: Implement adaptive scaling based on file-specific metadata';
 
-fprintf('\nRecommendations:\n');
+console_log('\nRecommendations:\n');
 for i = 1:length(recommendations)
-    fprintf('  %d. %s\n', i, recommendations{i});
+    console_log('  %d. %s\n', i, recommendations{i});
 end
 
 end
@@ -624,15 +624,15 @@ output_filename = sprintf('tdms_metadata_diagnostic_%s_%s.mat', ...
 
 save(output_filename, 'metadata_table', 'tdms_directory', 'dataset_name');
 
-fprintf('\nDiagnostic results saved to: %s\n', output_filename);
+console_log('\nDiagnostic results saved to: %s\n', output_filename);
 
 % Also save as CSV for easy viewing
 csv_filename = strrep(output_filename, '.mat', '.csv');
 try
     writetable(metadata_table, csv_filename);
-    fprintf('Metadata table saved to: %s\n', csv_filename);
+    console_log('Metadata table saved to: %s\n', csv_filename);
 catch
-    fprintf('Could not save CSV (table may contain mixed data types)\n');
+    console_log('Could not save CSV (table may contain mixed data types)\n');
 end
 
 end

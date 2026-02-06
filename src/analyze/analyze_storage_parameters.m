@@ -14,7 +14,7 @@ function storage_results = analyze_storage_parameters(das_results, head_results,
 % Outputs:
 %   storage_results - Structure with storage parameter estimates
 
-fprintf('=== STORAGE PARAMETER ANALYSIS ===\n');
+console_log('=== STORAGE PARAMETER ANALYSIS ===\n');
 
 % Initialize results
 storage_results = struct();
@@ -22,25 +22,25 @@ storage_results.tests = test_labels;
 
 for i = 1:length(test_labels)
     test_label = test_labels{i};
-    fprintf('\nAnalyzing storage parameters for test: %s\n', test_label);
+    console_log('\nAnalyzing storage parameters for test: %s\n', test_label);
     
     % Get DAS data from already-processed results
     if ~isfield(das_results, test_label) || isfield(das_results.(test_label), 'error')
-        fprintf('  No DAS results found for %s\n', test_label);
+        console_log('  No DAS results found for %s\n', test_label);
         continue;
     end
     das_data = das_results.(test_label);
     
     % Get head data from already-processed results
     if ~isfield(head_results, test_label) || isfield(head_results.(test_label), 'error')
-        fprintf('  No head results found for %s\n', test_label);
+        console_log('  No head results found for %s\n', test_label);
         continue;
     end
     head_data = head_results.(test_label);
     
     % Extract strain rate from DAS data (already filtered and time-shifted)
     if ~isfield(das_data, 'analysis_strain_rate') || ~isfield(das_data, 'analysis_time')
-        fprintf('  No analysis_strain_rate found in DAS data for %s\n', test_label);
+        console_log('  No analysis_strain_rate found in DAS data for %s\n', test_label);
         continue;
     end
     
@@ -54,7 +54,7 @@ for i = 1:length(test_labels)
         zone_name = zones_to_analyze{z_idx};
         
         if ~isfield(head_data, 'zones') || ~isfield(head_data.zones, zone_name)
-            fprintf('  No %s zone data found\n', zone_name);
+            console_log('  No %s zone data found\n', zone_name);
             continue;
         end
         
@@ -62,7 +62,7 @@ for i = 1:length(test_labels)
         
         % Check if recovery data exists
         if ~isfield(zone_data, 'recovery_data') || isempty(zone_data.recovery_data)
-            fprintf('  No recovery data found for zone %s\n', zone_name);
+            console_log('  No recovery data found for zone %s\n', zone_name);
             continue;
         end
         
@@ -218,23 +218,23 @@ for i = 1:length(test_labels)
         storage_results.(result_key).S_traditional = S_traditional;
         storage_results.(result_key).D_traditional = D_traditional;
         
-        fprintf('  Zone %s results:\n', zone_name);
-        fprintf('    Correlation window: %s to %s\n', window_time(1), window_time(end));
-        fprintf('    Slope: %.6f (nm/s)/(ft/min)\n', slope);
-        fprintf('    R²: %.4f\n', r_squared);
-        fprintf('    Time lag: %d seconds\n', time_lag);
-        fprintf('    Specific storage (Ss,ε): %.2e 1/m\n', Ss_estimate);
-        fprintf('    Storativity (S = Ss × b, b=%.0fm): %.2e\n', aquifer_thickness, S_storativity);
+        console_log('  Zone %s results:\n', zone_name);
+        console_log('    Correlation window: %s to %s\n', window_time(1), window_time(end));
+        console_log('    Slope: %.6f (nm/s)/(ft/min)\n', slope);
+        console_log('    R²: %.4f\n', r_squared);
+        console_log('    Time lag: %d seconds\n', time_lag);
+        console_log('    Specific storage (Ss,ε): %.2e 1/m\n', Ss_estimate);
+        console_log('    Storativity (S = Ss × b, b=%.0fm): %.2e\n', aquifer_thickness, S_storativity);
         if ~isnan(T_traditional_ft2_day)
-            fprintf('    Traditional T: %.1f ft²/day, K: %.2f ft/day\n', T_traditional_ft2_day, K_traditional_ft_day);
+            console_log('    Traditional T: %.1f ft²/day, K: %.2f ft/day\n', T_traditional_ft2_day, K_traditional_ft_day);
             if ~isnan(S_traditional)
-                fprintf('    Traditional S: %.2e (DAS/Traditional ratio: %.2f)\n', S_traditional, S_storativity/S_traditional);
+                console_log('    Traditional S: %.2e (DAS/Traditional ratio: %.2f)\n', S_traditional, S_storativity/S_traditional);
             end
         end
     end
 end
 
-fprintf('\n=== STORAGE PARAMETER ANALYSIS COMPLETE ===\n');
+console_log('\n=== STORAGE PARAMETER ANALYSIS COMPLETE ===\n');
 
 end
 

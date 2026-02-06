@@ -3,7 +3,7 @@ function shift_time_to_pump_start(input_csv, output_csv, pump_start_elapsed)
 %
 % Usage: shift_time_to_pump_start(input_csv, output_csv, 31500)
 
-fprintf('=== SHIFTING TIME TO PUMP START ===\n');
+console_log('=== SHIFTING TIME TO PUMP START ===\n');
 
 %% Load data
 data = readtable(input_csv);
@@ -22,8 +22,8 @@ drawdown_ft = data.Drawdown_ft;
 %% Shift time
 time_adjusted = time_sec - pump_start_elapsed;
 
-fprintf('Original time range: %.1f to %.1f sec\n', min(time_sec), max(time_sec));
-fprintf('Adjusted time range: %.1f to %.1f sec\n', min(time_adjusted), max(time_adjusted));
+console_log('Original time range: %.1f to %.1f sec\n', min(time_sec), max(time_sec));
+console_log('Adjusted time range: %.1f to %.1f sec\n', min(time_adjusted), max(time_adjusted));
 
 %% Only keep data from pump start onward (positive times)
 mask = time_adjusted >= 0;
@@ -34,7 +34,7 @@ if has_weights
     weights_final = weights(mask);
 end
 
-fprintf('Kept %d points (removed %d baseline points)\n', sum(mask), sum(~mask));
+console_log('Kept %d points (removed %d baseline points)\n', sum(mask), sum(~mask));
 
 %% Export
 if has_weights
@@ -47,8 +47,8 @@ end
 
 writetable(export_table, output_csv);
 
-fprintf('\n✓ Exported to: %s\n', output_csv);
-fprintf('✓ Time now starts at pump start (t=0)\n');
+console_log('\n✓ Exported to: %s\n', output_csv);
+console_log('✓ Time now starts at pump start (t=0)\n');
 
 %% Plot
 figure('Position', [50, 50, 1400, 600]);

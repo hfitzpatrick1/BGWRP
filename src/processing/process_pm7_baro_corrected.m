@@ -3,7 +3,7 @@ function process_pm7_baro_corrected(csv_file, zone_name, pump_start_time)
 %
 % For small signals, properly detrend drift and establish stable baseline
 
-fprintf('=== BAROMETRIC/DRIFT CORRECTION ===\n');
+console_log('=== BAROMETRIC/DRIFT CORRECTION ===\n');
 
 %% Load data
 fid = fopen(csv_file, 'r');
@@ -54,8 +54,8 @@ drift = polyval(p, all_time_numeric);
 % Remove drift from entire dataset
 depth_detrended = depth_cleaned - drift + mean(pre_test_depth, 'omitnan');
 
-fprintf('Pre-test drift slope: %.6f ft/day\n', p(1)*24*60);
-fprintf('Total drift over pre-test: %.4f ft\n', drift(find(pre_test_mask, 1, 'last')) - drift(find(pre_test_mask, 1, 'first')));
+console_log('Pre-test drift slope: %.6f ft/day\n', p(1)*24*60);
+console_log('Total drift over pre-test: %.4f ft\n', drift(find(pre_test_mask, 1, 'last')) - drift(find(pre_test_mask, 1, 'first')));
 
 %% STEP 2: Light smoothing (3-point only)
 depth_smoothed = movmean(depth_detrended, 3, 'omitnan');
@@ -65,12 +65,12 @@ depth_smoothed = movmean(depth_detrended, 3, 'omitnan');
 baseline_mask = timestamps >= timestamps(1) + minutes(30) & timestamps < timestamps(1) + hours(1.5);
 baseline_depth = mean(depth_smoothed(baseline_mask), 'omitnan');
 
-fprintf('Baseline from first hour: %.4f ft\n', baseline_depth);
+console_log('Baseline from first hour: %.4f ft\n', baseline_depth);
 
 %% STEP 4: Calculate drawdown
 drawdown_ft = baseline_depth - depth_smoothed;  % Drawdown is POSITIVE when water level drops
 
-fprintf('Max drawdown: %.4f ft (%.3f inches)\n', max(drawdown_ft), max(drawdown_ft)*12);
+console_log('Max drawdown: %.4f ft (%.3f inches)\n', max(drawdown_ft), max(drawdown_ft)*12);
 
 %% Plot diagnostics
 pump_times = [
@@ -159,7 +159,7 @@ title('ZOOMED: Pumping Period');
 grid on;
 
 %% Step check
-fprintf('\nStep check at pump rate changes:\n');
+console_log('\nStep check at pump rate changes:\n');
 for i = 2:length(pump_times)-1
     before_mask = timestamps >= (pump_times(i) - minutes(5)) & timestamps < pump_times(i);
     after_mask = timestamps >= pump_times(i) & timestamps <= (pump_times(i) + minutes(5));
@@ -168,7 +168,7 @@ for i = 2:length(pump_times)-1
     after_avg = mean(drawdown_ft(after_mask), 'omitnan');
     step = after_avg - before_avg;
     
-    fprintf('  %d->%d GPM: Step = %.4f ft (%.3f in)\n', ...
+    console_log('  %d->%d GPM: Step = %.4f ft (%.3f in)\n', ...
         rates(i-1), rates(i), step, step*12);
 end
 
@@ -187,6 +187,6 @@ save(fullfile(output_dir, sprintf('%s_baro_corrected.mat', base_name)), ...
     'Date', 'Drawdownft', 'Depthft', 'Depth_detrended', 'pump_start_time', ...
     'pressure_psi', 'temp_f', 'baseline_depth');
 
-fprintf('\nSaved to: %s\n', fullfile(output_dir, sprintf('%s_baro_corrected.mat', base_name)));
+console_log('\nSaved to: %s\n', fullfile(output_dir, sprintf('%s_baro_corrected.mat', base_name)));
 
 end

@@ -5,28 +5,28 @@ clear all;
 close all;
 clc;
 
-fprintf('=== PT01a 100 Hz ANALYSIS WITH ANTI-ALIASING ===\n\n');
+console_log('=== PT01a 100 Hz ANALYSIS WITH ANTI-ALIASING ===\n\n');
 
 %% Add paths
 addpath(genpath('C:\Coding\BGWRP\src'));
 
 %% Step 1: Load data directly
-fprintf('STEP 1: Loading 100 Hz data...\n');
+console_log('STEP 1: Loading 100 Hz data...\n');
 data_file = 'C:\Coding\BGWRP\data\_BATCH\_active\PT01a_Recovery_100\Dataset_PT01a_Recovery_100.mat';
 loaded = load(data_file);
 raw_data = loaded.fulldata;  % [125979 time points x 1407 channels]
 
-fprintf('  Data loaded: %d time points x %d channels\n', size(raw_data, 1), size(raw_data, 2));
+console_log('  Data loaded: %d time points x %d channels\n', size(raw_data, 1), size(raw_data, 2));
 
 %% Step 2: Apply anti-aliasing filter
-fprintf('\nSTEP 2: Applying anti-aliasing filter (0.5 Hz cutoff)...\n');
+console_log('\nSTEP 2: Applying anti-aliasing filter (0.5 Hz cutoff)...\n');
 config = struct();
 config.decimation_factor = 100;
 filtered_data = resample_antialias_filter(raw_data, config);
-fprintf('  ✓ Filter complete! Noise reduced by 68.9%%\n');
+console_log('  ✓ Filter complete! Noise reduced by 68.9%%\n');
 
 %% Step 3: Create a proper waterfall plot with correct depth range
-fprintf('\nSTEP 3: Creating waterfall plot with PT01a configuration...\n');
+console_log('\nSTEP 3: Creating waterfall plot with PT01a configuration...\n');
 
 % Create time vector (assuming 100 Hz, starting at PT01a recovery time)
 fs = 100;  % Hz
@@ -73,8 +73,8 @@ ylim([100, 160]);  % Adjust these values to match your well configuration
 % Set colorbar limits for PT01a (optimized from 1 Hz analysis)
 set(gca, 'CLim', [0.1, 0.25]);
 
-fprintf('  ✓ Figure 101 created with proper depth range (%.0f-%.0f ft)\n', depth_min_ft, depth_max_ft);
+console_log('  ✓ Figure 101 created with proper depth range (%.0f-%.0f ft)\n', depth_min_ft, depth_max_ft);
 
-fprintf('\n=== ANALYSIS COMPLETE ===\n');
-fprintf('The anti-aliasing filter successfully cleaned your 100 Hz data!\n');
-fprintf('Next step: Integrate with ROI analysis for R² calculation\n');
+console_log('\n=== ANALYSIS COMPLETE ===\n');
+console_log('The anti-aliasing filter successfully cleaned your 100 Hz data!\n');
+console_log('Next step: Integrate with ROI analysis for R² calculation\n');

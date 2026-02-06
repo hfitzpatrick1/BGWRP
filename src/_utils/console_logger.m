@@ -32,8 +32,8 @@ switch action
             return;
         end
         
-        fprintf('Console logging to: %s\n', log_path);
-        fprintf(log_fid, 'Console log started: %s\n\n', datestr(now));
+        console_log('Console logging to: %s\n', log_path);
+        console_log(log_fid, 'Console log started: %s\n\n', datestr(now));
         
     case 'log'
         if nargin < 2
@@ -48,18 +48,18 @@ switch action
         end
         
         % Write to console
-        fprintf('%s', message);
+        console_log('%s', message);
         
         % Write to file if open
         if ~isempty(log_fid) && log_fid ~= -1
-            fprintf(log_fid, '%s', message);
+            console_log(log_fid, '%s', message);
         end
         
     case 'close'
         if ~isempty(log_fid) && log_fid ~= -1
-            fprintf(log_fid, '\nConsole log ended: %s\n', datestr(now));
+            console_log(log_fid, '\nConsole log ended: %s\n', datestr(now));
             fclose(log_fid);
-            fprintf('Console log saved to: %s\n', log_path);
+            console_log('Console log saved to: %s\n', log_path);
             log_fid = [];
             log_path = '';
         end

@@ -57,8 +57,8 @@ function results = calculate_storage_from_poroelasticity(das_data, head_data, ti
 %
 % EXAMPLE:
 %   results = calculate_storage_from_poroelasticity(das, head, timing, cfg);
-%   fprintf('Storage from DAS: S = %.6f\n', results.S_DAS);
-%   fprintf('Storage from Aqtesolv: S = %.6f\n', results.S_Aqtesolv);
+%   console_log('Storage from DAS: S = %.6f\n', results.S_DAS);
+%   console_log('Storage from Aqtesolv: S = %.6f\n', results.S_Aqtesolv);
 %
 % See also: analyze_das_data, run_storage_analysis
 
@@ -95,22 +95,22 @@ depth_range = config.depth_range;
 %% Physical constants
 mu_water = 0.001002;  % Pa·s (dynamic viscosity at 20°C)
 
-fprintf('\n=== POROELASTIC STORAGE CALCULATION ===\n');
-fprintf('Method: Wang (2000) coupled DAS-pressure analysis\n');
-fprintf('Validation: Becker et al. (2022), β = 0.021 (Zone 5)\n\n');
+console_log('\n=== POROELASTIC STORAGE CALCULATION ===\n');
+console_log('Method: Wang (2000) coupled DAS-pressure analysis\n');
+console_log('Validation: Becker et al. (2022), β = 0.021 (Zone 5)\n\n');
 
-fprintf('Aquifer Parameters:\n');
-fprintf('  T = %.2e ft²/day\n', T);
-fprintf('  S = %.6f\n', S);
-fprintf('  K = %.1f ft/day\n', K);
-fprintf('  b = %.0f ft\n', b);
-fprintf('  r = %.0f ft\n', r);
-fprintf('  α = %.2f (Biot coefficient)\n', alpha);
-fprintf('  Q = %.0f GPM (final pumping rate)\n', Q_pumping);
-fprintf('  Pumping duration = %.0f min\n\n', t_pumping/60);
+console_log('Aquifer Parameters:\n');
+console_log('  T = %.2e ft²/day\n', T);
+console_log('  S = %.6f\n', S);
+console_log('  K = %.1f ft/day\n', K);
+console_log('  b = %.0f ft\n', b);
+console_log('  r = %.0f ft\n', r);
+console_log('  α = %.2f (Biot coefficient)\n', alpha);
+console_log('  Q = %.0f GPM (final pumping rate)\n', Q_pumping);
+console_log('  Pumping duration = %.0f min\n\n', t_pumping/60);
 
 %% Step 1: Calculate pressure time derivative
-fprintf('=== STEP 1: Pressure Time Derivative ===\n');
+console_log('=== STEP 1: Pressure Time Derivative ===\n');
 
 time_vector = das_data.time_vector;  % seconds
 head_zone5 = head_data.head;         % ft
@@ -118,18 +118,18 @@ head_zone5 = head_data.head;         % ft
 dt = time_vector(2) - time_vector(1);  % seconds (assuming uniform sampling)
 p_dot = gradient(head_zone5) / dt;     % ft/s
 
-fprintf('Time step: %.2f s\n', dt);
-fprintf('Pressure rate range: %.2e to %.2e ft/s\n', min(p_dot), max(p_dot));
-fprintf('Mean pressure rate: %.2e ft/s\n', mean(p_dot));
-fprintf('Sign check: ');
+console_log('Time step: %.2f s\n', dt);
+console_log('Pressure rate range: %.2e to %.2e ft/s\n', min(p_dot), max(p_dot));
+console_log('Mean pressure rate: %.2e ft/s\n', mean(p_dot));
+console_log('Sign check: ');
 if mean(p_dot) > 0
-    fprintf('✓ Positive (pressure rising during recovery)\n\n');
+    console_log('✓ Positive (pressure rising during recovery)\n\n');
 else
-    fprintf('✗ Negative (unexpected for recovery)\n\n');
+    console_log('✗ Negative (unexpected for recovery)\n\n');
 end
 
 %% Step 2: Calculate pressure Laplacian (Theis recovery)
-fprintf('=== STEP 2: Pressure Laplacian (Theis Recovery) ===\n');
+console_log('=== STEP 2: Pressure Laplacian (Theis Recovery) ===\n');
 
 % Convert pumping rate to ft³/s
 Q_cfs = Q_pumping * 0.002228;  % GPM to ft³/s
@@ -166,43 +166,43 @@ end
 % Pressure Laplacian (∇²p) in 1/ft²
 del2_p = (Q_cfs / (4 * pi * T)) * (W_u1 - W_u2);
 
-fprintf('Well function u₁ range: %.2e to %.2e\n', min(u1), max(u1));
-fprintf('Well function u₂ range: %.2e to %.2e\n', min(u2(2:end)), max(u2(2:end)));
-fprintf('∇²p range: %.2e to %.2e 1/ft²\n', min(del2_p), max(del2_p));
-fprintf('Sign check: ');
+console_log('Well function u₁ range: %.2e to %.2e\n', min(u1), max(u1));
+console_log('Well function u₂ range: %.2e to %.2e\n', min(u2(2:end)), max(u2(2:end)));
+console_log('∇²p range: %.2e to %.2e 1/ft²\n', min(del2_p), max(del2_p));
+console_log('Sign check: ');
 if mean(del2_p) < 0
-    fprintf('✓ Negative (pressure cone relaxing)\n\n');
+    console_log('✓ Negative (pressure cone relaxing)\n\n');
 else
-    fprintf('✗ Positive (unexpected for recovery)\n\n');
+    console_log('✗ Positive (unexpected for recovery)\n\n');
 end
 
 %% Step 3: Extract DAS strain rate
-fprintf('=== STEP 3: DAS Strain Rate Extraction ===\n');
+console_log('=== STEP 3: DAS Strain Rate Extraction ===\n');
 
 depth_vector = das_data.depth_vector;
 strain_rate_matrix = das_data.strain_rate;
 
 % Select depth interval
 depth_idx = find(depth_vector >= depth_range(1) & depth_vector <= depth_range(2));
-fprintf('Selected depth range: %.1f to %.1f ft\n', ...
+console_log('Selected depth range: %.1f to %.1f ft\n', ...
     min(depth_vector(depth_idx)), max(depth_vector(depth_idx)));
-fprintf('Number of channels: %d\n', length(depth_idx));
+console_log('Number of channels: %d\n', length(depth_idx));
 
 % Average strain rate across responsive interval
 strain_rate_avg = mean(strain_rate_matrix(:, depth_idx), 2);  % [time x 1]
 
-fprintf('Strain rate range: %.2e to %.2e 1/s\n', ...
+console_log('Strain rate range: %.2e to %.2e 1/s\n', ...
     min(strain_rate_avg), max(strain_rate_avg));
-fprintf('Mean strain rate: %.2e 1/s\n', mean(strain_rate_avg));
-fprintf('Sign check: ');
+console_log('Mean strain rate: %.2e 1/s\n', mean(strain_rate_avg));
+console_log('Sign check: ');
 if mean(strain_rate_avg) > 0
-    fprintf('✓ Positive (aquifer expanding during recovery)\n\n');
+    console_log('✓ Positive (aquifer expanding during recovery)\n\n');
 else
-    fprintf('✗ Negative (unexpected for recovery)\n\n');
+    console_log('✗ Negative (unexpected for recovery)\n\n');
 end
 
 %% Step 4: Calculate constrained storage Sε
-fprintf('=== STEP 4: Constrained Storage Calculation ===\n');
+console_log('=== STEP 4: Constrained Storage Calculation ===\n');
 
 % Convert to SI units for consistency
 K_SI = K * (0.3048 / 86400);        % ft/day to m/s
@@ -217,38 +217,38 @@ strain_term = alpha * strain_rate_avg;            % 1/s
 % Solve for Sε: Sε = [(k/μ)∇²p - α·ε̇] / ṗ
 Se = (diffusion_term - strain_term) ./ p_dot_SI;  % 1/Pa
 
-fprintf('Diffusion term range: %.2e to %.2e 1/s\n', ...
+console_log('Diffusion term range: %.2e to %.2e 1/s\n', ...
     min(diffusion_term), max(diffusion_term));
-fprintf('Strain term range: %.2e to %.2e 1/s\n', ...
+console_log('Strain term range: %.2e to %.2e 1/s\n', ...
     min(strain_term), max(strain_term));
-fprintf('Sε range: %.2e to %.2e 1/Pa\n', min(Se), max(Se));
-fprintf('Sε mean: %.2e 1/Pa\n', mean(Se));
-fprintf('Sε median: %.2e 1/Pa\n\n', median(Se));
+console_log('Sε range: %.2e to %.2e 1/Pa\n', min(Se), max(Se));
+console_log('Sε mean: %.2e 1/Pa\n', mean(Se));
+console_log('Sε median: %.2e 1/Pa\n\n', median(Se));
 
 %% Step 5: Convert to specific storage
-fprintf('=== STEP 5: Specific Storage Conversion ===\n');
+console_log('=== STEP 5: Specific Storage Conversion ===\n');
 
 % Specific storage Ss (1/m then convert to 1/ft)
 Ss_SI = Se / b_SI;           % 1/m
 Ss_ft = Ss_SI * 0.3048;      % 1/ft
 
-fprintf('Ss range: %.2e to %.2e 1/ft\n', min(Ss_ft), max(Ss_ft));
-fprintf('Ss mean: %.2e 1/ft\n', mean(Ss_ft));
-fprintf('Ss median: %.2e 1/ft\n\n', median(Ss_ft));
+console_log('Ss range: %.2e to %.2e 1/ft\n', min(Ss_ft), max(Ss_ft));
+console_log('Ss mean: %.2e 1/ft\n', mean(Ss_ft));
+console_log('Ss median: %.2e 1/ft\n\n', median(Ss_ft));
 
 %% Step 6: Calculate storativity and compare
-fprintf('=== STEP 6: Storativity Comparison ===\n');
+console_log('=== STEP 6: Storativity Comparison ===\n');
 
 % DAS-derived storativity
 S_DAS = mean(Ss_ft) * b;  % dimensionless
 
-fprintf('Aqtesolv: S = %.6f\n', S);
-fprintf('DAS:      S = %.6f\n', S_DAS);
-fprintf('Ratio (DAS/Aqtesolv): %.2f\n', S_DAS / S);
-fprintf('Difference: %.1f%%\n\n', 100 * abs(S_DAS - S) / S);
+console_log('Aqtesolv: S = %.6f\n', S);
+console_log('DAS:      S = %.6f\n', S_DAS);
+console_log('Ratio (DAS/Aqtesolv): %.2f\n', S_DAS / S);
+console_log('Difference: %.1f%%\n\n', 100 * abs(S_DAS - S) / S);
 
 %% Step 7: Becker-style diagnostic checks
-fprintf('=== STEP 7: BECKER DIAGNOSTIC CHECKS ===\n');
+console_log('=== STEP 7: BECKER DIAGNOSTIC CHECKS ===\n');
 
 diagnostics = struct();
 
@@ -257,14 +257,14 @@ strain_integrated = cumtrapz(time_vector, strain_rate_avg);
 strain_amplitude_ns = (max(strain_integrated) - min(strain_integrated)) * 1e9;
 diagnostics.strain_amplitude_ns = strain_amplitude_ns;
 
-fprintf('Check 1: Strain Amplitude\n');
-fprintf('  Measured: %.0f nanostrain\n', strain_amplitude_ns);
-fprintf('  Expected: 100-2000 ns (Becker range)\n');
+console_log('Check 1: Strain Amplitude\n');
+console_log('  Measured: %.0f nanostrain\n', strain_amplitude_ns);
+console_log('  Expected: 100-2000 ns (Becker range)\n');
 if strain_amplitude_ns >= 100 && strain_amplitude_ns <= 2000
-    fprintf('  Status: ✓ PASS\n\n');
+    console_log('  Status: ✓ PASS\n\n');
     diagnostics.amplitude_check = 'PASS';
 else
-    fprintf('  Status: ⚠ CAUTION (outside typical range)\n\n');
+    console_log('  Status: ⚠ CAUTION (outside typical range)\n\n');
     diagnostics.amplitude_check = 'CAUTION';
 end
 
@@ -272,17 +272,17 @@ end
 corr_coef = corr(strain_rate_avg, p_dot);
 diagnostics.correlation = corr_coef;
 
-fprintf('Check 2: Strain-Pressure Correlation\n');
-fprintf('  Correlation coefficient: %.3f\n', corr_coef);
+console_log('Check 2: Strain-Pressure Correlation\n');
+console_log('  Correlation coefficient: %.3f\n', corr_coef);
 if corr_coef > 0.5
-    fprintf('  Status: ✓ PASS (strong positive, normal poroelastic response)\n\n');
+    console_log('  Status: ✓ PASS (strong positive, normal poroelastic response)\n\n');
     diagnostics.correlation_check = 'PASS';
 elseif corr_coef < -0.3
-    fprintf('  Status: ✗ FAIL (negative correlation, Noordbergum effect)\n');
-    fprintf('  This indicates reverse strain response - complex 3D coupling\n\n');
+    console_log('  Status: ✗ FAIL (negative correlation, Noordbergum effect)\n');
+    console_log('  This indicates reverse strain response - complex 3D coupling\n\n');
     diagnostics.correlation_check = 'FAIL_NOORDBERGUM';
 else
-    fprintf('  Status: ⚠ CAUTION (weak correlation)\n\n');
+    console_log('  Status: ⚠ CAUTION (weak correlation)\n\n');
     diagnostics.correlation_check = 'CAUTION';
 end
 
@@ -292,13 +292,13 @@ d_strain = gradient(strain_smooth);
 monotonic_fraction = sum(d_strain > -0.1*max(d_strain)) / length(d_strain);
 diagnostics.monotonic_fraction = monotonic_fraction;
 
-fprintf('Check 3: Monotonic Recovery Behavior\n');
-fprintf('  Monotonic fraction: %.1f%%\n', 100*monotonic_fraction);
+console_log('Check 3: Monotonic Recovery Behavior\n');
+console_log('  Monotonic fraction: %.1f%%\n', 100*monotonic_fraction);
 if monotonic_fraction > 0.95
-    fprintf('  Status: ✓ PASS (smooth recovery)\n\n');
+    console_log('  Status: ✓ PASS (smooth recovery)\n\n');
     diagnostics.monotonic_check = 'PASS';
 else
-    fprintf('  Status: ⚠ CAUTION (non-monotonic, possible leak-off)\n\n');
+    console_log('  Status: ⚠ CAUTION (non-monotonic, possible leak-off)\n\n');
     diagnostics.monotonic_check = 'CAUTION';
 end
 
@@ -306,65 +306,65 @@ end
 t_diffusion = (r^2 * S) / (4 * T / 86400);  % seconds
 diagnostics.t_diffusion = t_diffusion;
 
-fprintf('Check 4: Time Scale Assessment\n');
-fprintf('  Diffusion time: %.0f s (%.1f min)\n', t_diffusion, t_diffusion/60);
-fprintf('  Analysis duration: %.0f s (%.1f min)\n', max(time_vector), max(time_vector)/60);
+console_log('Check 4: Time Scale Assessment\n');
+console_log('  Diffusion time: %.0f s (%.1f min)\n', t_diffusion, t_diffusion/60);
+console_log('  Analysis duration: %.0f s (%.1f min)\n', max(time_vector), max(time_vector)/60);
 if max(time_vector) > 0.5 * t_diffusion
-    fprintf('  Status: ✓ PASS (covers diffusive regime)\n\n');
+    console_log('  Status: ✓ PASS (covers diffusive regime)\n\n');
     diagnostics.timescale_check = 'PASS';
 else
-    fprintf('  Status: ⚠ CAUTION (early elastic regime)\n\n');
+    console_log('  Status: ⚠ CAUTION (early elastic regime)\n\n');
     diagnostics.timescale_check = 'CAUTION';
 end
 
 % Diagnostic 5: Storage sign and magnitude
-fprintf('Check 5: Storage Parameter Validation\n');
-fprintf('  Mean Sε: %.2e 1/Pa (should be ~1e-5 to 1e-4)\n', mean(Se));
-fprintf('  Mean Ss: %.2e 1/ft (should be ~1e-6 to 1e-5)\n', mean(Ss_ft));
+console_log('Check 5: Storage Parameter Validation\n');
+console_log('  Mean Sε: %.2e 1/Pa (should be ~1e-5 to 1e-4)\n', mean(Se));
+console_log('  Mean Ss: %.2e 1/ft (should be ~1e-6 to 1e-5)\n', mean(Ss_ft));
 
 all_positive = all(Se > 0);
 reasonable_magnitude = (mean(Se) > 1e-6) && (mean(Se) < 1e-3);
 
 if all_positive && reasonable_magnitude
-    fprintf('  Status: ✓ PASS (all positive, reasonable magnitude)\n\n');
+    console_log('  Status: ✓ PASS (all positive, reasonable magnitude)\n\n');
     diagnostics.storage_check = 'PASS';
 elseif ~all_positive
-    fprintf('  Status: ✗ FAIL (negative storage detected)\n');
-    fprintf('  Check sign conventions and calculation\n\n');
+    console_log('  Status: ✗ FAIL (negative storage detected)\n');
+    console_log('  Check sign conventions and calculation\n\n');
     diagnostics.storage_check = 'FAIL_SIGN';
 else
-    fprintf('  Status: ⚠ CAUTION (magnitude unusual)\n\n');
+    console_log('  Status: ⚠ CAUTION (magnitude unusual)\n\n');
     diagnostics.storage_check = 'CAUTION';
 end
 
 % Overall assessment
-fprintf('=== OVERALL DIAGNOSTIC ASSESSMENT ===\n');
+console_log('=== OVERALL DIAGNOSTIC ASSESSMENT ===\n');
 checks = {diagnostics.amplitude_check, diagnostics.correlation_check, ...
           diagnostics.monotonic_check, diagnostics.timescale_check, ...
           diagnostics.storage_check};
 n_pass = sum(strcmp(checks, 'PASS'));
 n_fail = sum(contains(checks, 'FAIL'));
 
-fprintf('Checks passed: %d/5\n', n_pass);
-fprintf('Checks failed: %d/5\n', n_fail);
+console_log('Checks passed: %d/5\n', n_pass);
+console_log('Checks failed: %d/5\n', n_fail);
 
 if n_pass >= 4 && n_fail == 0
-    fprintf('Quality: ✓ EXCELLENT - Simple analysis applicable\n');
+    console_log('Quality: ✓ EXCELLENT - Simple analysis applicable\n');
     diagnostics.overall = 'EXCELLENT';
 elseif n_pass >= 3 && n_fail == 0
-    fprintf('Quality: ✓ GOOD - Results reliable with minor cautions\n');
+    console_log('Quality: ✓ GOOD - Results reliable with minor cautions\n');
     diagnostics.overall = 'GOOD';
 elseif n_fail > 0
-    fprintf('Quality: ✗ POOR - Complex behavior, need advanced modeling\n');
+    console_log('Quality: ✗ POOR - Complex behavior, need advanced modeling\n');
     diagnostics.overall = 'POOR';
 else
-    fprintf('Quality: ⚠ FAIR - Results interpretable with caution\n');
+    console_log('Quality: ⚠ FAIR - Results interpretable with caution\n');
     diagnostics.overall = 'FAIR';
 end
-fprintf('\n');
+console_log('\n');
 
 %% Generate visualizations
-fprintf('=== GENERATING FIGURES ===\n');
+console_log('=== GENERATING FIGURES ===\n');
 
 figs = struct();
 
@@ -486,7 +486,7 @@ text(0.1, 0.05, sprintf('Passed: %d/5 | Failed: %d/5', n_pass, n_fail), 'FontSiz
 
 sgtitle('Becker et al. (2022) Diagnostic Framework', 'FontSize', 13, 'FontWeight', 'bold');
 
-fprintf('✓ Figures generated\n\n');
+console_log('✓ Figures generated\n\n');
 
 %% Package results
 results = struct();
@@ -512,8 +512,8 @@ results.intermediate.strain_term = strain_term;
 results.intermediate.p_dot = p_dot;
 results.intermediate.del2_p = del2_p;
 
-fprintf('=== CALCULATION COMPLETE ===\n');
-fprintf('Results returned in structure with %d fields\n', length(fieldnames(results)));
+console_log('=== CALCULATION COMPLETE ===\n');
+console_log('Results returned in structure with %d fields\n', length(fieldnames(results)));
 
 end
 

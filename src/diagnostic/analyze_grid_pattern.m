@@ -17,9 +17,9 @@ if nargin < 2
     data_source = 'concatenated';
 end
 
-fprintf('=== GRID PATTERN ANALYSIS ===\n');
-fprintf('Dataset: %s\n', dataset_name);
-fprintf('Data source: %s\n', data_source);
+console_log('=== GRID PATTERN ANALYSIS ===\n');
+console_log('Dataset: %s\n', dataset_name);
+console_log('Data source: %s\n', data_source);
 
 %% Load data based on source type
 switch lower(data_source)
@@ -28,7 +28,7 @@ switch lower(data_source)
         
     case 'raw'
         [data, info] = load_raw_tdms_data(dataset_name);
-        fprintf('*** ANALYZING TRULY RAW ADC VALUES (no scaling applied) ***\n');
+        console_log('*** ANALYZING TRULY RAW ADC VALUES (no scaling applied) ***\n');
         
     case 'tdms_to_mat'
         [data, info] = load_tdms_to_mat_data(dataset_name);
@@ -37,10 +37,10 @@ switch lower(data_source)
         error('Unknown data source: %s. Use: concatenated, raw, tdms_to_mat', data_source);
 end
 
-fprintf('Data size: [%d x %d] (time x channels)\n', size(data));
-fprintf('Sampling rate: %d Hz\n', info.sampling_rate);
+console_log('Data size: [%d x %d] (time x channels)\n', size(data));
+console_log('Sampling rate: %d Hz\n', info.sampling_rate);
 if isfield(info, 'note')
-    fprintf('Note: %s\n', info.note);
+    console_log('Note: %s\n', info.note);
 end
 
 %% Analyze grid pattern in a sample region
@@ -55,10 +55,10 @@ c_start = max(1, c_mid - 50);
 c_end = min(size(data, 2), c_mid + 49);
 
 sample_data = data(t_start:t_end, c_start:c_end);
-fprintf('Sample region: time %d:%d, channels %d:%d\n', t_start, t_end, c_start, c_end);
+console_log('Sample region: time %d:%d, channels %d:%d\n', t_start, t_end, c_start, c_end);
 
 %% Analyze horizontal (temporal) patterns
-fprintf('\n=== TEMPORAL PATTERN ANALYSIS ===\n');
+console_log('\n=== TEMPORAL PATTERN ANALYSIS ===\n');
 % Take mean across channels to see temporal patterns
 temporal_profile = mean(sample_data, 2);
 temporal_diff = diff(temporal_profile);
@@ -67,7 +67,7 @@ temporal_diff = diff(temporal_profile);
 [temporal_fft, f_temporal] = analyze_periodicity(temporal_profile, 1, 'Temporal');
 
 %% Analyze vertical (spatial) patterns  
-fprintf('\n=== SPATIAL PATTERN ANALYSIS ===\n');
+console_log('\n=== SPATIAL PATTERN ANALYSIS ===\n');
 % Take mean across time to see spatial patterns
 spatial_profile = mean(sample_data, 1);
 spatial_diff = diff(spatial_profile);
@@ -126,7 +126,7 @@ title('Frequency Analysis');
 legend('Temporal', 'Spatial');
 grid on;
 
-fprintf('\n=== ANALYSIS COMPLETE ===\n');
+console_log('\n=== ANALYSIS COMPLETE ===\n');
 
 end
 
@@ -142,7 +142,7 @@ if ~exist(data_file, 'file')
     error('Concatenated data file not found: %s', data_file);
 end
 
-fprintf('Loading concatenated: %s\n', data_file);
+console_log('Loading concatenated: %s\n', data_file);
 loaded = load(data_file);
 
 if isfield(loaded, 'decdata')
@@ -173,7 +173,7 @@ end
 
 % Load first file as sample (analyzing all would be too much)
 sample_file = fullfile(tdms_dir, tdms_files(1).name);
-fprintf('Loading raw TDMS sample: %s\n', sample_file);
+console_log('Loading raw TDMS sample: %s\n', sample_file);
 
 % Use EXACT same approach as Silixa_TDMSDataToPhysicalDispRate.m
 try
@@ -182,7 +182,7 @@ try
     n_ch = fileinfo.n_ch;
     n_samp = fileinfo.ChannelLength;
     
-    fprintf('TDMS file: %d channels, %d samples\n', n_ch, n_samp);
+    console_log('TDMS file: %d channels, %d samples\n', n_ch, n_samp);
     
     % Load subset for analysis (first 1000 samples, first 100 channels)
     max_samples = min(1000, n_samp);
@@ -198,9 +198,9 @@ try
     data = TDMS_Adv_Read(sample_file, arg);
     
     % MODIFIED: Keep truly raw ADC values - NO SCALING
-    fprintf('Loaded RAW ADC values: [%d x %d]\n', size(data));
-    fprintf('Raw ADC range: [%.0f, %.0f] counts\n', min(data(:)), max(data(:)));
-    fprintf('Raw ADC data type: %s\n', class(data));
+    console_log('Loaded RAW ADC values: [%d x %d]\n', size(data));
+    console_log('Raw ADC range: [%.0f, %.0f] counts\n', min(data(:)), max(data(:)));
+    console_log('Raw ADC data type: %s\n', class(data));
     
     info.sampling_rate = 100;  % 100Hz
     info.file_path = sample_file;
@@ -228,7 +228,7 @@ if isempty(mat_files)
 end
 
 sample_file = fullfile(mat_dir, mat_files(1).name);
-fprintf('Loading 100Hz MAT sample: %s\n', sample_file);
+console_log('Loading 100Hz MAT sample: %s\n', sample_file);
 
 loaded = load(sample_file);
 if isfield(loaded, 'data')
@@ -252,14 +252,14 @@ frequencies = (0:N-1) / (N * sampling_interval);
 [~, peak_indices] = findpeaks(abs(fft_result(1:floor(N/2))), 'MinPeakHeight', 0.1*max(abs(fft_result)));
 
 if ~isempty(peak_indices)
-    fprintf('%s dominant frequencies:\n', label);
+    console_log('%s dominant frequencies:\n', label);
     for i = 1:min(5, length(peak_indices))
         freq = frequencies(peak_indices(i));
         period = 1/freq;
-        fprintf('  %.4f Hz (period: %.2f %s)\n', freq, period, label);
+        console_log('  %.4f Hz (period: %.2f %s)\n', freq, period, label);
     end
 else
-    fprintf('%s: No dominant periodic patterns found\n', label);
+    console_log('%s: No dominant periodic patterns found\n', label);
 end
 
 end

@@ -19,11 +19,11 @@ if length(mat_files) == 1
     try
         loaded_data = load(data_file);
         head_data = loaded_data;
-        fprintf('  Loaded head data: %s\n', mat_files(1).name);
+        console_log('  Loaded head data: %s\n', mat_files(1).name);
     catch ME
-        fprintf('  Error loading head data: %s\n', ME.message);
+        console_log('  Error loading head data: %s\n', ME.message);
     end
 else
-    fprintf('  No head data found for %s\n', test_label);
+    console_log('  No head data found for %s\n', test_label);
 end
 end

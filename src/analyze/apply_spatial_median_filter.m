@@ -27,13 +27,13 @@ if mod(channels_window, 2) == 0
     channels_window = channels_window + 1;
 end
 
-fprintf('  Spatial median filter: %d channels, %d time samples\n', channels_window, time_window);
+console_log('  Spatial median filter: %d channels, %d time samples\n', channels_window, time_window);
 
 [num_time, num_channels] = size(data1Hz);
 filtered_data = zeros(size(data1Hz));
 
 % Step 1: Apply spatial median filter across channels (removes vertical striping)
-fprintf('    Step 1: Removing vertical artifacts...\n');
+console_log('    Step 1: Removing vertical artifacts...\n');
 half_window = floor(channels_window / 2);
 
 for t = 1:num_time
@@ -55,12 +55,12 @@ end
 
 % Step 2: Light temporal smoothing to clean up any remaining noise
 if time_window > 1
-    fprintf('    Step 2: Light temporal smoothing...\n');
+    console_log('    Step 2: Light temporal smoothing...\n');
     for ch = 1:num_channels
         filtered_data(:, ch) = movmean(filtered_data(:, ch), time_window);
     end
 end
 
-fprintf('  Spatial median filtering complete\n');
+console_log('  Spatial median filtering complete\n');
 
 end

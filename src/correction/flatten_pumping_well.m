@@ -9,7 +9,7 @@ data = readtable(input_file);
 time_sec = data.Time_sec;
 drawdown_ft = data.Drawdown_ft;
 
-fprintf('=== FLATTENING PUMPING WELL PLATEAUS ===\n');
+console_log('=== FLATTENING PUMPING WELL PLATEAUS ===\n');
 
 %% Define pump rate periods and flatten each
 pump_times = [0, 3600, 7200, 10800, 14400, 18000];
@@ -39,7 +39,7 @@ for i = 1:length(rates)
         % Make PERFECTLY FLAT - replace entire plateau
         drawdown_flat(plateau_mask) = plateau_value;
         
-        fprintf('Rate %d GPM: Flattened at %.3f ft (%d points)\n', ...
+        console_log('Rate %d GPM: Flattened at %.3f ft (%d points)\n', ...
             rates(i), plateau_value, sum(plateau_mask));
     end
 end
@@ -73,8 +73,8 @@ export_table = table(time_sec, drawdown_final, ...
 
 writetable(export_table, output_file);
 
-fprintf('\n✓ Exported: %s\n', output_file);
-fprintf('✓ Perfectly flat plateaus for AQTESOLV!\n');
+console_log('\n✓ Exported: %s\n', output_file);
+console_log('✓ Perfectly flat plateaus for AQTESOLV!\n');
 
 %% Plot (AQTESOLV style with Displacement)
 figure('Position', [50, 50, 1400, 600]);
@@ -105,7 +105,7 @@ set(gca, 'FontSize', 11);
 xlim([0, max(time_sec)]);
 ylim([0, max(drawdown_final)*1.1]);
 
-fprintf('\n=== FILES FOR AQTESOLV ===\n');
-fprintf('1. Pumping Well: PT01a_PUMPING_WELL_FLAT.csv\n');
-fprintf('2. Observation Well: PM7_Zone2_FINAL_AQTESOLV.csv\n');
-fprintf('3. Pump Schedule: Pump_Schedule_AQTESOLV.csv\n');
+console_log('\n=== FILES FOR AQTESOLV ===\n');
+console_log('1. Pumping Well: PT01a_PUMPING_WELL_FLAT.csv\n');
+console_log('2. Observation Well: PM7_Zone2_FINAL_AQTESOLV.csv\n');
+console_log('3. Pump Schedule: Pump_Schedule_AQTESOLV.csv\n');

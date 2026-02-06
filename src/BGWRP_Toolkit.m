@@ -9,13 +9,13 @@
 
 % clear all; % REMOVED - this was clearing input config struct!
 
-fprintf('=== TDMS BATCH PROCESSING PIPELINE ===\n');
+console_log('=== TDMS BATCH PROCESSING PIPELINE ===\n');
 
 %% Setup paths
 script_dir = fileparts(mfilename('fullpath'));
 % Add all subdirectories to path
 addpath(genpath(script_dir));
-fprintf('Added all subdirectories to path: %s\n', script_dir);
+console_log('Added all subdirectories to path: %s\n', script_dir);
 
 %% Configuration Setup
 % Load config from file first (clear cache to ensure fresh config)
@@ -31,7 +31,7 @@ file_config = config();
 
 % Handle shorthand mode parameter
 if exist('mode', 'var') && ischar(mode)
-    fprintf('Using shorthand mode: %s\n', mode);
+    console_log('Using shorthand mode: %s\n', mode);
     config = file_config; % Start with file config
     
     % Merge in user's custom settings (user settings take priority)
@@ -161,7 +161,7 @@ if exist('mode', 'var') && ischar(mode)
             % Reset other diagnostic options to defaults
             config.run_boundary_diagnostic = false;
             config.run_enhanced_diagnostic = false;
-            fprintf('Diagnostic mode: quantization analysis\n');
+            console_log('Diagnostic mode: quantization analysis\n');
             
         case 'run_detrend'
             % Analysis mode with detrend filtering
@@ -175,7 +175,7 @@ if exist('mode', 'var') && ischar(mode)
             % Reset diagnostic options to defaults
             config.run_boundary_diagnostic = false;
             config.run_enhanced_diagnostic = false;
-            fprintf('Filter mode: detrend\n');
+            console_log('Filter mode: detrend\n');
             
         case 'run_highpass'
             % Analysis mode with highpass filtering
@@ -186,7 +186,7 @@ if exist('mode', 'var') && ischar(mode)
             config.save_charts = contains(mode, 'save');
             config.apply_concatenation_filter = true;
             config.filter_method = 'highpass';
-            fprintf('Filter mode: highpass\n');
+            console_log('Filter mode: highpass\n');
             
         case 'run_median'
             % Analysis mode with median filtering
@@ -197,7 +197,7 @@ if exist('mode', 'var') && ischar(mode)
             config.save_charts = contains(mode, 'save');
             config.apply_concatenation_filter = true;
             config.filter_method = 'median';
-            fprintf('Filter mode: median\n');
+            console_log('Filter mode: median\n');
             
         case 'run_filter_chen'
             % Run Chen et al. complete denoising framework
@@ -211,7 +211,7 @@ if exist('mode', 'var') && ischar(mode)
             % Reset other filtering
             config.apply_concatenation_filter = false;
             config.filter_method = 'none';
-            fprintf('Running Chen et al. complete denoising framework\n');
+            console_log('Running Chen et al. complete denoising framework\n');
             
         case 'run_filter_chen_fk'
             % Run Chen Stage 3 F-K filter only (grid pattern focus)
@@ -226,7 +226,7 @@ if exist('mode', 'var') && ischar(mode)
             config.apply_concatenation_filter = false;
             config.filter_method = 'none';
             config.chen_denoising = false;
-            fprintf('Running Chen F-K dip filter (grid pattern removal)\n');
+            console_log('Running Chen F-K dip filter (grid pattern removal)\n');
             
         case 'run_filter_spatial'
             % Run spatial median filtering
@@ -240,7 +240,7 @@ if exist('mode', 'var') && ischar(mode)
             config.apply_concatenation_filter = false;
             config.filter_method = 'none';
             config.chen_denoising = false;
-            fprintf('Running spatial median filtering\n');
+            console_log('Running spatial median filtering\n');
             
         case 'run_filter_temporal'
             % Run temporal median filtering
@@ -254,7 +254,7 @@ if exist('mode', 'var') && ischar(mode)
             config.apply_concatenation_filter = false;
             config.filter_method = 'none';
             config.chen_denoising = false;
-            fprintf('Running temporal median filtering\n');
+            console_log('Running temporal median filtering\n');
             
         case 'run_filter_baseline'
             % Run baseline (no filtering)
@@ -269,7 +269,7 @@ if exist('mode', 'var') && ischar(mode)
             % Reset other filtering
             config.apply_concatenation_filter = false;
             config.filter_method = 'none';
-            fprintf('Running baseline (no filtering)\n');
+            console_log('Running baseline (no filtering)\n');
             
         case 'run_filter_ensemble'
             % Run multi-channel ensemble averaging (signal extraction)
@@ -283,7 +283,7 @@ if exist('mode', 'var') && ischar(mode)
             config.apply_concatenation_filter = false;
             config.filter_method = 'none';
             config.chen_denoising = false;
-            fprintf('Running ensemble averaging (signal extraction approach)\n');
+            console_log('Running ensemble averaging (signal extraction approach)\n');
             
         case 'run_filter_grid'
             % Run targeted grid pattern removal
@@ -297,7 +297,7 @@ if exist('mode', 'var') && ischar(mode)
             config.apply_concatenation_filter = false;
             config.filter_method = 'none';
             config.chen_denoising = false;
-            fprintf('Running targeted grid pattern removal (dual bandstop)\n');
+            console_log('Running targeted grid pattern removal (dual bandstop)\n');
             
         case 'run_filter_movavg'
             % Run parameterized moving average filter
@@ -311,7 +311,7 @@ if exist('mode', 'var') && ischar(mode)
             config.apply_concatenation_filter = false;
             config.filter_method = 'none';
             config.chen_denoising = false;
-            fprintf('Running parameterized moving average filter\n');
+            console_log('Running parameterized moving average filter\n');
             
         case 'run_filter_matlab_movmean'
             % Run MATLAB movmean filter (like PM07_PT01a_Simple.m)
@@ -325,7 +325,7 @@ if exist('mode', 'var') && ischar(mode)
             config.apply_concatenation_filter = false;
             config.filter_method = 'none';
             config.chen_denoising = false;
-            fprintf('Running MATLAB movmean filter (10-sample window)\n');
+            console_log('Running MATLAB movmean filter (10-sample window)\n');
             
             case 'run_filter_movmean_plus_grid'
         % Run MATLAB movmean + grid pattern removal (0.35 Hz target)
@@ -338,7 +338,7 @@ if exist('mode', 'var') && ischar(mode)
         config.apply_concatenation_filter = true;   % Then: Apply grid removal
         config.filter_method = 'dual_bandstop';     % Target 0.35 Hz pattern
         config.chen_denoising = false;
-        fprintf('Running MATLAB movmean + 0.35 Hz grid removal\n');
+        console_log('Running MATLAB movmean + 0.35 Hz grid removal\n');
         
     case 'run_filter_matlab_movmean_5sec'
         % Run MATLAB movmean filter with 5-second window (500 samples at 100Hz)
@@ -355,7 +355,7 @@ if exist('mode', 'var') && ischar(mode)
         config.chen_denoising = false;
         % NOTE: 50x correction applied in analyze_das_data.m for decimation loss
         config.apply_sampling_freq_correction = true;
-        fprintf('Running MATLAB movmean filter (5-second window = 500 samples for 100Hz data)\n');
+        console_log('Running MATLAB movmean filter (5-second window = 500 samples for 100Hz data)\n');
     
     case 'run_filter_matlab_movmean_7sec'
         % Run MATLAB movmean filter with 7-second window (700 samples at 100Hz)
@@ -372,7 +372,7 @@ if exist('mode', 'var') && ischar(mode)
         config.chen_denoising = false;
         % NOTE: 50x correction applied in analyze_das_data.m for decimation loss
         config.apply_sampling_freq_correction = true;
-        fprintf('Running MATLAB movmean filter (7-second window = 700 samples for 100Hz data)\n');
+        console_log('Running MATLAB movmean filter (7-second window = 700 samples for 100Hz data)\n');
     
     case 'run_filter_matlab_movmean_8sec'
         % Run MATLAB movmean filter with 8-second window (800 samples at 100Hz)
@@ -389,7 +389,7 @@ if exist('mode', 'var') && ischar(mode)
         config.chen_denoising = false;
         % NOTE: 50x correction applied in analyze_das_data.m for decimation loss
         config.apply_sampling_freq_correction = true;
-        fprintf('Running MATLAB movmean filter (8-second window = 800 samples for 100Hz data)\n');
+        console_log('Running MATLAB movmean filter (8-second window = 800 samples for 100Hz data)\n');
     
     case 'run_filter_matlab_movmean_10sec'
         % Run MATLAB movmean filter with 10-second window (1000 samples at 100Hz)
@@ -406,7 +406,7 @@ if exist('mode', 'var') && ischar(mode)
         config.chen_denoising = false;
         % NOTE: 50x correction applied in analyze_das_data.m for decimation loss
         config.apply_sampling_freq_correction = true;
-        fprintf('Running MATLAB movmean filter (10-second window = 1000 samples for 100Hz data)\n');
+        console_log('Running MATLAB movmean filter (10-second window = 1000 samples for 100Hz data)\n');
             
         case 'run_correlation_analysis'
             % Analysis mode with strain rate vs head data correlation
@@ -454,10 +454,10 @@ if exist('mode', 'var') && ischar(mode)
             config.dynamic_bounds = false;
             % Disable related bounds to use individual manual bounds
             config.use_related_bounds = false;
-            fprintf('Running 5-second moving mean filter + strain rate vs head data correlation analysis (DAS shifted +20s)\n');
-            fprintf('  Colorbar bounds: Raw/Displacement ±5 nm/s, Strain ±2 nm/m\n');
-            fprintf('  Manual bounds enabled, dynamic_bounds disabled\n');
-            fprintf('  Timing correction: 8s, Recovery window: 19:14-19:17\n');
+            console_log('Running 5-second moving mean filter + strain rate vs head data correlation analysis (DAS shifted +20s)\n');
+            console_log('  Colorbar bounds: Raw/Displacement ±5 nm/s, Strain ±2 nm/m\n');
+            console_log('  Manual bounds enabled, dynamic_bounds disabled\n');
+            console_log('  Timing correction: 8s, Recovery window: 19:14-19:17\n');
             
         case 'run_correlation_analysis_1sec'
             % Same as run_correlation_analysis but with 1-second smoothing
@@ -491,7 +491,7 @@ if exist('mode', 'var') && ischar(mode)
             config.manual_bounds.strain.max = 2;
             config.dynamic_bounds = false;
             config.use_related_bounds = false;
-            fprintf('Running correlation analysis with 1-SECOND smoothing (100 samples for 100Hz data)\n');
+            console_log('Running correlation analysis with 1-SECOND smoothing (100 samples for 100Hz data)\n');
             
         case 'run_correlation_analysis_3sec'
             % Same as run_correlation_analysis but with 3-second smoothing
@@ -525,7 +525,7 @@ if exist('mode', 'var') && ischar(mode)
             config.manual_bounds.strain.max = 2;
             config.dynamic_bounds = false;
             config.use_related_bounds = false;
-            fprintf('Running correlation analysis with 3-SECOND smoothing (300 samples for 100Hz data)\n');
+            console_log('Running correlation analysis with 3-SECOND smoothing (300 samples for 100Hz data)\n');
             
         case 'run_correlation_analysis_5sec'
             % Same as run_correlation_analysis but with 5-second smoothing
@@ -559,7 +559,7 @@ if exist('mode', 'var') && ischar(mode)
             config.manual_bounds.strain.max = 2;
             config.dynamic_bounds = false;
             config.use_related_bounds = false;
-            fprintf('Running correlation analysis with 5-SECOND smoothing (500 samples for 100Hz data)\n');
+            console_log('Running correlation analysis with 5-SECOND smoothing (500 samples for 100Hz data)\n');
             
         case 'run_correlation_analysis_7sec'
             % Same as run_correlation_analysis but with 7-second smoothing
@@ -593,7 +593,7 @@ if exist('mode', 'var') && ischar(mode)
             config.manual_bounds.strain.max = 2;
             config.dynamic_bounds = false;
             config.use_related_bounds = false;
-            fprintf('Running correlation analysis with 7-SECOND smoothing (700 samples for 100Hz data)\n');
+            console_log('Running correlation analysis with 7-SECOND smoothing (700 samples for 100Hz data)\n');
             
         case 'run_correlation_analysis_8sec'
             % Same as run_correlation_analysis but with 8-second smoothing
@@ -627,7 +627,7 @@ if exist('mode', 'var') && ischar(mode)
             config.manual_bounds.strain.max = 2;
             config.dynamic_bounds = false;
             config.use_related_bounds = false;
-            fprintf('Running correlation analysis with 8-SECOND smoothing (800 samples for 100Hz data)\n');
+            console_log('Running correlation analysis with 8-SECOND smoothing (800 samples for 100Hz data)\n');
             
         case 'run_correlation_analysis_10sec'
             % Same as run_correlation_analysis but with 10-second smoothing
@@ -661,7 +661,7 @@ if exist('mode', 'var') && ischar(mode)
             config.manual_bounds.strain.max = 2;
             config.dynamic_bounds = false;
             config.use_related_bounds = false;
-            fprintf('Running correlation analysis with 10-SECOND smoothing (1000 samples for 100Hz data)\n');
+            console_log('Running correlation analysis with 10-SECOND smoothing (1000 samples for 100Hz data)\n');
             
         case 'run_correlation_analysis_15sec'
             % Same as run_correlation_analysis but with 15-second smoothing
@@ -695,7 +695,7 @@ if exist('mode', 'var') && ischar(mode)
             config.manual_bounds.strain.max = 2;
             config.dynamic_bounds = false;
             config.use_related_bounds = false;
-            fprintf('Running correlation analysis with 15-SECOND smoothing (1500 samples for 100Hz data)\n');
+            console_log('Running correlation analysis with 15-SECOND smoothing (1500 samples for 100Hz data)\n');
             
         case 'run_correlation_analysis_20sec'
             % Same as run_correlation_analysis but with 20-second smoothing
@@ -729,7 +729,7 @@ if exist('mode', 'var') && ischar(mode)
             config.manual_bounds.strain.max = 2;
             config.dynamic_bounds = false;
             config.use_related_bounds = false;
-            fprintf('Running correlation analysis with 20-SECOND smoothing (2000 samples for 100Hz data)\n');
+            console_log('Running correlation analysis with 20-SECOND smoothing (2000 samples for 100Hz data)\n');
             
         case 'run_correlation_analysis_25sec'
             % Same as run_correlation_analysis but with 25-second smoothing
@@ -763,7 +763,7 @@ if exist('mode', 'var') && ischar(mode)
             config.manual_bounds.strain.max = 2;
             config.dynamic_bounds = false;
             config.use_related_bounds = false;
-            fprintf('Running correlation analysis with 25-SECOND smoothing (2500 samples for 100Hz data)\n');
+            console_log('Running correlation analysis with 25-SECOND smoothing (2500 samples for 100Hz data)\n');
             
         case 'run_correlation_analysis_30sec'
             % Same as run_correlation_analysis but with 30-second smoothing
@@ -797,7 +797,7 @@ if exist('mode', 'var') && ischar(mode)
             config.manual_bounds.strain.max = 2;
             config.dynamic_bounds = false;
             config.use_related_bounds = false;
-            fprintf('Running correlation analysis with 30-SECOND smoothing (3000 samples for 100Hz data)\n');
+            console_log('Running correlation analysis with 30-SECOND smoothing (3000 samples for 100Hz data)\n');
             
         case 'run_correlation_analysis_lowpass'
             % Correlation analysis using the SAME anti-aliasing filter as 1Hz decimation
@@ -836,10 +836,10 @@ if exist('mode', 'var') && ischar(mode)
             config.manual_bounds.displacement.max = 5;
             config.manual_bounds.strain.min = -2;
             config.manual_bounds.strain.max = 2;
-            fprintf('Running correlation analysis with RESAMPLE ANTI-ALIASING FILTER\n');
-            fprintf('  Using the SAME filter that makes your 1Hz data look clean!\n');
-            fprintf('  Cutoff: 0.5 Hz (Nyquist for 1Hz data)\n');
-            fprintf('  Dynamic colorbar bounds enabled\n');
+            console_log('Running correlation analysis with RESAMPLE ANTI-ALIASING FILTER\n');
+            console_log('  Using the SAME filter that makes your 1Hz data look clean!\n');
+            console_log('  Cutoff: 0.5 Hz (Nyquist for 1Hz data)\n');
+            console_log('  Dynamic colorbar bounds enabled\n');
             
         case 'run_correlation_analysis_lowpass_PT01a'
             % PT01a-specific correlation analysis with anti-aliasing filter
@@ -880,12 +880,12 @@ if exist('mode', 'var') && ischar(mode)
             config.manual_bounds.displacement.max = 5;
             config.manual_bounds.strain.min = -2;
             config.manual_bounds.strain.max = 2;
-            fprintf('Running PT01a correlation analysis with RESAMPLE ANTI-ALIASING FILTER\n');
-            fprintf('  Using the SAME filter that makes your 1Hz data look clean!\n');
-            fprintf('  Cutoff: 0.5 Hz (Nyquist for 1Hz data)\n');
-            fprintf('  PT01a dates: Nov 7, 2023, 20:45:15 to 20:46:30 UTC\n');
-            fprintf('  DAS time shift: +38 seconds (from 1Hz optimization)\n');
-            fprintf('  Dynamic colorbar bounds enabled\n');
+            console_log('Running PT01a correlation analysis with RESAMPLE ANTI-ALIASING FILTER\n');
+            console_log('  Using the SAME filter that makes your 1Hz data look clean!\n');
+            console_log('  Cutoff: 0.5 Hz (Nyquist for 1Hz data)\n');
+            console_log('  PT01a dates: Nov 7, 2023, 20:45:15 to 20:46:30 UTC\n');
+            console_log('  DAS time shift: +38 seconds (from 1Hz optimization)\n');
+            console_log('  Dynamic colorbar bounds enabled\n');
             
         case 'run_linear_regression'
             % Analysis mode for linear regression (run after correlation_analysis)
@@ -908,7 +908,7 @@ if exist('mode', 'var') && ischar(mode)
             % ENABLE sampling frequency correction for strain rate calculation
             % NOTE: 50x correction applied in analyze_das_data.m
             config.apply_sampling_freq_correction = true;
-            fprintf('Running linear regression analysis (strain rate only, 50x correction applied)\n');
+            console_log('Running linear regression analysis (strain rate only, 50x correction applied)\n');
             
         case 'run_linear_regression_compare'
             % Analysis mode for linear regression - run BOTH strain and displacement rate
@@ -926,7 +926,7 @@ if exist('mode', 'var') && ischar(mode)
             config.filter_method = 'none';
             config.chen_denoising = false;
             config.das_time_shift_seconds = 20;
-            fprintf('Running linear regression analysis (BOTH strain rate AND displacement rate for comparison)\n');
+            console_log('Running linear regression analysis (BOTH strain rate AND displacement rate for comparison)\n');
             
         case 'run_amplitude_storage'
             % Simple amplitude-based storage calculation (single channel method)
@@ -980,7 +980,7 @@ if exist('mode', 'var') && ischar(mode)
             config.das_time_shift_seconds = 20;
             % ENABLE sampling frequency correction for strain rate calculation
             config.apply_sampling_freq_correction = true;
-            fprintf('Running amplitude-based storage calculation with linear regression plot (single channel at %.0f ft, zone %s)\n', ...
+            console_log('Running amplitude-based storage calculation with linear regression plot (single channel at %.0f ft, zone %s)\n', ...
                 config.amplitude_target_depth_ft, config.amplitude_zone);
             
         case 'run_storage_analysis'
@@ -999,7 +999,7 @@ if exist('mode', 'var') && ischar(mode)
             config.chen_denoising = false;
             % Shift DAS time forward by 20 seconds to align with head data
             config.das_time_shift_seconds = 20;
-            fprintf('Running storage parameter analysis from DAS-head correlation (DAS shifted +20s)\n');
+            console_log('Running storage parameter analysis from DAS-head correlation (DAS shifted +20s)\n');
             
         case 'run_storage_calculation'
             % Simple storage calculation from linear regression (Becker method)
@@ -1018,7 +1018,7 @@ if exist('mode', 'var') && ischar(mode)
             config.filter_method = 'none';
             config.chen_denoising = false;
             config.das_time_shift_seconds = 20;
-            fprintf('Running correlation analysis + linear regression + storage calculation\n');
+            console_log('Running correlation analysis + linear regression + storage calculation\n');
             
         case 'run_smooth'
             % Analysis mode with boundary smoothingg
@@ -1029,7 +1029,7 @@ if exist('mode', 'var') && ischar(mode)
             config.save_charts = contains(mode, 'save');
             config.apply_concatenation_filter = true;
             config.filter_method = 'overlap_smooth';
-            fprintf('Filter mode: overlap_smooth\n');
+            console_log('Filter mode: overlap_smooth\n');
             
         case 'diagnostic_boundaries'
             % Diagnostic mode: analyze file boundary discontinuities
@@ -1044,7 +1044,7 @@ if exist('mode', 'var') && ischar(mode)
             config.filter_method = 'none';
             % Reset other diagnostic options
             config.run_enhanced_diagnostic = false;
-            fprintf('Diagnostic mode: file boundaries\n');
+            console_log('Diagnostic mode: file boundaries\n');
             
         case 'diagnostic_enhanced'
             % Enhanced diagnostic mode: focused boundary analysis
@@ -1054,7 +1054,7 @@ if exist('mode', 'var') && ischar(mode)
             config.run_data_analysis = false;
             config.save_charts = false;
             config.run_enhanced_diagnostic = true;
-            fprintf('Enhanced diagnostic mode\n');
+            console_log('Enhanced diagnostic mode\n');
             
         case 'diagnostic_tdms'
             % TDMS metadata diagnostic mode: analyze raw file metadata
@@ -1064,7 +1064,7 @@ if exist('mode', 'var') && ischar(mode)
             config.run_data_analysis = false;
             config.save_charts = false;
             config.run_tdms_metadata_diagnostic = true;
-            fprintf('Diagnostic mode: TDMS metadata analysis\n');
+            console_log('Diagnostic mode: TDMS metadata analysis\n');
             
         case 'run_phase_align'
             % Analysis mode with phase alignment correction
@@ -1075,7 +1075,7 @@ if exist('mode', 'var') && ischar(mode)
             config.save_charts = contains(mode, 'save');
             config.apply_concatenation_filter = true;
             config.filter_method = 'phase_align';
-            fprintf('Phase correction mode: phase_align\n');
+            console_log('Phase correction mode: phase_align\n');
             
         case 'run_smooth_transition'
             % Analysis mode with smooth transition correction
@@ -1086,7 +1086,7 @@ if exist('mode', 'var') && ischar(mode)
             config.save_charts = contains(mode, 'save');
             config.apply_concatenation_filter = true;
             config.filter_method = 'smooth_transition';
-            fprintf('Phase correction mode: smooth_transition\n');
+            console_log('Phase correction mode: smooth_transition\n');
             
         case 'run_local_detrend'
             % Analysis mode with local detrending correction
@@ -1097,7 +1097,7 @@ if exist('mode', 'var') && ischar(mode)
             config.save_charts = contains(mode, 'save');
             config.apply_concatenation_filter = true;
             config.filter_method = 'local_detrend';
-            fprintf('Phase correction mode: local_detrend\n');
+            console_log('Phase correction mode: local_detrend\n');
             
         case 'run_rms_normalize'
             % Analysis mode with RMS amplitude normalization
@@ -1108,7 +1108,7 @@ if exist('mode', 'var') && ischar(mode)
             config.save_charts = contains(mode, 'save');
             config.apply_concatenation_filter = true;
             config.filter_method = 'rms_normalize';
-            fprintf('Amplitude correction mode: rms_normalize\n');
+            console_log('Amplitude correction mode: rms_normalize\n');
             
         case 'run_adaptive_normalize'
             % Analysis mode with adaptive amplitude normalization
@@ -1119,7 +1119,7 @@ if exist('mode', 'var') && ischar(mode)
             config.save_charts = contains(mode, 'save');
             config.apply_concatenation_filter = true;
             config.filter_method = 'adaptive_normalize';
-            fprintf('Amplitude correction mode: adaptive_normalize\n');
+            console_log('Amplitude correction mode: adaptive_normalize\n');
             
         case 'run_percentile_normalize'
             % Analysis mode with percentile-based normalization
@@ -1130,7 +1130,7 @@ if exist('mode', 'var') && ischar(mode)
             config.save_charts = contains(mode, 'save');
             config.apply_concatenation_filter = true;
             config.filter_method = 'percentile_normalize';
-            fprintf('Amplitude correction mode: percentile_normalize\n');
+            console_log('Amplitude correction mode: percentile_normalize\n');
             
         case {'run_timing', 'analyze_timing'}
             % Analysis mode: timing extraction + analysis
@@ -1187,18 +1187,18 @@ if exist('mode', 'var') && ischar(mode)
             config.manual_bounds.displacement.max = 5;
             config.manual_bounds.strain.min = -2;
             config.manual_bounds.strain.max = 2;
-            fprintf('Running PT01a correlation analysis with RESAMPLE ANTI-ALIASING FILTER\n');
-            fprintf('  Using the SAME filter that makes your 1Hz data look clean!\n');
-            fprintf('  Cutoff: 0.5 Hz (Nyquist for 1Hz data)\n');
-            fprintf('  PT01a dates: Nov 7, 2023, 20:45:15 to 20:46:30 UTC\n');
-            fprintf('  DAS time shift: +38 seconds (from 1Hz optimization)\n');
-            fprintf('  Dynamic colorbar bounds enabled\n');
+            console_log('Running PT01a correlation analysis with RESAMPLE ANTI-ALIASING FILTER\n');
+            console_log('  Using the SAME filter that makes your 1Hz data look clean!\n');
+            console_log('  Cutoff: 0.5 Hz (Nyquist for 1Hz data)\n');
+            console_log('  PT01a dates: Nov 7, 2023, 20:45:15 to 20:46:30 UTC\n');
+            console_log('  DAS time shift: +38 seconds (from 1Hz optimization)\n');
+            console_log('  Dynamic colorbar bounds enabled\n');
             
         otherwise
             error('Unknown mode: %s. Valid modes: prep, prep_single_step, prep_double_precision, prep_no_decim, prep_purge, prep_tdms, prep_concat, prep_timing, analyze, analyze_save, all, all_save, purge_inactive, purge_unraw, diagnostic_boundaries, diagnostic_enhanced, diagnostic_tdms, run_correlation_analysis, run_correlation_analysis_lowpass_pt01a, run_linear_regression, run_linear_regression_compare, run_amplitude_storage, run_storage_analysis, run_storage_calculation', mode);
     end
     
-    fprintf('Mode "%s" configured\n', mode);
+    console_log('Mode "%s" configured\n', mode);
 
 else
     % Use file config as base
@@ -1250,7 +1250,7 @@ end
 
 %% Workspace Organization (only for prep modes)
 if config.run_tdms_conversion || config.run_concatenation || config.run_timing_extraction
-    fprintf('\n=== WORKSPACE ORGANIZATION ===\n');
+    console_log('\n=== WORKSPACE ORGANIZATION ===\n');
     % Determine selective mode from current mode
     if contains(mode, 'purge')
         selective_mode = 'purge';
@@ -1260,41 +1260,41 @@ if config.run_tdms_conversion || config.run_concatenation || config.run_timing_e
     
     workspace_info = organize_workspace(config.base_input, config.cleanup_dirs, selective_mode);
 else
-    fprintf('\n=== ANALYSIS MODE: Skipping workspace organization ===\n');
+    console_log('\n=== ANALYSIS MODE: Skipping workspace organization ===\n');
     workspace_info = struct('input_folders', {{}});
 end
 
-fprintf('Processing stages enabled:\n');
+console_log('Processing stages enabled:\n');
 if config.run_tdms_conversion
-    fprintf('  TDMS Conversion: ENABLED\n');
+    console_log('  TDMS Conversion: ENABLED\n');
 else
-    fprintf('  TDMS Conversion: DISABLED\n');
+    console_log('  TDMS Conversion: DISABLED\n');
 end
-fprintf('DEBUG: config.run_concatenation = %s (type: %s)\n', string(config.run_concatenation), class(config.run_concatenation));
+console_log('DEBUG: config.run_concatenation = %s (type: %s)\n', string(config.run_concatenation), class(config.run_concatenation));
 if config.run_concatenation
-    fprintf('  Concatenation: ENABLED\n');
+    console_log('  Concatenation: ENABLED\n');
 else
-    fprintf('  Concatenation: DISABLED\n');
+    console_log('  Concatenation: DISABLED\n');
 end
 if config.run_timing_extraction
-    fprintf('  Timing Extraction: ENABLED\n');
+    console_log('  Timing Extraction: ENABLED\n');
 else
-    fprintf('  Timing Extraction: DISABLED\n');
+    console_log('  Timing Extraction: DISABLED\n');
 end
 if config.run_data_analysis
-    fprintf('  Data Analysis: ENABLED\n');
+    console_log('  Data Analysis: ENABLED\n');
 else
-    fprintf('  Data Analysis: DISABLED\n');
+    console_log('  Data Analysis: DISABLED\n');
 end
 if config.save_charts
-    fprintf('  Chart Saving: ENABLED\n');
+    console_log('  Chart Saving: ENABLED\n');
 else
-    fprintf('  Chart Saving: DISABLED\n');
+    console_log('  Chart Saving: DISABLED\n');
 end
 
 %% Step 1: Convert TDMS to individual MAT files
 if config.run_tdms_conversion
-    fprintf('\n=== STEP 1: TDMS TO MAT CONVERSION ===\n');
+    console_log('\n=== STEP 1: TDMS TO MAT CONVERSION ===\n');
     
     % Use organized workspace folders
     if exist('workspace_info', 'var') && isfield(workspace_info, 'input_folders')
@@ -1305,7 +1305,7 @@ if config.run_tdms_conversion
     
     for i = 1:length(folders_to_process)
         current_folder = folders_to_process{i};
-        fprintf('\n--- Processing %s ---\n', current_folder);
+        console_log('\n--- Processing %s ---\n', current_folder);
         
         % Set parameters for Silixa script (store in config to avoid clearing)
         % Read TDMS files from _active or original input directory _das subdirectory
@@ -1330,15 +1330,15 @@ if config.run_tdms_conversion
     
     % Verify input directory exists
     if ~exist(directory, 'dir')
-        fprintf('⚠ Directory not found: %s\n', directory);
+        console_log('⚠ Directory not found: %s\n', directory);
         continue;
     end
     
     % Check files
     files = dir([directory filesearch]);
-    fprintf('Found %d TDMS files\n', length(files));
+    console_log('Found %d TDMS files\n', length(files));
     if length(files) == 0
-        fprintf('⚠ No TDMS files found, skipping\n');
+        console_log('⚠ No TDMS files found, skipping\n');
         continue;
     end
     
@@ -1346,18 +1346,18 @@ if config.run_tdms_conversion
     try
         silixa_script = fullfile(script_dir, 'prepare', 'Silixa_TDMSDataToPhysicalDispRate.m');
         run(silixa_script);
-        fprintf('✓ TDMS conversion completed for %s\n', current_folder);
+        console_log('✓ TDMS conversion completed for %s\n', current_folder);
     catch ME
-        fprintf('✗ TDMS conversion failed for %s: %s\n', current_folder, ME.message);
+        console_log('✗ TDMS conversion failed for %s: %s\n', current_folder, ME.message);
     end
     end
 else
-    fprintf('\n=== STEP 1: SKIPPED (TDMS conversion disabled) ===\n');
+    console_log('\n=== STEP 1: SKIPPED (TDMS conversion disabled) ===\n');
 end
 
 %% Step 2: Process head data (combine zones into single files)
 if config.run_concatenation  % Run head processing if concatenation is enabled
-    fprintf('\n=== STEP 2A: HEAD DATA PROCESSING ===\n');
+    console_log('\n=== STEP 2A: HEAD DATA PROCESSING ===\n');
     
     % Use the same folders that were processed in TDMS conversion step
     if exist('workspace_info', 'var') && isfield(workspace_info, 'input_folders')
@@ -1368,7 +1368,7 @@ if config.run_concatenation  % Run head processing if concatenation is enabled
     
     for i = 1:length(folders_to_process)
         current_folder = folders_to_process{i};
-        fprintf('\n--- Processing head data for %s ---\n', current_folder);
+        console_log('\n--- Processing head data for %s ---\n', current_folder);
         
         % Head data input directory (expect _head subdirectory)
         % Check _active first, then fall back to base path
@@ -1386,7 +1386,7 @@ if config.run_concatenation  % Run head processing if concatenation is enabled
         
         % Check if head data directory exists
         if ~exist(head_input_dir, 'dir')
-            fprintf('⚠ Head data directory not found: %s\n', head_input_dir);
+            console_log('⚠ Head data directory not found: %s\n', head_input_dir);
             continue;
         end
         
@@ -1394,19 +1394,19 @@ if config.run_concatenation  % Run head processing if concatenation is enabled
         success = process_head_data(head_input_dir, head_output_file);
         
         if success
-            fprintf('✓ Head data processing completed: %s\n', current_folder);
+            console_log('✓ Head data processing completed: %s\n', current_folder);
         else
-            fprintf('✗ Head data processing failed for %s\n', current_folder);
+            console_log('✗ Head data processing failed for %s\n', current_folder);
         end
     end
 else
-    fprintf('\n=== STEP 2A: SKIPPED (Head data processing disabled) ===\n');
+    console_log('\n=== STEP 2A: SKIPPED (Head data processing disabled) ===\n');
 end
 
 %% Step 2B: Concatenate and downsample individual MAT files
-fprintf('DEBUG: config.run_concatenation = %d\n', config.run_concatenation);
+console_log('DEBUG: config.run_concatenation = %d\n', config.run_concatenation);
 if config.run_concatenation
-    fprintf('\n=== STEP 2: CONCATENATION AND DOWNSAMPLING ===\n');
+    console_log('\n=== STEP 2: CONCATENATION AND DOWNSAMPLING ===\n');
 
 % Store config values locally before loop to survive clear statements
 local_test_directories = config.test_directories;
@@ -1430,21 +1430,21 @@ if exist('workspace_info', 'var') && isfield(workspace_info, 'input_folders')
             test_labels_to_use{j} = sprintf('test%d', j);
         end
     end
-    fprintf('DEBUG: Using workspace folders: %s\n', strjoin(folders_to_process, ', '));
+    console_log('DEBUG: Using workspace folders: %s\n', strjoin(folders_to_process, ', '));
 else
     folders_to_process = local_test_directories;
     test_labels_to_use = local_test_labels;
-    fprintf('DEBUG: Using config folders: %s\n', strjoin(folders_to_process, ', '));
+    console_log('DEBUG: Using config folders: %s\n', strjoin(folders_to_process, ', '));
 end
 
 for i = 1:length(folders_to_process)
     current_folder = folders_to_process{i};
     test_label = test_labels_to_use{i};
-    fprintf('\n--- Concatenating %s ---\n', current_folder);
+    console_log('\n--- Concatenating %s ---\n', current_folder);
     
     % Read from _tdms_to_mat/_das subdirectory (new structure)
     mat_directory = fullfile(local_base_input, '_tdms_to_mat', current_folder, '_das');
-    fprintf('DEBUG: Looking for DAS MAT files in: %s\n', mat_directory);
+    console_log('DEBUG: Looking for DAS MAT files in: %s\n', mat_directory);
     
     directory = mat_directory;  % ConcatDownsample expects 'directory' variable
     filesearch = '*.mat';
@@ -1460,32 +1460,32 @@ for i = 1:length(folders_to_process)
     
     % Verify MAT directory exists
     if ~exist(mat_directory, 'dir')
-        fprintf('⚠ MAT directory not found: %s\n', mat_directory);
+        console_log('⚠ MAT directory not found: %s\n', mat_directory);
         continue;
     end
     
     % Check MAT files
     search_pattern = fullfile(mat_directory, filesearch);
-    fprintf('DEBUG: Search pattern: %s\n', search_pattern);
+    console_log('DEBUG: Search pattern: %s\n', search_pattern);
     files = dir(search_pattern);
-    fprintf('Found %d MAT files to concatenate\n', length(files));
+    console_log('Found %d MAT files to concatenate\n', length(files));
     
     % List the files found
     if length(files) > 0
         for j = 1:min(3, length(files))  % Show first 3 files
-            fprintf('  File %d: %s\n', j, files(j).name);
+            console_log('  File %d: %s\n', j, files(j).name);
         end
         if length(files) > 3
-            fprintf('  ... and %d more files\n', length(files) - 3);
+            console_log('  ... and %d more files\n', length(files) - 3);
         end
     else
-        fprintf('⚠ No MAT files found, skipping\n');
+        console_log('⚠ No MAT files found, skipping\n');
         % List what IS in the directory
         all_files = dir(mat_directory);
-        fprintf('DEBUG: Directory contents (%d items):\n', length(all_files));
+        console_log('DEBUG: Directory contents (%d items):\n', length(all_files));
         for j = 1:min(5, length(all_files))
             if ~all_files(j).isdir
-                fprintf('  %s\n', all_files(j).name);
+                console_log('  %s\n', all_files(j).name);
             end
         end
         continue;
@@ -1495,7 +1495,7 @@ for i = 1:length(folders_to_process)
     success = process_mat_data(mat_directory, output_file, local_decimation_factor);
     
     if success
-        fprintf('✓ Concatenation completed: %s\n', outname);
+        console_log('✓ Concatenation completed: %s\n', outname);
         
         % Copy DAS data to _active/<current_folder>/_das directory
         active_dataset_dir = fullfile(local_base_input, '_active', current_folder);
@@ -1505,7 +1505,7 @@ for i = 1:length(folders_to_process)
         end
         active_das_output = fullfile(active_das_dir, outname);
         copyfile(output_file, active_das_output);
-        fprintf('✓ Copied DAS data to _active/%s/_das: %s\n', current_folder, outname);
+        console_log('✓ Copied DAS data to _active/%s/_das: %s\n', current_folder, outname);
         
         % Copy head data if it exists to _active/<current_folder>/_head directory
         head_source = fullfile(local_base_input, '_combined_head', current_folder, 'head_data.mat');
@@ -1516,21 +1516,21 @@ for i = 1:length(folders_to_process)
             end
             active_head_output = fullfile(active_head_dir, 'head_data.mat');
             copyfile(head_source, active_head_output);
-            fprintf('✓ Copied head data to _active/%s/_head: head_data.mat\n', current_folder);
+            console_log('✓ Copied head data to _active/%s/_head: head_data.mat\n', current_folder);
         else
-            fprintf('⚠ No head data found for %s\n', current_folder);
+            console_log('⚠ No head data found for %s\n', current_folder);
         end
     else
-        fprintf('✗ Concatenation failed for %s\n', current_folder);
+        console_log('✗ Concatenation failed for %s\n', current_folder);
     end
 end
 else
-    fprintf('\n=== STEP 2: SKIPPED (Concatenation disabled) ===\n');
+    console_log('\n=== STEP 2: SKIPPED (Concatenation disabled) ===\n');
 end
 
 %% Step 3: Extract timing configuration
 if config.run_timing_extraction
-    fprintf('\n=== STEP 3: EXTRACTING TIMING CONFIGURATION ===\n');
+    console_log('\n=== STEP 3: EXTRACTING TIMING CONFIGURATION ===\n');
 
 timing_config = struct();
 
@@ -1539,7 +1539,7 @@ if exist('workspace_info', 'var') && isfield(workspace_info, 'input_folders') &&
     input_folders = workspace_info.input_folders;
 else
     % Fallback: scan for input folders manually during prep
-    fprintf('⚠ Workspace info not available, scanning for input folders...\n');
+    console_log('⚠ Workspace info not available, scanning for input folders...\n');
     all_items = dir(config.base_input);
     input_folders = {};
     for i = 1:length(all_items)
@@ -1559,32 +1559,32 @@ for i = 1:length(input_folders)
     % Use actual folder name as test label - no hardcoded patterns
     test_label = folder_name;
     
-    fprintf('Extracting timing for folder %s (label: %s)...\n', folder_name, test_label);
+    console_log('Extracting timing for folder %s (label: %s)...\n', folder_name, test_label);
     
     % Look for TDMS files in original input folder _das subdirectory
     tdms_directory = fullfile(config.base_input, folder_name, '_das');
-    fprintf('  🔍 Checking primary directory: %s\n', tdms_directory);
+    console_log('  🔍 Checking primary directory: %s\n', tdms_directory);
     if ~exist(tdms_directory, 'dir')
         % Try organized workspace location
         tdms_directory = fullfile(config.base_input, '_tdms_to_mat', folder_name, '_das');
-        fprintf('  🔍 Primary not found, trying workspace: %s\n', tdms_directory);
+        console_log('  🔍 Primary not found, trying workspace: %s\n', tdms_directory);
     else
-        fprintf('  ✓ Primary directory exists\n');
+        console_log('  ✓ Primary directory exists\n');
     end
     
     if exist(tdms_directory, 'dir')
         % Find first TDMS file to extract start time
-        fprintf('  📁 Scanning directory: %s\n', tdms_directory);
+        console_log('  📁 Scanning directory: %s\n', tdms_directory);
         tdms_files = dir(fullfile(tdms_directory, '*.tdms'));
-        fprintf('  📊 Found %d TDMS files in directory\n', length(tdms_files));
+        console_log('  📊 Found %d TDMS files in directory\n', length(tdms_files));
         
         if ~isempty(tdms_files)
             % Sort files by name to ensure chronological order
             [~, sort_idx] = sort({tdms_files.name});
             tdms_files = tdms_files(sort_idx);
-            fprintf('  📋 Files sorted chronologically\n');
-            fprintf('  🕐 First file: %s\n', tdms_files(1).name);
-            fprintf('  🕐 Last file: %s\n', tdms_files(end).name);
+            console_log('  📋 Files sorted chronologically\n');
+            console_log('  🕐 First file: %s\n', tdms_files(1).name);
+            console_log('  🕐 Last file: %s\n', tdms_files(end).name);
             first_file = tdms_files(1).name;
             
             % Extract timestamp from filename
@@ -1611,12 +1611,12 @@ for i = 1:length(input_folders)
                     timing_config.(test_label).source = 'extracted_from_filename';
                     timing_config.(test_label).num_files = length(tdms_files);
                     
-                    fprintf('  ✓ Start time: %s (from %s)\n', start_time, first_file);
-                    fprintf('  📊 Total files detected: %d\n', length(tdms_files));
+                    console_log('  ✓ Start time: %s (from %s)\n', start_time, first_file);
+                    console_log('  📊 Total files detected: %d\n', length(tdms_files));
                     
                     % Calculate end time (approximate)
                     last_file = tdms_files(end).name;
-                    fprintf('  🕐 Processing last file: %s\n', last_file);
+                    console_log('  🕐 Processing last file: %s\n', last_file);
                     last_timestamp_match = regexp(last_file, 'UTC_(\d{8}_\d{6}\.\d{3})', 'tokens');
                     if ~isempty(last_timestamp_match)
                         last_timestamp_str = last_timestamp_match{1}{1};
@@ -1632,32 +1632,32 @@ for i = 1:length(input_folders)
                         timing_config.(test_label).end = end_time;
                         timing_config.(test_label).duration_minutes = minutes(end_time - start_time);
                         
-                        fprintf('  ✓ End time: %s (%.1f minutes)\n', end_time, timing_config.(test_label).duration_minutes);
-                        fprintf('  📏 Duration calculation: %s to %s = %.1f minutes\n', start_time, end_time, timing_config.(test_label).duration_minutes);
+                        console_log('  ✓ End time: %s (%.1f minutes)\n', end_time, timing_config.(test_label).duration_minutes);
+                        console_log('  📏 Duration calculation: %s to %s = %.1f minutes\n', start_time, end_time, timing_config.(test_label).duration_minutes);
                     end
                     
                 catch
-                    fprintf('  ⚠ Could not parse timestamp: %s\n', timestamp_str);
+                    console_log('  ⚠ Could not parse timestamp: %s\n', timestamp_str);
                 end
             else
-                fprintf('  ⚠ No timestamp found in filename: %s\n', first_file);
+                console_log('  ⚠ No timestamp found in filename: %s\n', first_file);
             end
         else
-            fprintf('  ⚠ No TDMS files found in %s\n', tdms_directory);
+            console_log('  ⚠ No TDMS files found in %s\n', tdms_directory);
         end
     else
-        fprintf('  ⚠ Directory not found: %s\n', tdms_directory);
+        console_log('  ⚠ Directory not found: %s\n', tdms_directory);
     end
 end
 
     %% Step 4: Save timing configuration
-    fprintf('\n=== STEP 4: SAVING CONFIGURATION ===\n');
+    console_log('\n=== STEP 4: SAVING CONFIGURATION ===\n');
 
     % Create _configs directory
     configs_dir = fullfile(config.base_input, '_configs');
     if ~exist(configs_dir, 'dir')
         mkdir(configs_dir);
-        fprintf('Created configs directory: %s\n', configs_dir);
+        console_log('Created configs directory: %s\n', configs_dir);
     end
 
     % Save individual config files per dataset
@@ -1704,44 +1704,44 @@ end
                 copyfile(source_func_filepath, active_func_filepath);
             end
             
-            fprintf('✓ Copied configs to _active/%s/_das_timing/\n', source_folder);
+            console_log('✓ Copied configs to _active/%s/_das_timing/\n', source_folder);
         end
     end
     
     % No longer saving legacy combined config - using individual dataset configs
 
     % Display configuration summary
-    fprintf('\n=== EXTRACTED TIMING CONFIGURATION ===\n');
+    console_log('\n=== EXTRACTED TIMING CONFIGURATION ===\n');
     for i = 1:length(config.test_labels)
         test_label = config.test_labels{i};
         if isfield(timing_config, test_label)
             timing_data = timing_config.(test_label);
-            fprintf('Dataset %s:\n', upper(test_label));
-            fprintf('  Start: %s\n', timing_data.start);
+            console_log('Dataset %s:\n', upper(test_label));
+            console_log('  Start: %s\n', timing_data.start);
             if isfield(timing_data, 'end')
-                fprintf('  End: %s\n', timing_data.end);
-                fprintf('  Duration: %.1f minutes\n', timing_data.duration_minutes);
+                console_log('  End: %s\n', timing_data.end);
+                console_log('  Duration: %.1f minutes\n', timing_data.duration_minutes);
             end
-            fprintf('  Files: %d\n', timing_data.num_files);
-            fprintf('  Source: %s\n', timing_data.source);
+            console_log('  Files: %d\n', timing_data.num_files);
+            console_log('  Source: %s\n', timing_data.source);
         end
     end
 
 else
-    fprintf('\n=== STEP 3: SKIPPED (Timing extraction disabled) ===\n');
+    console_log('\n=== STEP 3: SKIPPED (Timing extraction disabled) ===\n');
 end
 
 %% Step 4: Boundary Diagnostic
 if isfield(config, 'run_boundary_diagnostic') && config.run_boundary_diagnostic
-    fprintf('\n=== STEP 4: FILE BOUNDARY DIAGNOSTIC ===\n');
+    console_log('\n=== STEP 4: FILE BOUNDARY DIAGNOSTIC ===\n');
     
     % Use unified dataset discovery for active (processed) datasets
     try
         dataset_info = discover_datasets(config.base_input, 'active');
-        fprintf('Discovered %d processed datasets for boundary diagnostic\n', length(dataset_info.datasets));
+        console_log('Discovered %d processed datasets for boundary diagnostic\n', length(dataset_info.datasets));
     catch ME
-        fprintf('✗ Active dataset discovery failed: %s\n', ME.message);
-        fprintf('Cannot proceed with boundary diagnostic\n');
+        console_log('✗ Active dataset discovery failed: %s\n', ME.message);
+        console_log('Cannot proceed with boundary diagnostic\n');
         return;
     end
     
@@ -1752,7 +1752,7 @@ if isfield(config, 'run_boundary_diagnostic') && config.run_boundary_diagnostic
         dataset_name = dataset_info.datasets{i};
         dataset_dir = dataset_info.paths{i};
         
-        fprintf('Processing dataset: %s\n', dataset_name);
+        console_log('Processing dataset: %s\n', dataset_name);
         
         % Find .mat file and timing config file
             mat_files = dir(fullfile(dataset_dir, '*.mat'));
@@ -1771,29 +1771,29 @@ if isfield(config, 'run_boundary_diagnostic') && config.run_boundary_diagnostic
                     diagnose_file_boundaries(dataset_name, data_filepath, loaded_config);
                     
                 catch ME
-                    fprintf('Error in diagnostic for %s: %s\n', dataset_name, ME.message);
+                    console_log('Error in diagnostic for %s: %s\n', dataset_name, ME.message);
                 end
                 rmpath(dataset_dir);
         else
-            fprintf('⚠ Skipping %s: Expected 1 MAT file and 1 timing config, found %d MAT, %d timing configs\n', ...
+            console_log('⚠ Skipping %s: Expected 1 MAT file and 1 timing config, found %d MAT, %d timing configs\n', ...
                 dataset_name, length(mat_files), length(m_files));
         end
     end
     
-    fprintf('\n=== BOUNDARY DIAGNOSTIC COMPLETE ===\n');
+    console_log('\n=== BOUNDARY DIAGNOSTIC COMPLETE ===\n');
 end
 
 %% Step 4b: Enhanced Diagnostic
 if isfield(config, 'run_enhanced_diagnostic') && config.run_enhanced_diagnostic
-    fprintf('\n=== STEP 4B: ENHANCED BOUNDARY DIAGNOSTIC ===\n');
+    console_log('\n=== STEP 4B: ENHANCED BOUNDARY DIAGNOSTIC ===\n');
     
     % Use unified dataset discovery for active (processed) datasets
     try
         dataset_info = discover_datasets(config.base_input, 'active');
-        fprintf('Discovered %d processed datasets for enhanced diagnostic\n', length(dataset_info.datasets));
+        console_log('Discovered %d processed datasets for enhanced diagnostic\n', length(dataset_info.datasets));
     catch ME
-        fprintf('✗ Active dataset discovery failed: %s\n', ME.message);
-        fprintf('Cannot proceed with enhanced diagnostic\n');
+        console_log('✗ Active dataset discovery failed: %s\n', ME.message);
+        console_log('Cannot proceed with enhanced diagnostic\n');
         return;
     end
     
@@ -1804,7 +1804,7 @@ if isfield(config, 'run_enhanced_diagnostic') && config.run_enhanced_diagnostic
         dataset_name = dataset_info.datasets{i};
         dataset_dir = dataset_info.paths{i};
         
-        fprintf('Processing dataset: %s\n', dataset_name);
+        console_log('Processing dataset: %s\n', dataset_name);
         
         % Find .mat file and timing config file
             mat_files = dir(fullfile(dataset_dir, '*.mat'));
@@ -1823,43 +1823,43 @@ if isfield(config, 'run_enhanced_diagnostic') && config.run_enhanced_diagnostic
                     diagnose_boundaries_enhanced(dataset_name, data_filepath, loaded_config);
                     
                 catch ME
-                    fprintf('Error in enhanced diagnostic for %s: %s\n', dataset_name, ME.message);
+                    console_log('Error in enhanced diagnostic for %s: %s\n', dataset_name, ME.message);
                 end
                 rmpath(dataset_dir);
         else
-            fprintf('⚠ Skipping %s: Expected 1 MAT file and 1 timing config, found %d MAT, %d timing configs\n', ...
+            console_log('⚠ Skipping %s: Expected 1 MAT file and 1 timing config, found %d MAT, %d timing configs\n', ...
                 dataset_name, length(mat_files), length(m_files));
         end
     end
     
-    fprintf('\n=== ENHANCED DIAGNOSTIC COMPLETE ===\n');
+    console_log('\n=== ENHANCED DIAGNOSTIC COMPLETE ===\n');
 end
 
 %% Step 4c: TDMS Metadata Diagnostic
 if isfield(config, 'run_tdms_metadata_diagnostic') && config.run_tdms_metadata_diagnostic
-    fprintf('\n=== STEP 4C: TDMS METADATA DIAGNOSTIC ===\n');
+    console_log('\n=== STEP 4C: TDMS METADATA DIAGNOSTIC ===\n');
     
     % Use unified dataset discovery for consistent behavior
     try
         dataset_info = discover_datasets(config.base_input, 'raw');
         folders_to_process = dataset_info.datasets;
-        fprintf('Discovered %d datasets for TDMS diagnostic\n', length(folders_to_process));
+        console_log('Discovered %d datasets for TDMS diagnostic\n', length(folders_to_process));
     catch ME
-        fprintf('✗ Dataset discovery failed: %s\n', ME.message);
-        fprintf('Cannot proceed with TDMS diagnostic\n');
+        console_log('✗ Dataset discovery failed: %s\n', ME.message);
+        console_log('Cannot proceed with TDMS diagnostic\n');
         folders_to_process = {};
     end
     
     for i = 1:length(folders_to_process)
         current_folder = folders_to_process{i};
-        fprintf('\n--- Processing %s ---\n', current_folder);
+        console_log('\n--- Processing %s ---\n', current_folder);
         
         % Get directory path from discovery results
         dataset_base_path = dataset_info.paths{i};
         
         % Check if this dataset has TDMS files
         if strcmp(dataset_info.types{i}, 'mat')
-            fprintf('⚠ Skipping %s: Only MAT files found, no TDMS metadata available\n', current_folder);
+            console_log('⚠ Skipping %s: Only MAT files found, no TDMS metadata available\n', current_folder);
             continue;
         end
         
@@ -1867,31 +1867,31 @@ if isfield(config, 'run_tdms_metadata_diagnostic') && config.run_tdms_metadata_d
         das_subdir = fullfile(dataset_base_path, '_das');
         if exist(das_subdir, 'dir')
             tdms_directory = das_subdir;
-            fprintf('Using structured _das subdirectory: %s\n', tdms_directory);
+            console_log('Using structured _das subdirectory: %s\n', tdms_directory);
         else
             tdms_directory = dataset_base_path;
-            fprintf('Using flat directory structure: %s\n', tdms_directory);
+            console_log('Using flat directory structure: %s\n', tdms_directory);
         end
         
         % Run TDMS metadata diagnostic
         try
             diagnose_tdms_metadata(current_folder, tdms_directory);
-            fprintf('✓ TDMS metadata diagnostic completed for %s\n', current_folder);
+            console_log('✓ TDMS metadata diagnostic completed for %s\n', current_folder);
         catch ME
-            fprintf('✗ TDMS metadata diagnostic failed for %s: %s\n', current_folder, ME.message);
+            console_log('✗ TDMS metadata diagnostic failed for %s: %s\n', current_folder, ME.message);
         end
     end
     
-    fprintf('\n=== TDMS METADATA DIAGNOSTIC COMPLETE ===\n');
+    console_log('\n=== TDMS METADATA DIAGNOSTIC COMPLETE ===\n');
 end
 
 %% Step 5: Data Analysis
 if config.run_data_analysis
-    fprintf('\n=== STEP 5: DATA ANALYSIS ===\n');
+    console_log('\n=== STEP 5: DATA ANALYSIS ===\n');
     
     % Ensure we have timing configuration
     if ~exist('timing_config', 'var') || isempty(timing_config)
-        fprintf('⚠ No timing configuration available. Looking for saved config...\n');
+        console_log('⚠ No timing configuration available. Looking for saved config...\n');
         
         % Load timing configs from individual dataset directories
         timing_config = struct();
@@ -1923,13 +1923,13 @@ if config.run_data_analysis
                     % Extract function name from .m file
                     [~, func_name, ~] = fileparts(m_files(1).name);
                     
-                    fprintf('Loading timing function: %s from %s\n', func_name, m_files(1).name);
+                    console_log('Loading timing function: %s from %s\n', func_name, m_files(1).name);
                     % Add the timing directory to path temporarily
                     addpath(timing_dir);
                     try
                         loaded_config.test_config = feval(func_name);
                     catch ME
-                        fprintf('Error calling %s: %s\n', func_name, ME.message);
+                        console_log('Error calling %s: %s\n', func_name, ME.message);
                         rmpath(timing_dir);
                         continue;
                     end
@@ -1940,21 +1940,21 @@ if config.run_data_analysis
                     
                     timing_config.(test_label) = loaded_config.test_config;
                     % Note: dataset_name removed - directory name is authority
-                    fprintf('✓ Loaded timing for test %s from %s (data: %s)\n', test_label, m_files(1).name, mat_files(1).name);
+                    console_log('✓ Loaded timing for test %s from %s (data: %s)\n', test_label, m_files(1).name, mat_files(1).name);
                 elseif length(m_files) == 0
-                    fprintf('⚠ No .m file found in %s\n', dataset_name);
+                    console_log('⚠ No .m file found in %s\n', dataset_name);
                 elseif length(mat_files) == 0
-                    fprintf('⚠ No .mat file found in %s\n', dataset_name);
+                    console_log('⚠ No .mat file found in %s\n', dataset_name);
                 elseif length(m_files) > 1
-                    fprintf('⚠ Multiple .m files found in %s - cannot determine config\n', dataset_name);
+                    console_log('⚠ Multiple .m files found in %s - cannot determine config\n', dataset_name);
                 elseif length(mat_files) > 1
-                    fprintf('⚠ Multiple .mat files found in %s - cannot determine data file\n', dataset_name);
+                    console_log('⚠ Multiple .mat files found in %s - cannot determine data file\n', dataset_name);
                 end
             end
         end
         
         if isempty(fieldnames(timing_config))
-            fprintf('No saved timing config found. Generating timing config...\n');
+            console_log('No saved timing config found. Generating timing config...\n');
             
             % Generate timing config if not available
             timing_config = struct();
@@ -2007,7 +2007,7 @@ if config.run_data_analysis
         % Initialize timing config for analysis mode
         if ~config.run_timing_extraction
             timing_config = struct();  % Clear any previous timing config
-            fprintf('Analysis mode: Starting with empty timing config\n');
+            console_log('Analysis mode: Starting with empty timing config\n');
         end
         
         % Determine test labels from available timing data
@@ -2035,12 +2035,12 @@ if config.run_data_analysis
                     [~, func_name, ~] = fileparts(m_files(1).name);
                     
                     % Load this config using MATLAB function
-                    fprintf('Loading timing function: %s from directory %s\n', func_name, dataset_name);
+                    console_log('Loading timing function: %s from directory %s\n', func_name, dataset_name);
                     addpath(timing_dir);
                     try
                         loaded_config.test_config = feval(func_name);
                     catch ME
-                        fprintf('Error calling %s: %s\n', func_name, ME.message);
+                        console_log('Error calling %s: %s\n', func_name, ME.message);
                         rmpath(timing_dir);
                         continue;
                     end
@@ -2048,17 +2048,17 @@ if config.run_data_analysis
                     
                     % Use directory name as test label (parent directory is authority)
                     test_label = dataset_name;
-                    fprintf('Using dataset directory name as test label: %s\n', test_label);
+                    console_log('Using dataset directory name as test label: %s\n', test_label);
                     
                     % Add to timing config
                     timing_config.(test_label) = loaded_config.test_config;
-                    fprintf('✓ Found dataset: %s\n', dataset_name);
+                    console_log('✓ Found dataset: %s\n', dataset_name);
                 elseif length(m_files) == 0
-                    fprintf('⚠ No .m files found in _das_timing subdirectory for %s\n', dataset_name);
+                    console_log('⚠ No .m files found in _das_timing subdirectory for %s\n', dataset_name);
                 else
-                    fprintf('⚠ Multiple .m files found in _das_timing subdirectory for %s:\n', dataset_name);
+                    console_log('⚠ Multiple .m files found in _das_timing subdirectory for %s:\n', dataset_name);
                     for j = 1:length(m_files)
-                        fprintf('    %s\n', m_files(j).name);
+                        console_log('    %s\n', m_files(j).name);
                     end
                 end
             end
@@ -2066,47 +2066,47 @@ if config.run_data_analysis
         
         available_tests = fieldnames(timing_config);
         if isempty(available_tests)
-            fprintf('⚠ No timing data available for analysis\n');
+            console_log('⚠ No timing data available for analysis\n');
             head_results = struct();
             das_results = struct();
         else
-            fprintf('Analyzing tests: %s\n', strjoin(available_tests, ', '));
+            console_log('Analyzing tests: %s\n', strjoin(available_tests, ', '));
             
             % Debug: Show what datasets are mapped to what tests
             for i = 1:length(available_tests)
                 test = available_tests{i};
-                fprintf('  Test %s -> Directory: %s\n', test, test);
+                console_log('  Test %s -> Directory: %s\n', test, test);
             end
             
             % Analyze head data
-            fprintf('Running head data analysis...\n');
+            console_log('Running head data analysis...\n');
             head_results = analyze_head_data(timing_config, available_tests, config);
             
             % Analyze DAS data
-            fprintf('Running DAS data analysis...\n');
+            console_log('Running DAS data analysis...\n');
             das_results = analyze_das_data(timing_config, available_tests, config);
         end
         
         % Generate plots
-        fprintf('Generating analysis plots...\n');
+        console_log('Generating analysis plots...\n');
         plot_results = generate_plots(head_results, das_results, config);
         
-        fprintf('✓ Data analysis completed successfully\n');
+        console_log('✓ Data analysis completed successfully\n');
         
     catch ME
-        fprintf('✗ Data analysis failed: %s\n', ME.message);
+        console_log('✗ Data analysis failed: %s\n', ME.message);
         if length(ME.stack) > 0
-            fprintf('   Location: %s (line %d)\n', ME.stack(1).name, ME.stack(1).line);
+            console_log('   Location: %s (line %d)\n', ME.stack(1).name, ME.stack(1).line);
         end
     end
     
 else
-    fprintf('\n=== STEP 5: SKIPPED (Data analysis disabled) ===\n');
+    console_log('\n=== STEP 5: SKIPPED (Data analysis disabled) ===\n');
 end
 
 %% Final Summary
-fprintf('\n=== BATCH PROCESSING COMPLETE ===\n');
-fprintf('Final outputs:\n');
+console_log('\n=== BATCH PROCESSING COMPLETE ===\n');
+console_log('Final outputs:\n');
 
 % Check for actual datasets in _active directory instead of hardcoded legacy names
 active_dir = fullfile(config.base_input, '_active');
@@ -2115,7 +2115,7 @@ if exist(active_dir, 'dir')
     dataset_dirs = dataset_dirs([dataset_dirs.isdir] & ~startsWith({dataset_dirs.name}, '.'));
     
     if ~isempty(dataset_dirs)
-        fprintf('Active datasets:\n');
+        console_log('Active datasets:\n');
         for i = 1:length(dataset_dirs)
             dataset_name = dataset_dirs(i).name;
             data_file = sprintf('Dataset_%s_1Hz.mat', dataset_name);
@@ -2125,54 +2125,54 @@ if exist(active_dir, 'dir')
             timing_path = fullfile(active_dir, dataset_name, timing_file);
             
             if exist(data_path, 'file') && exist(timing_path, 'file')
-                fprintf('  ✓ %s (complete with timing config)\n', dataset_name);
+                console_log('  ✓ %s (complete with timing config)\n', dataset_name);
             elseif exist(data_path, 'file')
-                fprintf('  ✓ %s (data only, missing timing)\n', dataset_name);
+                console_log('  ✓ %s (data only, missing timing)\n', dataset_name);
             else
-                fprintf('  ✗ %s (incomplete)\n', dataset_name);
+                console_log('  ✗ %s (incomplete)\n', dataset_name);
             end
         end
     else
-        fprintf('  ⚠ No datasets found in _active directory\n');
+        console_log('  ⚠ No datasets found in _active directory\n');
     end
 else
-    fprintf('  ⚠ _active directory not found\n');
+    console_log('  ⚠ _active directory not found\n');
     
     % Fallback: check legacy locations (only if _active doesn't exist)
-    fprintf('Legacy file check:\n');
+    console_log('Legacy file check:\n');
     for i = 1:length(config.test_labels)
         final_file = sprintf('Dataset_%s_1Hz.mat', config.test_labels{i});
         if exist(fullfile(config.base_input, final_file), 'file')
-            fprintf('  ✓ %s (legacy location)\n', final_file);
+            console_log('  ✓ %s (legacy location)\n', final_file);
         else
-            fprintf('  ✗ %s (not created)\n', final_file);
+            console_log('  ✗ %s (not created)\n', final_file);
         end
     end
 end
 if config.run_timing_extraction
-    fprintf('  ✓ Individual dataset timing configs\n');
+    console_log('  ✓ Individual dataset timing configs\n');
 end
 if config.run_data_analysis && exist('plot_results', 'var')
-    fprintf('  ✓ Data analysis completed\n');
+    console_log('  ✓ Data analysis completed\n');
     if plot_results.save_enabled && ~isempty(plot_results.figures_created)
-        fprintf('  ✓ Charts saved: %d files\n', length(plot_results.figures_created));
+        console_log('  ✓ Charts saved: %d files\n', length(plot_results.figures_created));
     end
 end
 
 %% Step 6: Purge Modes (if enabled)
 if isfield(config, 'run_purge_inactive') && config.run_purge_inactive
-    fprintf('\n=== PURGE INACTIVE MODE ===\n');
+    console_log('\n=== PURGE INACTIVE MODE ===\n');
     purge_inactive_directories(config.base_input);
-    fprintf('=== PURGE INACTIVE COMPLETE ===\n');
+    console_log('=== PURGE INACTIVE COMPLETE ===\n');
 elseif isfield(config, 'run_purge_unraw') && config.run_purge_unraw
-    fprintf('\n=== PURGE UNRAW MODE ===\n');
+    console_log('\n=== PURGE UNRAW MODE ===\n');
     purge_unraw_directories(config.base_input);
-    fprintf('=== PURGE UNRAW COMPLETE ===\n');
+    console_log('=== PURGE UNRAW COMPLETE ===\n');
 end
 
 %% Step 7: Quantization Analysis (if enabled)
 if isfield(config, 'run_quantization_analysis') && config.run_quantization_analysis
-    fprintf('\n=== STEP 6: QUANTIZATION ANALYSIS ===\n');
+    console_log('\n=== STEP 6: QUANTIZATION ANALYSIS ===\n');
     
     % Look for processed datasets in _concatenated directory
     concatenated_dir = fullfile(config.base_input, '_concatenated');
@@ -2190,34 +2190,34 @@ if isfield(config, 'run_quantization_analysis') && config.run_quantization_analy
         end
         
         if ~isempty(datasets)
-            fprintf('Found %d datasets with processed 1Hz data:\n', length(datasets));
+            console_log('Found %d datasets with processed 1Hz data:\n', length(datasets));
             for i = 1:length(datasets)
                 dataset_name = datasets{i};
-                fprintf('  %d. %s\n', i, dataset_name);
+                console_log('  %d. %s\n', i, dataset_name);
                 try
                     analyze_quantization(dataset_name);
                 catch ME
-                    fprintf('✗ Quantization analysis failed for %s: %s\n', dataset_name, ME.message);
+                    console_log('✗ Quantization analysis failed for %s: %s\n', dataset_name, ME.message);
                 end
             end
         else
-            fprintf('No datasets with 1Hz data found in _concatenated directory\n');
+            console_log('No datasets with 1Hz data found in _concatenated directory\n');
         end
     else
-        fprintf('_concatenated directory not found: %s\n', concatenated_dir);
+        console_log('_concatenated directory not found: %s\n', concatenated_dir);
     end
     
-    fprintf('=== QUANTIZATION ANALYSIS COMPLETE ===\n');
+    console_log('=== QUANTIZATION ANALYSIS COMPLETE ===\n');
 end
 
 %% Archive processed directories (selective mode only)
 if exist('workspace_info', 'var') && isfield(workspace_info, 'archive_function') && ~isempty(workspace_info.archive_function)
-    fprintf('\n=== ARCHIVING PROCESSED DIRECTORIES ===\n');
+    console_log('\n=== ARCHIVING PROCESSED DIRECTORIES ===\n');
     workspace_info.archive_function();
 end
 
 if strcmp(mode, 'analyze') || strcmp(mode, 'analyze_timing')
-    fprintf('\nAnalysis complete!\n');
+    console_log('\nAnalysis complete!\n');
 else
-    fprintf('\nReady for analysis!\n');
+    console_log('\nReady for analysis!\n');
 end

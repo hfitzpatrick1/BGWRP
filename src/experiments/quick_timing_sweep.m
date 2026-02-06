@@ -4,7 +4,7 @@ if ~exist('das_results', 'var')
     error('Run correlation analysis first');
 end
 
-fprintf('Testing timing: 10s to 20s\n');
+console_log('Testing timing: 10s to 20s\n');
 timing_vals = 10:2:20;
 results = zeros(length(timing_vals), 2);
 
@@ -19,10 +19,10 @@ for i = 1:length(timing_vals)
     
     roi = linear_regression_depth_range(das_results, head_results, 'PT01c_Recovery_short', lr_config);
     results(i, :) = [timing_vals(i), roi.R_squared];
-    fprintf('%2ds: R² = %.4f\n', timing_vals(i), roi.R_squared);
+    console_log('%2ds: R² = %.4f\n', timing_vals(i), roi.R_squared);
 end
 
 [best_r2, idx] = max(results(:, 2));
-fprintf('\nBest: %ds with R² = %.4f\n', results(idx, 1), best_r2);
+console_log('\nBest: %ds with R² = %.4f\n', results(idx, 1), best_r2);
 
 

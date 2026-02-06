@@ -8,7 +8,7 @@ function freq_analysis = analyze_frequencies_detailed(das_data, config)
 % 4. Frequency evolution tracking
 % 5. Signal-to-noise ratio analysis
 
-fprintf('    Performing detailed frequency analysis...\n');
+console_log('    Performing detailed frequency analysis...\n');
 
 % Get analysis data
 if isfield(das_data, 'analysis_time') && isfield(das_data, 'time_array')
@@ -40,11 +40,11 @@ freq_analysis.analysis_duration = analysis_duration;
 freq_analysis.sampling_rate = fs;
 freq_analysis.n_samples = N;
 
-fprintf('      Analysis window: %.1f minutes (%d samples at %.1f Hz)\n', ...
+console_log('      Analysis window: %.1f minutes (%d samples at %.1f Hz)\n', ...
     analysis_duration/60, N, fs);
 
 %% METHOD 1: BASIC FFT WITH STATISTICAL PEAK DETECTION
-fprintf('      Method 1: Statistical peak detection...\n');
+console_log('      Method 1: Statistical peak detection...\n');
 
 % Clean signal
 signal_clean = detrend(signal - mean(signal));
@@ -89,9 +89,9 @@ if ~isempty(locs_3sig)
     freq_analysis.peaks_3sigma.frequencies = freq_one_sided(locs_3sig);
     freq_analysis.peaks_3sigma.magnitudes = magnitude(locs_3sig);
     freq_analysis.peaks_3sigma.snr_db = peaks_3sig - noise_floor_db;
-    fprintf('        Found %d peaks above 3-sigma threshold\n', length(locs_3sig));
+    console_log('        Found %d peaks above 3-sigma threshold\n', length(locs_3sig));
     for i = 1:length(locs_3sig)
-        fprintf('          %.4f Hz (SNR: %.1f dB)\n', ...
+        console_log('          %.4f Hz (SNR: %.1f dB)\n', ...
             freq_analysis.peaks_3sigma.frequencies(i), ...
             freq_analysis.peaks_3sigma.snr_db(i));
     end
@@ -103,11 +103,11 @@ if ~isempty(locs_6sig)
     freq_analysis.peaks_6sigma.frequencies = freq_one_sided(locs_6sig);
     freq_analysis.peaks_6sigma.magnitudes = magnitude(locs_6sig);
     freq_analysis.peaks_6sigma.snr_db = peaks_6sig - noise_floor_db;
-    fprintf('        Found %d peaks above 6-sigma threshold (high confidence)\n', length(locs_6sig));
+    console_log('        Found %d peaks above 6-sigma threshold (high confidence)\n', length(locs_6sig));
 end
 
 %% METHOD 2: WELCH POWER SPECTRAL DENSITY
-fprintf('      Method 2: Welch PSD estimation...\n');
+console_log('      Method 2: Welch PSD estimation...\n');
 
 if N > 64
     window_length = min(256, floor(N/4));
@@ -133,20 +133,20 @@ if N > 64
         freq_analysis.welch_psd.peak_frequencies = freq_welch(psd_locs);
         freq_analysis.welch_psd.peak_powers = psd(psd_locs);
         freq_analysis.welch_psd.peak_snr_db = psd_peaks - psd_noise_floor;
-        fprintf('        Welch method found %d significant peaks\n', length(psd_locs));
+        console_log('        Welch method found %d significant peaks\n', length(psd_locs));
         for i = 1:length(psd_locs)
-            fprintf('          %.4f Hz (SNR: %.1f dB)\n', ...
+            console_log('          %.4f Hz (SNR: %.1f dB)\n', ...
                 freq_analysis.welch_psd.peak_frequencies(i), ...
                 freq_analysis.welch_psd.peak_snr_db(i));
         end
     end
 else
-    fprintf('        Signal too short for Welch analysis\n');
+    console_log('        Signal too short for Welch analysis\n');
     freq_analysis.welch_psd = struct();
 end
 
 %% METHOD 3: WINDOWED SPECTROGRAM ANALYSIS
-fprintf('      Method 3: Time-frequency evolution...\n');
+console_log('      Method 3: Time-frequency evolution...\n');
 
 if N > 32
     spec_window = min(64, floor(N/3));
@@ -169,20 +169,20 @@ if N > 32
     freq_analysis.spectrogram.power_db = S_db;
     freq_analysis.spectrogram.persistent_frequencies = persistent_frequencies;
     
-    fprintf('        Found %d persistent frequencies across time window\n', ...
+    console_log('        Found %d persistent frequencies across time window\n', ...
         length(persistent_frequencies));
     if ~isempty(persistent_frequencies)
         for i = 1:length(persistent_frequencies)
-            fprintf('          %.4f Hz (persistent)\n', persistent_frequencies(i));
+            console_log('          %.4f Hz (persistent)\n', persistent_frequencies(i));
         end
     end
 else
-    fprintf('        Signal too short for spectrogram analysis\n');
+    console_log('        Signal too short for spectrogram analysis\n');
     freq_analysis.spectrogram = struct();
 end
 
 %% METHOD 4: FREQUENCY BAND ANALYSIS
-fprintf('      Method 4: Frequency band power analysis...\n');
+console_log('      Method 4: Frequency band power analysis...\n');
 
 % Define frequency bands based on physical expectations
 bands = struct();
@@ -204,16 +204,16 @@ for band_name = fieldnames(bands)'
         freq_analysis.band_analysis.(band_name{1}).percentage = band_percentage;
         freq_analysis.band_analysis.(band_name{1}).frequency_range = band_range;
         
-        fprintf('        %s (%.3f-%.3f Hz): %.1f%% of total power\n', ...
+        console_log('        %s (%.3f-%.3f Hz): %.1f%% of total power\n', ...
             band_name{1}, band_range(1), band_range(2), band_percentage);
     end
 end
 
 %% SUMMARY
-fprintf('      Summary of frequency identification:\n');
-fprintf('        Analysis duration: %.1f minutes\n', analysis_duration/60);
-fprintf('        Frequency resolution: %.4f Hz\n', fs/N);
-fprintf('        Noise floor: %.1f dB\n', noise_floor_db);
+console_log('      Summary of frequency identification:\n');
+console_log('        Analysis duration: %.1f minutes\n', analysis_duration/60);
+console_log('        Frequency resolution: %.4f Hz\n', fs/N);
+console_log('        Noise floor: %.1f dB\n', noise_floor_db);
 
 % Combine all detected frequencies
 all_detected_freqs = [];
@@ -231,20 +231,20 @@ end
 if ~isempty(all_detected_freqs)
     unique_freqs = unique(round(all_detected_freqs, 4));
     freq_analysis.summary.detected_frequencies = unique_freqs;
-    fprintf('        Total unique frequencies detected: %d\n', length(unique_freqs));
-    fprintf('        Frequency list: ');
+    console_log('        Total unique frequencies detected: %d\n', length(unique_freqs));
+    console_log('        Frequency list: ');
     for i = 1:length(unique_freqs)
-        fprintf('%.4f ', unique_freqs(i));
+        console_log('%.4f ', unique_freqs(i));
         if mod(i, 10) == 0  % Line break every 10 frequencies
-            fprintf('\n                        ');
+            console_log('\n                        ');
         end
     end
-    fprintf('Hz\n');
+    console_log('Hz\n');
 else
     freq_analysis.summary.detected_frequencies = [];
-    fprintf('        No significant frequencies detected\n');
+    console_log('        No significant frequencies detected\n');
 end
 
-fprintf('        Detailed frequency analysis complete\n');
+console_log('        Detailed frequency analysis complete\n');
 
 end

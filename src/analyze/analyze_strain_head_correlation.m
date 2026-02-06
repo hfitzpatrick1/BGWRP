@@ -11,7 +11,7 @@ function correlation_results = analyze_strain_head_correlation(das_results, head
 % Outputs:
 %   correlation_results - Structure with correlation analysis results
 
-fprintf('=== STRAIN RATE vs HEAD DATA CORRELATION ANALYSIS ===\n');
+console_log('=== STRAIN RATE vs HEAD DATA CORRELATION ANALYSIS ===\n');
 
 % Initialize results
 correlation_results = struct();
@@ -19,18 +19,18 @@ correlation_results.tests = test_labels;
 
 for i = 1:length(test_labels)
     test_label = test_labels{i};
-    fprintf('Analyzing correlation for test: %s\n', test_label);
+    console_log('Analyzing correlation for test: %s\n', test_label);
     
     % Get DAS data from already-processed results
     if ~isfield(das_results, test_label) || isfield(das_results.(test_label), 'error')
-        fprintf('  No DAS results found for %s\n', test_label);
+        console_log('  No DAS results found for %s\n', test_label);
         continue;
     end
     das_data = das_results.(test_label);
     
     % Get head data from already-processed results
     if ~isfield(head_results, test_label) || isfield(head_results.(test_label), 'error')
-        fprintf('  No head results found for %s\n', test_label);
+        console_log('  No head results found for %s\n', test_label);
         continue;
     end
     head_data = head_results.(test_label);
@@ -40,13 +40,13 @@ for i = 1:length(test_labels)
         strain_rate = das_data.analysis_strain_rate;
         strain_time = das_data.analysis_time;
     else
-        fprintf('  No analysis_strain_rate found in DAS data for %s\n', test_label);
+        console_log('  No analysis_strain_rate found in DAS data for %s\n', test_label);
         continue;
     end
         
     % Extract head data (drawdown rate) from zone z5 (best signal)
     if ~isfield(head_data, 'zones') || ~isfield(head_data.zones, 'z5')
-        fprintf('  No z5 zone data found in head results for %s\n', test_label);
+        console_log('  No z5 zone data found in head results for %s\n', test_label);
         continue;
     end
     zone_data = head_data.zones.z5;
@@ -76,9 +76,9 @@ for i = 1:length(test_labels)
         correlation_results.(test_label).head_onset_time = head_onset;
         correlation_results.(test_label).onset_delay = strain_onset - head_onset;
         
-        fprintf('  Correlation coefficient: %.3f\n', r_value);
-        fprintf('  Strain onset: %s\n', strain_onset);
-        fprintf('  Head onset: %s\n', head_onset);
-        fprintf('  Onset delay: %.2f seconds\n', seconds(correlation_results.(test_label).onset_delay));
+        console_log('  Correlation coefficient: %.3f\n', r_value);
+        console_log('  Strain onset: %s\n', strain_onset);
+        console_log('  Head onset: %s\n', head_onset);
+        console_log('  Onset delay: %.2f seconds\n', seconds(correlation_results.(test_label).onset_delay));
     end
     end

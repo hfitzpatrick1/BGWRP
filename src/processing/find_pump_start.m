@@ -7,10 +7,10 @@ drawdown_ft = data.Drawdown_ft;
 pump_start_idx = find(drawdown_ft > 0.01, 1, 'first');
 pump_start_time = time_sec(pump_start_idx);
 
-fprintf('=== PUMP START DETECTION ===\n');
-fprintf('Pump starts at: %.0f seconds (line %d)\n', pump_start_time, pump_start_idx);
-fprintf('Time range in file: %.0f to %.0f sec\n', min(time_sec), max(time_sec));
-fprintf('\n✓ Use this value: %.0f\n', pump_start_time);
+console_log('=== PUMP START DETECTION ===\n');
+console_log('Pump starts at: %.0f seconds (line %d)\n', pump_start_time, pump_start_idx);
+console_log('Time range in file: %.0f to %.0f sec\n', min(time_sec), max(time_sec));
+console_log('\n✓ Use this value: %.0f\n', pump_start_time);
 
 % Plot to verify
 figure('Position', [50, 50, 1400, 600]);

@@ -10,9 +10,9 @@ if nargin < 1
     dataset_name = 'PT01c_Recovery_short';
 end
 
-fprintf('=== PATTERN PROGRESSION ANALYSIS ===\n');
-fprintf('Dataset: %s\n', dataset_name);
-fprintf('Tracing pattern strength through pipeline stages...\n\n');
+console_log('=== PATTERN PROGRESSION ANALYSIS ===\n');
+console_log('Dataset: %s\n', dataset_name);
+console_log('Tracing pattern strength through pipeline stages...\n\n');
 
 % Storage for results
 results = struct();
@@ -21,7 +21,7 @@ stages = {'raw', 'tdms_to_mat', 'concatenated'};
 %% Analyze each pipeline stage
 for i = 1:length(stages)
     stage = stages{i};
-    fprintf('--- STAGE %d: %s ---\n', i, upper(stage));
+    console_log('--- STAGE %d: %s ---\n', i, upper(stage));
     
     try
         % Load data for this stage
@@ -37,15 +37,15 @@ for i = 1:length(stages)
         display_stage_summary(stage, metrics);
         
     catch ME
-        fprintf('✗ Failed to analyze stage %s: %s\n', stage, ME.message);
+        console_log('✗ Failed to analyze stage %s: %s\n', stage, ME.message);
         results.(stage) = struct('error', ME.message);
     end
     
-    fprintf('\n');
+    console_log('\n');
 end
 
 %% Compare across stages
-fprintf('=== PATTERN PROGRESSION SUMMARY ===\n');
+console_log('=== PATTERN PROGRESSION SUMMARY ===\n');
 compare_pattern_progression(results);
 
 %% Create visualization
@@ -73,7 +73,7 @@ switch lower(stage)
         
         % Load first file (sample)
         sample_file = fullfile(tdms_dir, tdms_files(1).name);
-        fprintf('Loading: %s\n', sample_file);
+        console_log('Loading: %s\n', sample_file);
         
         [~, fileinfo] = TDMS_Adv_Read(sample_file);
         max_samples = min(1000, fileinfo.ChannelLength);
@@ -104,7 +104,7 @@ switch lower(stage)
         end
         
         sample_file = fullfile(mat_dir, mat_files(1).name);
-        fprintf('Loading: %s\n', sample_file);
+        console_log('Loading: %s\n', sample_file);
         
         loaded = load(sample_file);
         if isfield(loaded, 'data')
@@ -122,7 +122,7 @@ switch lower(stage)
             error('Concatenated data file not found: %s', data_file);
         end
         
-        fprintf('Loading: %s\n', data_file);
+        console_log('Loading: %s\n', data_file);
         loaded = load(data_file);
         
         if isfield(loaded, 'decdata')
@@ -137,7 +137,7 @@ switch lower(stage)
         error('Unknown stage: %s', stage);
 end
 
-fprintf('Data size: [%d x %d], Range: [%.3f, %.3f]\n', ...
+console_log('Data size: [%d x %d], Range: [%.3f, %.3f]\n', ...
     size(data,1), size(data,2), min(data(:)), max(data(:)));
 
 end
@@ -231,29 +231,29 @@ end
 function display_stage_summary(stage, metrics)
 %DISPLAY_STAGE_SUMMARY Show key metrics for this stage
 
-fprintf('Data: [%d x %d] @ %d Hz\n', metrics.data_size(1), metrics.data_size(2), metrics.sampling_rate);
-fprintf('Range: [%.3f, %.3f]\n', metrics.data_range(1), metrics.data_range(2));
+console_log('Data: [%d x %d] @ %d Hz\n', metrics.data_size(1), metrics.data_size(2), metrics.sampling_rate);
+console_log('Range: [%.3f, %.3f]\n', metrics.data_range(1), metrics.data_range(2));
 
 if ~isempty(metrics.temporal_freqs)
-    fprintf('Top temporal frequencies: ');
+    console_log('Top temporal frequencies: ');
     for i = 1:length(metrics.temporal_freqs)
         period = 1/metrics.temporal_freqs(i);
-        fprintf('%.3f Hz (%.1fs) ', metrics.temporal_freqs(i), period);
+        console_log('%.3f Hz (%.1fs) ', metrics.temporal_freqs(i), period);
     end
-    fprintf('\n');
-    fprintf('Temporal strength: %.1f%%\n', metrics.temporal_strength * 100);
+    console_log('\n');
+    console_log('Temporal strength: %.1f%%\n', metrics.temporal_strength * 100);
 else
-    fprintf('No significant temporal patterns\n');
+    console_log('No significant temporal patterns\n');
 end
 
 if ~isempty(metrics.spatial_freqs)
-    fprintf('Spatial strength: %.1f%%\n', metrics.spatial_strength * 100);
+    console_log('Spatial strength: %.1f%%\n', metrics.spatial_strength * 100);
 else
-    fprintf('No significant spatial patterns\n');
+    console_log('No significant spatial patterns\n');
 end
 
-fprintf('Channel coherence: %.3f\n', metrics.channel_coherence);
-fprintf('Overall pattern strength: %.1f\n', metrics.overall_pattern_strength);
+console_log('Channel coherence: %.3f\n', metrics.channel_coherence);
+console_log('Overall pattern strength: %.1f\n', metrics.overall_pattern_strength);
 
 end
 
@@ -264,9 +264,9 @@ stages = {'raw', 'tdms_to_mat', 'concatenated'};
 valid_stages = {};
 strengths = [];
 
-fprintf('Stage Comparison:\n');
-fprintf('%-15s %-15s %-15s %-15s\n', 'Stage', 'Overall Score', 'Temporal', 'Coherence');
-fprintf('%s\n', repmat('-', 1, 60));
+console_log('Stage Comparison:\n');
+console_log('%-15s %-15s %-15s %-15s\n', 'Stage', 'Overall Score', 'Temporal', 'Coherence');
+console_log('%s\n', repmat('-', 1, 60));
 
 for i = 1:length(stages)
     stage = stages{i};
@@ -274,18 +274,18 @@ for i = 1:length(stages)
         valid_stages{end+1} = stage;
         strengths(end+1) = results.(stage).overall_pattern_strength;
         
-        fprintf('%-15s %-15.1f %-15.1f %-15.3f\n', ...
+        console_log('%-15s %-15.1f %-15.1f %-15.3f\n', ...
             upper(stage), ...
             results.(stage).overall_pattern_strength, ...
             results.(stage).temporal_strength * 100, ...
             results.(stage).channel_coherence);
     else
-        fprintf('%-15s %-15s\n', upper(stage), 'ERROR');
+        console_log('%-15s %-15s\n', upper(stage), 'ERROR');
     end
 end
 
 if length(strengths) > 1
-    fprintf('\nPattern Progression:\n');
+    console_log('\nPattern Progression:\n');
     for i = 2:length(strengths)
         change = strengths(i) - strengths(i-1);
         pct_change = (change / strengths(i-1)) * 100;
@@ -298,7 +298,7 @@ if length(strengths) > 1
             direction = '→ NO CHANGE';
         end
         
-        fprintf('%s → %s: %.1f %s (%.1f%%)\n', ...
+        console_log('%s → %s: %.1f %s (%.1f%%)\n', ...
             upper(valid_stages{i-1}), upper(valid_stages{i}), ...
             abs(change), direction, abs(pct_change));
     end
@@ -329,7 +329,7 @@ for i = 1:length(stages)
 end
 
 if length(valid_stages) < 2
-    fprintf('Insufficient valid stages for plotting\n');
+    console_log('Insufficient valid stages for plotting\n');
     return;
 end
 

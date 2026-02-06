@@ -11,7 +11,7 @@ function filtered_data = dual_bandstop_filter(data, config)
 % Output:
 %   filtered_data - Filtered data with grid patterns removed
 
-fprintf('Applying dual bandstop filter for grid pattern removal...\n');
+console_log('Applying dual bandstop filter for grid pattern removal...\n');
 
 [n_time, n_channels] = size(data);
 filtered_data = zeros(size(data));
@@ -26,12 +26,12 @@ slow_grid_high = get_config_param(config, 'slow_grid_high', 0.33); % Hz
 fast_grid_low = get_config_param(config, 'fast_grid_low', 0.395);  % Hz
 fast_grid_high = get_config_param(config, 'fast_grid_high', 0.473); % Hz
 
-fprintf('Filter settings:\n');
-fprintf('  Sampling rate: %.1f Hz\n', fs);
-fprintf('  Nyquist frequency: %.2f Hz\n', fs/2);
-fprintf('  Slow grid stop band: %.3f - %.3f Hz\n', slow_grid_low, slow_grid_high);
-fprintf('  Fast grid stop band: %.3f - %.3f Hz\n', fast_grid_low, fast_grid_high);
-fprintf('  Filter order: %d\n', filter_order);
+console_log('Filter settings:\n');
+console_log('  Sampling rate: %.1f Hz\n', fs);
+console_log('  Nyquist frequency: %.2f Hz\n', fs/2);
+console_log('  Slow grid stop band: %.3f - %.3f Hz\n', slow_grid_low, slow_grid_high);
+console_log('  Fast grid stop band: %.3f - %.3f Hz\n', fast_grid_low, fast_grid_high);
+console_log('  Filter order: %d\n', filter_order);
 
 % Validate frequencies are within Nyquist limit
 nyquist = fs / 2;
@@ -49,7 +49,7 @@ try
     % Stop band 2: Fast grid patterns (0.395-0.473 Hz) 
     [b2, a2] = ellip(filter_order, 1, 40, [fast_grid_low fast_grid_high]/(nyquist), 'stop');
     
-    fprintf('Filter design successful\n');
+    console_log('Filter design successful\n');
     
 catch ME
     warning('MATLAB:filterDesignFailed', 'Elliptic filter design failed: %s. Using Butterworth fallback.', ME.message);
@@ -57,7 +57,7 @@ catch ME
         % Fallback to Butterworth filters
         [b1, a1] = butter(filter_order, [slow_grid_low slow_grid_high]/(nyquist), 'stop');
         [b2, a2] = butter(filter_order, [fast_grid_low fast_grid_high]/(nyquist), 'stop');
-        fprintf('Butterworth filter design successful\n');
+        console_log('Butterworth filter design successful\n');
     catch ME2
         warning('MATLAB:filterDesignFailed', 'Filter design completely failed: %s. Applying no filtering.', ME2.message);
         filtered_data = data;
@@ -66,10 +66,10 @@ catch ME
 end
 
 % Apply filters to each channel
-fprintf('Filtering channels: ');
+console_log('Filtering channels: ');
 for ch = 1:n_channels
     if mod(ch, 100) == 0 || ch == n_channels
-        fprintf('%d ', ch);
+        console_log('%d ', ch);
     end
     
     try
@@ -90,7 +90,7 @@ for ch = 1:n_channels
         filtered_data(:, ch) = data(:, ch);
     end
 end
-fprintf('\n');
+console_log('\n');
 
 % Calculate filter performance metrics
 original_power = sum(var(data, 0, 1));
@@ -109,14 +109,14 @@ try
     signal_correlation = corrcoef(original_signal, filtered_signal);
     signal_preservation = signal_correlation(1,2) * 100;
     
-    fprintf('Performance metrics:\n');
-    fprintf('  Overall noise reduction: %.1f%%\n', noise_reduction);
-    fprintf('  Low-frequency signal preservation: %.1f%%\n', signal_preservation);
+    console_log('Performance metrics:\n');
+    console_log('  Overall noise reduction: %.1f%%\n', noise_reduction);
+    console_log('  Low-frequency signal preservation: %.1f%%\n', signal_preservation);
     
 catch
-    fprintf('Performance metrics:\n');
-    fprintf('  Overall noise reduction: %.1f%%\n', noise_reduction);
-    fprintf('  Signal preservation: Unable to calculate\n');
+    console_log('Performance metrics:\n');
+    console_log('  Overall noise reduction: %.1f%%\n', noise_reduction);
+    console_log('  Signal preservation: Unable to calculate\n');
 end
 
 % Amplitude analysis
@@ -124,11 +124,11 @@ original_range = [min(data(:)), max(data(:))];
 filtered_range = [min(filtered_data(:)), max(filtered_data(:))];
 amplitude_change = (diff(filtered_range) / diff(original_range)) * 100;
 
-fprintf('  Amplitude preservation: %.1f%%\n', amplitude_change);
-fprintf('  Original range: [%.3f, %.3f]\n', original_range(1), original_range(2));
-fprintf('  Filtered range: [%.3f, %.3f]\n', filtered_range(1), filtered_range(2));
+console_log('  Amplitude preservation: %.1f%%\n', amplitude_change);
+console_log('  Original range: [%.3f, %.3f]\n', original_range(1), original_range(2));
+console_log('  Filtered range: [%.3f, %.3f]\n', filtered_range(1), filtered_range(2));
 
-fprintf('Dual bandstop filtering complete\n');
+console_log('Dual bandstop filtering complete\n');
 
 end
 

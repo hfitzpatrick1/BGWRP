@@ -46,12 +46,12 @@ weight_ranges = {
 %% Apply weights
 add_weights_to_data(input_file, output_file, weight_ranges);
 
-fprintf('\n=== REFINED WEIGHTS SUMMARY ===\n');
-fprintf('HIGH weight (1.0) - Your circled areas:\n');
-fprintf('  • 0-1000 sec: Early time response\n');
-fprintf('  • 3000-6000 sec: 50 GPM plateau\n');
-fprintf('  • 7000-9000 sec: 80 GPM plateau\n');
-fprintf('  • 9500-11500 sec: 110 GPM plateau\n');
-fprintf('  • 12500-14000 sec: 150 GPM plateau\n');
-fprintf('\nLow weight (0.3): Transitions\n');
-fprintf('Medium weight (0.7): Recovery\n');
+console_log('\n=== REFINED WEIGHTS SUMMARY ===\n');
+console_log('HIGH weight (1.0) - Your circled areas:\n');
+console_log('  • 0-1000 sec: Early time response\n');
+console_log('  • 3000-6000 sec: 50 GPM plateau\n');
+console_log('  • 7000-9000 sec: 80 GPM plateau\n');
+console_log('  • 9500-11500 sec: 110 GPM plateau\n');
+console_log('  • 12500-14000 sec: 150 GPM plateau\n');
+console_log('\nLow weight (0.3): Transitions\n');
+console_log('Medium weight (0.7): Recovery\n');

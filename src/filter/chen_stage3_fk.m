@@ -27,7 +27,7 @@ target_vertical = get_param(config, 'chen_fk_target_vertical', true);
 preserve_signal = get_param(config, 'chen_fk_preserve_signal', 0.8);
 taper_width = get_param(config, 'chen_fk_taper_width', 0.1);
 
-fprintf('      F-K dip filter: strength=%.3f, H=%d, V=%d\n', ...
+console_log('      F-K dip filter: strength=%.3f, H=%d, V=%d\n', ...
     filter_strength, target_horizontal, target_vertical);
 
 [num_time, num_channels] = size(data);
@@ -57,7 +57,7 @@ filter_mask = ones(size(fk_data));
 if target_horizontal
     horizontal_mask = create_triangular_notch(K, filter_strength, taper_width);
     filter_mask = filter_mask .* horizontal_mask;
-    fprintf('        Applied horizontal noise filter\n');
+    console_log('        Applied horizontal noise filter\n');
 end
 
 % Target vertical noise (around zero frequency) - transpose and filter
@@ -75,7 +75,7 @@ if target_vertical
     
     % Re-compute F-K for final filtering
     fk_data = fft2(padded_data);
-    fprintf('        Applied vertical noise filter\n');
+    console_log('        Applied vertical noise filter\n');
 end
 
 % Step 4: Apply filter mask
@@ -90,7 +90,7 @@ filtered_result = filtered_padded(1:num_time, 1:num_channels);
 % Preserve signal energy while removing coherent noise
 filtered_data = data * preserve_signal + filtered_result * (1 - preserve_signal);
 
-fprintf('        F-K filtering complete\n');
+console_log('        F-K filtering complete\n');
 
 end
 

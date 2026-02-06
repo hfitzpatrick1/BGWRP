@@ -9,10 +9,10 @@ lr_config.show_plots = true;
 
 results = linear_regression_strain_drawdown(das_results, head_results, 'PT01c_Recovery_short', lr_config);
 
-fprintf('\n=== OPTIMAL TIMING CORRECTION ===\n');
-fprintf('Correction: %.1f seconds\n', lr_config.timing_correction_sec);
-fprintf('R = %.3f\n', results.R);
-fprintf('R^2 = %.3f\n', results.R_squared);
-fprintf('Slope = %.3e ns/s per ft/min\n', results.slope);
-fprintf('Intercept = %.3e ns/s\n', results.intercept);
-fprintf('N = %d data points\n', results.N);
+console_log('\n=== OPTIMAL TIMING CORRECTION ===\n');
+console_log('Correction: %.1f seconds\n', lr_config.timing_correction_sec);
+console_log('R = %.3f\n', results.R);
+console_log('R^2 = %.3f\n', results.R_squared);
+console_log('Slope = %.3e ns/s per ft/min\n', results.slope);
+console_log('Intercept = %.3e ns/s\n', results.intercept);
+console_log('N = %d data points\n', results.N);

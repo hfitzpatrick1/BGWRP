@@ -5,7 +5,7 @@ function plot_simple_fft(das_data, test_label, config)
 % 1. Time domain signal
 % 2. Frequency domain (FFT)
 
-fprintf('      Creating simple FFT analysis...\n');
+console_log('      Creating simple FFT analysis...\n');
 
 % Get analysis data
 if isfield(das_data, 'analysis_time') && isfield(das_data, 'time_array')
@@ -124,6 +124,6 @@ end
 sgtitle(sprintf('Simple FFT Analysis - %s', upper(test_label)), ...
     'FontSize', 16, 'FontWeight', 'bold');
 
-fprintf('        Simple FFT analysis complete\n');
+console_log('        Simple FFT analysis complete\n');
 
 end

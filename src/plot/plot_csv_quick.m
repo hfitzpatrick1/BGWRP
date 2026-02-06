@@ -41,7 +41,7 @@ if nargin >= 2 && max(time_col) > 10000  % Likely in seconds
         end
     end
 elseif nargin < 2
-    fprintf('Note: Pump schedule markers not shown (provide pump_start_elapsed as 2nd argument)\n');
+    console_log('Note: Pump schedule markers not shown (provide pump_start_elapsed as 2nd argument)\n');
 end
 
 xlabel(sprintf('%s', col_names{1}), 'FontSize', 12);
@@ -49,9 +49,9 @@ ylabel(sprintf('%s', col_names{2}), 'FontSize', 12);
 title(sprintf('Plot: %s', csv_file), 'Interpreter', 'none', 'FontSize', 12);
 grid on;
 
-fprintf('Plotted %d points\n', length(time_col));
-fprintf('Time range: %.1f to %.1f %s\n', min(time_col), max(time_col), col_names{1});
-fprintf('Value range: %.4f to %.4f %s\n', min(value_col), max(value_col), col_names{2});
-fprintf('Mean: %.4f, Max: %.4f\n', mean(value_col), max(value_col));
+console_log('Plotted %d points\n', length(time_col));
+console_log('Time range: %.1f to %.1f %s\n', min(time_col), max(time_col), col_names{1});
+console_log('Value range: %.4f to %.4f %s\n', min(value_col), max(value_col), col_names{2});
+console_log('Mean: %.4f, Max: %.4f\n', mean(value_col), max(value_col));
 
 end

@@ -40,19 +40,19 @@ depth_mask = depth_ft >= depth_range_ft(1) & depth_ft <= depth_range_ft(2);
 channels_in_range = find(depth_mask);
 n_channels = length(channels_in_range);
 
-fprintf('Depth range: %.0f-%.0f ft\n', depth_range_ft(1), depth_range_ft(2));
-fprintf('Channels in range: %d\n', n_channels);
-fprintf('Channel depths: %.1f to %.1f ft\n', min(depth_ft(depth_mask)), max(depth_ft(depth_mask)));
+console_log('Depth range: %.0f-%.0f ft\n', depth_range_ft(1), depth_range_ft(2));
+console_log('Channels in range: %d\n', n_channels);
+console_log('Channel depths: %.1f to %.1f ft\n', min(depth_ft(depth_mask)), max(depth_ft(depth_mask)));
 
 % Average displacement rate across depth range
-fprintf('Full displacement rate matrix size: [%d time points × %d channels]\n', ...
+console_log('Full displacement rate matrix size: [%d time points × %d channels]\n', ...
     size(displacement_rate_full, 1), size(displacement_rate_full, 2));
-fprintf('Channels selected for averaging: %d channels\n', sum(depth_mask));
+console_log('Channels selected for averaging: %d channels\n', sum(depth_mask));
 
 displacement_rate_avg = mean(displacement_rate_full(:, depth_mask), 2);  % Average across channels
 
-fprintf('Averaged displacement rate size: [%d time points]\n', length(displacement_rate_avg));
-fprintf('Averaged displacement rate range: %.3f to %.3f nm/s\n', ...
+console_log('Averaged displacement rate size: [%d time points]\n', length(displacement_rate_avg));
+console_log('Averaged displacement rate range: %.3f to %.3f nm/s\n', ...
     min(displacement_rate_avg), max(displacement_rate_avg));
 
 % Get analysis time window - use FULL time array, not filtered
@@ -62,8 +62,8 @@ analysis_end = max(time_das);
 time_analysis = time_das;
 displacement_analysis = displacement_rate_avg;
 
-fprintf('Time range: %s to %s\n', datestr(analysis_start), datestr(analysis_end));
-fprintf('Using FULL time array (not filtered to analysis window)\n');
+console_log('Time range: %s to %s\n', datestr(analysis_start), datestr(analysis_end));
+console_log('Using FULL time array (not filtered to analysis window)\n');
 
 %% Extract head data
 zone_colors = containers.Map({'z4', 'z5'}, ...
@@ -123,6 +123,6 @@ title(sprintf('Depth Range %.0f-%.0f ft (%d channels) - %s', ...
 grid on;
 set(gca, 'FontSize', 11);
 
-fprintf('\nPlot created! Check alignment between drawdown rate and DAS signals.\n');
-fprintf('If peaks don''t align, you may need to adjust timing correction.\n');
+console_log('\nPlot created! Check alignment between drawdown rate and DAS signals.\n');
+console_log('If peaks don''t align, you may need to adjust timing correction.\n');
 

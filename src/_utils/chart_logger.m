@@ -49,25 +49,25 @@ if strcmp(message, 'init')
     session_active = true;
     
     % Write session header
-    fprintf(log_file_handle, '=== CHART LOGGING SESSION ===\n');
-    fprintf(log_file_handle, 'Started: %s\n', datestr(now));
-    fprintf(log_file_handle, 'Log file: %s\n', log_filename);
-    fprintf(log_file_handle, 'Base directory: %s\n', config.base_input);
-    fprintf(log_file_handle, '=====================================\n\n');
+    console_log(log_file_handle, '=== CHART LOGGING SESSION ===\n');
+    console_log(log_file_handle, 'Started: %s\n', datestr(now));
+    console_log(log_file_handle, 'Log file: %s\n', log_filename);
+    console_log(log_file_handle, 'Base directory: %s\n', config.base_input);
+    console_log(log_file_handle, '=====================================\n\n');
     
     % Also display to console
-    fprintf('📊 Chart logging initialized: %s\n', log_filepath);
+    console_log('📊 Chart logging initialized: %s\n', log_filepath);
     return;
     
 elseif strcmp(message, 'close')
     if session_active && log_file_handle ~= -1
         % Write session footer
-        fprintf(log_file_handle, '\n=====================================\n');
-        fprintf(log_file_handle, 'Session ended: %s\n', datestr(now));
-        fprintf(log_file_handle, '=== END CHART LOGGING SESSION ===\n');
+        console_log(log_file_handle, '\n=====================================\n');
+        console_log(log_file_handle, 'Session ended: %s\n', datestr(now));
+        console_log(log_file_handle, '=== END CHART LOGGING SESSION ===\n');
         
         fclose(log_file_handle);
-        fprintf('📊 Chart log saved: %s\n', fullfile(log_directory, log_filename));
+        console_log('📊 Chart log saved: %s\n', fullfile(log_directory, log_filename));
         
         % Reset persistent variables
         log_file_handle = [];
@@ -88,11 +88,11 @@ timestamp = datestr(now, 'HH:MM:SS.FFF');
 timestamped_message = sprintf('[%s] %s', timestamp, formatted_message);
 
 % Write to console (always)
-fprintf('%s\n', timestamped_message);
+console_log('%s\n', timestamped_message);
 
 % Write to log file (if session active)
 if session_active && ~isempty(log_file_handle) && log_file_handle ~= -1
-    fprintf(log_file_handle, '%s\n', timestamped_message);
+    console_log(log_file_handle, '%s\n', timestamped_message);
     % Flush to ensure immediate write
     if exist('OCTAVE_VERSION', 'builtin')
         fflush(log_file_handle);

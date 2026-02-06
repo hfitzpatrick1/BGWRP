@@ -7,13 +7,13 @@ function purge_inactive_directories(base_input)
 % Input:
 %   base_input - Base directory path (e.g., 'C:\Coding\BGWRP\data\_BATCH\')
 
-fprintf('Purging intermediate directories that do not match _active content...\n');
+console_log('Purging intermediate directories that do not match _active content...\n');
 
 % Get list of active datasets
 active_dir = fullfile(base_input, '_active');
 if ~exist(active_dir, 'dir')
-    fprintf('⚠ No _active directory found: %s\n', active_dir);
-    fprintf('Nothing to purge against.\n');
+    console_log('⚠ No _active directory found: %s\n', active_dir);
+    console_log('Nothing to purge against.\n');
     return;
 end
 
@@ -27,12 +27,12 @@ for i = 1:length(active_items)
 end
 
 if isempty(active_datasets)
-    fprintf('⚠ No active datasets found in %s\n', active_dir);
-    fprintf('Nothing to purge against.\n');
+    console_log('⚠ No active datasets found in %s\n', active_dir);
+    console_log('Nothing to purge against.\n');
     return;
 end
 
-fprintf('Active datasets to preserve: %s\n', strjoin(active_datasets, ', '));
+console_log('Active datasets to preserve: %s\n', strjoin(active_datasets, ', '));
 
 % Directories to clean up
 intermediate_dirs = {
@@ -50,11 +50,11 @@ for i = 1:length(intermediate_dirs)
     target_dir = fullfile(base_input, dir_name);
     
     if ~exist(target_dir, 'dir')
-        fprintf('Skipping %s (does not exist)\n', dir_name);
+        console_log('Skipping %s (does not exist)\n', dir_name);
         continue;
     end
     
-    fprintf('\n--- Cleaning %s ---\n', dir_name);
+    console_log('\n--- Cleaning %s ---\n', dir_name);
     
     % Get items in this directory
     items = dir(target_dir);
@@ -83,7 +83,7 @@ for i = 1:length(intermediate_dirs)
     end
     
     if isempty(datasets_in_dir)
-        fprintf('  No datasets found in %s\n', dir_name);
+        console_log('  No datasets found in %s\n', dir_name);
         continue;
     end
     
@@ -92,20 +92,20 @@ for i = 1:length(intermediate_dirs)
         dataset_name = datasets_in_dir{j};
         
         if ismember(dataset_name, active_datasets)
-            fprintf('  ✓ Preserving %s (active)\n', dataset_name);
+            console_log('  ✓ Preserving %s (active)\n', dataset_name);
             total_preserved = total_preserved + 1;
         else
-            fprintf('  ✗ Removing %s (inactive)\n', dataset_name);
+            console_log('  ✗ Removing %s (inactive)\n', dataset_name);
             
             % Remove dataset directory
             dataset_path = fullfile(target_dir, dataset_name);
             if exist(dataset_path, 'dir')
                 try
                     rmdir(dataset_path, 's');
-                    fprintf('    Removed directory: %s\n', dataset_path);
+                    console_log('    Removed directory: %s\n', dataset_path);
                     total_removed = total_removed + 1;
                 catch ME
-                    fprintf('    ⚠ Failed to remove %s: %s\n', dataset_path, ME.message);
+                    console_log('    ⚠ Failed to remove %s: %s\n', dataset_path, ME.message);
                 end
             end
             
@@ -116,9 +116,9 @@ for i = 1:length(intermediate_dirs)
                 if exist(config_file, 'file')
                     try
                         delete(config_file);
-                        fprintf('    Removed config file: %s\n', config_file);
+                        console_log('    Removed config file: %s\n', config_file);
                     catch ME
-                        fprintf('    ⚠ Failed to remove %s: %s\n', config_file, ME.message);
+                        console_log('    ⚠ Failed to remove %s: %s\n', config_file, ME.message);
                     end
                 end
                 
@@ -129,9 +129,9 @@ for i = 1:length(intermediate_dirs)
                     if exist(legacy_file, 'file')
                         try
                             delete(legacy_file);
-                            fprintf('    Removed legacy file: %s\n', legacy_file);
+                            console_log('    Removed legacy file: %s\n', legacy_file);
                         catch ME
-                            fprintf('    ⚠ Failed to remove %s: %s\n', legacy_file, ME.message);
+                            console_log('    ⚠ Failed to remove %s: %s\n', legacy_file, ME.message);
                         end
                     end
                 end
@@ -140,9 +140,9 @@ for i = 1:length(intermediate_dirs)
     end
 end
 
-fprintf('\n=== PURGE SUMMARY ===\n');
-fprintf('Datasets preserved: %d\n', total_preserved);
-fprintf('Datasets removed: %d\n', total_removed);
-fprintf('Active datasets: %s\n', strjoin(active_datasets, ', '));
+console_log('\n=== PURGE SUMMARY ===\n');
+console_log('Datasets preserved: %d\n', total_preserved);
+console_log('Datasets removed: %d\n', total_removed);
+console_log('Active datasets: %s\n', strjoin(active_datasets, ', '));
 
 end

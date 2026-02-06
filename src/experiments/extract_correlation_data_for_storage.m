@@ -16,7 +16,7 @@
 
 clear time_vector head_zone5 das_strain_rate depth_vector
 
-fprintf('=== EXTRACTING DATA FOR STORAGE ANALYSIS ===\n\n');
+console_log('=== EXTRACTING DATA FOR STORAGE ANALYSIS ===\n\n');
 
 %% ============================================================
 %% CONFIGURATION: Set your test name here
@@ -25,12 +25,12 @@ fprintf('=== EXTRACTING DATA FOR STORAGE ANALYSIS ===\n\n');
 % CHANGE THIS FOR EACH TEST:
 test_name = 'PT01c_Recovery_short';  % Options: PT01a_Recovery, PT01b_Recovery, PT01c_Recovery_short
 
-fprintf('Test: %s\n\n', test_name);
+console_log('Test: %s\n\n', test_name);
 
 %% ============================================================
 %% STEP 1: Extract DAS data
 %% ============================================================
-fprintf('Step 1: Extracting DAS data...\n');
+console_log('Step 1: Extracting DAS data...\n');
 
 % Check if results exist
 if ~exist('das_results', 'var') || ~exist('head_results', 'var')
@@ -58,18 +58,18 @@ das_strain_rate = displacement_rate / (gauge_length_m * 1e9);  % Convert to 1/s
 % Get depth vector
 depth_vector = das.depth_ft;
 
-fprintf('  ✓ DAS data extracted and converted\n');
-fprintf('    Time points: %d\n', length(time_vector));
-fprintf('    Time range: %.1f to %.1f minutes\n', min(time_vector)/60, max(time_vector)/60);
-fprintf('    Depths: %d channels\n', length(depth_vector));
-fprintf('    Depth range: %.1f to %.1f ft\n', min(depth_vector), max(depth_vector));
-fprintf('    Strain rate size: [%d x %d]\n', size(das_strain_rate, 1), size(das_strain_rate, 2));
-fprintf('    Strain rate range: %.2e to %.2e 1/s (converted from nm/s)\n\n', min(das_strain_rate(:)), max(das_strain_rate(:)));
+console_log('  ✓ DAS data extracted and converted\n');
+console_log('    Time points: %d\n', length(time_vector));
+console_log('    Time range: %.1f to %.1f minutes\n', min(time_vector)/60, max(time_vector)/60);
+console_log('    Depths: %d channels\n', length(depth_vector));
+console_log('    Depth range: %.1f to %.1f ft\n', min(depth_vector), max(depth_vector));
+console_log('    Strain rate size: [%d x %d]\n', size(das_strain_rate, 1), size(das_strain_rate, 2));
+console_log('    Strain rate range: %.2e to %.2e 1/s (converted from nm/s)\n\n', min(das_strain_rate(:)), max(das_strain_rate(:)));
 
 %% ============================================================
 %% STEP 2: Extract Zone 5 head data
 %% ============================================================
-fprintf('Step 2: Extracting Zone 5 head data...\n');
+console_log('Step 2: Extracting Zone 5 head data...\n');
 
 % Extract head structure
 head = head_results.(test_name);
@@ -85,15 +85,15 @@ z5_time_seconds = seconds(z5_time - z5_time(1));
 % (Zone 5 has fewer samples than DAS, typically ~60 vs 300)
 head_zone5 = interp1(z5_time_seconds, z5_drawdown, time_vector, 'linear', 'extrap');
 
-fprintf('  ✓ Zone 5 data extracted and interpolated\n');
-fprintf('    Original Zone 5 points: %d\n', length(z5_drawdown));
-fprintf('    Interpolated to: %d points (matching DAS)\n', length(head_zone5));
-fprintf('    Head range: %.2f to %.2f ft\n\n', min(head_zone5), max(head_zone5));
+console_log('  ✓ Zone 5 data extracted and interpolated\n');
+console_log('    Original Zone 5 points: %d\n', length(z5_drawdown));
+console_log('    Interpolated to: %d points (matching DAS)\n', length(head_zone5));
+console_log('    Head range: %.2f to %.2f ft\n\n', min(head_zone5), max(head_zone5));
 
 %% ============================================================
 %% STEP 3: Quality checks
 %% ============================================================
-fprintf('Step 3: Quality checks...\n');
+console_log('Step 3: Quality checks...\n');
 
 % Check for NaN or Inf
 if any(isnan(das_strain_rate(:)))
@@ -117,12 +117,12 @@ assert(length(time_vector) == length(head_zone5), ...
 assert(length(depth_vector) == size(das_strain_rate, 2), ...
     'Depth vector length must match DAS strain rate columns');
 
-fprintf('  ✓ All quality checks passed\n\n');
+console_log('  ✓ All quality checks passed\n\n');
 
 %% ============================================================
 %% STEP 4: Save data
 %% ============================================================
-fprintf('Step 4: Saving correlation results...\n');
+console_log('Step 4: Saving correlation results...\n');
 
 % Construct filename with test name
 output_filename = sprintf('C:\\Coding\\BGWRP Lit Review\\Thesis\\correlation_results_%s.mat', test_name);
@@ -130,22 +130,22 @@ output_filename = sprintf('C:\\Coding\\BGWRP Lit Review\\Thesis\\correlation_res
 % Save
 save(output_filename, 'time_vector', 'head_zone5', 'das_strain_rate', 'depth_vector', 'test_name');
 
-fprintf('  ✓ Data saved to:\n    %s\n\n', output_filename);
+console_log('  ✓ Data saved to:\n    %s\n\n', output_filename);
 
 %% ============================================================
 %% STEP 5: Display summary
 %% ============================================================
-fprintf('=== EXTRACTION COMPLETE ===\n\n');
-fprintf('Variables ready for storage analysis:\n');
-fprintf('  time_vector:      [%d x 1] seconds\n', length(time_vector));
-fprintf('  head_zone5:       [%d x 1] ft\n', length(head_zone5));
-fprintf('  das_strain_rate:  [%d x %d] 1/s\n', size(das_strain_rate, 1), size(das_strain_rate, 2));
-fprintf('  depth_vector:     [%d x 1] ft\n\n', length(depth_vector));
+console_log('=== EXTRACTION COMPLETE ===\n\n');
+console_log('Variables ready for storage analysis:\n');
+console_log('  time_vector:      [%d x 1] seconds\n', length(time_vector));
+console_log('  head_zone5:       [%d x 1] ft\n', length(head_zone5));
+console_log('  das_strain_rate:  [%d x %d] 1/s\n', size(das_strain_rate, 1), size(das_strain_rate, 2));
+console_log('  depth_vector:     [%d x 1] ft\n\n', length(depth_vector));
 
-fprintf('NEXT STEP:\n');
-fprintf('  cd(''C:\\Coding\\BGWRP\\src'')\n');
-fprintf('  load(''%s'')\n', output_filename);
-fprintf('  test_storage_calculation\n\n');
+console_log('NEXT STEP:\n');
+console_log('  cd(''C:\\Coding\\BGWRP\\src'')\n');
+console_log('  load(''%s'')\n', output_filename);
+console_log('  test_storage_calculation\n\n');
 
 %% ============================================================
 %% OPTIONAL: Auto-run storage calculation
@@ -154,7 +154,7 @@ fprintf('  test_storage_calculation\n\n');
 run_now = questdlg('Run storage calculation now?', 'Run Analysis', 'Yes', 'No', 'Yes');
 
 if strcmp(run_now, 'Yes')
-    fprintf('Running storage calculation...\n\n');
+    console_log('Running storage calculation...\n\n');
     cd('C:\Coding\BGWRP\src');
     test_storage_calculation
 end

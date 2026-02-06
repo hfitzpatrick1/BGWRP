@@ -24,29 +24,29 @@ if ~exist('save_directory', 'var')
 end
 
 %% Enhanced Error Handling and Validation
-fprintf('=== SILIXA TDMS TO PHYSICAL DISPLACEMENT RATE ===\n');
-fprintf('Using directory: %s\n', directory);
-fprintf('Saving to: %s\n', save_directory);
+console_log('=== SILIXA TDMS TO PHYSICAL DISPLACEMENT RATE ===\n');
+console_log('Using directory: %s\n', directory);
+console_log('Saving to: %s\n', save_directory);
 
 % Verify directories exist
-fprintf('Checking directories...\n');
+console_log('Checking directories...\n');
 if ~exist(directory, 'dir')
     error('Source directory does not exist: %s', directory);
 end
-fprintf('✓ Source directory exists: %s\n', directory);
+console_log('✓ Source directory exists: %s\n', directory);
 
 if ~exist(save_directory, 'dir')
     mkdir(save_directory);
-    fprintf('✓ Created output directory: %s\n', save_directory);
+    console_log('✓ Created output directory: %s\n', save_directory);
 else
-    fprintf('✓ Output directory exists: %s\n', save_directory);
+    console_log('✓ Output directory exists: %s\n', save_directory);
 end
 
 %% Run Script
 % Find files
 files           =   dir([directory filesearch]);
 lf              =   length(files);
-fprintf('Found %d TDMS files to process\n', lf);
+console_log('Found %d TDMS files to process\n', lf);
 
 if lf == 0
     error('No TDMS files found in directory: %s', directory);
@@ -119,13 +119,13 @@ for nn = f_ind
                 else
                     data = data * (physical_factor * adc_factor);
                 end
-                fprintf('Applied single-step scaling: %g\n', physical_factor * adc_factor);
+                console_log('Applied single-step scaling: %g\n', physical_factor * adc_factor);
                 
             case 'double_precision'
                 % Force double precision throughout
                 data = double(data) * double(adc_factor);
                 data = data * double(physical_factor);
-                fprintf('Applied double-precision scaling\n');
+                console_log('Applied double-precision scaling\n');
                 
             case 'two_stage'
                 % Original two-stage method (may cause artifacts)
@@ -134,7 +134,7 @@ for nn = f_ind
                 end
                 data = data * adc_factor;
                 data = physical_factor * data;
-                fprintf('Applied two-stage scaling (legacy)\n');
+                console_log('Applied two-stage scaling (legacy)\n');
                 
             otherwise
                 error('Unknown scaling method: %s', scaling_method);
@@ -148,7 +148,7 @@ for nn = f_ind
             % Write to the specified save directory
             if ~exist(save_directory, 'dir')
                 mkdir(save_directory);
-                fprintf('Created output directory: %s\n', save_directory);
+                console_log('Created output directory: %s\n', save_directory);
             end
             
             output_filename = fullfile(save_directory, [filename(1:end-4) 'mat']);
@@ -159,28 +159,28 @@ for nn = f_ind
             % Verify file was created
             if exist(output_filename, 'file')
                 successful_files = successful_files + 1;
-                fprintf('✓ %s -> MAT (%dx%d)\n', filename, size(data,1), size(data,2));
+                console_log('✓ %s -> MAT (%dx%d)\n', filename, size(data,1), size(data,2));
             else
                 error('File was not created: %s', output_filename);
             end
         else
             successful_files = successful_files + 1;
-            fprintf('✓ %s processed (%dx%d)\n', filename, size(data,1), size(data,2));
+            console_log('✓ %s processed (%dx%d)\n', filename, size(data,1), size(data,2));
         end
         
     catch ME
         failed_files = failed_files + 1;
-        fprintf('\n✗ ERROR processing %s: %s\n', filename, ME.message);
+        console_log('\n✗ ERROR processing %s: %s\n', filename, ME.message);
         if length(ME.stack) > 0
-            fprintf('   Location: %s (line %d)\n', ME.stack(1).name, ME.stack(1).line);
+            console_log('   Location: %s (line %d)\n', ME.stack(1).name, ME.stack(1).line);
         end
         % Continue with next file instead of stopping
-        fprintf('   Continuing with next file...\n');
+        console_log('   Continuing with next file...\n');
     end
 end
 
-fprintf('\n=== PROCESSING SUMMARY ===\n');
-fprintf('Total files: %d\n', cnt);
-fprintf('Successful: %d\n', successful_files);
-fprintf('Failed: %d\n', failed_files);
-fprintf('Output directory: %s\n', save_directory);
+console_log('\n=== PROCESSING SUMMARY ===\n');
+console_log('Total files: %d\n', cnt);
+console_log('Successful: %d\n', successful_files);
+console_log('Failed: %d\n', failed_files);
+console_log('Output directory: %s\n', save_directory);

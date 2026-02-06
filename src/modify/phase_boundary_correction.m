@@ -21,11 +21,11 @@ if ~isfield(options, 'diagnostic_threshold'), options.diagnostic_threshold = 0.0
 if ~isfield(options, 'correction_window'), options.correction_window = 10; end
 if ~isfield(options, 'test_channels'), options.test_channels = 450:470; end
 
-fprintf('=== PHASE BOUNDARY CORRECTION ===\n');
-fprintf('Method: %s\n', options.method);
+console_log('=== PHASE BOUNDARY CORRECTION ===\n');
+console_log('Method: %s\n', options.method);
 
 %% STAGE 1: DIAGNOSTIC DETECTION
-fprintf('\n--- STAGE 1: BOUNDARY DETECTION ---\n');
+console_log('\n--- STAGE 1: BOUNDARY DETECTION ---\n');
 
 % Calculate expected file boundaries
 start_time = timing_config.start;
@@ -36,15 +36,15 @@ samples_per_file = file_duration_minutes * 60 * sample_rate;
 num_files = ceil(size(data, 1) / samples_per_file);
 boundary_positions = (1:num_files-1) * samples_per_file;
 
-fprintf('Detecting boundaries in %d total samples\n', size(data, 1));
-fprintf('Expected %d boundaries at 60-sample intervals\n', length(boundary_positions));
+console_log('Detecting boundaries in %d total samples\n', size(data, 1));
+console_log('Expected %d boundaries at 60-sample intervals\n', length(boundary_positions));
 
 % Detect significant discontinuities
 boundary_info = [];
 test_channels = options.test_channels;
 test_channels = test_channels(test_channels <= size(data, 2)); % Ensure valid channels
 
-fprintf('Testing channels %d to %d for discontinuities\n', min(test_channels), max(test_channels));
+console_log('Testing channels %d to %d for discontinuities\n', min(test_channels), max(test_channels));
 
 for i = 1:length(boundary_positions)
     boundary_sample = boundary_positions(i);
@@ -70,7 +70,7 @@ for i = 1:length(boundary_positions)
         
         if max_jump > options.diagnostic_threshold
             boundary_time = start_time + seconds(boundary_sample - 1);
-            fprintf('  Boundary %d (sample %d, %s): max_jump=%.4f, mean_offset=%.4f\n', ...
+            console_log('  Boundary %d (sample %d, %s): max_jump=%.4f, mean_offset=%.4f\n', ...
                 i, boundary_sample, boundary_time, max_jump, mean(phase_jump));
         end
     end
@@ -81,22 +81,22 @@ if ~isempty(boundary_info)
     significant_mask = boundary_info(:, 2) > options.diagnostic_threshold;
     significant_boundaries = boundary_info(significant_mask, :);
     
-    fprintf('\nDetected %d/%d significant boundaries requiring correction\n', ...
+    console_log('\nDetected %d/%d significant boundaries requiring correction\n', ...
         sum(significant_mask), size(boundary_info, 1));
 else
-    fprintf('No boundaries detected - returning original data\n');
+    console_log('No boundaries detected - returning original data\n');
     corrected_data = data;
     return;
 end
 
 %% STAGE 2: TARGETED CORRECTION
-fprintf('\n--- STAGE 2: PHASE CORRECTION ---\n');
+console_log('\n--- STAGE 2: PHASE CORRECTION ---\n');
 
 corrected_data = data; % Start with original data
 
 switch lower(options.method)
     case 'phase_align'
-        fprintf('Applying phase alignment correction...\n');
+        console_log('Applying phase alignment correction...\n');
         
         for i = 1:size(significant_boundaries, 1)
             boundary_sample = significant_boundaries(i, 1);
@@ -113,7 +113,7 @@ switch lower(options.method)
             end
             
             % Apply phase offset correction to all channels
-            fprintf('    Correcting samples %d to %d (offset: %.4f)\n', ...
+            console_log('    Correcting samples %d to %d (offset: %.4f)\n', ...
                 correction_start, correction_end, mean_offset);
             
             corrected_data(correction_start:correction_end, :) = ...
@@ -121,7 +121,7 @@ switch lower(options.method)
         end
         
     case 'smooth_transition'
-        fprintf('Applying smooth transition correction...\n');
+        console_log('Applying smooth transition correction...\n');
         
         for i = 1:size(significant_boundaries, 1)
             boundary_sample = significant_boundaries(i, 1);
@@ -144,13 +144,13 @@ switch lower(options.method)
                         corrected_data(sample_idx, :) - correction_factor;
                 end
                 
-                fprintf('    Smooth transition at boundary %d (samples %d-%d)\n', ...
+                console_log('    Smooth transition at boundary %d (samples %d-%d)\n', ...
                     boundary_sample, transition_start, transition_end);
             end
         end
         
     case 'local_detrend'
-        fprintf('Applying local detrending correction...\n');
+        console_log('Applying local detrending correction...\n');
         
         for i = 1:size(significant_boundaries, 1)
             boundary_sample = significant_boundaries(i, 1);
@@ -166,7 +166,7 @@ switch lower(options.method)
                 corrected_data(local_start:local_end, ch) = detrend(local_data(:, ch), 'linear');
             end
             
-            fprintf('    Local detrend at boundary %d (samples %d-%d)\n', ...
+            console_log('    Local detrend at boundary %d (samples %d-%d)\n', ...
                 boundary_sample, local_start, local_end);
         end
         
@@ -176,7 +176,7 @@ switch lower(options.method)
 end
 
 %% VALIDATION
-fprintf('\n--- CORRECTION VALIDATION ---\n');
+console_log('\n--- CORRECTION VALIDATION ---\n');
 
 % Re-test boundaries after correction
 post_correction_info = [];
@@ -201,30 +201,30 @@ for i = 1:size(significant_boundaries, 1)
         
         post_correction_info(end+1, :) = [boundary_sample, original_jump, max_jump_after, improvement];
         
-        fprintf('  Boundary %d: %.4f -> %.4f (%.1f%% improvement)\n', ...
+        console_log('  Boundary %d: %.4f -> %.4f (%.1f%% improvement)\n', ...
             boundary_sample, original_jump, max_jump_after, improvement);
     end
 end
 
 if ~isempty(post_correction_info)
     avg_improvement = mean(post_correction_info(:, 4));
-    fprintf('\nOverall average improvement: %.1f%%\n', avg_improvement);
+    console_log('\nOverall average improvement: %.1f%%\n', avg_improvement);
     
     remaining_significant = sum(post_correction_info(:, 3) > options.diagnostic_threshold);
-    fprintf('Remaining significant boundaries: %d/%d\n', ...
+    console_log('Remaining significant boundaries: %d/%d\n', ...
         remaining_significant, size(post_correction_info, 1));
     
     if avg_improvement > 50
-        fprintf('✓ CORRECTION SUCCESSFUL: Substantial improvement achieved\n');
+        console_log('✓ CORRECTION SUCCESSFUL: Substantial improvement achieved\n');
     elseif avg_improvement > 20
-        fprintf('⚠ CORRECTION PARTIAL: Moderate improvement achieved\n');
+        console_log('⚠ CORRECTION PARTIAL: Moderate improvement achieved\n');
     else
-        fprintf('✗ CORRECTION MINIMAL: Limited improvement - try different method\n');
+        console_log('✗ CORRECTION MINIMAL: Limited improvement - try different method\n');
     end
 else
-    fprintf('⚠ Unable to validate correction\n');
+    console_log('⚠ Unable to validate correction\n');
 end
 
-fprintf('\n=== PHASE CORRECTION COMPLETE ===\n');
+console_log('\n=== PHASE CORRECTION COMPLETE ===\n');
 
 end

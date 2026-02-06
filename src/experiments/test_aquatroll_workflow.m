@@ -5,10 +5,10 @@ function test_aquatroll_workflow()
 % then tests the cleaning workflow. Use this to understand the processing
 % steps before applying to your real data.
 
-fprintf('=== TESTING AQUATROLL WORKFLOW WITH SYNTHETIC DATA ===\n\n');
+console_log('=== TESTING AQUATROLL WORKFLOW WITH SYNTHETIC DATA ===\n\n');
 
 %% Generate Synthetic Pump Test Data
-fprintf('Generating synthetic pump test data...\n');
+console_log('Generating synthetic pump test data...\n');
 
 % Time parameters
 t_start = datetime(2024,1,15,10,0,0);
@@ -57,7 +57,7 @@ for i = 1:num_points
 end
 
 %% Add Realistic Noise
-fprintf('Adding realistic noise sources...\n');
+console_log('Adding realistic noise sources...\n');
 
 % 1. White noise (electronic noise) - small amplitude, high frequency
 white_noise = 0.005 * randn(size(pressure_ideal)); % 0.005 psi RMS
@@ -94,14 +94,14 @@ pressure_noisy = pressure_ideal + white_noise + baro_drift' + temp_drift' + spik
 dropout_locs = [1000:1005, 5000:5008, 15000]; % Some data gaps
 pressure_noisy(dropout_locs) = NaN;
 
-fprintf('✓ Synthetic data generated\n');
-fprintf('  Duration: %.1f hours\n', duration_hours);
-fprintf('  Sampling rate: 1 Hz\n');
-fprintf('  Noise sources: white noise, barometric drift, temperature drift, spikes, pump vibration\n');
-fprintf('  Data dropouts: %d points\n', length(dropout_locs));
+console_log('✓ Synthetic data generated\n');
+console_log('  Duration: %.1f hours\n', duration_hours);
+console_log('  Sampling rate: 1 Hz\n');
+console_log('  Noise sources: white noise, barometric drift, temperature drift, spikes, pump vibration\n');
+console_log('  Data dropouts: %d points\n', length(dropout_locs));
 
 %% Apply Cleaning Steps (mimicking process_aquatroll_pump_test.m)
-fprintf('\nApplying cleaning workflow...\n');
+console_log('\nApplying cleaning workflow...\n');
 
 % Step 1: Outlier detection
 window_size = 50;
@@ -112,23 +112,23 @@ outliers = abs(pressure_noisy - moving_median) > outlier_threshold * moving_mad;
 
 pressure_cleaned = pressure_noisy;
 pressure_cleaned(outliers) = NaN;
-fprintf('✓ Removed %d outliers\n', sum(outliers));
+console_log('✓ Removed %d outliers\n', sum(outliers));
 
 % Step 2: Interpolate small gaps
 max_gap = 5;
 pressure_cleaned = fillmissing(pressure_cleaned, 'linear', 'MaxGap', max_gap);
-fprintf('✓ Interpolated small gaps\n');
+console_log('✓ Interpolated small gaps\n');
 
 % Step 3: Moving average smoothing
 smooth_window = 5;
 pressure_smoothed = movmean(pressure_cleaned, smooth_window, 'omitnan');
-fprintf('✓ Applied %d-point moving average\n', smooth_window);
+console_log('✓ Applied %d-point moving average\n', smooth_window);
 
 % Step 4: Savitzky-Golay filter
 savgol_order = 2;
 savgol_framelen = 11;
 pressure_final = sgolayfilt(pressure_smoothed, savgol_order, savgol_framelen);
-fprintf('✓ Applied Savitzky-Golay filter\n');
+console_log('✓ Applied Savitzky-Golay filter\n');
 
 %% Calculate Drawdown
 baseline_points = 3000; % First 50 minutes (before pumping starts)
@@ -145,7 +145,7 @@ drawdown_noisy = static_level - water_level_noisy;
 drawdown_cleaned = static_level - water_level_cleaned;
 
 %% Visualize Results
-fprintf('\nCreating visualizations...\n');
+console_log('\nCreating visualizations...\n');
 
 figure('Name', 'Synthetic Aquatroll Test - Full Workflow', 'Position', [100, 100, 1400, 900]);
 
@@ -206,29 +206,29 @@ legend('Location', 'best');
 grid on;
 
 %% Quality Metrics
-fprintf('\n=== QUALITY METRICS ===\n');
+console_log('\n=== QUALITY METRICS ===\n');
 noise_before = rms(residual_noisy, 'omitnan');
 noise_after = rms(residual_cleaned, 'omitnan');
 noise_reduction = (1 - noise_after/noise_before) * 100;
 
-fprintf('RMS Noise:\n');
-fprintf('  Before cleaning: %.4f psi (%.3f ft)\n', noise_before, noise_before * psi_to_ft);
-fprintf('  After cleaning:  %.4f psi (%.3f ft)\n', noise_after, noise_after * psi_to_ft);
-fprintf('  Noise reduction: %.1f%%\n', noise_reduction);
+console_log('RMS Noise:\n');
+console_log('  Before cleaning: %.4f psi (%.3f ft)\n', noise_before, noise_before * psi_to_ft);
+console_log('  After cleaning:  %.4f psi (%.3f ft)\n', noise_after, noise_after * psi_to_ft);
+console_log('  Noise reduction: %.1f%%\n', noise_reduction);
 
 signal_std = std(pressure_ideal);
 snr_before = 20 * log10(signal_std / noise_before);
 snr_after = 20 * log10(signal_std / noise_after);
 
-fprintf('\nSignal-to-Noise Ratio:\n');
-fprintf('  Before cleaning: %.1f dB\n', snr_before);
-fprintf('  After cleaning:  %.1f dB\n', snr_after);
-fprintf('  Improvement:     %.1f dB\n', snr_after - snr_before);
+console_log('\nSignal-to-Noise Ratio:\n');
+console_log('  Before cleaning: %.1f dB\n', snr_before);
+console_log('  After cleaning:  %.1f dB\n', snr_after);
+console_log('  Improvement:     %.1f dB\n', snr_after - snr_before);
 
-fprintf('\nOutlier Detection:\n');
-fprintf('  Spikes injected: %d\n', num_spikes);
-fprintf('  Outliers detected: %d\n', sum(outliers));
-fprintf('  Detection rate: %.1f%%\n', 100 * sum(outliers) / num_spikes);
+console_log('\nOutlier Detection:\n');
+console_log('  Spikes injected: %d\n', num_spikes);
+console_log('  Outliers detected: %d\n', sum(outliers));
+console_log('  Detection rate: %.1f%%\n', 100 * sum(outliers) / num_spikes);
 
 %% Zoom plots for detailed inspection
 figure('Name', 'Detailed Views', 'Position', [200, 200, 1400, 700]);
@@ -294,17 +294,17 @@ legend('Ideal', 'Noisy', 'Cleaned', 'Location', 'best');
 grid on;
 
 %% Summary
-fprintf('\n=== TEST COMPLETE ===\n');
-fprintf('✓ Synthetic data with realistic noise generated\n');
-fprintf('✓ Cleaning workflow applied successfully\n');
-fprintf('✓ %.1f%% noise reduction achieved\n', noise_reduction);
-fprintf('✓ Visualizations created\n\n');
-fprintf('📋 INTERPRETATION:\n');
-fprintf('   - Green lines show "ground truth" (ideal pump test response)\n');
-fprintf('   - Blue lines show noisy data (similar to raw Aquatroll data)\n');
-fprintf('   - Red lines show cleaned data (after filtering)\n\n');
-fprintf('💡 TIP: If this test looks good, you can now apply the same\n');
-fprintf('   workflow to your real Aquatroll data using:\n');
-fprintf('   >> process_aquatroll_pump_test()\n\n');
+console_log('\n=== TEST COMPLETE ===\n');
+console_log('✓ Synthetic data with realistic noise generated\n');
+console_log('✓ Cleaning workflow applied successfully\n');
+console_log('✓ %.1f%% noise reduction achieved\n', noise_reduction);
+console_log('✓ Visualizations created\n\n');
+console_log('📋 INTERPRETATION:\n');
+console_log('   - Green lines show "ground truth" (ideal pump test response)\n');
+console_log('   - Blue lines show noisy data (similar to raw Aquatroll data)\n');
+console_log('   - Red lines show cleaned data (after filtering)\n\n');
+console_log('💡 TIP: If this test looks good, you can now apply the same\n');
+console_log('   workflow to your real Aquatroll data using:\n');
+console_log('   >> process_aquatroll_pump_test()\n\n');
 
 end

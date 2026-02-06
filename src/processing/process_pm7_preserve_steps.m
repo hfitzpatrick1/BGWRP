@@ -3,7 +3,7 @@ function process_pm7_preserve_steps(csv_file, zone_name, pump_start_time)
 %
 % NO SMOOTHING - only detrend and remove extreme outliers
 
-fprintf('=== PRESERVING STEPS - NO SMOOTHING ===\n');
+console_log('=== PRESERVING STEPS - NO SMOOTHING ===\n');
 
 %% Load data
 fid = fopen(csv_file, 'r');
@@ -35,7 +35,7 @@ depth_cleaned = depth_ft_raw;
 depth_cleaned(outliers) = NaN;
 depth_cleaned = fillmissing(depth_cleaned, 'linear', 'MaxGap', 2);
 
-fprintf('Removed %d extreme outliers\n', sum(outliers));
+console_log('Removed %d extreme outliers\n', sum(outliers));
 
 %% Detrend pre-test period
 pre_test_mask = timestamps < pump_start_time;
@@ -50,7 +50,7 @@ all_time_numeric = datenum(timestamps);
 drift = polyval(p, all_time_numeric);
 depth_detrended = depth_cleaned - drift + mean(pre_test_depth, 'omitnan');
 
-fprintf('Drift removed: %.6f ft/hour\n', p(1)*24*60);
+console_log('Drift removed: %.6f ft/hour\n', p(1)*24*60);
 
 %% NO SMOOTHING - use raw detrended data
 depth_final = depth_detrended;
@@ -68,9 +68,9 @@ elapsed_time_sec = seconds(timestamps - timestamps(1));
 % Calculate pump start in elapsed time
 pump_start_elapsed = seconds(pump_start_time - timestamps(1));
 
-fprintf('Baseline: %.4f ft\n', baseline_depth);
-fprintf('Max drawdown: %.4f ft\n', max(drawdown_ft));
-fprintf('Pump starts at: %.1f seconds elapsed\n', pump_start_elapsed);
+console_log('Baseline: %.4f ft\n', baseline_depth);
+console_log('Max drawdown: %.4f ft\n', max(drawdown_ft));
+console_log('Pump starts at: %.1f seconds elapsed\n', pump_start_elapsed);
 
 %% Plot with CORRECT pump timing
 pump_times_elapsed = pump_start_elapsed + [0, 3600, 7200, 10800, 14400];
@@ -128,7 +128,7 @@ title('ZOOMED: Pumping period - Look for steps at vertical lines');
 grid on;
 
 %% Step analysis
-fprintf('\nStep sizes at pump rate changes:\n');
+console_log('\nStep sizes at pump rate changes:\n');
 for i = 2:length(pump_times_elapsed)-1
     if pump_times_elapsed(i) >= 0 && pump_times_elapsed(i) <= max(elapsed_time_sec)
         before_mask = elapsed_time_sec >= (pump_times_elapsed(i) - 300) & elapsed_time_sec < pump_times_elapsed(i);
@@ -138,7 +138,7 @@ for i = 2:length(pump_times_elapsed)-1
         after_avg = mean(drawdown_ft(after_mask), 'omitnan');
         step = after_avg - before_avg;
         
-        fprintf('  %d->%d GPM: Step = %.4f ft (%.3f in)\n', ...
+        console_log('  %d->%d GPM: Step = %.4f ft (%.3f in)\n', ...
             rates(i-1), rates(i), step, step*12);
     end
 end
@@ -157,6 +157,6 @@ Time_sec = elapsed_time_sec;
 save(fullfile(output_dir, sprintf('%s_no_smooth.mat', base_name)), ...
     'Date', 'Drawdownft', 'Depthft', 'Time_sec', 'pump_start_time', 'baseline_depth');
 
-fprintf('\nSaved to: %s\n', fullfile(output_dir, sprintf('%s_no_smooth.mat', base_name)));
+console_log('\nSaved to: %s\n', fullfile(output_dir, sprintf('%s_no_smooth.mat', base_name)));
 
 end

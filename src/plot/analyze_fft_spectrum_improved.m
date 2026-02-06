@@ -14,7 +14,7 @@ function fft_results = analyze_fft_spectrum_improved(das_data, config)
 % Outputs:
 %   fft_results - Structure containing proper frequency analysis
 
-fprintf('    Computing improved FFT spectrum analysis...\n');
+console_log('    Computing improved FFT spectrum analysis...\n');
 
 % Initialize results
 fft_results = struct();
@@ -24,12 +24,12 @@ if isfield(das_data, 'raw_data') && ~isempty(das_data.raw_data)
     % Use higher sampling rate raw data for better frequency resolution
     signal_data = das_data.raw_data;
     fs = get_config_param(config, 'raw_sampling_rate', 100);  % Original 100 Hz before decimation
-    fprintf('      Using raw data at %d Hz sampling rate\n', fs);
+    console_log('      Using raw data at %d Hz sampling rate\n', fs);
 else
     % Fall back to smoothed data
     signal_data = das_data.smoothed_data;
     fs = get_config_param(config, 'sampling_rate', 1.0);
-    fprintf('      Using decimated data at %.1f Hz sampling rate\n', fs);
+    console_log('      Using decimated data at %.1f Hz sampling rate\n', fs);
 end
 
 % Select analysis window
@@ -53,7 +53,7 @@ else
 end
 
 [n_time, n_channels] = size(analysis_data);
-fprintf('      Analysis: %d samples at %.1f Hz, %d channels\n', n_time, fs, n_channels);
+console_log('      Analysis: %d samples at %.1f Hz, %d channels\n', n_time, fs, n_channels);
 
 % Select representative channel (pumping zone if available)
 if isfield(das_data, 'pumping_zone') && isfield(das_data.pumping_zone, 'channel_idx')
@@ -64,7 +64,7 @@ end
 rep_channel = max(1, min(rep_channel, n_channels));
 
 %% FUNDAMENTAL FFT ANALYSIS
-fprintf('      Performing fundamental FFT analysis...\n');
+console_log('      Performing fundamental FFT analysis...\n');
 
 % Get signal from representative channel
 signal = analysis_data(:, rep_channel);
@@ -109,7 +109,7 @@ fft_results.N = N;
 fft_results.rep_channel = rep_channel;
 
 %% FREQUENCY COMPONENT IDENTIFICATION
-fprintf('      Identifying frequency components...\n');
+console_log('      Identifying frequency components...\n');
 
 % Find significant frequency peaks (sine wave components)
 % Use relative threshold based on signal characteristics
@@ -126,16 +126,16 @@ fft_results.dominant_magnitudes = magnitude(peak_indices);
 fft_results.dominant_phases = phase(peak_indices);
 fft_results.dominant_amplitudes = fft_results.dominant_magnitudes / (N/2);  % Convert to actual amplitudes
 
-fprintf('        Found %d significant frequency components:\n', length(fft_results.dominant_frequencies));
+console_log('        Found %d significant frequency components:\n', length(fft_results.dominant_frequencies));
 for i = 1:length(fft_results.dominant_frequencies)
     freq_hz = fft_results.dominant_frequencies(i);
     amp = fft_results.dominant_amplitudes(i);
     phase_deg = rad2deg(fft_results.dominant_phases(i));
-    fprintf('          %.3f Hz: Amplitude = %.2e, Phase = %.1f°\n', freq_hz, amp, phase_deg);
+    console_log('          %.3f Hz: Amplitude = %.2e, Phase = %.1f°\n', freq_hz, amp, phase_deg);
 end
 
 %% FREQUENCY BAND ANALYSIS
-fprintf('      Analyzing frequency bands...\n');
+console_log('      Analyzing frequency bands...\n');
 
 % Define meaningful frequency bands for DAS data
 bands = struct();
@@ -164,16 +164,16 @@ end
 fft_results.power_bands.total = sum(psd);
 
 % Report power distribution
-fprintf('        Power distribution:\n');
+console_log('        Power distribution:\n');
 for band_name = fieldnames(fft_results.power_bands)'
     if ~strcmp(band_name{1}, 'total')
         power_pct = 100 * fft_results.power_bands.(band_name{1}) / fft_results.power_bands.total;
-        fprintf('          %s: %.1f%%\n', band_name{1}, power_pct);
+        console_log('          %s: %.1f%%\n', band_name{1}, power_pct);
     end
 end
 
 %% SPECTRAL QUALITY ASSESSMENT
-fprintf('      Assessing spectral quality...\n');
+console_log('      Assessing spectral quality...\n');
 
 % Calculate SNR and spectral characteristics
 dc_power = psd(1);  % DC component power
@@ -189,11 +189,11 @@ fft_results.quality.snr_db = snr_db;
 fft_results.quality.spectral_flatness = spectral_flatness;
 fft_results.quality.frequency_resolution = fs / N;
 
-fprintf('        SNR: %.1f dB\n', snr_db);
-fprintf('        Frequency resolution: %.4f Hz\n', fft_results.quality.frequency_resolution);
-fprintf('        Spectral flatness: %.3f (0=tonal, 1=white noise)\n', spectral_flatness);
+console_log('        SNR: %.1f dB\n', snr_db);
+console_log('        Frequency resolution: %.4f Hz\n', fft_results.quality.frequency_resolution);
+console_log('        Spectral flatness: %.3f (0=tonal, 1=white noise)\n', spectral_flatness);
 
-fprintf('      Improved FFT analysis complete\n');
+console_log('      Improved FFT analysis complete\n');
 
 end
 

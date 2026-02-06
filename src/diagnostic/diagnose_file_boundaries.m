@@ -8,11 +8,11 @@ function diagnose_file_boundaries(dataset_name, data_filepath, timing_config)
 %   data_filepath - Path to concatenated MAT file
 %   timing_config - Timing configuration with file information
 
-fprintf('=== FILE BOUNDARY DISCONTINUITY DIAGNOSTIC ===\n');
-fprintf('Dataset: %s\n', dataset_name);
+console_log('=== FILE BOUNDARY DISCONTINUITY DIAGNOSTIC ===\n');
+console_log('Dataset: %s\n', dataset_name);
 
 % Load data
-fprintf('Loading data from: %s\n', data_filepath);
+console_log('Loading data from: %s\n', data_filepath);
 load(data_filepath, 'decdata');
 data = decdata;
 
@@ -22,22 +22,22 @@ file_duration_minutes = 1;  % Assume 1-minute files
 sample_rate = 1;  % 1 Hz
 samples_per_file = file_duration_minutes * 60 * sample_rate;
 
-fprintf('Expected samples per file: %d\n', samples_per_file);
-fprintf('Total samples: %d\n', size(data, 1));
-fprintf('Total channels: %d\n', size(data, 2));
+console_log('Expected samples per file: %d\n', samples_per_file);
+console_log('Total samples: %d\n', size(data, 1));
+console_log('Total channels: %d\n', size(data, 2));
 
 % Calculate expected file boundary positions
 num_files = ceil(size(data, 1) / samples_per_file);
 boundary_positions = (1:num_files-1) * samples_per_file;
 
-fprintf('Expected file boundaries at samples: %s\n', mat2str(boundary_positions));
+console_log('Expected file boundaries at samples: %s\n', mat2str(boundary_positions));
 
 % Focus on pumping zone channels (around depth 280-290 ft)
 test_channels = [450:470];  % Representative subset
-fprintf('Analyzing channels: %d to %d\n', min(test_channels), max(test_channels));
+console_log('Analyzing channels: %d to %d\n', min(test_channels), max(test_channels));
 
 % Analyze discontinuities at each boundary
-fprintf('\n--- BOUNDARY DISCONTINUITY ANALYSIS ---\n');
+console_log('\n--- BOUNDARY DISCONTINUITY ANALYSIS ---\n');
 
 discontinuities = [];
 for i = 1:length(boundary_positions)
@@ -62,37 +62,37 @@ for i = 1:length(boundary_positions)
         % Calculate boundary time
         boundary_time = start_time + seconds(boundary_sample - 1);
         
-        fprintf('Boundary %d (sample %d, time %s):\n', i, boundary_sample, boundary_time);
-        fprintf('  Max discontinuity: %.6f\n', max_discontinuity);
-        fprintf('  Mean discontinuity: %.6f\n', mean_discontinuity);
-        fprintf('  Affected channels: %d/%d (>0.001 threshold)\n', ...
+        console_log('Boundary %d (sample %d, time %s):\n', i, boundary_sample, boundary_time);
+        console_log('  Max discontinuity: %.6f\n', max_discontinuity);
+        console_log('  Mean discontinuity: %.6f\n', mean_discontinuity);
+        console_log('  Affected channels: %d/%d (>0.001 threshold)\n', ...
             sum(discontinuity > 0.001), length(discontinuity));
     end
 end
 
 % Overall statistics
 if ~isempty(discontinuities)
-    fprintf('\n--- SUMMARY STATISTICS ---\n');
-    fprintf('Total boundaries analyzed: %d\n', size(discontinuities, 1));
-    fprintf('Average max discontinuity: %.6f\n', mean(discontinuities(:, 2)));
-    fprintf('Average mean discontinuity: %.6f\n', mean(discontinuities(:, 3)));
-    fprintf('Largest discontinuity: %.6f (at sample %d)\n', ...
+    console_log('\n--- SUMMARY STATISTICS ---\n');
+    console_log('Total boundaries analyzed: %d\n', size(discontinuities, 1));
+    console_log('Average max discontinuity: %.6f\n', mean(discontinuities(:, 2)));
+    console_log('Average mean discontinuity: %.6f\n', mean(discontinuities(:, 3)));
+    console_log('Largest discontinuity: %.6f (at sample %d)\n', ...
         max(discontinuities(:, 2)), discontinuities(discontinuities(:, 2) == max(discontinuities(:, 2)), 1));
     
     % Determine if this explains the vertical striping
     significant_boundaries = sum(discontinuities(:, 2) > 0.01);
-    fprintf('Significant boundaries (>0.01 threshold): %d/%d\n', ...
+    console_log('Significant boundaries (>0.01 threshold): %d/%d\n', ...
         significant_boundaries, size(discontinuities, 1));
     
     if significant_boundaries >= 3
-        fprintf('\n✓ DIAGNOSIS: File boundary discontinuities likely cause of vertical striping\n');
-        fprintf('  Recommendation: Implement boundary-specific phase alignment correction\n');
+        console_log('\n✓ DIAGNOSIS: File boundary discontinuities likely cause of vertical striping\n');
+        console_log('  Recommendation: Implement boundary-specific phase alignment correction\n');
     else
-        fprintf('\n⚠ DIAGNOSIS: File boundaries show minor discontinuities\n');
-        fprintf('  Recommendation: Investigate other causes (calibration drift, temperature)\n');
+        console_log('\n⚠ DIAGNOSIS: File boundaries show minor discontinuities\n');
+        console_log('  Recommendation: Investigate other causes (calibration drift, temperature)\n');
     end
 else
-    fprintf('\n⚠ No boundary discontinuities detected - check file timing assumptions\n');
+    console_log('\n⚠ No boundary discontinuities detected - check file timing assumptions\n');
 end
 
 % Create diagnostic plot
@@ -119,6 +119,6 @@ end
 
 sgtitle(sprintf('File Boundary Diagnostic - %s', dataset_name));
 
-fprintf('\n=== DIAGNOSTIC COMPLETE ===\n');
+console_log('\n=== DIAGNOSTIC COMPLETE ===\n');
 
 end

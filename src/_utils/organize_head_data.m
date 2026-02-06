@@ -15,24 +15,24 @@ function organize_head_data(base_input)
 % 4. Copies matched head files to appropriate active directories
 % 5. Renames them to generic "head_data_zX.mat" format
 
-fprintf('=== ORGANIZING HEAD DATA FILES ===\n');
+console_log('=== ORGANIZING HEAD DATA FILES ===\n');
 
 % Paths
 head_source_dir = fullfile(fileparts(base_input), 'data', 'head');
 active_base_dir = fullfile(base_input, '_active');
 
 if ~exist(head_source_dir, 'dir')
-    fprintf('⚠ Head data source directory not found: %s\n', head_source_dir);
+    console_log('⚠ Head data source directory not found: %s\n', head_source_dir);
     return;
 end
 
 if ~exist(active_base_dir, 'dir')
-    fprintf('⚠ Active datasets directory not found: %s\n', active_base_dir);
+    console_log('⚠ Active datasets directory not found: %s\n', active_base_dir);
     return;
 end
 
 %% Step 1: Read all head data files and their timestamps
-fprintf('Step 1: Reading head data file timestamps...\n');
+console_log('Step 1: Reading head data file timestamps...\n');
 head_files = dir(fullfile(head_source_dir, '*.mat'));
 head_info = struct();
 
@@ -41,7 +41,7 @@ for i = 1:length(head_files)
     filepath = fullfile(head_source_dir, filename);
     
     try
-        fprintf('  Reading: %s\n', filename);
+        console_log('  Reading: %s\n', filename);
         data = load(filepath);
         
         if isfield(data, 'Date') && ~isempty(data.Date)
@@ -60,20 +60,20 @@ for i = 1:length(head_files)
                 head_info(i).zone = 'unknown';
             end
             
-            fprintf('    Timestamps: %s to %s (%d points, zone %s)\n', ...
+            console_log('    Timestamps: %s to %s (%d points, zone %s)\n', ...
                 head_info(i).start_time, head_info(i).end_time, ...
                 head_info(i).num_points, head_info(i).zone);
         else
-            fprintf('    ⚠ No Date field found in %s\n', filename);
+            console_log('    ⚠ No Date field found in %s\n', filename);
         end
         
     catch ME
-        fprintf('    ✗ Error reading %s: %s\n', filename, ME.message);
+        console_log('    ✗ Error reading %s: %s\n', filename, ME.message);
     end
 end
 
 %% Step 2: Read all active dataset timing configs
-fprintf('\nStep 2: Reading active dataset timing configs...\n');
+console_log('\nStep 2: Reading active dataset timing configs...\n');
 dataset_dirs = dir(active_base_dir);
 dataset_dirs = dataset_dirs([dataset_dirs.isdir] & ~startsWith({dataset_dirs.name}, '.'));
 
@@ -95,20 +95,20 @@ for i = 1:length(dataset_dirs)
             dataset_info(i).start_time = timing_config.start;
             dataset_info(i).end_time = timing_config.end;
             
-            fprintf('  Dataset: %s\n', dataset_name);
-            fprintf('    Timing: %s to %s\n', timing_config.start, timing_config.end);
+            console_log('  Dataset: %s\n', dataset_name);
+            console_log('    Timing: %s to %s\n', timing_config.start, timing_config.end);
             
         catch ME
-            fprintf('    ⚠ Error loading timing config for %s: %s\n', dataset_name, ME.message);
+            console_log('    ⚠ Error loading timing config for %s: %s\n', dataset_name, ME.message);
         end
         rmpath(dataset_dir);
     else
-        fprintf('  ⚠ Dataset %s: Expected 1 timing config, found %d\n', dataset_name, length(timing_files));
+        console_log('  ⚠ Dataset %s: Expected 1 timing config, found %d\n', dataset_name, length(timing_files));
     end
 end
 
 %% Step 3: Match head files to datasets based on timestamp overlap
-fprintf('\nStep 3: Matching head files to datasets...\n');
+console_log('\nStep 3: Matching head files to datasets...\n');
 
 for d = 1:length(dataset_info)
     if ~isfield(dataset_info(d), 'start_time')
@@ -116,7 +116,7 @@ for d = 1:length(dataset_info)
     end
     
     dataset = dataset_info(d);
-    fprintf('  Processing dataset: %s\n', dataset.name);
+    console_log('  Processing dataset: %s\n', dataset.name);
     
     matched_files = {};
     for h = 1:length(head_info)
@@ -132,14 +132,14 @@ for d = 1:length(dataset_info)
         overlap = (head.start_time <= dataset.end_time) && (head.end_time >= dataset.start_time);
         
         if overlap
-            fprintf('    ✓ Match: %s (zone %s) overlaps with dataset window\n', head.filename, head.zone);
+            console_log('    ✓ Match: %s (zone %s) overlaps with dataset window\n', head.filename, head.zone);
             matched_files{end+1} = head;
         end
     end
     
     %% Step 4: Copy matched files to dataset directory
     if ~isempty(matched_files)
-        fprintf('    Copying %d head files to %s...\n', length(matched_files), dataset.name);
+        console_log('    Copying %d head files to %s...\n', length(matched_files), dataset.name);
         
         for m = 1:length(matched_files)
             head = matched_files{m};
@@ -150,16 +150,16 @@ for d = 1:length(dataset_info)
             
             try
                 copyfile(head.filepath, dest_path);
-                fprintf('      ✓ Copied %s -> %s\n', head.filename, new_filename);
+                console_log('      ✓ Copied %s -> %s\n', head.filename, new_filename);
             catch ME
-                fprintf('      ✗ Failed to copy %s: %s\n', head.filename, ME.message);
+                console_log('      ✗ Failed to copy %s: %s\n', head.filename, ME.message);
             end
         end
     else
-        fprintf('    ⚠ No head files matched dataset %s\n', dataset.name);
+        console_log('    ⚠ No head files matched dataset %s\n', dataset.name);
     end
 end
 
-fprintf('\n=== HEAD DATA ORGANIZATION COMPLETE ===\n');
+console_log('\n=== HEAD DATA ORGANIZATION COMPLETE ===\n');
 
 end

@@ -7,7 +7,7 @@ function plot_frequency_analysis_detailed(freq_analysis, test_label)
 % 3. Spectrogram (time-frequency evolution)
 % 4. Frequency band power distribution
 
-fprintf('      Creating detailed frequency analysis plots...\n');
+console_log('      Creating detailed frequency analysis plots...\n');
 
 figure;
 set(gcf, 'Position', [100, 100, 1400, 900]);
@@ -217,6 +217,6 @@ end
 sgtitle(sprintf('Detailed Frequency Analysis - %s', upper(test_label)), ...
     'FontSize', 16, 'FontWeight', 'bold');
 
-fprintf('        Detailed frequency analysis plots created\n');
+console_log('        Detailed frequency analysis plots created\n');
 
 end

@@ -16,10 +16,10 @@ function success = process_mat_data(input_directory, output_filename, decimation
 % Outputs:
 %   success          - true if successful, false otherwise
 
-fprintf('=== MAT DATA PROCESSING PIPELINE ===\n');
-fprintf('Input directory: %s\n', input_directory);
-fprintf('Output file: %s\n', output_filename);
-fprintf('Decimation factor: %d\n', decimation_factor);
+console_log('=== MAT DATA PROCESSING PIPELINE ===\n');
+console_log('Input directory: %s\n', input_directory);
+console_log('Output file: %s\n', output_filename);
+console_log('Decimation factor: %d\n', decimation_factor);
 
 success = false;
 
@@ -40,7 +40,7 @@ try
     clear concatenated_data;
     
     % STEP 3: Save result with appropriate variable name
-    fprintf('\n=== SAVING PROCESSED DATA ===\n');
+    console_log('\n=== SAVING PROCESSED DATA ===\n');
     
     % Ensure output directory exists
     output_dir = fileparts(output_filename);
@@ -51,13 +51,13 @@ try
     if decimation_factor == 1
         % Save as full-resolution data
         fulldata = processed_data;
-        fprintf('Saving full-resolution data: %s\n', output_filename);
+        console_log('Saving full-resolution data: %s\n', output_filename);
         save(output_filename, 'fulldata', '-v7.3');
         clear fulldata;
     else
         % Save as decimated data (maintain compatibility)
         decdata = processed_data;
-        fprintf('Saving decimated data: %s\n', output_filename);
+        console_log('Saving decimated data: %s\n', output_filename);
         save(output_filename, 'decdata', '-v7.3');
         clear decdata;
     end
@@ -65,17 +65,17 @@ try
     % Verify file was created and report size
     if exist(output_filename, 'file')
         file_info = dir(output_filename);
-        fprintf('✓ Success! File saved: %.1f MB\n', file_info.bytes / 1024 / 1024);
+        console_log('✓ Success! File saved: %.1f MB\n', file_info.bytes / 1024 / 1024);
         success = true;
     else
         error('Output file was not created');
     end
     
 catch ME
-    fprintf('✗ Processing failed: %s\n', ME.message);
+    console_log('✗ Processing failed: %s\n', ME.message);
     success = false;
 end
 
-fprintf('=== PROCESSING COMPLETE ===\n\n');
+console_log('=== PROCESSING COMPLETE ===\n\n');
 
 end

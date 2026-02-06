@@ -1,7 +1,7 @@
 %% Find and Clean PT-01a Zone 3
 % This script searches for your file and processes it automatically
 
-fprintf('Searching for PT-01a Zone 3 transducer file...\n\n');
+console_log('Searching for PT-01a Zone 3 transducer file...\n\n');
 
 % Search in multiple possible locations
 search_locations = {
@@ -26,7 +26,7 @@ for i = 1:length(search_locations)
             files = dir(fullfile(search_locations{i}, file_patterns{j}));
             if ~isempty(files)
                 found_file = fullfile(files(1).folder, files(1).name);
-                fprintf('Found file: %s\n\n', found_file);
+                console_log('Found file: %s\n\n', found_file);
                 break;
             end
         end
@@ -38,16 +38,16 @@ end
 
 % Check if we found the file
 if isempty(found_file)
-    fprintf('Could not find PT-01a Zone 3 file!\n');
-    fprintf('Please manually specify the file path:\n');
-    fprintf('  csv_file = ''YOUR/PATH/HERE.csv'';\n');
-    fprintf('  process_pm7_transducer_data(csv_file, ''PT-01a Zone 3'');\n');
+    console_log('Could not find PT-01a Zone 3 file!\n');
+    console_log('Please manually specify the file path:\n');
+    console_log('  csv_file = ''YOUR/PATH/HERE.csv'';\n');
+    console_log('  process_pm7_transducer_data(csv_file, ''PT-01a Zone 3'');\n');
     return;
 end
 
 % Process the file
-fprintf('Processing transducer data...\n\n');
+console_log('Processing transducer data...\n\n');
 process_pm7_transducer_data(found_file, 'PT-01a Zone 3 (420-440 ft)');
 
-fprintf('\n=== COMPLETE ===\n');
-fprintf('Check the output in the ''processed'' subfolder next to your data file.\n');
+console_log('\n=== COMPLETE ===\n');
+console_log('Check the output in the ''processed'' subfolder next to your data file.\n');

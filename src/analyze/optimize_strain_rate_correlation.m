@@ -1,7 +1,7 @@
 %OPTIMIZE_STRAIN_RATE_CORRELATION Find best smoothing and timing for maximum correlation
 % This script tries different combinations to maximize R² for strain rate
 
-fprintf('\n=== OPTIMIZING STRAIN RATE CORRELATION ===\n\n');
+console_log('\n=== OPTIMIZING STRAIN RATE CORRELATION ===\n\n');
 
 % Base config
 base_config.zone = 'z5';
@@ -28,9 +28,9 @@ best_config = [];
 best_timing = [];
 best_results = [];
 
-fprintf('Testing %d smoothing configs × %d timing corrections = %d combinations\n', ...
+console_log('Testing %d smoothing configs × %d timing corrections = %d combinations\n', ...
     length(smoothing_configs), length(timing_corrections), length(smoothing_configs) * length(timing_corrections));
-fprintf('This may take a few minutes...\n\n');
+console_log('This may take a few minutes...\n\n');
 
 total_tests = length(smoothing_configs) * length(timing_corrections);
 test_count = 0;
@@ -69,7 +69,7 @@ for s = 1:length(smoothing_configs)
             
             % Progress update every 10 tests
             if mod(test_count, 10) == 0
-                fprintf('  Progress: %d/%d tests, Best R² so far: %.4f\n', test_count, total_tests, best_R2);
+                console_log('  Progress: %d/%d tests, Best R² so far: %.4f\n', test_count, total_tests, best_R2);
             end
             
         catch ME
@@ -80,20 +80,20 @@ for s = 1:length(smoothing_configs)
 end
 
 % Display results
-fprintf('\n=== OPTIMIZATION RESULTS ===\n');
-fprintf('Best Configuration:\n');
-fprintf('  Smoothing: %s\n', best_config.name);
-fprintf('  Pre-diff smoothing: %d seconds\n', best_config.pre_diff);
-fprintf('  Post-diff smoothing: %d seconds (%s)\n', best_config.post_window, best_config.post_method);
-fprintf('  Spatial averaging: %d pairs\n', best_config.spatial);
-fprintf('  Timing correction: %d seconds\n', best_timing);
-fprintf('\nBest Results:\n');
-fprintf('  R²: %.4f\n', best_R2);
-fprintf('  R: %.4f\n', best_results.R);
-fprintf('  Slope: %.4e (1/s) per (ft/s)\n', best_results.slope);
+console_log('\n=== OPTIMIZATION RESULTS ===\n');
+console_log('Best Configuration:\n');
+console_log('  Smoothing: %s\n', best_config.name);
+console_log('  Pre-diff smoothing: %d seconds\n', best_config.pre_diff);
+console_log('  Post-diff smoothing: %d seconds (%s)\n', best_config.post_window, best_config.post_method);
+console_log('  Spatial averaging: %d pairs\n', best_config.spatial);
+console_log('  Timing correction: %d seconds\n', best_timing);
+console_log('\nBest Results:\n');
+console_log('  R²: %.4f\n', best_R2);
+console_log('  R: %.4f\n', best_results.R);
+console_log('  Slope: %.4e (1/s) per (ft/s)\n', best_results.slope);
 
 % Run with best config and show plots
-fprintf('\n=== RUNNING WITH BEST CONFIGURATION ===\n');
+console_log('\n=== RUNNING WITH BEST CONFIGURATION ===\n');
 final_config = base_config;
 final_config.timing_correction_sec = best_timing;
 final_config.show_plots = true;
@@ -110,34 +110,34 @@ end
 final_results = linear_regression_strain_drawdown(das_results, head_results, 'PT01c_Recovery_short', final_config);
 
 % Calculate storage with best results
-fprintf('\n=== CALCULATING STORAGE WITH BEST CORRELATION ===\n');
+console_log('\n=== CALCULATING STORAGE WITH BEST CORRELATION ===\n');
 storage_config.alpha = 0.95;
 storage_config.gamma_unit = 'SI';
 storage_results = calculate_specific_storage_becker(final_results, storage_config);
 
-fprintf('\n=== FINAL STORAGE VALUE ===\n');
-fprintf('S_s (specific storage): %.4e 1/m\n', storage_results.S_s);
-fprintf('R²: %.4f (correlation quality)\n', final_results.R_squared);
+console_log('\n=== FINAL STORAGE VALUE ===\n');
+console_log('S_s (specific storage): %.4e 1/m\n', storage_results.S_s);
+console_log('R²: %.4f (correlation quality)\n', final_results.R_squared);
 
 if final_results.R_squared > 0.7
-    fprintf('✓ EXCELLENT correlation - reliable storage estimate!\n');
+    console_log('✓ EXCELLENT correlation - reliable storage estimate!\n');
 elseif final_results.R_squared > 0.5
-    fprintf('✓ GOOD correlation - acceptable for storage estimate\n');
+    console_log('✓ GOOD correlation - acceptable for storage estimate\n');
 elseif final_results.R_squared > 0.4
-    fprintf('⚠ MODERATE correlation - use with caution\n');
+    console_log('⚠ MODERATE correlation - use with caution\n');
 else
-    fprintf('✗ WEAK correlation - consider improving data quality\n');
+    console_log('✗ WEAK correlation - consider improving data quality\n');
 end
 
-fprintf('\n=== DONE! ===\n');
-fprintf('Use this configuration for your final analysis:\n');
-fprintf('  lr_config.timing_correction_sec = %d;\n', best_timing);
+console_log('\n=== DONE! ===\n');
+console_log('Use this configuration for your final analysis:\n');
+console_log('  lr_config.timing_correction_sec = %d;\n', best_timing);
 if best_config.pre_diff > 0
-    fprintf('  lr_config.pre_diff_smoothing_window = %d;\n', best_config.pre_diff);
+    console_log('  lr_config.pre_diff_smoothing_window = %d;\n', best_config.pre_diff);
 end
-fprintf('  lr_config.strain_rate_smoothing_window = %d;\n', best_config.post_window);
-fprintf('  lr_config.strain_rate_smoothing_method = ''%s'';\n', best_config.post_method);
+console_log('  lr_config.strain_rate_smoothing_window = %d;\n', best_config.post_window);
+console_log('  lr_config.strain_rate_smoothing_method = ''%s'';\n', best_config.post_method);
 if best_config.spatial > 1
-    fprintf('  lr_config.strain_rate_spatial_averaging = %d;\n', best_config.spatial);
+    console_log('  lr_config.strain_rate_spatial_averaging = %d;\n', best_config.spatial);
 end
 

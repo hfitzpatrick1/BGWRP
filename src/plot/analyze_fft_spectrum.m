@@ -15,7 +15,7 @@ function fft_results = analyze_fft_spectrum(das_data, config)
 % Outputs:
 %   fft_results - Structure containing frequency analysis results
 
-fprintf('    Computing FFT spectrum analysis...\n');
+console_log('    Computing FFT spectrum analysis...\n');
 
 % Initialize results structure
 fft_results = struct();
@@ -41,7 +41,7 @@ end
 if fft_window_length >= n_analysis_samples
     fft_window_length = min(fft_window_length, floor(n_analysis_samples / 4));
     fft_window_length = max(fft_window_length, 16);  % Minimum window size
-    fprintf('      Adapted FFT window size to %d samples (data length: %d)\n', fft_window_length, n_analysis_samples);
+    console_log('      Adapted FFT window size to %d samples (data length: %d)\n', fft_window_length, n_analysis_samples);
 end
 
 % Extract analysis window data (reuse the mask from above)
@@ -55,10 +55,10 @@ else
 end
 
 [n_time, n_channels] = size(analysis_data);
-fprintf('      Analysis window: %d samples, %d channels\n', n_time, n_channels);
+console_log('      Analysis window: %d samples, %d channels\n', n_time, n_channels);
 
 %% 1. OVERALL FREQUENCY SPECTRUM (PSD)
-fprintf('      Computing power spectral density...\n');
+console_log('      Computing power spectral density...\n');
 
 % Select representative channel (pumping zone if available)
 if isfield(das_data, 'pumping_zone') && isfield(das_data.pumping_zone, 'channel_idx')
@@ -94,7 +94,7 @@ fft_results.psd_values = psd_values(freq_mask);
 fft_results.rep_channel = rep_channel;
 
 %% 2. DOMINANT FREQUENCY IDENTIFICATION
-fprintf('      Identifying dominant frequencies...\n');
+console_log('      Identifying dominant frequencies...\n');
 
 % Find peaks in PSD (dominant frequencies)
 psd_smooth = movmean(fft_results.psd_values, 5);  % Smooth for peak detection
@@ -114,15 +114,15 @@ fft_results.power_bands.grid_slow = sum(fft_results.psd_values(grid_slow_mask));
 fft_results.power_bands.grid_fast = sum(fft_results.psd_values(grid_fast_mask));
 fft_results.power_bands.total = sum(fft_results.psd_values);
 
-fprintf('        Found %d dominant frequencies\n', length(fft_results.dominant_freqs));
+console_log('        Found %d dominant frequencies\n', length(fft_results.dominant_freqs));
 if ~isempty(fft_results.dominant_freqs)
-    fprintf('        Dominant frequencies: ');
-    fprintf('%.3f ', fft_results.dominant_freqs);
-    fprintf('Hz\n');
+    console_log('        Dominant frequencies: ');
+    console_log('%.3f ', fft_results.dominant_freqs);
+    console_log('Hz\n');
 end
 
 %% 3. SPATIAL FREQUENCY COHERENCE
-fprintf('      Computing spatial frequency coherence...\n');
+console_log('      Computing spatial frequency coherence...\n');
 
 % Select subset of channels for coherence analysis (computational efficiency)
 n_coherence_channels = min(20, n_channels);
@@ -155,7 +155,7 @@ fft_results.coherence_matrix = coherence_matrix;
 fft_results.coherence_channels = coherence_channels;
 
 %% 4. TIME-FREQUENCY ANALYSIS (SPECTROGRAM)
-fprintf('      Computing time-frequency evolution...\n');
+console_log('      Computing time-frequency evolution...\n');
 
 % Compute spectrogram for representative channel
 window_size = min(fft_window_length, floor(n_time/10));  % Adaptive window size
@@ -181,7 +181,7 @@ else
 end
 
 %% 5. NOISE PATTERN CHARACTERIZATION
-fprintf('      Characterizing noise patterns...\n');
+console_log('      Characterizing noise patterns...\n');
 
 % Grid pattern analysis based on known artifact frequencies
 grid_slow_power = mean(fft_results.psd_values(grid_slow_mask));
@@ -198,16 +198,16 @@ fft_results.noise_analysis.has_slow_grid = fft_results.noise_analysis.grid_slow_
 fft_results.noise_analysis.has_fast_grid = fft_results.noise_analysis.grid_fast_ratio > grid_threshold;
 
 if fft_results.noise_analysis.has_slow_grid || fft_results.noise_analysis.has_fast_grid
-    fprintf('        WARNING: Grid pattern artifacts detected!\n');
+    console_log('        WARNING: Grid pattern artifacts detected!\n');
     if fft_results.noise_analysis.has_slow_grid
-        fprintf('          Slow grid (0.15-0.33 Hz): %.1fx above background\n', fft_results.noise_analysis.grid_slow_ratio);
+        console_log('          Slow grid (0.15-0.33 Hz): %.1fx above background\n', fft_results.noise_analysis.grid_slow_ratio);
     end
     if fft_results.noise_analysis.has_fast_grid
-        fprintf('          Fast grid (0.35-0.45 Hz): %.1fx above background\n', fft_results.noise_analysis.grid_fast_ratio);
+        console_log('          Fast grid (0.35-0.45 Hz): %.1fx above background\n', fft_results.noise_analysis.grid_fast_ratio);
     end
 end
 
-fprintf('      FFT analysis complete\n');
+console_log('      FFT analysis complete\n');
 
 end
 

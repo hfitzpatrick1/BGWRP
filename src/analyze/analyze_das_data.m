@@ -11,7 +11,7 @@ function das_results = analyze_das_data(timing_config, test_labels, config)
 % Outputs:
 %   das_results - Structure containing DAS analysis results for all tests
 
-fprintf('=== DAS DATA ANALYSIS ===\n');
+console_log('=== DAS DATA ANALYSIS ===\n');
 
 % Initialize results structure
 das_results = struct();
@@ -52,11 +52,11 @@ calibration.dynamic_default.zone_max_ft = 400;
 %% Analyze DAS data for each test
 for i = 1:length(test_labels)
     test_label = test_labels{i};
-    fprintf('\n--- Analyzing DAS data for test %s ---\n', upper(test_label));
+    console_log('\n--- Analyzing DAS data for test %s ---\n', upper(test_label));
     
     % Get timing info for this test
     if ~isfield(timing_config, test_label)
-        fprintf('  WARNING: No timing data found for test %s\n', test_label);
+        console_log('  WARNING: No timing data found for test %s\n', test_label);
         das_results.(test_label).error = 'no_timing_data';
         continue;
     end
@@ -69,7 +69,7 @@ for i = 1:length(test_labels)
     das_subdir = fullfile(dataset_dir, '_das');
     
     if ~exist(das_subdir, 'dir')
-        fprintf('  ⚠ _das subdirectory not found for %s\n', test_label);
+        console_log('  ⚠ _das subdirectory not found for %s\n', test_label);
         das_results.(test_label).error = 'das_subdir_not_found';
         continue;
     end
@@ -78,13 +78,13 @@ for i = 1:length(test_labels)
     mat_files = dir(fullfile(das_subdir, '*.mat'));
     
     if length(mat_files) == 0
-        fprintf('  ⚠ No .mat files found in _das subdirectory for %s\n', test_label);
+        console_log('  ⚠ No .mat files found in _das subdirectory for %s\n', test_label);
         das_results.(test_label).error = 'no_das_files';
         continue;
     elseif length(mat_files) > 1
-        fprintf('  ⚠ Multiple .mat files found in _das subdirectory for %s:\n', test_label);
+        console_log('  ⚠ Multiple .mat files found in _das subdirectory for %s:\n', test_label);
         for i = 1:length(mat_files)
-            fprintf('    %s\n', mat_files(i).name);
+            console_log('    %s\n', mat_files(i).name);
         end
         das_results.(test_label).error = 'multiple_das_files';
         continue;
@@ -92,25 +92,25 @@ for i = 1:length(test_labels)
     
     % Found exactly one .mat file - use it
     das_filepath = fullfile(das_subdir, mat_files(1).name);
-    fprintf('  Found DAS data file: %s\n', mat_files(1).name);
+    console_log('  Found DAS data file: %s\n', mat_files(1).name);
     
-    fprintf('  Loading DAS data: %s\n', das_filepath);
+    console_log('  Loading DAS data: %s\n', das_filepath);
     
     % Load DAS data (handle multiple variable naming conventions)
     loaded_data = load(das_filepath);
     if isfield(loaded_data, 'decdata')
         data1Hz = loaded_data.decdata;
-        fprintf('  Loaded decimated data: [%d x %d]\n', size(data1Hz, 1), size(data1Hz, 2));
+        console_log('  Loaded decimated data: [%d x %d]\n', size(data1Hz, 1), size(data1Hz, 2));
     elseif isfield(loaded_data, 'fulldata')
         data1Hz = loaded_data.fulldata;
-        fprintf('  Loaded full-resolution data: [%d x %d]\n', size(data1Hz, 1), size(data1Hz, 2));
+        console_log('  Loaded full-resolution data: [%d x %d]\n', size(data1Hz, 1), size(data1Hz, 2));
     elseif isfield(loaded_data, 'Data')
         data1Hz = loaded_data.Data;
-        fprintf('  Loaded processed data: [%d x %d]\n', size(data1Hz, 1), size(data1Hz, 2));
+        console_log('  Loaded processed data: [%d x %d]\n', size(data1Hz, 1), size(data1Hz, 2));
     else
         % Show available variables to help debug
         available_vars = fieldnames(loaded_data);
-        fprintf('  Available variables in file: %s\n', strjoin(available_vars, ', '));
+        console_log('  Available variables in file: %s\n', strjoin(available_vars, ', '));
         error('No valid data variable found. Expected ''decdata'', ''fulldata'', or ''Data''');
     end
     
@@ -125,43 +125,43 @@ for i = 1:length(test_labels)
         % This suggests the data might already be in wrong units or scale
         % For now, DON'T apply conversion - investigate the actual issue
         sampling_freq = 1.0;  % Don't convert - investigate first
-        fprintf('  ℹ DECIMATED DATA - NOT applying sampling frequency conversion\n');
-        fprintf('    Data appears to have unit/scale issues (check_tdms_units showed ~±330)\n');
-        fprintf('    Need to investigate actual units before applying conversion\n');
-        fprintf('    Current range will be checked against advisor''s ~±0.25 nm/s\n');
+        console_log('  ℹ DECIMATED DATA - NOT applying sampling frequency conversion\n');
+        console_log('    Data appears to have unit/scale issues (check_tdms_units showed ~±330)\n');
+        console_log('    Need to investigate actual units before applying conversion\n');
+        console_log('    Current range will be checked against advisor''s ~±0.25 nm/s\n');
         elseif isfield(loaded_data, 'fs_f')
             % Use the stored sampling frequency (for non-decimated data)
             sampling_freq = loaded_data.fs_f;  % Hz
-            fprintf('  ⚠ APPLYING SAMPLING FREQUENCY CORRECTION\n');
-            fprintf('    Data type: Original or full-resolution\n');
-            fprintf('    Stored sampling frequency: %.2f Hz\n', sampling_freq);
+            console_log('  ⚠ APPLYING SAMPLING FREQUENCY CORRECTION\n');
+            console_log('    Data type: Original or full-resolution\n');
+            console_log('    Stored sampling frequency: %.2f Hz\n', sampling_freq);
         else
             % Default fallback
             sampling_freq = 1.0;  % Hz (assume 1 Hz decimated data)
-            fprintf('  ⚠ WARNING: No sampling frequency (fs_f) found in file!\n');
-            fprintf('    Assuming decimated data at 1 Hz\n');
+            console_log('  ⚠ WARNING: No sampling frequency (fs_f) found in file!\n');
+            console_log('    Assuming decimated data at 1 Hz\n');
         end
         
-        fprintf('    Data was saved as nm/sample, converting to nm/s\n');
-        fprintf('    Using sampling frequency: %.2f Hz\n', sampling_freq);
-        fprintf('    Before correction: [%.3e, %.3e] nm/sample\n', min(data1Hz(:)), max(data1Hz(:)));
+        console_log('    Data was saved as nm/sample, converting to nm/s\n');
+        console_log('    Using sampling frequency: %.2f Hz\n', sampling_freq);
+        console_log('    Before correction: [%.3e, %.3e] nm/sample\n', min(data1Hz(:)), max(data1Hz(:)));
         
         data1Hz = data1Hz * sampling_freq;  % Convert nm/sample → nm/s
         
-        fprintf('    After correction: [%.3e, %.3e] nm/s\n', min(data1Hz(:)), max(data1Hz(:)));
-        fprintf('    ✓ Data now represents displacement RATE (nm/s)\n');
+        console_log('    After correction: [%.3e, %.3e] nm/s\n', min(data1Hz(:)), max(data1Hz(:)));
+        console_log('    ✓ Data now represents displacement RATE (nm/s)\n');
     else
-        fprintf('  Sampling frequency correction: DISABLED (data assumed to be already in nm/s)\n');
+        console_log('  Sampling frequency correction: DISABLED (data assumed to be already in nm/s)\n');
     end
     
     % DEBUG: Check data quality after correction
-    fprintf('  DEBUG: Corrected data range: [%.3f, %.3f]\n', min(data1Hz(:)), max(data1Hz(:)));
+    console_log('  DEBUG: Corrected data range: [%.3f, %.3f]\n', min(data1Hz(:)), max(data1Hz(:)));
     nan_count = sum(isnan(data1Hz(:)));
-    fprintf('  DEBUG: NaN values in loaded data: %d out of %d (%.1f%%)\n', nan_count, numel(data1Hz), (nan_count/numel(data1Hz))*100);
+    console_log('  DEBUG: NaN values in loaded data: %d out of %d (%.1f%%)\n', nan_count, numel(data1Hz), (nan_count/numel(data1Hz))*100);
     
     % Apply concatenation artifact filtering if enabled
     if isfield(config, 'apply_concatenation_filter') && config.apply_concatenation_filter
-        fprintf('  Applying concatenation artifact filter...\n');
+        console_log('  Applying concatenation artifact filter...\n');
         filter_method = 'detrend';  % Default
         if isfield(config, 'filter_method')
             filter_method = config.filter_method;
@@ -200,19 +200,19 @@ for i = 1:length(test_labels)
     % Get calibration parameters - try dataset-specific, fallback to dynamic default
     if isfield(calibration, test_label)
         cal_params = calibration.(test_label);
-        fprintf('  Using dataset-specific calibration for %s\n', test_label);
+        console_log('  Using dataset-specific calibration for %s\n', test_label);
     elseif contains(upper(test_label), 'PT01A')
         cal_params = calibration.PT01a;
-        fprintf('  Using PT01a calibration for %s\n', test_label);
+        console_log('  Using PT01a calibration for %s\n', test_label);
     elseif contains(upper(test_label), 'PT01B') 
         cal_params = calibration.PT01b;
-        fprintf('  Using PT01b calibration for %s\n', test_label);
+        console_log('  Using PT01b calibration for %s\n', test_label);
     elseif contains(upper(test_label), 'PT01C')
         cal_params = calibration.PT01c;
-        fprintf('  Using PT01c calibration for %s\n', test_label);
+        console_log('  Using PT01c calibration for %s\n', test_label);
     else
         cal_params = calibration.dynamic_default;
-        fprintf('  Using dynamic_default calibration for %s\n', test_label);
+        console_log('  Using dynamic_default calibration for %s\n', test_label);
     end
     
     C1 = cal_params.C1;
@@ -220,7 +220,7 @@ for i = 1:length(test_labels)
     zone_min_ft = cal_params.zone_min_ft;
     zone_max_ft = cal_params.zone_max_ft;
     
-    fprintf('  Calibration: C1=%d, MperChan=%.3f\n', C1, MperChan);
+    console_log('  Calibration: C1=%d, MperChan=%.3f\n', C1, MperChan);
     
     % Calculate depth array (from simple script)
     channels = 1:size(data1Hz, 2);
@@ -232,43 +232,43 @@ for i = 1:length(test_labels)
     % Apply DAS timing adjustment if specified
     if isfield(test_timing, 'das_timing_adjustment') && test_timing.das_timing_adjustment ~= 0
         data_start = data_start + seconds(test_timing.das_timing_adjustment);
-        fprintf('  Applied DAS timing adjustment: +%d seconds\n', test_timing.das_timing_adjustment);
+        console_log('  Applied DAS timing adjustment: +%d seconds\n', test_timing.das_timing_adjustment);
     end
     
     n_samples = size(data1Hz, 1);
     time_array = data_start + seconds(0:n_samples-1);
     
     % Check for dataset-specific smoothing configuration
-    fprintf('  DEBUG: Checking dataset-specific smoothing for test_label="%s"\n', test_label);
+    console_log('  DEBUG: Checking dataset-specific smoothing for test_label="%s"\n', test_label);
     if isfield(config, 'dataset_smoothing')
-        fprintf('    DEBUG: config.dataset_smoothing exists\n');
+        console_log('    DEBUG: config.dataset_smoothing exists\n');
         if isfield(config.dataset_smoothing, test_label)
-            fprintf('    DEBUG: Found config for %s\n', test_label);
+            console_log('    DEBUG: Found config for %s\n', test_label);
             ds_config = config.dataset_smoothing.(test_label);
             if isfield(ds_config, 'fs') && isfield(ds_config, 'preprocessing_window_sec')
                 % Convert smoothing window from seconds to samples based on sampling rate
                 smooth_window = round(ds_config.preprocessing_window_sec * ds_config.fs);
                 % Override the global config with dataset-specific value
                 config.matlab_movmean_window = smooth_window;
-                fprintf('  ✓ Using dataset-specific smoothing: %d seconds = %d samples at %d Hz\n', ...
+                console_log('  ✓ Using dataset-specific smoothing: %d seconds = %d samples at %d Hz\n', ...
                     ds_config.preprocessing_window_sec, smooth_window, ds_config.fs);
             else
-                fprintf('    DEBUG: Missing fs or preprocessing_window_sec fields\n');
+                console_log('    DEBUG: Missing fs or preprocessing_window_sec fields\n');
             end
         else
-            fprintf('    DEBUG: No config found for test_label="%s"\n', test_label);
+            console_log('    DEBUG: No config found for test_label="%s"\n', test_label);
             if isfield(config, 'dataset_smoothing')
                 available = fieldnames(config.dataset_smoothing);
-                fprintf('    DEBUG: Available configs: %s\n', strjoin(available, ', '));
+                console_log('    DEBUG: Available configs: %s\n', strjoin(available, ', '));
             end
         end
     else
-        fprintf('    DEBUG: config.dataset_smoothing does NOT exist\n');
+        console_log('    DEBUG: config.dataset_smoothing does NOT exist\n');
     end
             
     % Apply configurable smoothing (from simple script approach)
     if isfield(config, 'disable_analysis_smoothing') && config.disable_analysis_smoothing
-        fprintf('  Smoothing disabled by config\n');
+        console_log('  Smoothing disabled by config\n');
         smoothed_data = data1Hz;  % No smoothing
     else
         % Apply smoothing based on config
@@ -287,32 +287,32 @@ for i = 1:length(test_labels)
         
         % Apply spatial common mode removal if enabled (removes vertical banding)
         if isfield(config, 'apply_spatial_common_mode_removal') && config.apply_spatial_common_mode_removal
-            fprintf('  Applying spatial common mode removal (removes vertical bands)...\n');
-            fprintf('    Original data range: [%.3f, %.3f] nm/s\n', min(data1Hz(:)), max(data1Hz(:)));
+            console_log('  Applying spatial common mode removal (removes vertical bands)...\n');
+            console_log('    Original data range: [%.3f, %.3f] nm/s\n', min(data1Hz(:)), max(data1Hz(:)));
             data_before_cm_removal = data1Hz;
             % At each time point, subtract the spatial average (average across all channels)
             spatial_mean = mean(data1Hz, 2, 'omitnan');  % Average across channels (dim 2)
             data1Hz = data1Hz - repmat(spatial_mean, 1, size(data1Hz, 2));  % Subtract from all channels
-            fprintf('    After spatial common mode removal: [%.3f, %.3f] nm/s\n', min(data1Hz(:)), max(data1Hz(:)));
-            fprintf('    Removed common mode component with range: [%.3f, %.3f] nm/s\n', min(spatial_mean), max(spatial_mean));
+            console_log('    After spatial common mode removal: [%.3f, %.3f] nm/s\n', min(data1Hz(:)), max(data1Hz(:)));
+            console_log('    Removed common mode component with range: [%.3f, %.3f] nm/s\n', min(spatial_mean), max(spatial_mean));
         end
         
         % Apply spatial median common mode removal if enabled (more robust, preserves signal better)
         if isfield(config, 'apply_spatial_median_removal') && config.apply_spatial_median_removal
-            fprintf('  Applying spatial median common mode removal (robust, preserves signal)...\n');
-            fprintf('    Original data range: [%.3f, %.3f] nm/s\n', min(data1Hz(:)), max(data1Hz(:)));
+            console_log('  Applying spatial median common mode removal (robust, preserves signal)...\n');
+            console_log('    Original data range: [%.3f, %.3f] nm/s\n', min(data1Hz(:)), max(data1Hz(:)));
             % At each time point, subtract the spatial median (median across all channels)
             % This is more robust to outliers and preserves local signals better
             spatial_median = median(data1Hz, 2, 'omitnan');  % Median across channels (dim 2)
             data1Hz = data1Hz - repmat(spatial_median, 1, size(data1Hz, 2));  % Subtract from all channels
-            fprintf('    After spatial median removal: [%.3f, %.3f] nm/s\n', min(data1Hz(:)), max(data1Hz(:)));
-            fprintf('    Removed common mode component (median) with range: [%.3f, %.3f] nm/s\n', min(spatial_median), max(spatial_median));
+            console_log('    After spatial median removal: [%.3f, %.3f] nm/s\n', min(data1Hz(:)), max(data1Hz(:)));
+            console_log('    Removed common mode component (median) with range: [%.3f, %.3f] nm/s\n', min(spatial_median), max(spatial_median));
         end
         
         % Apply reference channel subtraction if enabled (subtract a channel far from signal)
         if isfield(config, 'apply_reference_channel_subtraction') && config.apply_reference_channel_subtraction
-            fprintf('  Applying reference channel subtraction (preserves local signals)...\n');
-            fprintf('    Original data range: [%.3f, %.3f] nm/s\n', min(data1Hz(:)), max(data1Hz(:)));
+            console_log('  Applying reference channel subtraction (preserves local signals)...\n');
+            console_log('    Original data range: [%.3f, %.3f] nm/s\n', min(data1Hz(:)), max(data1Hz(:)));
             % Use a channel far from the pumping zone (e.g., shallow or deep) as reference
             % This captures common mode but not local signals
             if isfield(config, 'reference_channel_idx') && ~isempty(config.reference_channel_idx)
@@ -322,11 +322,11 @@ for i = 1:length(test_labels)
                 ref_depth_ft = 200;
                 [~, ref_ch_idx] = min(abs(depth_ft - ref_depth_ft));
             end
-            fprintf('    Using reference channel %d at %.1f ft\n', ref_ch_idx, depth_ft(ref_ch_idx));
+            console_log('    Using reference channel %d at %.1f ft\n', ref_ch_idx, depth_ft(ref_ch_idx));
             reference_signal = data1Hz(:, ref_ch_idx);  % Reference channel time series
             data1Hz = data1Hz - repmat(reference_signal, 1, size(data1Hz, 2));  % Subtract from all channels
-            fprintf('    After reference channel subtraction: [%.3f, %.3f] nm/s\n', min(data1Hz(:)), max(data1Hz(:)));
-            fprintf('    Reference channel range: [%.3f, %.3f] nm/s\n', min(reference_signal), max(reference_signal));
+            console_log('    After reference channel subtraction: [%.3f, %.3f] nm/s\n', min(data1Hz(:)), max(data1Hz(:)));
+            console_log('    Reference channel range: [%.3f, %.3f] nm/s\n', min(reference_signal), max(reference_signal));
         end
         
         switch lower(smoothing_method)
@@ -347,74 +347,74 @@ for i = 1:length(test_labels)
                 smoothed_data = imgaussfilt(data1Hz, sigma);
             case 'chen_full'
                 % Complete Chen et al. (2023) 3-stage framework
-                fprintf('  Applying Chen et al. complete framework...\n');
+                console_log('  Applying Chen et al. complete framework...\n');
                 smoothed_data = apply_filter(data1Hz, 'chen_full', config);
             case 'chen_stage1'
                 % Chen Stage 1: Bandpass only
-                fprintf('  Applying Chen Stage 1 (bandpass)...\n');
+                console_log('  Applying Chen Stage 1 (bandpass)...\n');
                 smoothed_data = apply_filter(data1Hz, 'chen_stage1', config);
             case 'chen_stage2'
                 % Chen Stage 2: SOMF only
-                fprintf('  Applying Chen Stage 2 (SOMF)...\n');
+                console_log('  Applying Chen Stage 2 (SOMF)...\n');
                 smoothed_data = apply_filter(data1Hz, 'chen_stage2', config);
             case 'chen_stage3'
                 % Chen Stage 3: F-K filter only (KEY for grid patterns)
-                fprintf('  Applying Chen Stage 3 (F-K dip filter)...\n');
+                console_log('  Applying Chen Stage 3 (F-K dip filter)...\n');
                 smoothed_data = apply_filter(data1Hz, 'chen_stage3', config);
             case 'spatial_median'
                 % Spatial median filter
-                fprintf('  Applying spatial median filtering...\n');
+                console_log('  Applying spatial median filtering...\n');
                 smoothed_data = apply_filter(data1Hz, 'spatial_median', config);
             case 'chen'
                 % Legacy Chen - redirect to complete framework
-                fprintf('  Applying Chen et al. complete framework (legacy)...\n');
+                console_log('  Applying Chen et al. complete framework (legacy)...\n');
                 smoothed_data = apply_filter(data1Hz, 'chen_full', config);
             case 'ensemble'
                 % Multi-channel ensemble averaging (signal extraction)
-                fprintf('  Applying ensemble averaging (signal extraction)...\n');
+                console_log('  Applying ensemble averaging (signal extraction)...\n');
                 config.depth_ft = depth_ft;  % Pass depth information to filter
                 smoothed_data = apply_filter(data1Hz, 'ensemble', config);
             case 'dual_bandstop'
                 % Targeted grid pattern removal
-                fprintf('  Applying dual bandstop filter (grid pattern removal)...\n');
+                console_log('  Applying dual bandstop filter (grid pattern removal)...\n');
                 config.sampling_rate = 1.0;  % 1Hz decimated data
                 smoothed_data = apply_filter(data1Hz, 'dual_bandstop', config);
             case 'matlab_movmean'
                 % Direct MATLAB movmean implementation with configurable window
-                fprintf('  Applying MATLAB movmean filter...\n');
+                console_log('  Applying MATLAB movmean filter...\n');
                 smoothed_data = apply_filter(data1Hz, 'matlab_movmean', config);
             case 'resample_antialias'
                 % Resample anti-aliasing filter (same as decimation uses)
-                fprintf('  Applying resample anti-aliasing filter...\n');
+                console_log('  Applying resample anti-aliasing filter...\n');
                 smoothed_data = apply_filter(data1Hz, 'resample_antialias', config);
             case 'none'
                 smoothed_data = data1Hz;  % No smoothing
             otherwise
-                fprintf('  Warning: Unknown smoothing method %s, using movmean\n', smoothing_method);
+                console_log('  Warning: Unknown smoothing method %s, using movmean\n', smoothing_method);
                 config.temporal_window = smooth_window;
                 smoothed_data = apply_filter(data1Hz, 'movmean', config);
         end
         % Report the window size used
         if strcmp(smoothing_method, 'matlab_movmean') && isfield(config, 'matlab_movmean_window')
             actual_window = config.matlab_movmean_window;
-            fprintf('  Using MATLAB movmean with window=%d samples (%.1f seconds)\n', actual_window, actual_window);
+            console_log('  Using MATLAB movmean with window=%d samples (%.1f seconds)\n', actual_window, actual_window);
         else
             actual_window = smooth_window;
         end
-        fprintf('  Applied %s smoothing (window: %d)\n', smoothing_method, actual_window);
+        console_log('  Applied %s smoothing (window: %d)\n', smoothing_method, actual_window);
         
         % Apply F-K filter after smoothing if enabled (removes common mode noise)
         if isfield(config, 'filter_method') && strcmp(config.filter_method, 'chen_stage3')
-            fprintf('  Applying F-K filter after smoothing (common mode removal)...\n');
+            console_log('  Applying F-K filter after smoothing (common mode removal)...\n');
             smoothed_data = apply_filter(smoothed_data, 'chen_stage3', config);
-            fprintf('  F-K filter complete\n');
+            console_log('  F-K filter complete\n');
         end
     end
     
     % DEBUG: Check data after smoothing
-    fprintf('  DEBUG: After smoothing data range: [%.3f, %.3f]\n', min(smoothed_data(:)), max(smoothed_data(:)));
+    console_log('  DEBUG: After smoothing data range: [%.3f, %.3f]\n', min(smoothed_data(:)), max(smoothed_data(:)));
     nan_count_smooth = sum(isnan(smoothed_data(:)));
-    fprintf('  DEBUG: NaN values after smoothing: %d out of %d (%.1f%%)\n', nan_count_smooth, numel(smoothed_data), (nan_count_smooth/numel(smoothed_data))*100);
+    console_log('  DEBUG: NaN values after smoothing: %d out of %d (%.1f%%)\n', nan_count_smooth, numel(smoothed_data), (nan_count_smooth/numel(smoothed_data))*100);
     
     % Find representative channel in pumping zone
             zone_mid_ft = (zone_min_ft + zone_max_ft) / 2;
@@ -433,7 +433,7 @@ for i = 1:length(test_labels)
     % Apply time shift if configured (for alignment with head data)
     if isfield(config, 'das_time_shift_seconds') && config.das_time_shift_seconds ~= 0
         time_array_shifted = time_array + seconds(config.das_time_shift_seconds);
-        fprintf('  Applied DAS time shift: +%d seconds\n', config.das_time_shift_seconds);
+        console_log('  Applied DAS time shift: +%d seconds\n', config.das_time_shift_seconds);
     else
         time_array_shifted = time_array;
     end
@@ -465,28 +465,28 @@ for i = 1:length(test_labels)
     
     % Check data range in analysis window only (not full dataset)
     analysis_window_data = das_results.(test_label).smoothed_data(analysis_mask, :);
-    fprintf('  Analysis window data range: [%.3f, %.3f] nm/s\n', min(analysis_window_data(:)), max(analysis_window_data(:)));
+    console_log('  Analysis window data range: [%.3f, %.3f] nm/s\n', min(analysis_window_data(:)), max(analysis_window_data(:)));
     
     % Extract analysis_strain_rate from smoothed_data (amplitude preserved via downsample())
     analysis_strain_rate = das_results.(test_label).smoothed_data(analysis_mask, channel_idx);
     
     % Flip sign if requested (for sign convention correction)
     if isfield(config, 'flip_displacement_rate_sign') && config.flip_displacement_rate_sign
-        fprintf('  Flipping displacement rate sign (multiplying by -1)...\n');
+        console_log('  Flipping displacement rate sign (multiplying by -1)...\n');
         analysis_strain_rate = -analysis_strain_rate;
         das_results.(test_label).smoothed_data = -das_results.(test_label).smoothed_data;
         analysis_window_data = -analysis_window_data;
-        fprintf('  After sign flip - Analysis window range: [%.3f, %.3f] nm/s\n', min(analysis_window_data(:)), max(analysis_window_data(:)));
+        console_log('  After sign flip - Analysis window range: [%.3f, %.3f] nm/s\n', min(analysis_window_data(:)), max(analysis_window_data(:)));
     end
     
     das_results.(test_label).analysis_strain_rate = analysis_strain_rate;
             
-    fprintf('  ✓ DAS analysis completed for %s\n', test_label);
-    fprintf('    Representative channel: %d at %.1f ft\n', channel_idx, depth_ft(channel_idx));
-            fprintf('    Analysis window: %d data points\n', sum(analysis_mask));
+    console_log('  ✓ DAS analysis completed for %s\n', test_label);
+    console_log('    Representative channel: %d at %.1f ft\n', channel_idx, depth_ft(channel_idx));
+            console_log('    Analysis window: %d data points\n', sum(analysis_mask));
 end
 
-fprintf('\n=== DAS DATA ANALYSIS COMPLETE ===\n');
+console_log('\n=== DAS DATA ANALYSIS COMPLETE ===\n');
 
 end
 

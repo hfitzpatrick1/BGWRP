@@ -49,17 +49,17 @@ weight_ranges = {
     pump_start_in_file + 14500, 99999,                      0.2
 };
 
-fprintf('STEP 1: Adding weights to DENOISED file...\n');
+console_log('STEP 1: Adding weights to DENOISED file...\n');
 add_weights_to_data(input_file, weighted_file, weight_ranges);
 
 %% Step 2: Shift time so pump start = 0
-fprintf('\nSTEP 2: Shifting time to pump start = 0...\n');
+console_log('\nSTEP 2: Shifting time to pump start = 0...\n');
 shift_time_to_pump_start(weighted_file, ...
                          'E:/Transducer Data 10_24_2023/Cleaned/PT01a/PM7_Zone2_FINAL_AQTESOLV.csv', ...
                          pump_start_in_file);
 
-fprintf('\n=== COMPLETE! ===\n');
-fprintf('✓ Final file: PM7_Zone2_FINAL_AQTESOLV.csv\n');
-fprintf('✓ Includes weights for your circled areas\n');
-fprintf('✓ Time starts at t=0 (pump ON)\n');
-fprintf('✓ Ready to import into AQTESOLV!\n');
+console_log('\n=== COMPLETE! ===\n');
+console_log('✓ Final file: PM7_Zone2_FINAL_AQTESOLV.csv\n');
+console_log('✓ Includes weights for your circled areas\n');
+console_log('✓ Time starts at t=0 (pump ON)\n');
+console_log('✓ Ready to import into AQTESOLV!\n');

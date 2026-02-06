@@ -2,15 +2,15 @@ function combined_filtering_approach()
 % COMBINED FILTERING: Common Mode Removal + 5-Second Moving Mean
 % This combines the working 5-second moving mean with common mode removal
 
-fprintf('=== COMBINED FILTERING APPROACH ===\n');
+console_log('=== COMBINED FILTERING APPROACH ===\n');
 
 %% Load data
 data_file = 'C:\Coding\BGWRP\data\_BATCH\_active\PT01c_Recovery_short\_das\Dataset_PT01c_Recovery_short_1Hz.mat';
-fprintf('Loading data: %s\n', data_file);
+console_log('Loading data: %s\n', data_file);
 load(data_file);
 
 % Check what variables are in the file
-fprintf('Variables in file: %s\n', strjoin(fieldnames(load(data_file)), ', '));
+console_log('Variables in file: %s\n', strjoin(fieldnames(load(data_file)), ', '));
 
 % Load timing configuration
 addpath('C:\Coding\BGWRP\data\_BATCH\_active\PT01c_Recovery_short\_das_timing');
@@ -26,10 +26,10 @@ MperChan = 0.263;
 channels = 1:size(decdata, 2);
 depth_ft = ((channels - C1 - 1) * MperChan) / 0.3048;
 
-fprintf('Loaded data: [%d x %d]\n', size(decdata,1), size(decdata,2));
-fprintf('Time range: %s to %s\n', time_array(1), time_array(end));
-fprintf('Depth range: %.1f to %.1f ft\n', min(depth_ft), max(depth_ft));
-fprintf('Original data range: [%.3f, %.3f] nm/s\n', min(decdata(:)), max(decdata(:)));
+console_log('Loaded data: [%d x %d]\n', size(decdata,1), size(decdata,2));
+console_log('Time range: %s to %s\n', time_array(1), time_array(end));
+console_log('Depth range: %.1f to %.1f ft\n', min(depth_ft), max(depth_ft));
+console_log('Original data range: [%.3f, %.3f] nm/s\n', min(decdata(:)), max(decdata(:)));
 
 %% Define analysis window
 analysis_start = datetime(2023,10,24,19,14,00,00,'TimeZone','UTC');
@@ -42,16 +42,16 @@ depth_mask = depth_ft >= 200 & depth_ft <= 665;
 depth_analysis = depth_ft(depth_mask);
 data_analysis = data_analysis(:, depth_mask);
 
-fprintf('Analysis window: %s to %s (%d time points)\n', time_analysis(1), time_analysis(end), length(time_analysis));
-fprintf('Depth range: %.1f to %.1f ft (%d channels)\n', min(depth_analysis), max(depth_analysis), length(depth_analysis));
+console_log('Analysis window: %s to %s (%d time points)\n', time_analysis(1), time_analysis(end), length(time_analysis));
+console_log('Depth range: %.1f to %.1f ft (%d channels)\n', min(depth_analysis), max(depth_analysis), length(depth_analysis));
 
 %% APPROACH 1: Subtraction-based Common Mode + 5-sec Moving Mean
-fprintf('\n--- APPROACH 1: Subtraction Common Mode + 5-sec Moving Mean ---\n');
+console_log('\n--- APPROACH 1: Subtraction Common Mode + 5-sec Moving Mean ---\n');
 
 % Use only the last 100 ft (565-665 ft) for common mode calculation
 cm_depth_mask = depth_analysis >= 565 & depth_analysis <= 665;
 cm_data = data_analysis(:, cm_depth_mask);
-fprintf('Using depths %.1f-%.1f ft (%d channels) for common mode calculation\n', ...
+console_log('Using depths %.1f-%.1f ft (%d channels) for common mode calculation\n', ...
     min(depth_analysis(cm_depth_mask)), max(depth_analysis(cm_depth_mask)), sum(cm_depth_mask));
 
 % Calculate common mode signal (depth-averaged for each time step from last 100 ft only)
@@ -63,11 +63,11 @@ data_cm_subtracted = data_analysis - common_mode;
 % Apply 5-second moving mean
 data_approach1 = movmean(data_cm_subtracted, 5, 1, 'omitnan');
 
-fprintf('After CM subtraction: [%.3f, %.3f] nm/s\n', min(data_cm_subtracted(:)), max(data_cm_subtracted(:)));
-fprintf('After 5-sec moving mean: [%.3f, %.3f] nm/s\n', min(data_approach1(:)), max(data_approach1(:)));
+console_log('After CM subtraction: [%.3f, %.3f] nm/s\n', min(data_cm_subtracted(:)), max(data_cm_subtracted(:)));
+console_log('After 5-sec moving mean: [%.3f, %.3f] nm/s\n', min(data_approach1(:)), max(data_approach1(:)));
 
 %% APPROACH 2: Division-based Common Mode (with epsilon) + 5-sec Moving Mean
-fprintf('\n--- APPROACH 2: Division Common Mode + 5-sec Moving Mean ---\n');
+console_log('\n--- APPROACH 2: Division Common Mode + 5-sec Moving Mean ---\n');
 
 % Find a quiet period for reference
 quiet_start = datetime(2023,10,24,19,15,30,00,'TimeZone','UTC');
@@ -81,8 +81,8 @@ if any(quiet_mask)
     ref_signal = mean(ref_data_cm, 2); % Average across depths (last 100 ft only)
     baseline_common_mode = mean(ref_signal); % Average across time
     
-    fprintf('Reference window: %s to %s (%d points)\n', quiet_start, quiet_end, sum(quiet_mask));
-    fprintf('Baseline common mode: %.6f nm/s\n', baseline_common_mode);
+    console_log('Reference window: %s to %s (%d points)\n', quiet_start, quiet_end, sum(quiet_mask));
+    console_log('Baseline common mode: %.6f nm/s\n', baseline_common_mode);
     
     % Apply division with epsilon to avoid extreme values
     epsilon = 0.1; % Larger epsilon to be more conservative
@@ -91,20 +91,20 @@ if any(quiet_mask)
     % Apply 5-second moving mean
     data_approach2 = movmean(data_cm_divided, 5, 1, 'omitnan');
     
-    fprintf('After CM division: [%.3f, %.3f] nm/s\n', min(data_cm_divided(:)), max(data_cm_divided(:)));
-    fprintf('After 5-sec moving mean: [%.3f, %.3f] nm/s\n', min(data_approach2(:)), max(data_approach2(:)));
+    console_log('After CM division: [%.3f, %.3f] nm/s\n', min(data_cm_divided(:)), max(data_cm_divided(:)));
+    console_log('After 5-sec moving mean: [%.3f, %.3f] nm/s\n', min(data_approach2(:)), max(data_approach2(:)));
 else
-    fprintf('Warning: No quiet period found, skipping division approach\n');
+    console_log('Warning: No quiet period found, skipping division approach\n');
     data_approach2 = data_approach1; % Use subtraction approach as fallback
 end
 
 %% APPROACH 3: Just 5-second Moving Mean (baseline)
-fprintf('\n--- APPROACH 3: 5-Second Moving Mean Only (Baseline) ---\n');
+console_log('\n--- APPROACH 3: 5-Second Moving Mean Only (Baseline) ---\n');
 data_approach3 = movmean(data_analysis, 5, 1, 'omitnan');
-fprintf('After 5-sec moving mean only: [%.3f, %.3f] nm/s\n', min(data_approach3(:)), max(data_approach3(:)));
+console_log('After 5-sec moving mean only: [%.3f, %.3f] nm/s\n', min(data_approach3(:)), max(data_approach3(:)));
 
 %% Calculate strain for all approaches
-fprintf('\n--- Calculating Strain from Strain Rate ---\n');
+console_log('\n--- Calculating Strain from Strain Rate ---\n');
 dt = 1.0; % 1 second sampling interval
 
 % Original strain
@@ -123,13 +123,13 @@ strain_approach2 = detrend(strain_approach2_cumsum, 1);
 strain_approach3_cumsum = cumsum(data_approach3 * dt, 1);
 strain_approach3 = detrend(strain_approach3_cumsum, 1);
 
-fprintf('Original strain range: [%.3f, %.3f] nm/m\n', min(strain_original(:)), max(strain_original(:)));
-fprintf('Approach 1 strain range: [%.3f, %.3f] nm/m\n', min(strain_approach1(:)), max(strain_approach1(:)));
-fprintf('Approach 2 strain range: [%.3f, %.3f] nm/m\n', min(strain_approach2(:)), max(strain_approach2(:)));
-fprintf('Approach 3 strain range: [%.3f, %.3f] nm/m\n', min(strain_approach3(:)), max(strain_approach3(:)));
+console_log('Original strain range: [%.3f, %.3f] nm/m\n', min(strain_original(:)), max(strain_original(:)));
+console_log('Approach 1 strain range: [%.3f, %.3f] nm/m\n', min(strain_approach1(:)), max(strain_approach1(:)));
+console_log('Approach 2 strain range: [%.3f, %.3f] nm/m\n', min(strain_approach2(:)), max(strain_approach2(:)));
+console_log('Approach 3 strain range: [%.3f, %.3f] nm/m\n', min(strain_approach3(:)), max(strain_approach3(:)));
 
 %% Create individual comparison visualizations
-fprintf('\n--- Creating Individual Comparison Visualizations ---\n');
+console_log('\n--- Creating Individual Comparison Visualizations ---\n');
 
 % Figure 1: Original Data
 figure('Position', [100, 100, 1500, 800]);
@@ -250,19 +250,19 @@ xlabel('Time');
 grid on;
 
 %% Save results
-fprintf('\n--- Saving Results ---\n');
+console_log('\n--- Saving Results ---\n');
 save('PT01c_Recovery_COMBINED_filtering.mat', ...
      'data_analysis', 'data_approach1', 'data_approach2', 'data_approach3', ...
      'strain_original', 'strain_approach1', 'strain_approach2', 'strain_approach3', ...
      'time_analysis', 'depth_analysis', 'common_mode', 'baseline_common_mode');
 
-fprintf('✓ Results saved to: PT01c_Recovery_COMBINED_filtering.mat\n');
+console_log('✓ Results saved to: PT01c_Recovery_COMBINED_filtering.mat\n');
 
-fprintf('\n=== COMBINED FILTERING COMPLETE ===\n');
-fprintf('Three approaches compared:\n');
-fprintf('1. CM Subtraction + 5-sec Moving Mean\n');
-fprintf('2. CM Division + 5-sec Moving Mean\n');
-fprintf('3. 5-sec Moving Mean Only (baseline)\n');
-fprintf('Compare the results to see which combination works best!\n');
+console_log('\n=== COMBINED FILTERING COMPLETE ===\n');
+console_log('Three approaches compared:\n');
+console_log('1. CM Subtraction + 5-sec Moving Mean\n');
+console_log('2. CM Division + 5-sec Moving Mean\n');
+console_log('3. 5-sec Moving Mean Only (baseline)\n');
+console_log('Compare the results to see which combination works best!\n');
 
 end

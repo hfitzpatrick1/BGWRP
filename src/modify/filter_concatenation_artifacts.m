@@ -16,7 +16,7 @@ if nargin < 2
     method = 'detrend';  % Default method
 end
 
-fprintf('    Applying concatenation artifact filter: %s\n', method);
+console_log('    Applying concatenation artifact filter: %s\n', method);
 
 switch lower(method)
     case 'detrend'
@@ -24,7 +24,7 @@ switch lower(method)
         filtered_data = zeros(size(data));
         for ch = 1:size(data, 2)
             if mod(ch, 100) == 0
-                fprintf('      Detrending channel %d of %d\n', ch, size(data, 2));
+                console_log('      Detrending channel %d of %d\n', ch, size(data, 2));
             end
             filtered_data(:, ch) = detrend(data(:, ch), 'linear');
         end
@@ -37,13 +37,13 @@ switch lower(method)
         
         for ch = 1:size(data, 2)
             if mod(ch, 100) == 0
-                fprintf('      High-pass filtering channel %d of %d\n', ch, size(data, 2));
+                console_log('      High-pass filtering channel %d of %d\n', ch, size(data, 2));
             end
             try
                 filtered_data(:, ch) = highpass(data(:, ch), cutoff_freq, sample_rate);
             catch
                 % Fallback if highpass function not available
-                fprintf('      Warning: highpass function not available, using detrend\n');
+                console_log('      Warning: highpass function not available, using detrend\n');
                 filtered_data(:, ch) = detrend(data(:, ch), 'linear');
             end
         end
@@ -55,7 +55,7 @@ switch lower(method)
         
         for ch = 1:size(data, 2)
             if mod(ch, 100) == 0
-                fprintf('      Median filtering channel %d of %d\n', ch, size(data, 2));
+                console_log('      Median filtering channel %d of %d\n', ch, size(data, 2));
             end
             filtered_data(:, ch) = medfilt1(data(:, ch), filter_length);
         end
@@ -94,13 +94,13 @@ switch lower(method)
     case 'none'
         % No filtering - pass through original data
         filtered_data = data;
-        fprintf('      No filtering applied\n');
+        console_log('      No filtering applied\n');
         
     otherwise
         warning('Unknown filter method: %s. Using no filtering.', method);
         filtered_data = data;
 end
 
-fprintf('    ✓ Filtering completed\n');
+console_log('    ✓ Filtering completed\n');
 
 end

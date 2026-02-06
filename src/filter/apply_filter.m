@@ -28,12 +28,12 @@ function filtered_data = apply_filter(data, filter_type, config)
 %   'common_mode_removal' - Remove common mode noise using reference window normalization
 %   'custom'           - Custom filter chain from config
 
-fprintf('  Applying filter: %s\n', filter_type);
+console_log('  Applying filter: %s\n', filter_type);
 
 switch lower(filter_type)
     case 'none'
         filtered_data = data;
-        fprintf('    No filtering applied\n');
+        console_log('    No filtering applied\n');
         
     case 'movmean'
         % Enhanced moving average with full parameterization
@@ -51,7 +51,7 @@ switch lower(filter_type)
                 filtered_data = movmean(data, window, dimension, 'Endpoints', endpoints);
         end
         
-        fprintf('    Moving %s: window=%d, dim=%d, endpoints=%s\n', method, window, dimension, endpoints);
+        console_log('    Moving %s: window=%d, dim=%d, endpoints=%s\n', method, window, dimension, endpoints);
         
     case 'matlab_movmean'
         % Direct MATLAB movmean implementation (like PM07_PT01a_Simple.m)
@@ -66,12 +66,12 @@ switch lower(filter_type)
             filtered_data = movmean(data, window, dimension, 'Endpoints', endpoints);
         end
         
-        fprintf('    MATLAB movmean: window=%d, dim=%d, endpoints=%s\n', window, dimension, endpoints);
+        console_log('    MATLAB movmean: window=%d, dim=%d, endpoints=%s\n', window, dimension, endpoints);
         
     case 'movmedian'
         window = get_config_param(config, 'temporal_window', 10);
         filtered_data = movmedian(data, window, 1);
-        fprintf('    Moving median: window=%d\n', window);
+        console_log('    Moving median: window=%d\n', window);
         
     case 'spatial_median'
         filtered_data = spatial_median_filter(data, config);
@@ -127,7 +127,7 @@ switch lower(filter_type)
         filtered_data = data;
 end
 
-fprintf('    Filter complete: range [%.3f, %.3f] -> [%.3f, %.3f]\n', ...
+console_log('    Filter complete: range [%.3f, %.3f] -> [%.3f, %.3f]\n', ...
     min(data(:)), max(data(:)), min(filtered_data(:)), max(filtered_data(:)));
 
 end

@@ -20,8 +20,8 @@ close all;
 addpath(genpath('src'));
 
 %% Configuration
-fprintf('\n=== STANDALONE LINEAR REGRESSION ANALYSIS ===\n');
-fprintf('Loading pre-processed data and running analysis...\n\n');
+console_log('\n=== STANDALONE LINEAR REGRESSION ANALYSIS ===\n');
+console_log('Loading pre-processed data and running analysis...\n\n');
 
 % Test configuration
 test_name = 'PT01c_Recovery_short';
@@ -42,22 +42,22 @@ if ~exist(head_data_file, 'file')
     error('Head data file not found: %s\nPlease process head data first', head_data_file);
 end
 
-fprintf('Loading data files:\n');
-fprintf('  DAS: %s\n', das_data_file);
-fprintf('  Head: %s\n', head_data_file);
+console_log('Loading data files:\n');
+console_log('  DAS: %s\n', das_data_file);
+console_log('  Head: %s\n', head_data_file);
 
 %% Load DAS Data
-fprintf('\nLoading DAS data...\n');
+console_log('\nLoading DAS data...\n');
 das_data = load(das_data_file);
-fprintf('  ✓ DAS data loaded\n');
+console_log('  ✓ DAS data loaded\n');
 
 %% Load Head Data
-fprintf('Loading head data...\n');
+console_log('Loading head data...\n');
 head_data = load(head_data_file);
-fprintf('  ✓ Head data loaded\n');
+console_log('  ✓ Head data loaded\n');
 
 %% Build das_results and head_results structures
-fprintf('\nBuilding analysis structures...\n');
+console_log('\nBuilding analysis structures...\n');
 
 % Get timing information
 timing_file = fullfile(cfg.base_input, '_configs', ['get_timing_' test_name '.m']);
@@ -94,10 +94,10 @@ zone5_depth_max_ft = 350;
 zone5_channels = find(das_data.depth_ft >= zone5_depth_min_ft & das_data.depth_ft <= zone5_depth_max_ft);
 das_results.(test_name).pumping_zone.channel_idx = zone5_channels(round(length(zone5_channels)/2));  % Center channel
 
-fprintf('  DAS time range: %s to %s\n', datestr(das_results.(test_name).analysis_time(1)), ...
+console_log('  DAS time range: %s to %s\n', datestr(das_results.(test_name).analysis_time(1)), ...
     datestr(das_results.(test_name).analysis_time(end)));
-fprintf('  DAS channels: %d\n', length(das_data.depth_ft));
-fprintf('  Zone 5 channels: %d (depths %.1f-%.1f ft)\n', length(zone5_channels), zone5_depth_min_ft, zone5_depth_max_ft);
+console_log('  DAS channels: %d\n', length(das_data.depth_ft));
+console_log('  Zone 5 channels: %d (depths %.1f-%.1f ft)\n', length(zone5_channels), zone5_depth_min_ft, zone5_depth_max_ft);
 
 % Build head_results structure
 head_results = struct();
@@ -113,14 +113,14 @@ if isfield(head_data, zone_name)
     head_results.(test_name).zones.(zone_name).recovery_data.Date = zone_data.Date(recovery_mask);
     head_results.(test_name).zones.(zone_name).recovery_data.Drawdownft = zone_data.Drawdownft(recovery_mask);
     
-    fprintf('  Head time range: %s to %s\n', datestr(zone_data.Date(1)), datestr(zone_data.Date(end)));
-    fprintf('  Head points in recovery window: %d\n', sum(recovery_mask));
+    console_log('  Head time range: %s to %s\n', datestr(zone_data.Date(1)), datestr(zone_data.Date(end)));
+    console_log('  Head points in recovery window: %d\n', sum(recovery_mask));
 else
     error('Zone %s data not found in head data file', zone_name);
 end
 
 %% Linear Regression Configuration
-fprintf('\nConfiguring linear regression...\n');
+console_log('\nConfiguring linear regression...\n');
 
 lr_config.timing_correction_sec = 13;  % 13-second shift (GPS vs laptop clock offset)
 lr_config.zone = zone_name;
@@ -143,23 +143,23 @@ lr_config.strain_rate_smoothing_window = 5;  % 5-second smoothing
 lr_config.strain_rate_smoothing_method = 'movmean';
 lr_config.head_rate_smoothing_window = 5;  % Match strain rate smoothing
 
-fprintf('  Timing correction: %d seconds\n', lr_config.timing_correction_sec);
-fprintf('  Depth range: %.1f - %.1f m (%.1f - %.1f ft)\n', depth_min_m, depth_max_m, depth_min_ft, depth_max_ft);
-fprintf('  Recovery window: %s to %s\n', datestr(lr_config.recovery_window(1)), datestr(lr_config.recovery_window(2)));
+console_log('  Timing correction: %d seconds\n', lr_config.timing_correction_sec);
+console_log('  Depth range: %.1f - %.1f m (%.1f - %.1f ft)\n', depth_min_m, depth_max_m, depth_min_ft, depth_max_ft);
+console_log('  Recovery window: %s to %s\n', datestr(lr_config.recovery_window(1)), datestr(lr_config.recovery_window(2)));
 
 %% Run Linear Regression
-fprintf('\n=== RUNNING LINEAR REGRESSION ===\n');
+console_log('\n=== RUNNING LINEAR REGRESSION ===\n');
 lr_results = linear_regression_strain_drawdown(das_results, head_results, test_name, lr_config);
 
-fprintf('\n=== REGRESSION RESULTS ===\n');
-fprintf('Slope: %.4e (1/s)/(m/s)\n', lr_results.slope);
-fprintf('R: %.3f\n', lr_results.R);
-fprintf('R²: %.3f\n', lr_results.R_squared);
-fprintf('RMSE: %.4e 1/s\n', lr_results.RMSE);
-fprintf('N points: %d\n', lr_results.n_points);
+console_log('\n=== REGRESSION RESULTS ===\n');
+console_log('Slope: %.4e (1/s)/(m/s)\n', lr_results.slope);
+console_log('R: %.3f\n', lr_results.R);
+console_log('R²: %.3f\n', lr_results.R_squared);
+console_log('RMSE: %.4e 1/s\n', lr_results.RMSE);
+console_log('N points: %d\n', lr_results.n_points);
 
 %% Calculate Storage Parameters
-fprintf('\n=== STORAGE PARAMETER CALCULATION ===\n');
+console_log('\n=== STORAGE PARAMETER CALCULATION ===\n');
 
 % Biot-Willis coefficient (from thesis)
 alpha = 0.90;  % For unconsolidated sediments
@@ -169,10 +169,10 @@ gamma_w = 9810;  % N/m³ (specific weight of water)
 S_epsilon = lr_results.slope * (alpha / gamma_w);  % 1/Pa
 S_s = S_epsilon * gamma_w;  % Specific storage (1/m)
 
-fprintf('Biot-Willis coefficient (α): %.2f\n', alpha);
-fprintf('Specific weight of water (γ): %.0f N/m³\n', gamma_w);
-fprintf('Poroelastic storage (Sε): %.4e 1/Pa\n', S_epsilon);
-fprintf('Specific storage (Ss): %.4e 1/m\n', S_s);
+console_log('Biot-Willis coefficient (α): %.2f\n', alpha);
+console_log('Specific weight of water (γ): %.0f N/m³\n', gamma_w);
+console_log('Poroelastic storage (Sε): %.4e 1/Pa\n', S_epsilon);
+console_log('Specific storage (Ss): %.4e 1/m\n', S_s);
 
 %% Generate Standalone Figures
 
@@ -181,10 +181,10 @@ output_dir = fullfile('output', 'Linear_Regression_Standalone');
 if ~exist(output_dir, 'dir')
     mkdir(output_dir);
 end
-fprintf('\nSaving figures to: %s\n', output_dir);
+console_log('\nSaving figures to: %s\n', output_dir);
 
 %% FIGURE 100: Linear Regression Scatter Plot
-fprintf('\nGenerating Figure 100: Linear Regression Scatter...\n');
+console_log('\nGenerating Figure 100: Linear Regression Scatter...\n');
 fig100 = figure(100); clf;
 set(fig100, 'Position', [100 100 900 800], 'Color', 'white');
 set(fig100, 'Name', 'Poroelastic Storage Analysis: PT-01c Zone 5 (76-107 m) - Linear Regression');
@@ -248,10 +248,10 @@ hold off;
 saveas(fig100, fullfile(output_dir, 'Fig100_Linear_Regression_Scatter.png'));
 saveas(fig100, fullfile(output_dir, 'Fig100_Linear_Regression_Scatter.svg'));
 savefig(fig100, fullfile(output_dir, 'Fig100_Linear_Regression_Scatter.fig'));
-fprintf('  ✓ Saved Figure 100\n');
+console_log('  ✓ Saved Figure 100\n');
 
 %% FIGURE 101: Time Series (Strain Rate and Drawdown Rate)
-fprintf('Generating Figure 101: Time Series...\n');
+console_log('Generating Figure 101: Time Series...\n');
 fig101 = figure(101); clf;
 set(fig101, 'Position', [150 150 1200 600], 'Color', 'white');
 set(fig101, 'Name', sprintf('Time Series (13s correction) - Depth %.0f-%.0f m', depth_min_m, depth_max_m));
@@ -295,19 +295,19 @@ datetick('x', 'HH:MM:SS', 'keepticks');
 saveas(fig101, fullfile(output_dir, 'Fig101_Time_Series.png'));
 saveas(fig101, fullfile(output_dir, 'Fig101_Time_Series.svg'));
 savefig(fig101, fullfile(output_dir, 'Fig101_Time_Series.fig'));
-fprintf('  ✓ Saved Figure 101\n');
+console_log('  ✓ Saved Figure 101\n');
 
 %% Summary
-fprintf('\n=== ANALYSIS COMPLETE ===\n');
-fprintf('Generated figures:\n');
-fprintf('  - Figure 100: Linear Regression Scatter Plot\n');
-fprintf('  - Figure 101: Time Series (Strain Rate and Drawdown Rate)\n');
-fprintf('\nFigures saved to:\n  %s\n', output_dir);
-fprintf('\nFile formats:\n');
-fprintf('  - PNG (high resolution, for PowerPoint/Word)\n');
-fprintf('  - SVG (vector graphics, for Adobe Illustrator/Inkscape)\n');
-fprintf('  - FIG (MATLAB format, for further editing)\n');
-fprintf('\n✓ Script complete!\n\n');
+console_log('\n=== ANALYSIS COMPLETE ===\n');
+console_log('Generated figures:\n');
+console_log('  - Figure 100: Linear Regression Scatter Plot\n');
+console_log('  - Figure 101: Time Series (Strain Rate and Drawdown Rate)\n');
+console_log('\nFigures saved to:\n  %s\n', output_dir);
+console_log('\nFile formats:\n');
+console_log('  - PNG (high resolution, for PowerPoint/Word)\n');
+console_log('  - SVG (vector graphics, for Adobe Illustrator/Inkscape)\n');
+console_log('  - FIG (MATLAB format, for further editing)\n');
+console_log('\n✓ Script complete!\n\n');
 
 
 

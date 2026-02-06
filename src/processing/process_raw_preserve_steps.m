@@ -3,7 +3,7 @@ function process_raw_preserve_steps(csv_file, zone_name, pump_start_time)
 %
 % NO smoothing - only extreme outlier removal and pre-test detrend
 
-fprintf('=== ABSOLUTE MINIMAL PROCESSING - PRESERVE STEP PLATEAUS ===\n');
+console_log('=== ABSOLUTE MINIMAL PROCESSING - PRESERVE STEP PLATEAUS ===\n');
 
 %% Load data
 fid = fopen(csv_file, 'r');
@@ -29,7 +29,7 @@ timestamps.TimeZone = 'UTC';
 
 depth_ft_raw = data_table.Depth_ft;
 
-fprintf('Loaded %d raw data points\n', length(depth_ft_raw));
+console_log('Loaded %d raw data points\n', length(depth_ft_raw));
 
 %% Only remove EXTREME outliers (>10 std)
 outliers = isoutlier(depth_ft_raw, 'median', 'ThresholdFactor', 10);
@@ -37,7 +37,7 @@ depth_cleaned = depth_ft_raw;
 depth_cleaned(outliers) = NaN;
 depth_cleaned = fillmissing(depth_cleaned, 'linear', 'MaxGap', 1);
 
-fprintf('Removed %d extreme outliers\n', sum(outliers));
+console_log('Removed %d extreme outliers\n', sum(outliers));
 
 %% Calculate pre-test baseline (NO detrending of pumping period!)
 pre_test_mask = timestamps < pump_start_time;
@@ -46,7 +46,7 @@ pre_test_depth = depth_cleaned(pre_test_mask);
 % Just use mean of pre-test for baseline - DON'T extrapolate trend!
 baseline_mean = mean(pre_test_depth, 'omitnan');
 
-fprintf('Pre-test mean depth: %.4f ft\n', baseline_mean);
+console_log('Pre-test mean depth: %.4f ft\n', baseline_mean);
 
 %% NO SMOOTHING - use raw cleaned data directly
 depth_final = depth_cleaned;
@@ -54,7 +54,7 @@ depth_final = depth_cleaned;
 %% Use pre-test mean as baseline
 baseline_depth = baseline_mean;
 
-fprintf('Using baseline: %.4f ft\n', baseline_depth);
+console_log('Using baseline: %.4f ft\n', baseline_depth);
 
 %% Calculate displacement (positive = water drops - like drawdown)
 % For steps to show, we want baseline = 0
@@ -64,8 +64,8 @@ displacement_ft = baseline_depth - depth_final;  % Flipped: positive when water 
 elapsed_time_sec = seconds(timestamps - timestamps(1));
 pump_start_elapsed = seconds(pump_start_time - timestamps(1));
 
-fprintf('Pump starts at: %.1f seconds elapsed\n', pump_start_elapsed);
-fprintf('Max displacement: %.4f ft\n', max(displacement_ft));
+console_log('Pump starts at: %.1f seconds elapsed\n', pump_start_elapsed);
+console_log('Max displacement: %.4f ft\n', max(displacement_ft));
 
 %% Plot with pump schedule
 pump_times_elapsed = pump_start_elapsed + [0, 3600, 7200, 10800, 14400];
@@ -137,7 +137,7 @@ export_table = table(Time_sec, Displacement_ft, ...
 output_csv = fullfile(output_dir, sprintf('%s_RAW_STEPS_PRESERVED.csv', base_name));
 writetable(export_table, output_csv);
 
-fprintf('\nExported to: %s\n', output_csv);
-fprintf('NO SMOOTHING - raw step plateaus preserved!\n');
+console_log('\nExported to: %s\n', output_csv);
+console_log('NO SMOOTHING - raw step plateaus preserved!\n');
 
 end

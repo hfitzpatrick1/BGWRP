@@ -40,11 +40,11 @@ weight_ranges = {
 %% Apply weights
 add_weights_to_data(input_file, output_file, weight_ranges);
 
-fprintf('\n=== SUMMARY ===\n');
-fprintf('High weight (1.0) sections:\n');
-fprintf('  • 4,800 - 6,400 sec\n');
-fprintf('  • 8,000 - 10,000 sec\n');
-fprintf('  • 12,000 - 13,600 sec\n');
-fprintf('  • 15,200 - 16,800 sec\n');
-fprintf('\nMedium weight (0.5): Transitions\n');
-fprintf('Low weight (0.3): Other sections\n');
+console_log('\n=== SUMMARY ===\n');
+console_log('High weight (1.0) sections:\n');
+console_log('  • 4,800 - 6,400 sec\n');
+console_log('  • 8,000 - 10,000 sec\n');
+console_log('  • 12,000 - 13,600 sec\n');
+console_log('  • 15,200 - 16,800 sec\n');
+console_log('\nMedium weight (0.5): Transitions\n');
+console_log('Low weight (0.3): Other sections\n');

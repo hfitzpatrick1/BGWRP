@@ -82,7 +82,7 @@ try
     file_type = 'unknown';
     
 catch ME
-    fprintf('Warning: Could not analyze file %s: %s\n', filepath, ME.message);
+    console_log('Warning: Could not analyze file %s: %s\n', filepath, ME.message);
     file_type = 'unknown';
 end
 

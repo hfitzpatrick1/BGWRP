@@ -17,9 +17,9 @@ if nargin < 3
     source_sampling_rate = 100; % Default based on TDMS analysis
 end
 
-fprintf('=== DOWNSAMPLING DATA ===\n');
-fprintf('Input size: [%d x %d]\n', size(input_data, 1), size(input_data, 2));
-fprintf('Decimation factor: %d\n', decimation_factor);
+console_log('=== DOWNSAMPLING DATA ===\n');
+console_log('Input size: [%d x %d]\n', size(input_data, 1), size(input_data, 2));
+console_log('Decimation factor: %d\n', decimation_factor);
 
 success = false;
 downsampled_data = [];
@@ -30,7 +30,7 @@ try
     
     % Handle no decimation case
     if decimation_factor == 1
-        fprintf('No decimation - preserving full resolution\n');
+        console_log('No decimation - preserving full resolution\n');
         downsampled_data = input_data;
         success = true;
         return;
@@ -52,12 +52,12 @@ try
     output_length = ceil(size(input_data, 1) / decimation_factor);
     downsampled_data = zeros(output_length, size(input_data, 2));
     
-    fprintf('Decimating %d channels...\n', size(input_data, 2));
+    console_log('Decimating %d channels...\n', size(input_data, 2));
     
     % Decimate each channel
     for n = 1:size(input_data, 2)
         if mod(n, 500) == 0 || n == size(input_data, 2)  % Show every 500th + last
-            fprintf('  Channel %d of %d\n', n, size(input_data, 2));
+            console_log('  Channel %d of %d\n', n, size(input_data, 2));
         end
         
         % Fix for MATLAB decimate() bug with single precision data
@@ -119,10 +119,10 @@ try
     end
     
     success = true;
-    fprintf('✓ Downsampling complete: [%d x %d]\n', size(downsampled_data, 1), size(downsampled_data, 2));
+    console_log('✓ Downsampling complete: [%d x %d]\n', size(downsampled_data, 1), size(downsampled_data, 2));
     
 catch ME
-    fprintf('✗ Error during downsampling: %s\n', ME.message);
+    console_log('✗ Error during downsampling: %s\n', ME.message);
     success = false;
     downsampled_data = [];
 end
@@ -137,37 +137,37 @@ target_sampling_rate = source_sampling_rate / decimation_factor;
 target_nyquist = target_sampling_rate / 2;
 source_nyquist = source_sampling_rate / 2;
 
-fprintf('\n=== DECIMATION VALIDATION ===\n');
-fprintf('Source: %.1f Hz (Nyquist: %.1f Hz)\n', source_sampling_rate, source_nyquist);
-fprintf('Target: %.1f Hz (Nyquist: %.1f Hz)\n', target_sampling_rate, target_nyquist);
+console_log('\n=== DECIMATION VALIDATION ===\n');
+console_log('Source: %.1f Hz (Nyquist: %.1f Hz)\n', source_sampling_rate, source_nyquist);
+console_log('Target: %.1f Hz (Nyquist: %.1f Hz)\n', target_sampling_rate, target_nyquist);
 
 % Validation checks
 if decimation_factor < 1
     error('Decimation factor must be >= 1');
 elseif decimation_factor == 1
-    fprintf('✓ No decimation - preserving full resolution\n');
+    console_log('✓ No decimation - preserving full resolution\n');
 elseif decimation_factor <= 5
-    fprintf('✓ Light decimation - preserving signal dynamics\n');
+    console_log('✓ Light decimation - preserving signal dynamics\n');
 elseif decimation_factor <= 20
-    fprintf('⚠ Medium decimation - adequate for slower phenomena\n');
+    console_log('⚠ Medium decimation - adequate for slower phenomena\n');
 elseif decimation_factor <= 50
-    fprintf('⚠ Heavy decimation - only slow phenomena preserved\n');
+    console_log('⚠ Heavy decimation - only slow phenomena preserved\n');
 elseif decimation_factor <= 100
-    fprintf('⚠ Very heavy decimation - only very slow phenomena\n');
+    console_log('⚠ Very heavy decimation - only very slow phenomena\n');
 else
-    fprintf('⚠ Extreme decimation - most signal content lost\n');
+    console_log('⚠ Extreme decimation - most signal content lost\n');
     warning('Decimation factor %d may be too aggressive', decimation_factor);
 end
 
 % Check for known problematic values
 if decimation_factor == 10
-    fprintf('ℹ Note: Factor 10 requires double precision (MATLAB bug workaround)\n');
+    console_log('ℹ Note: Factor 10 requires double precision (MATLAB bug workaround)\n');
 end
 
 if mod(decimation_factor, 2) ~= 0 && decimation_factor > 1
-    fprintf('ℹ Note: Odd factors may cause phase distortion\n');
+    console_log('ℹ Note: Odd factors may cause phase distortion\n');
 end
 
-fprintf('===============================\n\n');
+console_log('===============================\n\n');
 
 end

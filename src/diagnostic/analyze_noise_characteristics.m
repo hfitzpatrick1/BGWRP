@@ -8,9 +8,9 @@ if nargin < 1
     dataset_name = 'PT01c_Recovery_short';
 end
 
-fprintf('=== NOISE CHARACTERISTICS ANALYSIS ===\n');
-fprintf('Dataset: %s\n', dataset_name);
-fprintf('Purpose: Identify optimal filtering strategies\n\n');
+console_log('=== NOISE CHARACTERISTICS ANALYSIS ===\n');
+console_log('Dataset: %s\n', dataset_name);
+console_log('Purpose: Identify optimal filtering strategies\n\n');
 
 % Load the concatenated data (post-decimation)
 data_path = 'C:\Coding\BGWRP\data\_BATCH';
@@ -20,14 +20,14 @@ if ~exist(concat_file, 'file')
     error('Concatenated file not found: %s', concat_file);
 end
 
-fprintf('Loading data: %s\n', concat_file);
+console_log('Loading data: %s\n', concat_file);
 loaded = load(concat_file);
 if isfield(loaded, 'decdata')
     data = loaded.decdata;
 else
     error('Expected decdata field not found in file');
 end
-fprintf('Data size: [%d x %d]\n', size(data,1), size(data,2));
+console_log('Data size: [%d x %d]\n', size(data,1), size(data,2));
 
 % Get basic parameters
 fs = 1; % Hz (post-decimation)
@@ -35,12 +35,12 @@ n_samples = size(data, 1);
 n_channels = size(data, 2);
 time_minutes = n_samples / fs / 60;
 
-fprintf('Sampling rate: %.1f Hz\n', fs);
-fprintf('Duration: %.1f minutes\n', time_minutes);
-fprintf('Nyquist frequency: %.2f Hz\n\n', fs/2);
+console_log('Sampling rate: %.1f Hz\n', fs);
+console_log('Duration: %.1f minutes\n', time_minutes);
+console_log('Nyquist frequency: %.2f Hz\n\n', fs/2);
 
 %% 1. TEMPORAL FREQUENCY ANALYSIS
-fprintf('=== 1. TEMPORAL FREQUENCY ANALYSIS ===\n');
+console_log('=== 1. TEMPORAL FREQUENCY ANALYSIS ===\n');
 
 % Select representative channels for analysis
 channel_subset = [100, 250, 500, 750, 900]; % Spread across fiber
@@ -79,7 +79,7 @@ for i = 1:length(channel_subset)
     total_power = sum(psd);
     noise_powers = [noise_powers; total_power];
     
-    fprintf('Channel %d: %.1f%% relative noise, %d dominant peaks\n', ...
+    console_log('Channel %d: %.1f%% relative noise, %d dominant peaks\n', ...
         ch, 100*std(signal_detrended)/mean(abs(signal_detrended)), length(peaks));
 end
 
@@ -94,12 +94,12 @@ grid on;
 
 sgtitle(sprintf('%s - Temporal Frequency Analysis', dataset_name));
 
-fprintf('\nDominant frequencies found: ');
-fprintf('%.3f ', all_freqs);
-fprintf('Hz\n');
+console_log('\nDominant frequencies found: ');
+console_log('%.3f ', all_freqs);
+console_log('Hz\n');
 
 %% 2. SPATIAL COHERENCE ANALYSIS
-fprintf('\n=== 2. SPATIAL COHERENCE ANALYSIS ===\n');
+console_log('\n=== 2. SPATIAL COHERENCE ANALYSIS ===\n');
 
 % Analyze spatial correlation patterns
 figure('Position', [200 200 1200 600]);
@@ -131,8 +131,8 @@ grid on;
 coherence_threshold = 0.7;
 coherent_regions = find(spatial_corr > coherence_threshold);
 
-fprintf('High spatial coherence (>%.1f): %d channel pairs\n', coherence_threshold, length(coherent_regions));
-fprintf('Coherent regions: %d total pairs (details suppressed)\n', length(coherent_regions));
+console_log('High spatial coherence (>%.1f): %d channel pairs\n', coherence_threshold, length(coherent_regions));
+console_log('Coherent regions: %d total pairs (details suppressed)\n', length(coherent_regions));
 
 % Channel-to-channel variability
 subplot(1,2,2);
@@ -146,7 +146,7 @@ grid on;
 sgtitle(sprintf('%s - Spatial Coherence Analysis', dataset_name));
 
 %% 3. PATTERN PERIODICITY ANALYSIS
-fprintf('\n=== 3. PATTERN PERIODICITY ANALYSIS ===\n');
+console_log('\n=== 3. PATTERN PERIODICITY ANALYSIS ===\n');
 
 figure('Position', [300 300 1200 600]);
 
@@ -170,9 +170,9 @@ grid on;
 if ~isempty(peaks)
     peak_periods = lags(lags>0);
     peak_periods = peak_periods(peak_locs) / fs / 60; % Convert to minutes
-    fprintf('Periodic patterns found at: ');
-    fprintf('%.1f ', peak_periods);
-    fprintf('minutes\n');
+    console_log('Periodic patterns found at: ');
+    console_log('%.1f ', peak_periods);
+    console_log('minutes\n');
 end
 
 % Look for spatial patterns
@@ -196,84 +196,84 @@ grid on;
 sgtitle(sprintf('%s - Pattern Periodicity Analysis', dataset_name));
 
 %% 4. FILTERING RECOMMENDATIONS
-fprintf('\n=== 4. FILTERING RECOMMENDATIONS ===\n');
+console_log('\n=== 4. FILTERING RECOMMENDATIONS ===\n');
 
 % Temporal filtering recommendations
 low_freq_cutoff = min(all_freqs) * 0.8;
 high_freq_cutoff = max(all_freqs) * 1.2;
 
-fprintf('TEMPORAL FILTERING:\n');
-fprintf('• Bandstop filters needed at: ');
-fprintf('%.3f ', all_freqs);
-fprintf('Hz\n');
+console_log('TEMPORAL FILTERING:\n');
+console_log('• Bandstop filters needed at: ');
+console_log('%.3f ', all_freqs);
+console_log('Hz\n');
 
 if low_freq_cutoff > 0.001
-    fprintf('• High-pass filter: >%.4f Hz (remove drift)\n', low_freq_cutoff);
+    console_log('• High-pass filter: >%.4f Hz (remove drift)\n', low_freq_cutoff);
 end
 
 if high_freq_cutoff < fs/2
-    fprintf('• Low-pass filter: <%.3f Hz (remove high-freq noise)\n', high_freq_cutoff);
+    console_log('• Low-pass filter: <%.3f Hz (remove high-freq noise)\n', high_freq_cutoff);
 end
 
 % Spatial filtering recommendations
-fprintf('\nSPATIAL FILTERING:\n');
+console_log('\nSPATIAL FILTERING:\n');
 if length(coherent_regions) > n_channels/10
-    fprintf('• High spatial coherence detected - spatial median filter recommended\n');
-    fprintf('• Suggested filter window: %d channels\n', min(21, round(n_channels/20)));
+    console_log('• High spatial coherence detected - spatial median filter recommended\n');
+    console_log('• Suggested filter window: %d channels\n', min(21, round(n_channels/20)));
 else
-    fprintf('• Low spatial coherence - spatial filtering may not be effective\n');
+    console_log('• Low spatial coherence - spatial filtering may not be effective\n');
 end
 
 % Adaptive filtering recommendations
 max_noise_channel = find(channel_std == max(channel_std), 1);
-fprintf('\nADAPTIVE FILTERING:\n');
-fprintf('• Noisiest channel: %d (std = %.3f)\n', max_noise_channel, max(channel_std));
-fprintf('• Noise variation across channels: %.1f%%\n', 100*std(channel_std)/mean(channel_std));
+console_log('\nADAPTIVE FILTERING:\n');
+console_log('• Noisiest channel: %d (std = %.3f)\n', max_noise_channel, max(channel_std));
+console_log('• Noise variation across channels: %.1f%%\n', 100*std(channel_std)/mean(channel_std));
 
 if std(channel_std)/mean(channel_std) > 0.2
-    fprintf('• Channel-specific filtering recommended\n');
+    console_log('• Channel-specific filtering recommended\n');
 else
-    fprintf('• Uniform filtering across all channels acceptable\n');
+    console_log('• Uniform filtering across all channels acceptable\n');
 end
 
 %% 5. SIGNAL-TO-NOISE ASSESSMENT
-fprintf('\n=== 5. SIGNAL-TO-NOISE ASSESSMENT ===\n');
+console_log('\n=== 5. SIGNAL-TO-NOISE ASSESSMENT ===\n');
 
 % Estimate signal vs noise components
 signal_energy = var(mean(spatial_data, 2)); % Common mode signal
 noise_energy = mean(var(spatial_data, [], 2)); % Channel-specific variance
 
 snr_estimate = 10*log10(signal_energy / noise_energy);
-fprintf('Estimated SNR: %.1f dB\n', snr_estimate);
+console_log('Estimated SNR: %.1f dB\n', snr_estimate);
 
 if snr_estimate > 10
-    fprintf('• Good SNR - gentle filtering recommended\n');
+    console_log('• Good SNR - gentle filtering recommended\n');
 elseif snr_estimate > 0
-    fprintf('• Moderate SNR - targeted filtering needed\n');
+    console_log('• Moderate SNR - targeted filtering needed\n');
 else
-    fprintf('• Poor SNR - aggressive filtering may be necessary\n');
+    console_log('• Poor SNR - aggressive filtering may be necessary\n');
 end
 
 %% 6. SUGGESTED CONFIG UPDATES
-fprintf('\n=== 6. SUGGESTED CONFIG.M UPDATES ===\n');
-fprintf('Based on this analysis, consider these config changes:\n\n');
+console_log('\n=== 6. SUGGESTED CONFIG.M UPDATES ===\n');
+console_log('Based on this analysis, consider these config changes:\n\n');
 
-fprintf('%% Filtering Configuration (based on noise analysis)\n');
+console_log('%% Filtering Configuration (based on noise analysis)\n');
 if ~isempty(all_freqs)
-    fprintf('config.bandstop_frequencies = [');
-    fprintf('%.3f ', all_freqs);
-    fprintf(']; %% Hz - remove dominant noise peaks\n');
+    console_log('config.bandstop_frequencies = [');
+    console_log('%.3f ', all_freqs);
+    console_log(']; %% Hz - remove dominant noise peaks\n');
 end
 
 if length(coherent_regions) > n_channels/10
-    fprintf('config.spatial_median_channels = %d; %% Spatial filtering window\n', min(21, round(n_channels/20)));
-    fprintf('config.smoothing_method = ''spatial_median''; %% Use spatial filtering\n');
+    console_log('config.spatial_median_channels = %d; %% Spatial filtering window\n', min(21, round(n_channels/20)));
+    console_log('config.smoothing_method = ''spatial_median''; %% Use spatial filtering\n');
 end
 
 if snr_estimate < 5
-    fprintf('config.chen_denoising = true; %% Enable advanced denoising\n');
+    console_log('config.chen_denoising = true; %% Enable advanced denoising\n');
 end
 
-fprintf('\nAnalysis complete. Review plots and recommendations above.\n');
+console_log('\nAnalysis complete. Review plots and recommendations above.\n');
 
 end

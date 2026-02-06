@@ -3,7 +3,7 @@ function process_pm7_minimal_processing(csv_file, zone_name, pump_start_time)
 %
 % Uses VERY light processing to keep steps visible
 
-fprintf('=== MINIMAL PROCESSING - PRESERVE STEPS ===\n');
+console_log('=== MINIMAL PROCESSING - PRESERVE STEPS ===\n');
 
 %% Load data
 fid = fopen(csv_file, 'r');
@@ -46,8 +46,8 @@ baseline_mask = timestamps >= baseline_start & timestamps <= baseline_end;
 baseline_depth = mean(depth_smoothed(baseline_mask), 'omitnan');
 drawdown_ft = depth_smoothed - baseline_depth;
 
-fprintf('Baseline: %.3f ft\n', baseline_depth);
-fprintf('Max drawdown: %.3f ft\n', max(drawdown_ft));
+console_log('Baseline: %.3f ft\n', baseline_depth);
+console_log('Max drawdown: %.3f ft\n', max(drawdown_ft));
 
 %% Plot with step annotations
 pump_times = [
@@ -113,7 +113,7 @@ catch
 end
 
 %% Print step check
-fprintf('\nChecking for steps at pump rate changes:\n');
+console_log('\nChecking for steps at pump rate changes:\n');
 for i = 2:length(pump_times)-1
     % Get data 10 min before and after rate change
     before_mask = timestamps >= (pump_times(i) - minutes(10)) & timestamps < pump_times(i);
@@ -123,7 +123,7 @@ for i = 2:length(pump_times)-1
     after_avg = mean(drawdown_ft(after_mask), 'omitnan');
     step_size = after_avg - before_avg;
     
-    fprintf('  %d->%d GPM: Before=%.4f ft, After=%.4f ft, Step=%.4f ft\n', ...
+    console_log('  %d->%d GPM: Before=%.4f ft, After=%.4f ft, Step=%.4f ft\n', ...
         rates(i-1), rates(i), before_avg, after_avg, step_size);
 end
 
@@ -140,6 +140,6 @@ Depthft = baseline_depth;
 save(fullfile(output_dir, sprintf('%s_minimal.mat', base_name)), ...
     'Date', 'Drawdownft', 'Depthft', 'pump_start_time');
 
-fprintf('\nIf you still don''t see steps, they genuinely aren''t in your data.\n');
+console_log('\nIf you still don''t see steps, they genuinely aren''t in your data.\n');
 
 end

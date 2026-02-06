@@ -8,7 +8,7 @@ function diagnose_boundaries_enhanced(dataset_name, data_filepath, timing_config
 %   data_filepath - Path to concatenated MAT file
 %   timing_config - Timing configuration with file information
 
-fprintf('=== ENHANCED BOUNDARY DIAGNOSTIC: %s ===\n', dataset_name);
+console_log('=== ENHANCED BOUNDARY DIAGNOSTIC: %s ===\n', dataset_name);
 
 % Load data
 load(data_filepath, 'decdata');
@@ -18,7 +18,7 @@ data = decdata;
 test_channels = 450:470;
 test_channels = test_channels(test_channels <= size(data, 2));
 
-fprintf('Dataset: %d samples, %d channels | Analyzing channels %d-%d\n', ...
+console_log('Dataset: %d samples, %d channels | Analyzing channels %d-%d\n', ...
     size(data, 1), size(data, 2), min(test_channels), max(test_channels));
 
 % Expected file boundaries (60-sample intervals)
@@ -29,7 +29,7 @@ boundary_positions = samples_per_file:samples_per_file:(size(data, 1) - samples_
 rep_channel = test_channels(11); % Middle channel
 rep_data = data(:, rep_channel);
 
-fprintf('\n--- ARTIFACT CHARACTERIZATION ---\n');
+console_log('\n--- ARTIFACT CHARACTERIZATION ---\n');
 
 % 1. Boundary Jump Analysis
 jumps = [];
@@ -44,25 +44,25 @@ for i = 1:min(length(boundary_positions), 20) % Limit to first 20 boundaries
 end
 
 if ~isempty(jumps)
-    fprintf('Jump Pattern: mean=%.4f, std=%.4f, range=[%.4f, %.4f]\n', ...
+    console_log('Jump Pattern: mean=%.4f, std=%.4f, range=[%.4f, %.4f]\n', ...
         mean(jumps), std(jumps), min(jumps), max(jumps));
     
     % Check for systematic bias
     if abs(mean(jumps)) > 2*std(jumps)
-        fprintf('  → SYSTEMATIC BIAS detected (mean >> std)\n');
+        console_log('  → SYSTEMATIC BIAS detected (mean >> std)\n');
     else
-        fprintf('  → RANDOM JUMPS detected (mean ≈ std)\n');
+        console_log('  → RANDOM JUMPS detected (mean ≈ std)\n');
     end
     
     % Check for drift
     jump_trend = polyfit(1:length(jumps), jumps, 1);
     if abs(jump_trend(1)) > 0.001
-        fprintf('  → DRIFT detected: %.6f per boundary\n', jump_trend(1));
+        console_log('  → DRIFT detected: %.6f per boundary\n', jump_trend(1));
     end
 end
 
 % 2. Amplitude Scale Analysis
-fprintf('\n--- AMPLITUDE SCALING ---\n');
+console_log('\n--- AMPLITUDE SCALING ---\n');
 segment_rms = [];
 for i = 1:min(length(boundary_positions)+1, 21) % First 20 segments
     if i == 1
@@ -85,17 +85,17 @@ end
 
 if length(segment_rms) > 1
     rms_variation = std(segment_rms) / mean(segment_rms);
-    fprintf('RMS Variation: %.1f%% (std/mean)\n', rms_variation * 100);
+    console_log('RMS Variation: %.1f%% (std/mean)\n', rms_variation * 100);
     
     if rms_variation > 0.1
-        fprintf('  → AMPLITUDE SCALING issues detected\n');
+        console_log('  → AMPLITUDE SCALING issues detected\n');
     else
-        fprintf('  → Amplitude scaling OK\n');
+        console_log('  → Amplitude scaling OK\n');
     end
 end
 
 % 3. Frequency Content Analysis
-fprintf('\n--- FREQUENCY ANALYSIS ---\n');
+console_log('\n--- FREQUENCY ANALYSIS ---\n');
 % Compare pre/post boundary frequency content
 if length(boundary_positions) >= 2
     % Get data from 2 adjacent segments
@@ -111,15 +111,15 @@ if length(boundary_positions) >= 2
     post_hf_energy = sum(post_diff.^2);
     
     hf_ratio = post_hf_energy / pre_hf_energy;
-    fprintf('High-freq energy ratio (post/pre): %.2f\n', hf_ratio);
+    console_log('High-freq energy ratio (post/pre): %.2f\n', hf_ratio);
     
     if hf_ratio > 1.5 || hf_ratio < 0.67
-        fprintf('  → FREQUENCY CONTENT changes at boundaries\n');
+        console_log('  → FREQUENCY CONTENT changes at boundaries\n');
     end
 end
 
 % 4. Spatial Coherence
-fprintf('\n--- SPATIAL COHERENCE ---\n');
+console_log('\n--- SPATIAL COHERENCE ---\n');
 if length(test_channels) > 5
     % Check if all channels show similar pattern
     pos = boundary_positions(10);
@@ -132,32 +132,32 @@ if length(test_channels) > 5
         end
         
         jump_coherence = std(all_jumps) / abs(mean(all_jumps));
-        fprintf('Channel coherence: %.2f (std/mean)\n', jump_coherence);
+        console_log('Channel coherence: %.2f (std/mean)\n', jump_coherence);
         
         if jump_coherence < 0.5
-            fprintf('  → COHERENT across channels (global artifact)\n');
+            console_log('  → COHERENT across channels (global artifact)\n');
         else
-            fprintf('  → INCOHERENT across channels (channel-specific)\n');
+            console_log('  → INCOHERENT across channels (channel-specific)\n');
         end
     end
 end
 
 % 5. Correction Recommendation
-fprintf('\n--- RECOMMENDATION ---\n');
+console_log('\n--- RECOMMENDATION ---\n');
 if exist('jumps', 'var') && ~isempty(jumps)
     if abs(mean(jumps)) > 3*std(jumps)
-        fprintf('→ Try DC OFFSET correction (systematic bias)\n');
+        console_log('→ Try DC OFFSET correction (systematic bias)\n');
     elseif exist('rms_variation', 'var') && rms_variation > 0.15
-        fprintf('→ Try AMPLITUDE SCALING correction\n');
+        console_log('→ Try AMPLITUDE SCALING correction\n');
     elseif exist('hf_ratio', 'var') && (hf_ratio > 2 || hf_ratio < 0.5)
-        fprintf('→ Try FREQUENCY DOMAIN correction\n');
+        console_log('→ Try FREQUENCY DOMAIN correction\n');
     elseif std(jumps) > abs(mean(jumps))
-        fprintf('→ Artifacts may be RANDOM - filtering may not help\n');
+        console_log('→ Artifacts may be RANDOM - filtering may not help\n');
     else
-        fprintf('→ Try INTERPOLATION across boundaries\n');
+        console_log('→ Try INTERPOLATION across boundaries\n');
     end
 else
-    fprintf('→ Insufficient data for recommendation\n');
+    console_log('→ Insufficient data for recommendation\n');
 end
 
 % Create focused diagnostic plot
@@ -200,6 +200,6 @@ if length(boundary_positions) >= 10
     xlabel('Sample'); ylabel('Amplitude');
 end
 
-fprintf('\n=== DIAGNOSTIC COMPLETE ===\n');
+console_log('\n=== DIAGNOSTIC COMPLETE ===\n');
 
 end

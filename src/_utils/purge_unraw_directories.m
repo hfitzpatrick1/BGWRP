@@ -7,16 +7,16 @@ function purge_unraw_directories(base_input)
 % Input:
 %   base_input - Base directory path (e.g., 'C:\Coding\BGWRP\data\_BATCH\')
 
-fprintf('Archiving non-underscore directories to _raw and purging unmatched intermediate processing...\n');
+console_log('Archiving non-underscore directories to _raw and purging unmatched intermediate processing...\n');
 
 %% STEP 1: Archive non-underscore directories to _raw
-fprintf('\n--- STEP 1: ARCHIVING TO _RAW ---\n');
+console_log('\n--- STEP 1: ARCHIVING TO _RAW ---\n');
 
 % Ensure _raw directory exists
 raw_dir = fullfile(base_input, '_raw');
 if ~exist(raw_dir, 'dir')
     mkdir(raw_dir);
-    fprintf('Created _raw directory: %s\n', raw_dir);
+    console_log('Created _raw directory: %s\n', raw_dir);
 end
 
 % Find non-underscore directories in base_input
@@ -28,7 +28,7 @@ for i = 1:length(base_items)
     end
 end
 
-fprintf('Found %d non-underscore directories to archive\n', length(non_underscore_dirs));
+console_log('Found %d non-underscore directories to archive\n', length(non_underscore_dirs));
 
 archived_count = 0;
 for i = 1:length(non_underscore_dirs)
@@ -37,25 +37,25 @@ for i = 1:length(non_underscore_dirs)
     target_path = fullfile(raw_dir, dir_name);
     
     if exist(target_path, 'dir')
-        fprintf('  ⚠ %s already exists in _raw - skipping\n', dir_name);
+        console_log('  ⚠ %s already exists in _raw - skipping\n', dir_name);
     else
         try
             movefile(source_path, target_path);
-            fprintf('  ✓ Archived %s to _raw\n', dir_name);
+            console_log('  ✓ Archived %s to _raw\n', dir_name);
             archived_count = archived_count + 1;
         catch ME
-            fprintf('  ✗ Failed to archive %s: %s\n', dir_name, ME.message);
+            console_log('  ✗ Failed to archive %s: %s\n', dir_name, ME.message);
         end
     end
 end
 
-fprintf('Archived %d directories to _raw\n', archived_count);
+console_log('Archived %d directories to _raw\n', archived_count);
 
 %% STEP 2: Get reference list from _raw
-fprintf('\n--- STEP 2: GETTING _RAW REFERENCE ---\n');
+console_log('\n--- STEP 2: GETTING _RAW REFERENCE ---\n');
 
 if ~exist(raw_dir, 'dir')
-    fprintf('⚠ No _raw directory found after archiving\n');
+    console_log('⚠ No _raw directory found after archiving\n');
     return;
 end
 
@@ -69,15 +69,15 @@ for i = 1:length(raw_items)
 end
 
 if isempty(raw_datasets)
-    fprintf('⚠ No raw datasets found in %s\n', raw_dir);
-    fprintf('Nothing to purge against.\n');
+    console_log('⚠ No raw datasets found in %s\n', raw_dir);
+    console_log('Nothing to purge against.\n');
     return;
 end
 
-fprintf('Raw datasets to preserve: %s\n', strjoin(raw_datasets, ', '));
+console_log('Raw datasets to preserve: %s\n', strjoin(raw_datasets, ', '));
 
 %% STEP 3: Purge intermediate directories that don't match _raw
-fprintf('\n--- STEP 3: PURGING UNMATCHED INTERMEDIATE ---\n');
+console_log('\n--- STEP 3: PURGING UNMATCHED INTERMEDIATE ---\n');
 
 % Directories to clean up (all intermediate processing)
 intermediate_dirs = {
@@ -96,11 +96,11 @@ for i = 1:length(intermediate_dirs)
     target_dir = fullfile(base_input, dir_name);
     
     if ~exist(target_dir, 'dir')
-        fprintf('Skipping %s (does not exist)\n', dir_name);
+        console_log('Skipping %s (does not exist)\n', dir_name);
         continue;
     end
     
-    fprintf('\n--- Cleaning %s ---\n', dir_name);
+    console_log('\n--- Cleaning %s ---\n', dir_name);
     
     % Get items in this directory
     items = dir(target_dir);
@@ -129,7 +129,7 @@ for i = 1:length(intermediate_dirs)
     end
     
     if isempty(datasets_in_dir)
-        fprintf('  No datasets found in %s\n', dir_name);
+        console_log('  No datasets found in %s\n', dir_name);
         continue;
     end
     
@@ -138,20 +138,20 @@ for i = 1:length(intermediate_dirs)
         dataset_name = datasets_in_dir{j};
         
         if ismember(dataset_name, raw_datasets)
-            fprintf('  ✓ Preserving %s (exists in _raw)\n', dataset_name);
+            console_log('  ✓ Preserving %s (exists in _raw)\n', dataset_name);
             total_preserved = total_preserved + 1;
         else
-            fprintf('  ✗ Removing %s (not in _raw)\n', dataset_name);
+            console_log('  ✗ Removing %s (not in _raw)\n', dataset_name);
             
             % Remove dataset directory
             dataset_path = fullfile(target_dir, dataset_name);
             if exist(dataset_path, 'dir')
                 try
                     rmdir(dataset_path, 's');
-                    fprintf('    Removed directory: %s\n', dataset_path);
+                    console_log('    Removed directory: %s\n', dataset_path);
                     total_removed = total_removed + 1;
                 catch ME
-                    fprintf('    ⚠ Failed to remove %s: %s\n', dataset_path, ME.message);
+                    console_log('    ⚠ Failed to remove %s: %s\n', dataset_path, ME.message);
                 end
             end
             
@@ -162,9 +162,9 @@ for i = 1:length(intermediate_dirs)
                 if exist(config_file, 'file')
                     try
                         delete(config_file);
-                        fprintf('    Removed config file: %s\n', config_file);
+                        console_log('    Removed config file: %s\n', config_file);
                     catch ME
-                        fprintf('    ⚠ Failed to remove %s: %s\n', config_file, ME.message);
+                        console_log('    ⚠ Failed to remove %s: %s\n', config_file, ME.message);
                     end
                 end
                 
@@ -175,9 +175,9 @@ for i = 1:length(intermediate_dirs)
                     if exist(legacy_file, 'file')
                         try
                             delete(legacy_file);
-                            fprintf('    Removed legacy file: %s\n', legacy_file);
+                            console_log('    Removed legacy file: %s\n', legacy_file);
                         catch ME
-                            fprintf('    ⚠ Failed to remove %s: %s\n', legacy_file, ME.message);
+                            console_log('    ⚠ Failed to remove %s: %s\n', legacy_file, ME.message);
                         end
                     end
                 end
@@ -186,10 +186,10 @@ for i = 1:length(intermediate_dirs)
     end
 end
 
-fprintf('\n=== PURGE SUMMARY ===\n');
-fprintf('Directories archived to _raw: %d\n', archived_count);
-fprintf('Datasets preserved in intermediate: %d\n', total_preserved);
-fprintf('Datasets removed from intermediate: %d\n', total_removed);
-fprintf('Raw datasets: %s\n', strjoin(raw_datasets, ', '));
+console_log('\n=== PURGE SUMMARY ===\n');
+console_log('Directories archived to _raw: %d\n', archived_count);
+console_log('Datasets preserved in intermediate: %d\n', total_preserved);
+console_log('Datasets removed from intermediate: %d\n', total_removed);
+console_log('Raw datasets: %s\n', strjoin(raw_datasets, ', '));
 
 end

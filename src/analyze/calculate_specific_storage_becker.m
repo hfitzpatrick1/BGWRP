@@ -54,12 +54,12 @@ end
 %% Constants
 if strcmp(config.gamma_unit, 'SI')
     gamma = 9810;  % N/m³ (specific weight of water in SI)
-    fprintf('\n=== SPECIFIC STORAGE CALCULATION (Becker 2022 Method) ===\n');
-    fprintf('Using SI units\n');
+    console_log('\n=== SPECIFIC STORAGE CALCULATION (Becker 2022 Method) ===\n');
+    console_log('Using SI units\n');
 else
     gamma = 62.4;  % lb/ft³ (specific weight of water in imperial)
-    fprintf('\n=== SPECIFIC STORAGE CALCULATION (Becker 2022 Method) ===\n');
-    fprintf('Using Imperial units\n');
+    console_log('\n=== SPECIFIC STORAGE CALCULATION (Becker 2022 Method) ===\n');
+    console_log('Using Imperial units\n');
 end
 
 %% Extract linear regression slope
@@ -79,14 +79,14 @@ slope_raw = lr_results.slope;  % (1/s) per (ft/s) for strain rate, or (nm/s) per
 using_displacement_rate = isfield(lr_results, 'use_displacement_rate') && lr_results.use_displacement_rate;
 
 if using_displacement_rate
-    fprintf('\n⚠⚠⚠ WARNING: Using DISPLACEMENT RATE instead of STRAIN RATE ⚠⚠⚠\n');
-    fprintf('  Storage calculations require STRAIN RATE for correct physical meaning\n');
-    fprintf('  Displacement rate slope: %.4e (nm/s)/(ft/s)\n', slope_raw);
+    console_log('\n⚠⚠⚠ WARNING: Using DISPLACEMENT RATE instead of STRAIN RATE ⚠⚠⚠\n');
+    console_log('  Storage calculations require STRAIN RATE for correct physical meaning\n');
+    console_log('  Displacement rate slope: %.4e (nm/s)/(ft/s)\n', slope_raw);
     
     % Check if user provided custom conversion factor
     if isfield(config, 'displacement_to_strain_conversion_factor') && config.displacement_to_strain_conversion_factor > 0
         conversion_factor = config.displacement_to_strain_conversion_factor;
-        fprintf('  Using CUSTOM conversion factor: %.2e\n', conversion_factor);
+        console_log('  Using CUSTOM conversion factor: %.2e\n', conversion_factor);
     else
         % Default conversion: divide by gauge length
         % But this might be too small - user can override
@@ -94,15 +94,15 @@ if using_displacement_rate
         characteristic_length_m = gauge_length_m;
         conversion_factor = characteristic_length_m * 1e9;  % 1e10
         
-        fprintf('  Using default conversion (gauge length): L = %.1f m\n', characteristic_length_m);
-        fprintf('  ⚠ NOTE: Using single-channel approximation for strain rate calculation\n');
+        console_log('  Using default conversion (gauge length): L = %.1f m\n', characteristic_length_m);
+        console_log('  ⚠ NOTE: Using single-channel approximation for strain rate calculation\n');
     end
     
     % Convert: (nm/s) / (ft/s) → (1/s) / (ft/s)
     slope_raw = slope_raw / conversion_factor;
     
-    fprintf('  Converted slope: %.4e (1/s)/(ft/s)\n', slope_raw);
-    fprintf('  ⚠ This is an APPROXIMATION - use strain rate for accurate results\n');
+    console_log('  Converted slope: %.4e (1/s)/(ft/s)\n', slope_raw);
+    console_log('  ⚠ This is an APPROXIMATION - use strain rate for accurate results\n');
     
     % Also need to create strain_rate field for compatibility
     if isfield(lr_results, 'displacement_rate')
@@ -117,17 +117,17 @@ if ~using_displacement_rate && isfield(config, 'strain_rate_characteristic_lengt
     L_gauge = 10;  % DAS gauge length in meters
     scaling_factor = L_gauge / L_char;
     
-    fprintf('\n📏 APPLYING CHARACTERISTIC LENGTH SCALING TO STRAIN RATE 📏\n');
-    fprintf('  Strain rate calculated with gauge length: %.1f m\n', L_gauge);
-    fprintf('  Rescaling to characteristic length: %.4f m\n', L_char);
-    fprintf('  Scaling factor: %.1f (= %.1fm / %.4fm)\n', scaling_factor, L_gauge, L_char);
-    fprintf('  Original slope: %.4e (1/s)/(ft/s)\n', slope_raw);
+    console_log('\n📏 APPLYING CHARACTERISTIC LENGTH SCALING TO STRAIN RATE 📏\n');
+    console_log('  Strain rate calculated with gauge length: %.1f m\n', L_gauge);
+    console_log('  Rescaling to characteristic length: %.4f m\n', L_char);
+    console_log('  Scaling factor: %.1f (= %.1fm / %.4fm)\n', scaling_factor, L_gauge, L_char);
+    console_log('  Original slope: %.4e (1/s)/(ft/s)\n', slope_raw);
     
     % Apply scaling
     slope_raw = slope_raw * scaling_factor;
     
-    fprintf('  Scaled slope: %.4e (1/s)/(ft/s)\n', slope_raw);
-    fprintf('  ⚠ This is an EMPIRICAL SCALING - assumes effective compression over %.2f cm\n', L_char*100);
+    console_log('  Scaled slope: %.4e (1/s)/(ft/s)\n', slope_raw);
+    console_log('  ⚠ This is an EMPIRICAL SCALING - assumes effective compression over %.2f cm\n', L_char*100);
 end
 
 % Apply Poisson's ratio correction: Convert axial strain to volumetric strain
@@ -139,41 +139,41 @@ if isfield(config, 'apply_poisson_correction') && config.apply_poisson_correctio
     nu = config.poisson_ratio;
     poisson_correction = 1 + (2*nu)/(1-nu);
     
-    fprintf('\n📐 APPLYING POISSON''S RATIO CORRECTION (ISOTROPIC) 📐\n');
-    fprintf('  ⚠ WARNING: This assumes ISOTROPIC aquifer conditions\n');
-    fprintf('  DAS measures: Axial strain rate (∂εzz/∂t)\n');
-    fprintf('  Poroelasticity needs: Volumetric strain rate (∂εkk/∂t)\n');
-    fprintf('  Poisson''s ratio (ν): %.2f\n', nu);
-    fprintf('  Conversion factor: εkk/εzz = 1 + 2ν/(1-ν) = %.3f\n', poisson_correction);
-    fprintf('  Original slope: %.4e (1/s)/(ft/s)\n', slope_raw);
+    console_log('\n📐 APPLYING POISSON''S RATIO CORRECTION (ISOTROPIC) 📐\n');
+    console_log('  ⚠ WARNING: This assumes ISOTROPIC aquifer conditions\n');
+    console_log('  DAS measures: Axial strain rate (∂εzz/∂t)\n');
+    console_log('  Poroelasticity needs: Volumetric strain rate (∂εkk/∂t)\n');
+    console_log('  Poisson''s ratio (ν): %.2f\n', nu);
+    console_log('  Conversion factor: εkk/εzz = 1 + 2ν/(1-ν) = %.3f\n', poisson_correction);
+    console_log('  Original slope: %.4e (1/s)/(ft/s)\n', slope_raw);
     
     % Apply correction to slope
     slope_raw = slope_raw * poisson_correction;
     
-    fprintf('  Corrected slope: %.4e (1/s)/(ft/s)\n', slope_raw);
-    fprintf('  ✓ Now represents volumetric strain rate\n');
+    console_log('  Corrected slope: %.4e (1/s)/(ft/s)\n', slope_raw);
+    console_log('  ✓ Now represents volumetric strain rate\n');
 else
-    fprintf('\n📐 POISSON CORRECTION: DISABLED 📐\n');
-    fprintf('  Aquifer is ANISOTROPIC (stratified sediments)\n');
-    fprintf('  Using vertical strain directly without isotropic correction\n');
-    fprintf('  This is appropriate for confined, stratified aquifers\n');
+    console_log('\n📐 POISSON CORRECTION: DISABLED 📐\n');
+    console_log('  Aquifer is ANISOTROPIC (stratified sediments)\n');
+    console_log('  Using vertical strain directly without isotropic correction\n');
+    console_log('  This is appropriate for confined, stratified aquifers\n');
 end
 
 % Check if we're using head rate or drawdown rate
 using_head_rate = isfield(lr_results, 'head_rate') && ~isempty(lr_results.head_rate);
 
-fprintf('\nLinear Regression Results:\n');
+console_log('\nLinear Regression Results:\n');
 if using_head_rate
-    fprintf('  Using HEAD RATE (∂h/∂t) - slope = (∂ε/∂t) / (∂h/∂t)\n');
-    fprintf('  Slope: %.4e (1/s)/(ft/s)\n', slope_raw);
-    fprintf('  Becker eq: S_ε = -α × slope / γ\n');
+    console_log('  Using HEAD RATE (∂h/∂t) - slope = (∂ε/∂t) / (∂h/∂t)\n');
+    console_log('  Slope: %.4e (1/s)/(ft/s)\n', slope_raw);
+    console_log('  Becker eq: S_ε = -α × slope / γ\n');
 else
-    fprintf('  Using DRAWDOWN RATE (∂s/∂t) - slope = (∂ε/∂t) / (∂s/∂t)\n');
-    fprintf('  Slope: %.4e (1/s)/(ft/s)\n', slope_raw);
-    fprintf('  Becker eq: S_ε = +α × slope / γ (signs cancel)\n');
+    console_log('  Using DRAWDOWN RATE (∂s/∂t) - slope = (∂ε/∂t) / (∂s/∂t)\n');
+    console_log('  Slope: %.4e (1/s)/(ft/s)\n', slope_raw);
+    console_log('  Becker eq: S_ε = +α × slope / γ (signs cancel)\n');
 end
-fprintf('  R: %.4f\n', lr_results.R);
-fprintf('  R^2: %.4f\n', lr_results.R_squared);
+console_log('  R: %.4f\n', lr_results.R);
+console_log('  R^2: %.4f\n', lr_results.R_squared);
 
 %% Unit conversion
 % Convert to consistent units:
@@ -203,7 +203,7 @@ if strcmp(config.gamma_unit, 'SI')
         S_epsilon = -config.alpha * slope_converted / gamma;  % 1/Pa
         % Ensure positive (storage must be positive)
         if S_epsilon < 0
-            fprintf('  WARNING: S_epsilon is negative, using absolute value\n');
+            console_log('  WARNING: S_epsilon is negative, using absolute value\n');
             S_epsilon = abs(S_epsilon);
         end
     else
@@ -211,14 +211,14 @@ if strcmp(config.gamma_unit, 'SI')
     end
     S_s = S_epsilon * gamma;  % 1/m (specific storage)
     
-    fprintf('\nUnit Conversions:\n');
-    fprintf('  Strain rate: %.4e 1/s (already converted)\n', mean(abs(lr_results.strain_rate)));
+    console_log('\nUnit Conversions:\n');
+    console_log('  Strain rate: %.4e 1/s (already converted)\n', mean(abs(lr_results.strain_rate)));
     if using_head_rate
-        fprintf('  Head rate: %.4e ft/s → %.4e m/s\n', mean(abs(lr_results.head_rate)), mean(abs(lr_results.head_rate))*drawdown_rate_conversion);
+        console_log('  Head rate: %.4e ft/s → %.4e m/s\n', mean(abs(lr_results.head_rate)), mean(abs(lr_results.head_rate))*drawdown_rate_conversion);
     else
-        fprintf('  Drawdown rate: %.4e ft/s → %.4e m/s\n', mean(abs(lr_results.drawdown_rate)), mean(abs(lr_results.drawdown_rate))*drawdown_rate_conversion);
+        console_log('  Drawdown rate: %.4e ft/s → %.4e m/s\n', mean(abs(lr_results.drawdown_rate)), mean(abs(lr_results.drawdown_rate))*drawdown_rate_conversion);
     end
-    fprintf('  γ = %.1f N/m³\n', gamma);
+    console_log('  γ = %.1f N/m³\n', gamma);
     
 else  % Imperial
     % Already in ft/s - no conversion needed
@@ -233,7 +233,7 @@ else  % Imperial
         S_epsilon = -config.alpha * slope_converted / gamma;  % 1/psf
         % Ensure positive (storage must be positive)
         if S_epsilon < 0
-            fprintf('  WARNING: S_epsilon is negative, using absolute value\n');
+            console_log('  WARNING: S_epsilon is negative, using absolute value\n');
             S_epsilon = abs(S_epsilon);
         end
     else
@@ -241,37 +241,37 @@ else  % Imperial
     end
     S_s = S_epsilon * gamma;  % 1/ft
     
-    fprintf('\nUnit Conversions:\n');
-    fprintf('  Strain rate: %.4e 1/s (already converted)\n', mean(abs(lr_results.strain_rate)));
+    console_log('\nUnit Conversions:\n');
+    console_log('  Strain rate: %.4e 1/s (already converted)\n', mean(abs(lr_results.strain_rate)));
     if using_head_rate
-        fprintf('  Head rate: %.4e ft/s (already in correct units)\n', mean(abs(lr_results.head_rate)));
+        console_log('  Head rate: %.4e ft/s (already in correct units)\n', mean(abs(lr_results.head_rate)));
     else
-        fprintf('  Drawdown rate: %.4e ft/s (already in correct units)\n', mean(abs(lr_results.drawdown_rate)));
+        console_log('  Drawdown rate: %.4e ft/s (already in correct units)\n', mean(abs(lr_results.drawdown_rate)));
     end
-    fprintf('  γ = %.1f lb/ft³\n', gamma);
+    console_log('  γ = %.1f lb/ft³\n', gamma);
 end
 
 %% Display results
-fprintf('\n=== STORAGE PARAMETERS (Becker Method) ===\n');
-fprintf('Biot-Willis coefficient (α): %.2f\n', config.alpha);
+console_log('\n=== STORAGE PARAMETERS (Becker Method) ===\n');
+console_log('Biot-Willis coefficient (α): %.2f\n', config.alpha);
 if strcmp(config.gamma_unit, 'SI')
-    fprintf('S_ε (strain-constrained): %.4e 1/Pa\n', S_epsilon);
-    fprintf('S_s (specific storage): %.4e 1/m\n', S_s);
+    console_log('S_ε (strain-constrained): %.4e 1/Pa\n', S_epsilon);
+    console_log('S_s (specific storage): %.4e 1/m\n', S_s);
 else
-    fprintf('S_ε (strain-constrained): %.4e 1/psf\n', S_epsilon);
-    fprintf('S_s (specific storage): %.4e 1/ft\n', S_s);
+    console_log('S_ε (strain-constrained): %.4e 1/psf\n', S_epsilon);
+    console_log('S_s (specific storage): %.4e 1/ft\n', S_s);
 end
 
 %% Quality assessment
-fprintf('\n=== QUALITY METRICS ===\n');
-fprintf('Correlation (R): %.4f\n', lr_results.R);
-fprintf('R^2: %.4f\n', lr_results.R_squared);
+console_log('\n=== QUALITY METRICS ===\n');
+console_log('Correlation (R): %.4f\n', lr_results.R);
+console_log('R^2: %.4f\n', lr_results.R_squared);
 if lr_results.R_squared > 0.7
-    fprintf('✓ Strong correlation - reliable estimate\n');
+    console_log('✓ Strong correlation - reliable estimate\n');
 elseif lr_results.R_squared > 0.4
-    fprintf('⚠ Moderate correlation - use with caution\n');
+    console_log('⚠ Moderate correlation - use with caution\n');
 else
-    fprintf('✗ Weak correlation - results may be unreliable\n');
+    console_log('✗ Weak correlation - results may be unreliable\n');
 end
 
 %% Package results

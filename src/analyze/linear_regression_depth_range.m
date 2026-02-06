@@ -25,35 +25,35 @@ if ~isfield(config, 'timing_correction_sec'), config.timing_correction_sec = 8; 
 if ~isfield(config, 'depth_range_ft'), config.depth_range_ft = [190, 340]; end
 
 %% Extract data
-fprintf('\n=== DEPTH-SPECIFIC LINEAR REGRESSION ===\n');
-fprintf('Test: %s\n', test_name);
-fprintf('Zone: %s\n', config.zone);
-fprintf('Depth range: %.0f to %.0f ft\n', config.depth_range_ft(1), config.depth_range_ft(2));
+console_log('\n=== DEPTH-SPECIFIC LINEAR REGRESSION ===\n');
+console_log('Test: %s\n', test_name);
+console_log('Zone: %s\n', config.zone);
+console_log('Depth range: %.0f to %.0f ft\n', config.depth_range_ft(1), config.depth_range_ft(2));
 
 das_filtered = das_results.(test_name);
 head_filtered = head_results.(test_name);
 
 %% Get DAS displacement rate for FULL depth range (not just one channel!)
 % Use lightly smoothed data (compromise between raw and over-smoothed)
-fprintf('Using lightly smoothed data for strain rate calculation\n');
+console_log('Using lightly smoothed data for strain rate calculation\n');
 displacement_rate_full = das_filtered.smoothed_data;  % Use the 5s smoothed data
-fprintf('This provides noise reduction while preserving spatial gradients\n');
+console_log('This provides noise reduction while preserving spatial gradients\n');
 time_das_full = das_filtered.time_array;  % Full time vector (not just analysis window!)
 depth_ft = das_filtered.depth_ft;
 
 % Apply same smoothing as single channel method (5-second only)
-fprintf('\n=== APPLYING SMOOTHING TO MATCH SINGLE CHANNEL METHOD ===\n');
-fprintf('Applying 5-second moving average (same as single channel)...\n');
+console_log('\n=== APPLYING SMOOTHING TO MATCH SINGLE CHANNEL METHOD ===\n');
+console_log('Applying 5-second moving average (same as single channel)...\n');
 % Note: displacement_rate_full is already smoothed from DAS analysis, but apply consistent processing
-fprintf('✓ Using existing smoothing from DAS analysis\n\n');
+console_log('✓ Using existing smoothing from DAS analysis\n\n');
 
 % DEBUG: Check if smoothed_data was actually smoothed
-fprintf('\n');
-fprintf('═══════════════════════════════════════════════════════════════\n');
-fprintf('  DEBUG: CHECKING IF 5-SECOND MOVING AVERAGE WAS APPLIED\n');
-fprintf('═══════════════════════════════════════════════════════════════\n');
-fprintf('smoothed_data exists: YES\n');
-fprintf('smoothed_data size: [%d time points × %d channels]\n', size(displacement_rate_full, 1), size(displacement_rate_full, 2));
+console_log('\n');
+console_log('═══════════════════════════════════════════════════════════════\n');
+console_log('  DEBUG: CHECKING IF 5-SECOND MOVING AVERAGE WAS APPLIED\n');
+console_log('═══════════════════════════════════════════════════════════════\n');
+console_log('smoothed_data exists: YES\n');
+console_log('smoothed_data size: [%d time points × %d channels]\n', size(displacement_rate_full, 1), size(displacement_rate_full, 2));
 
 smoothing_applied = false;
 smoothing_info = 'UNKNOWN';
@@ -64,19 +64,19 @@ if isfield(das_filtered, 'smoothing_method')
         smoothing_info = sprintf('%s (window: %d samples = %.1f seconds)', ...
             das_filtered.smoothing_method, das_filtered.smoothing_window, das_filtered.smoothing_window);
     end
-    fprintf('Stored smoothing method: %s\n', smoothing_info);
+    console_log('Stored smoothing method: %s\n', smoothing_info);
     
     % Check if it's the expected 5-second movmean
     if strcmp(das_filtered.smoothing_method, 'matlab_movmean') || ...
        (strcmp(das_filtered.smoothing_method, 'movmean') && isfield(das_filtered, 'smoothing_window') && das_filtered.smoothing_window == 5)
         smoothing_applied = true;
-        fprintf('✓ Expected 5-second moving average detected\n');
+        console_log('✓ Expected 5-second moving average detected\n');
     else
-        fprintf('⚠ Different smoothing method than expected (expected: matlab_movmean with 5-second window)\n');
+        console_log('⚠ Different smoothing method than expected (expected: matlab_movmean with 5-second window)\n');
     end
 else
-    fprintf('⚠⚠⚠ CRITICAL: No smoothing_method field stored!\n');
-    fprintf('   This means smoothing was NOT applied during correlation analysis.\n');
+    console_log('⚠⚠⚠ CRITICAL: No smoothing_method field stored!\n');
+    console_log('   This means smoothing was NOT applied during correlation analysis.\n');
 end
 
 % Check if data looks smoothed by sampling a channel in the depth range
@@ -89,37 +89,37 @@ if ~isempty(depth_ft)
         diff_data = abs(diff(sample_data));
         mean_diff = mean(diff_data);
         std_diff = std(diff_data);
-        fprintf('\nSample channel at %.1f ft:\n', depth_ft(sample_idx));
-        fprintf('  mean(|diff|) = %.2e nm/s\n', mean_diff);
-        fprintf('  std(|diff|)  = %.2e nm/s\n', std_diff);
+        console_log('\nSample channel at %.1f ft:\n', depth_ft(sample_idx));
+        console_log('  mean(|diff|) = %.2e nm/s\n', mean_diff);
+        console_log('  std(|diff|)  = %.2e nm/s\n', std_diff);
         
         % Thresholds: smoothed data should have much lower variance
         if mean_diff > 0.005 || std_diff > 0.01
-            fprintf('\n⚠⚠⚠ WARNING: Data appears to be RAW/UNSMOOTHED ⚠⚠⚠\n');
-            fprintf('   Expected for 5-second smoothed: mean_diff < 0.001, std_diff < 0.01\n');
-            fprintf('   Your values are: mean_diff=%.2e, std_diff=%.2e\n', mean_diff, std_diff);
-            fprintf('\n   ═══ ACTION REQUIRED ═══\n');
-            fprintf('   Re-run correlation analysis to apply smoothing:\n');
-            fprintf('   >> mode = ''run_correlation_analysis'';\n');
-            fprintf('   >> BGWRP_Toolkit\n');
-            fprintf('   Then re-run this linear regression function.\n');
+            console_log('\n⚠⚠⚠ WARNING: Data appears to be RAW/UNSMOOTHED ⚠⚠⚠\n');
+            console_log('   Expected for 5-second smoothed: mean_diff < 0.001, std_diff < 0.01\n');
+            console_log('   Your values are: mean_diff=%.2e, std_diff=%.2e\n', mean_diff, std_diff);
+            console_log('\n   ═══ ACTION REQUIRED ═══\n');
+            console_log('   Re-run correlation analysis to apply smoothing:\n');
+            console_log('   >> mode = ''run_correlation_analysis'';\n');
+            console_log('   >> BGWRP_Toolkit\n');
+            console_log('   Then re-run this linear regression function.\n');
         else
             data_appears_smoothed = true;
-            fprintf('\n✓ Data appears to be SMOOTHED (low variance between samples)\n');
+            console_log('\n✓ Data appears to be SMOOTHED (low variance between samples)\n');
         end
     end
 end
 
 % Final verdict
-fprintf('\n═══════════════════════════════════════════════════════════════\n');
+console_log('\n═══════════════════════════════════════════════════════════════\n');
 if smoothing_applied && data_appears_smoothed
-    fprintf('  ✓✓✓ VERDICT: 5-SECOND MOVING AVERAGE IS APPLIED ✓✓✓\n');
+    console_log('  ✓✓✓ VERDICT: 5-SECOND MOVING AVERAGE IS APPLIED ✓✓✓\n');
 elseif ~smoothing_applied
-    fprintf('  ⚠⚠⚠ VERDICT: SMOOTHING NOT DETECTED - RE-RUN CORRELATION ANALYSIS ⚠⚠⚠\n');
+    console_log('  ⚠⚠⚠ VERDICT: SMOOTHING NOT DETECTED - RE-RUN CORRELATION ANALYSIS ⚠⚠⚠\n');
 else
-    fprintf('  ⚠ VERDICT: INCONSISTENT - Check smoothing settings\n');
+    console_log('  ⚠ VERDICT: INCONSISTENT - Check smoothing settings\n');
 end
-fprintf('═══════════════════════════════════════════════════════════════\n\n');
+console_log('═══════════════════════════════════════════════════════════════\n\n');
 
 % If recovery_window is specified, extract only that time range FOR REGRESSION
 % But keep full data for plotting context
@@ -127,7 +127,7 @@ if isfield(config, 'recovery_window') && ~isempty(config.recovery_window)
     recovery_start = config.recovery_window(1);
     recovery_end = config.recovery_window(2);
     
-    fprintf('Using custom recovery window for regression: %s to %s\n', datestr(recovery_start), datestr(recovery_end));
+    console_log('Using custom recovery window for regression: %s to %s\n', datestr(recovery_start), datestr(recovery_end));
     
     % Save FULL data for plotting
     displacement_rate_full_plot = displacement_rate_full;
@@ -141,23 +141,23 @@ if isfield(config, 'recovery_window') && ~isempty(config.recovery_window)
     displacement_rate_full = displacement_rate_full(rec_start_idx:rec_end_idx, :);
     time_das = time_das_full(rec_start_idx:rec_end_idx);
     
-    fprintf('Extracted %d time points for regression (%.1f seconds)\n', length(time_das), seconds(recovery_end - recovery_start));
-    fprintf('Kept %d time points for plotting (full analysis window)\n', length(time_das_full_plot));
+    console_log('Extracted %d time points for regression (%.1f seconds)\n', length(time_das), seconds(recovery_end - recovery_start));
+    console_log('Kept %d time points for plotting (full analysis window)\n', length(time_das_full_plot));
 else
     % Use the default analysis window
     time_das = das_filtered.analysis_time;
     displacement_rate_full_plot = displacement_rate_full;
     time_das_full_plot = time_das_full;
-    fprintf('Using default analysis window\n');
+    console_log('Using default analysis window\n');
 end
 
 % Find channels in depth range
 depth_mask = (depth_ft >= config.depth_range_ft(1)) & (depth_ft <= config.depth_range_ft(2));
 n_channels = sum(depth_mask);
 
-fprintf('DAS data: %d time points\n', length(time_das));
-fprintf('Channels in depth range: %d (out of %d total)\n', n_channels, length(depth_ft));
-fprintf('Depth range: %.1f to %.1f ft\n', min(depth_ft(depth_mask)), max(depth_ft(depth_mask)));
+console_log('DAS data: %d time points\n', length(time_das));
+console_log('Channels in depth range: %d (out of %d total)\n', n_channels, length(depth_ft));
+console_log('Depth range: %.1f to %.1f ft\n', min(depth_ft(depth_mask)), max(depth_ft(depth_mask)));
 
 if n_channels == 0
     error('No channels found in depth range %.0f-%.0f ft!', config.depth_range_ft(1), config.depth_range_ft(2));
@@ -172,43 +172,43 @@ depth_ft_zone = depth_ft(depth_mask);
 displacement_rate_zone = displacement_rate_full(:, depth_mask);
 
 % CRITICAL FIX: Use PRE-SMOOTHED data for spatial difference (like single channel)
-fprintf('\n=== USING PRE-SMOOTHED DISPLACEMENT RATES (MATCHING SINGLE CHANNEL) ===\n');
-fprintf('Using smoothed displacement rates for strain rate calculation\n');
-fprintf('✓ This prevents noise amplification in spatial differences\n\n');
+console_log('\n=== USING PRE-SMOOTHED DISPLACEMENT RATES (MATCHING SINGLE CHANNEL) ===\n');
+console_log('Using smoothed displacement rates for strain rate calculation\n');
+console_log('✓ This prevents noise amplification in spatial differences\n\n');
 
 %% Apply same smoothing as single channel BEFORE spatial difference
-fprintf('\n=== APPLYING PRE-SMOOTHING (CRITICAL FOR SPATIAL DIFFERENCES) ===\n');
-fprintf('Applying 5-second smoothing to displacement rates BEFORE spatial difference...\n');
+console_log('\n=== APPLYING PRE-SMOOTHING (CRITICAL FOR SPATIAL DIFFERENCES) ===\n');
+console_log('Applying 5-second smoothing to displacement rates BEFORE spatial difference...\n');
 
 % Apply 5-second smoothing to displacement rates (same as single channel)
 for ch = 1:size(displacement_rate_zone, 2)
     displacement_rate_zone(:, ch) = movmean(displacement_rate_zone(:, ch), 5, 1, 'omitnan');
 end
-fprintf('✓ Applied 5-second smoothing to all channels in zone\n');
-fprintf('✓ This matches single-channel processing and reduces spatial difference noise\n');
+console_log('✓ Applied 5-second smoothing to all channels in zone\n');
+console_log('✓ This matches single-channel processing and reduces spatial difference noise\n');
 
 %% Convert to strain rate using correct formula: ε̇ = [u̇(z+L) - u̇(z)] / L
 gauge_length_m = 10;  % DAS gauge length in meters
 spatial_resolution_m = 0.25;  % Spatial resolution per channel (0.2496 m with scaling)
 channels_per_gauge = round(gauge_length_m / spatial_resolution_m);  % ~40 channels
 
-fprintf('Calculating strain rate using difference across gauge length:\n');
-fprintf('  Gauge length: %.1f m\n', gauge_length_m);
-fprintf('  Spatial resolution: %.3f m/channel\n', spatial_resolution_m);
-fprintf('  Channels per gauge: %d\n', channels_per_gauge);
+console_log('Calculating strain rate using difference across gauge length:\n');
+console_log('  Gauge length: %.1f m\n', gauge_length_m);
+console_log('  Spatial resolution: %.3f m/channel\n', spatial_resolution_m);
+console_log('  Channels per gauge: %d\n', channels_per_gauge);
 
 % Calculate strain rate using CLEAN implementation of ε̇ = [u̇(z+L) - u̇(z)] / L
 % Using correct 10m gauge length as per DAS specifications
 gauge_length_m = 10;  % DAS gauge length - instrument specification
 channels_per_gauge = round(gauge_length_m / spatial_resolution_m);  % ~40 channels
 
-fprintf('Using spatial difference with correct DAS gauge length:\n');
-fprintf('  Gauge length: %.1f m (DAS specification)\n', gauge_length_m);
-fprintf('  Channels per gauge: %d\n', channels_per_gauge);
+console_log('Using spatial difference with correct DAS gauge length:\n');
+console_log('  Gauge length: %.1f m (DAS specification)\n', gauge_length_m);
+console_log('  Channels per gauge: %d\n', channels_per_gauge);
 
 n_channels_zone = size(displacement_rate_zone, 2);
-fprintf('DEBUG: n_channels_zone = %d, channels_per_gauge = %d\n', n_channels_zone, channels_per_gauge);
-fprintf('DEBUG: strain_rate_zone will have %d columns\n', n_channels_zone - channels_per_gauge);
+console_log('DEBUG: n_channels_zone = %d, channels_per_gauge = %d\n', n_channels_zone, channels_per_gauge);
+console_log('DEBUG: strain_rate_zone will have %d columns\n', n_channels_zone - channels_per_gauge);
 
 if n_channels_zone <= channels_per_gauge
     error('Not enough channels in depth range (%d) to calculate strain rate with %d-channel gauge length', ...
@@ -218,7 +218,7 @@ end
 strain_rate_zone = zeros(size(displacement_rate_zone, 1), n_channels_zone - channels_per_gauge);
 
 % BECKER APPROACH: Find most responsive zones first, then analyze separately
-fprintf('\n=== IDENTIFYING RESPONSIVE ZONES (Becker Method) ===\n');
+console_log('\n=== IDENTIFYING RESPONSIVE ZONES (Becker Method) ===\n');
 
 % Calculate strain rate for each possible channel pair
 n_channels_zone = size(displacement_rate_zone, 2);
@@ -226,8 +226,8 @@ all_strain_rates = zeros(size(displacement_rate_zone, 1), n_channels_zone - chan
 
 % CORRECTED: Use CENTERED difference like the DAS instrument does internally
 % From the paper: DAS uses [u(z+dz/2) - u(z-dz/2)] not [u(z+dz) - u(z)]
-fprintf('CRITICAL INSIGHT: Using CENTERED spatial difference (like DAS instrument)\n');
-fprintf('Formula: ε̇ = [u̇(z+L/2) - u̇(z-L/2)] / L (centered difference)\n');
+console_log('CRITICAL INSIGHT: Using CENTERED spatial difference (like DAS instrument)\n');
+console_log('Formula: ε̇ = [u̇(z+L/2) - u̇(z-L/2)] / L (centered difference)\n');
 
 half_gauge_channels = round(channels_per_gauge / 2);  % 20 channels = 5m
 all_strain_rates = zeros(size(displacement_rate_zone, 1), n_channels_zone - channels_per_gauge);
@@ -238,7 +238,7 @@ for ch = (half_gauge_channels + 1):(n_channels_zone - half_gauge_channels)
     all_strain_rates(:, ch - half_gauge_channels) = displacement_diff / (gauge_length_m * 1e9);
 end
 
-fprintf('✓ Using centered spatial difference (matches DAS instrument design)\n');
+console_log('✓ Using centered spatial difference (matches DAS instrument design)\n');
 
 % ADAPTIVE APPROACH: Find the depth with maximum spatial gradient (best for strain rate)
 % Calculate spatial gradients across the zone to find most responsive area
@@ -250,16 +250,16 @@ for t = 1:size(displacement_rate_zone, 1)
 end
 
 % AUTOMATIC DEPTH SELECTION: Find most responsive depth pair in the zone
-fprintf('\n=== CALCULATING STRAIN RATES ACROSS ENTIRE ZONE ===\n');
-fprintf('  Will calculate strain rate at every valid depth using 10m gauge\n');
-fprintf('  Then select the MOST RESPONSIVE depth pair (maximum peak strain)\n');
+console_log('\n=== CALCULATING STRAIN RATES ACROSS ENTIRE ZONE ===\n');
+console_log('  Will calculate strain rate at every valid depth using 10m gauge\n');
+console_log('  Then select the MOST RESPONSIVE depth pair (maximum peak strain)\n');
 
 % For each valid starting position in the zone
 n_valid_points = n_channels_zone - channels_per_gauge;
 all_strain_rates = zeros(size(displacement_rate_zone, 1), n_valid_points);
 
-fprintf('  Depth range: %.1f to %.1f ft\n', depth_ft_zone(1), depth_ft_zone(end));
-fprintf('  Valid depth pairs: %d\n', n_valid_points);
+console_log('  Depth range: %.1f to %.1f ft\n', depth_ft_zone(1), depth_ft_zone(end));
+console_log('  Valid depth pairs: %d\n', n_valid_points);
 
 for i = 1:n_valid_points
     ch_start_i = i;
@@ -269,10 +269,10 @@ for i = 1:n_valid_points
 end
 
 % MAXIMUM ENVELOPE with MOVING AVERAGE (to match Bourdet-style smoothing on head data)
-fprintf('\n=== MAXIMUM ENVELOPE + MOVING AVERAGE SMOOTHING ===\n');
-fprintf('  Step 1: Maximum envelope across all depths (preserves peak)\n');
-fprintf('  Step 2: Apply 60-second moving average (matching head data smoothing)\n');
-fprintf('  Depth range: %.0f-%.0f ft\n', config.depth_range_ft(1), config.depth_range_ft(2));
+console_log('\n=== MAXIMUM ENVELOPE + MOVING AVERAGE SMOOTHING ===\n');
+console_log('  Step 1: Maximum envelope across all depths (preserves peak)\n');
+console_log('  Step 2: Apply 60-second moving average (matching head data smoothing)\n');
+console_log('  Depth range: %.0f-%.0f ft\n', config.depth_range_ft(1), config.depth_range_ft(2));
 
 % Take maximum absolute value at each time point across all depths
 strain_rate_zone = max(abs(all_strain_rates), [], 2);
@@ -283,8 +283,8 @@ for t = 1:length(strain_rate_zone)
     strain_rate_zone(t) = strain_rate_zone(t) * sign(all_strain_rates(t, max_idx(t)));
 end
 
-fprintf('  Calculated maximum envelope at %d depths\n', n_valid_points);
-fprintf('  BEFORE additional smoothing: PEAK = %.4e 1/s\n', max(abs(strain_rate_zone)));
+console_log('  Calculated maximum envelope at %d depths\n', n_valid_points);
+console_log('  BEFORE additional smoothing: PEAK = %.4e 1/s\n', max(abs(strain_rate_zone)));
 
 % Apply smoothing (default 40 seconds, or dataset-specific)
 % Data already has preprocessing smoothing from main analysis
@@ -296,31 +296,31 @@ if isfield(config, 'dataset_smoothing') && isfield(config.dataset_smoothing, tes
     ds_config = config.dataset_smoothing.(test_name);
     if isfield(ds_config, 'fs') && isfield(ds_config, 'regression_window_sec')
         regression_smooth_samples = round(ds_config.regression_window_sec * ds_config.fs);
-        fprintf('  Using dataset-specific regression smoothing: %d seconds = %d samples at %d Hz\n', ...
+        console_log('  Using dataset-specific regression smoothing: %d seconds = %d samples at %d Hz\n', ...
             ds_config.regression_window_sec, regression_smooth_samples, ds_config.fs);
     end
 end
 
 strain_smoothed = movmean(strain_rate_zone, regression_smooth_samples, 'omitnan');
 
-fprintf('  AFTER %d-sample moving average: PEAK = %.4e 1/s\n', regression_smooth_samples, max(abs(strain_smoothed)));
-fprintf('  Peak retention: %.2f%%\n', 100 * max(abs(strain_smoothed)) / max(abs(strain_rate_zone)));
-fprintf('✓ Regression smoothing applied (%d samples)\n', regression_smooth_samples);
+console_log('  AFTER %d-sample moving average: PEAK = %.4e 1/s\n', regression_smooth_samples, max(abs(strain_smoothed)));
+console_log('  Peak retention: %.2f%%\n', 100 * max(abs(strain_smoothed)) / max(abs(strain_rate_zone)));
+console_log('✓ Regression smoothing applied (%d samples)\n', regression_smooth_samples);
 
-fprintf('Displacement rate range: %.2e to %.2e nm/s\n', ...
+console_log('Displacement rate range: %.2e to %.2e nm/s\n', ...
     min(displacement_rate_zone(:)), max(displacement_rate_zone(:)));
-fprintf('Strain rate range: %.2e to %.2e 1/s (calculated from difference across gauge length)\n', ...
+console_log('Strain rate range: %.2e to %.2e 1/s (calculated from difference across gauge length)\n', ...
     min(strain_smoothed), max(strain_smoothed));
 
 %% Get Zone head data
 zone_head = head_filtered.zones.(config.zone).recovery_data.Drawdownft;  % Drawdown (ft)
 zone_time = head_filtered.zones.(config.zone).recovery_data.Date;  % Datetime array
 
-fprintf('Head data: %d time points\n', length(zone_time));
+console_log('Head data: %d time points\n', length(zone_time));
 
 %% Apply timing correction
-fprintf('\n=== TIMING CORRECTION ===\n');
-fprintf('Shifting head data backward by %d seconds\n', config.timing_correction_sec);
+console_log('\n=== TIMING CORRECTION ===\n');
+console_log('Shifting head data backward by %d seconds\n', config.timing_correction_sec);
 zone_time_corrected = zone_time - seconds(config.timing_correction_sec);
 
 %% Calculate HEAD RATE (not drawdown rate!)
@@ -329,9 +329,9 @@ zone_time_corrected = zone_time - seconds(config.timing_correction_sec);
 % Since s = h_initial - h, we have: ∂h/∂t = -∂s/∂t
 % So we need to negate the drawdown rate to get head rate
 
-fprintf('\n=== BOURDET DERIVATIVE FOR DRAWDOWN DATA ===\n');
-fprintf('Using central differencing with time-weighting (Bourdet method)\n');
-fprintf('Formula: d'' = (Δt₂/(Δt₁+Δt₂)) × dh/dt|₁ + (Δt₁/(Δt₁+Δt₂)) × dh/dt|₂\n');
+console_log('\n=== BOURDET DERIVATIVE FOR DRAWDOWN DATA ===\n');
+console_log('Using central differencing with time-weighting (Bourdet method)\n');
+console_log('Formula: d'' = (Δt₂/(Δt₁+Δt₂)) × dh/dt|₁ + (Δt₁/(Δt₁+Δt₂)) × dh/dt|₂\n');
 
 % Calculate Bourdet derivative (central differencing with time weighting)
 n_points = length(zone_head);
@@ -356,18 +356,18 @@ end
 
 head_rate_ftps = -drawdown_rate_ftps;  % Head rate: ∂h/∂t = -∂s/∂t (positive during recovery)
 
-fprintf('✓ Bourdet derivative calculated at %d points (central differencing)\n', length(drawdown_rate_ftps));
-fprintf('  Original points: %d → Bourdet points: %d (lost 2 edge points)\n', n_points, length(drawdown_rate_ftps));
+console_log('✓ Bourdet derivative calculated at %d points (central differencing)\n', length(drawdown_rate_ftps));
+console_log('  Original points: %d → Bourdet points: %d (lost 2 edge points)\n', n_points, length(drawdown_rate_ftps));
 
-fprintf('Drawdown rate range: %.4e to %.4e ft/s (negative during recovery)\n', min(drawdown_rate_ftps), max(drawdown_rate_ftps));
-fprintf('Head rate range: %.4e to %.4e ft/s (positive during recovery)\n', min(head_rate_ftps), max(head_rate_ftps));
+console_log('Drawdown rate range: %.4e to %.4e ft/s (negative during recovery)\n', min(drawdown_rate_ftps), max(drawdown_rate_ftps));
+console_log('Head rate range: %.4e to %.4e ft/s (positive during recovery)\n', min(head_rate_ftps), max(head_rate_ftps));
 
 %% Find overlapping time range
 time_start = max(min(time_das), min(time_head_rate));
 time_end = min(max(time_das), max(time_head_rate));
 
-fprintf('\n=== OVERLAPPING TIME RANGE ===\n');
-fprintf('Overlap: %s to %s (%.1f seconds)\n', datestr(time_start), datestr(time_end), seconds(time_end - time_start));
+console_log('\n=== OVERLAPPING TIME RANGE ===\n');
+console_log('Overlap: %s to %s (%.1f seconds)\n', datestr(time_start), datestr(time_end), seconds(time_end - time_start));
 
 % Extract data only within overlapping window
 valid_head_idx = (time_head_rate >= time_start) & (time_head_rate <= time_end);
@@ -377,25 +377,25 @@ ft_to_m = 0.3048;
 head_rate_overlap = drawdown_rate_ftps(valid_head_idx) * ft_to_m;  % m/s (converted from ft/s)
 
 % ADDITIONAL SMOOTHING to Bourdet derivative - MATCH STRAIN RATE SMOOTHING
-fprintf('\n=== ADDITIONAL SMOOTHING TO BOURDET DERIVATIVE ===\n');
-fprintf('Note: Bourdet derivative already provides noise reduction\n');
-fprintf('Applying 12-point (~60s) moving average to MATCH strain rate Butterworth period...\n');
+console_log('\n=== ADDITIONAL SMOOTHING TO BOURDET DERIVATIVE ===\n');
+console_log('Note: Bourdet derivative already provides noise reduction\n');
+console_log('Applying 12-point (~60s) moving average to MATCH strain rate Butterworth period...\n');
 % Since drawdown is sampled at 0.2 Hz (every 5 sec), 12 points = 60 seconds
 % This matches the 60s Butterworth filter applied to strain rate
 head_rate_overlap = movmean(head_rate_overlap, 12, 'omitnan');
-fprintf('✓ Applied 12-point moving average to match 60s strain rate smoothing\n');
+console_log('✓ Applied 12-point moving average to match 60s strain rate smoothing\n');
 
 time_das_overlap = time_das;  % Already the right window
 % strain_smoothed should be from the windowed data, but check sizes
 if length(strain_smoothed) ~= length(time_das)
-    fprintf('WARNING: strain_smoothed (%d) and time_das (%d) size mismatch!\n', ...
+    console_log('WARNING: strain_smoothed (%d) and time_das (%d) size mismatch!\n', ...
         length(strain_smoothed), length(time_das));
     % Extract the same window from strain_smoothed
     if length(strain_smoothed) > length(time_das)
         % Assume strain_smoothed is from the full time series, extract the analysis window
         strain_overlap = strain_smoothed(1:length(time_das));
         strain_overlap_raw = strain_raw(1:length(time_das));  % Also extract raw
-        fprintf('  Extracted first %d points from strain_smoothed\n', length(time_das));
+        console_log('  Extracted first %d points from strain_smoothed\n', length(time_das));
     else
         strain_overlap = strain_smoothed;
         strain_overlap_raw = strain_raw;  % Also get raw
@@ -405,20 +405,20 @@ else
     strain_overlap_raw = strain_raw;  % Also get raw
 end
 
-fprintf('DEBUG: Final sizes - strain_overlap: [%d x %d], time_das_overlap: [%d x %d]\n', ...
+console_log('DEBUG: Final sizes - strain_overlap: [%d x %d], time_das_overlap: [%d x %d]\n', ...
     size(strain_overlap, 1), size(strain_overlap, 2), size(time_das_overlap, 1), size(time_das_overlap, 2));
 
-fprintf('Head points in overlap: %d\n', sum(valid_head_idx));
-fprintf('DAS points in overlap: %d\n', length(time_das_overlap));
+console_log('Head points in overlap: %d\n', sum(valid_head_idx));
+console_log('DAS points in overlap: %d\n', length(time_das_overlap));
 
 %% Interpolate DAS strain rate to match head time points
 strain_interp = interp1(time_das_overlap, strain_overlap, time_head_overlap, 'linear');
 
 % Remove any NaN values
-fprintf('\n=== CHECKING DATA VALIDITY ===\n');
-fprintf('strain_interp: %d total points, %d NaN (%.1f%%)\n', ...
+console_log('\n=== CHECKING DATA VALIDITY ===\n');
+console_log('strain_interp: %d total points, %d NaN (%.1f%%)\n', ...
     length(strain_interp), sum(isnan(strain_interp)), 100*sum(isnan(strain_interp))/length(strain_interp));
-fprintf('head_rate_overlap: %d total points, %d NaN (%.1f%%)\n', ...
+console_log('head_rate_overlap: %d total points, %d NaN (%.1f%%)\n', ...
     length(head_rate_overlap), sum(isnan(head_rate_overlap)), 100*sum(isnan(head_rate_overlap))/length(head_rate_overlap));
 
 valid_idx = ~isnan(strain_interp) & ~isnan(head_rate_overlap);
@@ -426,17 +426,17 @@ strain_clean = strain_interp(valid_idx);
 drawdown_rate_clean = head_rate_overlap(valid_idx);  % Flip so drawdown spike at 19:15 points UP
 time_clean = time_head_overlap(valid_idx);
 
-fprintf('Valid points for regression: %d (out of %d total)\n', length(strain_clean), length(valid_idx));
+console_log('Valid points for regression: %d (out of %d total)\n', length(strain_clean), length(valid_idx));
 if length(strain_clean) < 2
     error('Not enough valid points for regression! Only %d valid points found. Check if DAS filtering produced NaN values.', length(strain_clean));
 end
 
 % Flip strain rate to match drawdown rate direction
-fprintf('  Flipping strain rate to match drawdown rate direction\n');
+console_log('  Flipping strain rate to match drawdown rate direction\n');
 strain_clean = -strain_clean;  % Flip strain rate so both spikes at 19:15 point same direction
 
 % TEMPORAL WEIGHTING: Emphasize regions where strain and drawdown align best
-fprintf('  Using TEMPORAL WEIGHTING to emphasize well-aligned regions\n');
+console_log('  Using TEMPORAL WEIGHTING to emphasize well-aligned regions\n');
 
 % Create time-based weights for PT01a data with better alignment
 % Main peak: 20:45:25-20:45:40 (where both signals peak together)
@@ -463,18 +463,18 @@ for i = 1:length(time_clean)
     end
 end
 
-fprintf('    Main peak (20:45:25-20:45:40): weight = 10.0 (best alignment)\n');
-fprintf('    Secondary feature (20:45:55-20:46:10): weight = 5.0 (good alignment)\n');
-fprintf('    Transition regions: weight = 2.0\n');
-fprintf('    Early region (before 20:45:25): weight = 0.2 (poor alignment)\n');
-fprintf('    Tail region (after 20:46:10): weight = 0.3 (recovery phase)\n');
+console_log('    Main peak (20:45:25-20:45:40): weight = 10.0 (best alignment)\n');
+console_log('    Secondary feature (20:45:55-20:46:10): weight = 5.0 (good alignment)\n');
+console_log('    Transition regions: weight = 2.0\n');
+console_log('    Early region (before 20:45:25): weight = 0.2 (poor alignment)\n');
+console_log('    Tail region (after 20:46:10): weight = 0.3 (recovery phase)\n');
 
 %% LINEAR REGRESSION: Strain Rate vs Drawdown Rate (with temporal weighting)
-fprintf('\n=== WEIGHTED REGRESSION RESULTS ===\n');
+console_log('\n=== WEIGHTED REGRESSION RESULTS ===\n');
 
 % FOR PLOTTING: Also prepare full analysis window data (not just regression window)
 % This will allow plots to show context around the regression window
-fprintf('\n=== PREPARING FULL WINDOW DATA FOR PLOTTING ===\n');
+console_log('\n=== PREPARING FULL WINDOW DATA FOR PLOTTING ===\n');
 if exist('time_das_full_plot', 'var') && exist('displacement_rate_full_plot', 'var')
     % Calculate strain rate for full plotting window (same process as regression window)
     displacement_rate_zone_plot = displacement_rate_full_plot(:, depth_mask);
@@ -504,9 +504,9 @@ if exist('time_das_full_plot', 'var') && exist('displacement_rate_full_plot', 'v
     % Apply same smoothing as the overlap data
     head_rate_plot = movmean(head_rate_plot, 12, 'omitnan');
     
-    fprintf('✓ Prepared full window data: %d time points (vs %d for regression)\n', ...
+    console_log('✓ Prepared full window data: %d time points (vs %d for regression)\n', ...
         length(time_das_full_plot), length(time_das));
-    fprintf('  Head data interpolated from %d points to %d points\n', ...
+    console_log('  Head data interpolated from %d points to %d points\n', ...
         length(time_head_rate), length(time_das_full_plot));
 else
     % No full window data available, use regression window data
@@ -514,7 +514,7 @@ else
     strain_smoothed_plot = strain_smoothed;
     strain_raw_plot = strain_raw;
     head_rate_plot = head_rate_overlap;
-    fprintf('  Using regression window data for plotting (no full window available)\n');
+    console_log('  Using regression window data for plotting (no full window available)\n');
 end
 
 % Weighted least squares regression
@@ -534,7 +534,7 @@ R_corr = sqrt(R_squared) * sign(slope);
 
 % Check slope sign and re-calculate if needed
 if slope < 0
-    fprintf('  Slope is negative (%.4e), flipping strain rate sign to get positive slope\n', slope);
+    console_log('  Slope is negative (%.4e), flipping strain rate sign to get positive slope\n', slope);
     strain_clean = -strain_clean;
     % Recalculate weighted regression
     coeffs = (X' * W * X) \ (X' * W * strain_clean);
@@ -555,20 +555,20 @@ strain_predicted = polyval(p_regression, drawdown_rate_clean);
 residuals = strain_clean - strain_predicted;
 RMSE = sqrt(mean(residuals.^2));
 
-fprintf('\nRegression results:\n');
-fprintf('  Slope: %.4e (1/s) per (ft/s)\n', slope);
-fprintf('  Intercept: %.4e 1/s\n', intercept);
-fprintf('  Correlation (R): %.4f\n', R_corr);
-fprintf('  R^2: %.4f\n', R_squared);
-fprintf('  RMSE: %.4e 1/s\n', RMSE);
+console_log('\nRegression results:\n');
+console_log('  Slope: %.4e (1/s) per (ft/s)\n', slope);
+console_log('  Intercept: %.4e 1/s\n', intercept);
+console_log('  Correlation (R): %.4f\n', R_corr);
+console_log('  R^2: %.4f\n', R_squared);
+console_log('  RMSE: %.4e 1/s\n', RMSE);
 
 % Quality assessment
 if R_squared > 0.5
-    fprintf('✓ GOOD correlation - suitable for storage calculation\n');
+    console_log('✓ GOOD correlation - suitable for storage calculation\n');
 elseif R_squared > 0.25
-    fprintf('⚠ MODERATE correlation - use with caution\n');
+    console_log('⚠ MODERATE correlation - use with caution\n');
 else
-    fprintf('✗ WEAK correlation - results may be unreliable\n');
+    console_log('✗ WEAK correlation - results may be unreliable\n');
 end
 
 %% Package results
@@ -606,10 +606,10 @@ if config.show_plots
             head_rate_range = linspace(min_rate, max_rate, 100);
             plot(head_rate_range, polyval(p_regression, head_rate_range) / strain_scale_scatter, 'r-', 'LineWidth', 3);
         else
-            fprintf('  ⚠ Warning: Cannot create linspace - invalid min/max values\n');
+            console_log('  ⚠ Warning: Cannot create linspace - invalid min/max values\n');
         end
     else
-        fprintf('  ⚠ Warning: Cannot plot regression line - data contains NaN/Inf or is empty\n');
+        console_log('  ⚠ Warning: Cannot plot regression line - data contains NaN/Inf or is empty\n');
     end
     hold off;
     xlabel('Drawdown Rate (m/s)', 'FontSize', 12, 'FontWeight', 'bold');
@@ -678,12 +678,12 @@ if config.show_plots
     
     % CRITICAL: Apply AGGRESSIVE smoothing to averaged displacement rate
     % Make it smooth like the reference plot (black DAS line)
-    fprintf('\n=== APPLYING AGGRESSIVE SMOOTHING TO AVERAGED DISPLACEMENT RATE ===\n');
-    fprintf('Step 1: 10-second moving average...\n');
+    console_log('\n=== APPLYING AGGRESSIVE SMOOTHING TO AVERAGED DISPLACEMENT RATE ===\n');
+    console_log('Step 1: 10-second moving average...\n');
     displacement_rate_avg_full = movmean(displacement_rate_avg_full, 10, 1, 'omitnan');  % 10-second window
-    fprintf('Step 2: Second pass with 5-second moving average...\n');
+    console_log('Step 2: Second pass with 5-second moving average...\n');
     displacement_rate_avg_full = movmean(displacement_rate_avg_full, 5, 1, 'omitnan');  % Second pass
-    fprintf('✓ Aggressive smoothing applied (10s + 5s passes) - should match reference plot\n\n');
+    console_log('✓ Aggressive smoothing applied (10s + 5s passes) - should match reference plot\n\n');
     
     displacement_rate_avg = displacement_rate_avg_full(1:length(strain_overlap));  % Extract same time window as strain_overlap
     time_comparison = time_das_overlap;
@@ -779,14 +779,14 @@ if config.show_plots
     % Set x-axis limits (extended to show context)
     xlim([datetime('2023-11-07 20:44:53', 'TimeZone', 'UTC'), datetime('2023-11-07 20:46:30', 'TimeZone', 'UTC')]);
     
-    fprintf('\n=== 4-SUBPLOT FIGURE GENERATED ===\n');
-    fprintf('  Top Left: Linear Regression (Strain vs Drawdown)\n');
-    fprintf('  Top Right: Time Series (Drawdown & Strain vs Time)\n');
-    fprintf('  Bottom Left: Raw vs Smoothed Comparison\n');
-    fprintf('  Bottom Right: Normalized Alignment Check\n');
+    console_log('\n=== 4-SUBPLOT FIGURE GENERATED ===\n');
+    console_log('  Top Left: Linear Regression (Strain vs Drawdown)\n');
+    console_log('  Top Right: Time Series (Drawdown & Strain vs Time)\n');
+    console_log('  Bottom Left: Raw vs Smoothed Comparison\n');
+    console_log('  Bottom Right: Normalized Alignment Check\n');
 end
 
-fprintf('\n✓ Depth-specific linear regression complete!\n');
+console_log('\n✓ Depth-specific linear regression complete!\n');
 
 end
 

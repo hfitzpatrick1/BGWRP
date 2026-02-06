@@ -51,18 +51,18 @@ if ~isfield(config, 'depth_averaging_method'), config.depth_averaging_method = '
 
 %% Extract data
 if config.use_displacement_rate
-    fprintf('\n=== LINEAR REGRESSION: DISPLACEMENT RATE vs DRAWDOWN RATE ===\n');
+    console_log('\n=== LINEAR REGRESSION: DISPLACEMENT RATE vs DRAWDOWN RATE ===\n');
 else
-    fprintf('\n=== LINEAR REGRESSION: STRAIN RATE vs DRAWDOWN RATE ===\n');
+    console_log('\n=== LINEAR REGRESSION: STRAIN RATE vs DRAWDOWN RATE ===\n');
 end
-fprintf('Test: %s\n', test_name);
-fprintf('Zone: %s\n', config.zone);
+console_log('Test: %s\n', test_name);
+console_log('Zone: %s\n', config.zone);
 
 das_filtered = das_results.(test_name);
 head_filtered = head_results.(test_name);
 
-fprintf('DAS data: %d time points\n', length(das_filtered.analysis_time));
-fprintf('Head data: %d time points\n', length(head_filtered.zones.(config.zone).recovery_data.Date));
+console_log('DAS data: %d time points\n', length(das_filtered.analysis_time));
+console_log('Head data: %d time points\n', length(head_filtered.zones.(config.zone).recovery_data.Date));
 
 %% Get DAS strain rate using single channel method: ε̇(z,t) = u̇(z,t) / L
 % Single channel approximation:
@@ -94,31 +94,31 @@ if isfield(config, 'depth_range_ft') && ~isempty(config.depth_range_ft)
         error('No channels found in depth range %.1f - %.1f ft', depth_min_ft, depth_max_ft);
     end
     
-    fprintf('\n=== DEPTH RANGE ANALYSIS ===\n');
-    fprintf('Depth range: %.1f - %.1f ft\n', depth_min_ft, depth_max_ft);
-    fprintf('Channels in range: %d (ch %d to ch %d)\n', length(channels_in_range), ...
+    console_log('\n=== DEPTH RANGE ANALYSIS ===\n');
+    console_log('Depth range: %.1f - %.1f ft\n', depth_min_ft, depth_max_ft);
+    console_log('Channels in range: %d (ch %d to ch %d)\n', length(channels_in_range), ...
         channels_in_range(1), channels_in_range(end));
-    fprintf('Averaging method: %s\n', config.depth_averaging_method);
+    console_log('Averaging method: %s\n', config.depth_averaging_method);
     
     % Select representative channel or prepare for averaging
     if strcmp(config.depth_averaging_method, 'representative')
         % Use center channel of range
         channel_idx = channels_in_range(round(length(channels_in_range)/2));
-        fprintf('Using representative channel: %d (%.1f ft)\n', channel_idx, depth_ft(channel_idx));
+        console_log('Using representative channel: %d (%.1f ft)\n', channel_idx, depth_ft(channel_idx));
         use_depth_averaging = false;
     else
         % Will average across all channels in range
         channel_idx = channels_in_range(1);  % Start channel for strain rate calculation
         use_depth_averaging = true;
-        fprintf('Will average across all %d channels in range\n', length(channels_in_range));
+        console_log('Will average across all %d channels in range\n', length(channels_in_range));
     end
     
 elseif isfield(das_filtered, 'pumping_zone') && isfield(das_filtered.pumping_zone, 'channel_idx')
     % Default: use pumping zone channel
     channel_idx = das_filtered.pumping_zone.channel_idx;
     use_depth_averaging = false;
-    fprintf('\n=== USING DEFAULT PUMPING ZONE CHANNEL ===\n');
-    fprintf('Channel: %d (%.1f ft)\n', channel_idx, das_filtered.depth_ft(channel_idx));
+    console_log('\n=== USING DEFAULT PUMPING ZONE CHANNEL ===\n');
+    console_log('Channel: %d (%.1f ft)\n', channel_idx, das_filtered.depth_ft(channel_idx));
 else
     error('No depth range specified and no pumping_zone channel available');
 end
@@ -136,7 +136,7 @@ if ~use_depth_averaging && ~config.use_displacement_rate
             'Solution: Either (1) use depth averaging, or (2) choose a shallower channel, or (3) expand depth range upward'], ...
             max_channel_needed, total_channels);
     end
-    fprintf('✓ Channel validation: channel %d + %d (gauge) = %d ≤ %d (total channels)\n', ...
+    console_log('✓ Channel validation: channel %d + %d (gauge) = %d ≤ %d (total channels)\n', ...
         channel_idx, gauge_length_channels, max_channel_needed, total_channels);
 end
 
@@ -150,15 +150,15 @@ if isfield(das_filtered, 'pumping_zone') && isfield(das_filtered.pumping_zone, '
         time_das_full = das_filtered.time_array;
         
         % DEBUG: Check if smoothed_data was actually smoothed
-        fprintf('\n=== DEBUG: CHECKING SMOOTHED_DATA ===\n');
-        fprintf('smoothed_data exists: YES\n');
-        fprintf('smoothed_data size: [%d time points × %d channels]\n', size(displacement_rate_full, 1), size(displacement_rate_full, 2));
+        console_log('\n=== DEBUG: CHECKING SMOOTHED_DATA ===\n');
+        console_log('smoothed_data exists: YES\n');
+        console_log('smoothed_data size: [%d time points × %d channels]\n', size(displacement_rate_full, 1), size(displacement_rate_full, 2));
         
         % Check if smoothing method info is stored
         if isfield(das_filtered, 'smoothing_method')
-            fprintf('Stored smoothing method: %s\n', das_filtered.smoothing_method);
+            console_log('Stored smoothing method: %s\n', das_filtered.smoothing_method);
         else
-            fprintf('⚠ No smoothing_method field stored - cannot verify smoothing was applied\n');
+            console_log('⚠ No smoothing_method field stored - cannot verify smoothing was applied\n');
         end
         
         % Check if this looks like raw data (high variance) or smoothed (low variance)
@@ -168,29 +168,29 @@ if isfield(das_filtered, 'pumping_zone') && isfield(das_filtered.pumping_zone, '
             sample_data = displacement_rate_full(:, sample_channel);
             data_std = std(sample_data);
             data_range = max(sample_data) - min(sample_data);
-            fprintf('Sample channel %d (%.1f ft): std=%.2e nm/s, range=%.2e nm/s\n', ...
+            console_log('Sample channel %d (%.1f ft): std=%.2e nm/s, range=%.2e nm/s\n', ...
                 sample_channel, das_filtered.depth_ft(sample_channel), data_std, data_range);
             
             % Check for high-frequency noise (raw data has more rapid changes)
             diff_data = abs(diff(sample_data));
             mean_diff = mean(diff_data);
             std_diff = std(diff_data);
-            fprintf('Mean absolute change between time steps: %.2e nm/s\n', mean_diff);
-            fprintf('Std of changes between time steps: %.2e nm/s\n', std_diff);
+            console_log('Mean absolute change between time steps: %.2e nm/s\n', mean_diff);
+            console_log('Std of changes between time steps: %.2e nm/s\n', std_diff);
             
             % More sophisticated check: compare to what smoothed data should look like
             % Smoothed 5-second data should have much smaller step-to-step changes
             % Raw 1Hz data typically has changes on order of 0.01-0.1 nm/s per step
             % Smoothed 5-second data should have changes < 0.001 nm/s per step
             if mean_diff > 0.005 || std_diff > 0.01  % Threshold for "raw" vs "smoothed"
-                fprintf('⚠⚠⚠ WARNING: Data appears to be RAW/UNSMOOTHED ⚠⚠⚠\n');
-                fprintf('   High variance detected: mean_diff=%.2e, std_diff=%.2e\n', mean_diff, std_diff);
-                fprintf('   Expected for 5-second smoothed data: mean_diff < 0.001, std_diff < 0.01\n');
-                fprintf('   ACTION REQUIRED: Re-run with mode=''run_correlation_analysis'' or ''run_filter_matlab_movmean_5sec''\n');
-                fprintf('   This will apply the 5-second moving average to smoothed_data\n');
+                console_log('⚠⚠⚠ WARNING: Data appears to be RAW/UNSMOOTHED ⚠⚠⚠\n');
+                console_log('   High variance detected: mean_diff=%.2e, std_diff=%.2e\n', mean_diff, std_diff);
+                console_log('   Expected for 5-second smoothed data: mean_diff < 0.001, std_diff < 0.01\n');
+                console_log('   ACTION REQUIRED: Re-run with mode=''run_correlation_analysis'' or ''run_filter_matlab_movmean_5sec''\n');
+                console_log('   This will apply the 5-second moving average to smoothed_data\n');
             else
-                fprintf('✓ Data appears to be SMOOTHED (low variance, gradual changes)\n');
-                fprintf('   mean_diff=%.2e, std_diff=%.2e (within expected range for smoothed data)\n', mean_diff, std_diff);
+                console_log('✓ Data appears to be SMOOTHED (low variance, gradual changes)\n');
+                console_log('   mean_diff=%.2e, std_diff=%.2e (within expected range for smoothed data)\n', mean_diff, std_diff);
             end
         end
         
@@ -205,53 +205,53 @@ if isfield(das_filtered, 'pumping_zone') && isfield(das_filtered.pumping_zone, '
         
         if config.use_displacement_rate
             % Use displacement rate directly
-            fprintf('\n=== USING DISPLACEMENT RATE (not strain rate) ===\n');
+            console_log('\n=== USING DISPLACEMENT RATE (not strain rate) ===\n');
             
             if use_depth_averaging
                 % Average displacement rate across depth range
-                fprintf('  Averaging displacement rate across depth range\n');
+                console_log('  Averaging displacement rate across depth range\n');
                 displacement_rate_all_channels = displacement_rate_full(time_mask, channels_in_range);  % [time × channels]
                 
                 switch config.depth_averaging_method
                     case 'mean'
                         displacement_rate_smoothed = mean(displacement_rate_all_channels, 2);  % Average across channels
-                        fprintf('  Method: Mean across %d channels\n', length(channels_in_range));
+                        console_log('  Method: Mean across %d channels\n', length(channels_in_range));
                     case 'median'
                         displacement_rate_smoothed = median(displacement_rate_all_channels, 2);  % Median across channels
-                        fprintf('  Method: Median across %d channels\n', length(channels_in_range));
+                        console_log('  Method: Median across %d channels\n', length(channels_in_range));
                     otherwise
                         displacement_rate_smoothed = mean(displacement_rate_all_channels, 2);
-                        fprintf('  Method: Mean (default) across %d channels\n', length(channels_in_range));
+                        console_log('  Method: Mean (default) across %d channels\n', length(channels_in_range));
                 end
-                fprintf('  Depth range: %.1f - %.1f ft (%d channels)\n', depth_min_ft, depth_max_ft, length(channels_in_range));
+                console_log('  Depth range: %.1f - %.1f ft (%d channels)\n', depth_min_ft, depth_max_ft, length(channels_in_range));
             else
                 % Single channel
                 displacement_rate_smoothed = displacement_rate_full(time_mask, channel_idx);  % nm/s
-                fprintf('  Channel: %d (%.1f ft)\n', channel_idx, das_filtered.depth_ft(channel_idx));
+                console_log('  Channel: %d (%.1f ft)\n', channel_idx, das_filtered.depth_ft(channel_idx));
             end
             
             strain_smoothed = displacement_rate_smoothed;  % Store as strain_smoothed for compatibility (but it's actually displacement rate)
             strain_raw = displacement_rate_smoothed;  % No raw version available in this path, use smoothed
-            fprintf('  Source: smoothed_data (should have 5-second movmean if correlation analysis was run)\n');
+            console_log('  Source: smoothed_data (should have 5-second movmean if correlation analysis was run)\n');
             if isfield(das_filtered, 'smoothing_method')
-                fprintf('  Smoothing method: %s', das_filtered.smoothing_method);
+                console_log('  Smoothing method: %s', das_filtered.smoothing_method);
                 if isfield(das_filtered, 'smoothing_window')
-                    fprintf(' (window: %d samples = %.1f seconds)\n', das_filtered.smoothing_window, das_filtered.smoothing_window);
+                    console_log(' (window: %d samples = %.1f seconds)\n', das_filtered.smoothing_window, das_filtered.smoothing_window);
                 else
-                    fprintf('\n');
+                    console_log('\n');
                 end
             else
-                fprintf('  ⚠ Smoothing method not stored - check debug output above to verify\n');
+                console_log('  ⚠ Smoothing method not stored - check debug output above to verify\n');
             end
-            fprintf('Displacement rate range: %.2e to %.2e nm/s\n', min(displacement_rate_smoothed), max(displacement_rate_smoothed));
+            console_log('Displacement rate range: %.2e to %.2e nm/s\n', min(displacement_rate_smoothed), max(displacement_rate_smoothed));
         else
             % Calculate strain rate using SINGLE CHANNEL method
-            fprintf('\n=== CALCULATING STRAIN RATE (Single Channel Method) ===\n');
-            fprintf('  Using single channel approximation: strain_rate = displacement_rate / gauge_length\n');
+            console_log('\n=== CALCULATING STRAIN RATE (Single Channel Method) ===\n');
+            console_log('  Using single channel approximation: strain_rate = displacement_rate / gauge_length\n');
             
             if use_depth_averaging
                 % Average strain rate across multiple channels in depth range
-                fprintf('  Averaging strain rate across depth range\n');
+                console_log('  Averaging strain rate across depth range\n');
                 n_channels = length(channels_in_range);
                 strain_channels = zeros(length(time_mask), n_channels);
                 
@@ -265,20 +265,20 @@ if isfield(das_filtered, 'pumping_zone') && isfield(das_filtered.pumping_zone, '
                 switch config.depth_averaging_method
                     case 'mean'
                         strain_smoothed = mean(strain_channels, 2);  % Units: 1/s
-                        fprintf('  Method: Mean across %d channels\n', n_channels);
+                        console_log('  Method: Mean across %d channels\n', n_channels);
                     case 'median'
                         strain_smoothed = median(strain_channels, 2);  % Units: 1/s
-                        fprintf('  Method: Median across %d channels\n', n_channels);
+                        console_log('  Method: Median across %d channels\n', n_channels);
                     otherwise
                         strain_smoothed = mean(strain_channels, 2);  % Units: 1/s
-                        fprintf('  Method: Mean (default) across %d channels\n', n_channels);
+                        console_log('  Method: Mean (default) across %d channels\n', n_channels);
                 end
                 strain_raw = strain_smoothed;  % Save raw version before smoothing (happens later)
-                fprintf('  Depth range: %.1f - %.1f ft (%d channels)\n', depth_min_ft, depth_max_ft, n_channels);
+                console_log('  Depth range: %.1f - %.1f ft (%d channels)\n', depth_min_ft, depth_max_ft, n_channels);
                 
             else
                 % Single channel calculation using PROPER BECKER SPATIAL DIFFERENCE METHOD
-                fprintf('  Using single channel with proper spatial difference: %d (%.1f ft)\n', channel_idx, das_filtered.depth_ft(channel_idx));
+                console_log('  Using single channel with proper spatial difference: %d (%.1f ft)\n', channel_idx, das_filtered.depth_ft(channel_idx));
                 
                 % For proper Becker method: ε̇(z,t) = [u̇(z+L,t) - u̇(z,t)] / L
                 % Need to get displacement at z and z+L
@@ -292,7 +292,7 @@ if isfield(das_filtered, 'pumping_zone') && isfield(das_filtered.pumping_zone, '
                         channel_idx_plus_L, size(displacement_rate_full, 2));
                 end
                 
-                fprintf('  Spatial difference: channel %d (%.1f ft) to channel %d (%.1f ft)\n', ...
+                console_log('  Spatial difference: channel %d (%.1f ft) to channel %d (%.1f ft)\n', ...
                     channel_idx, das_filtered.depth_ft(channel_idx), ...
                     channel_idx_plus_L, das_filtered.depth_ft(channel_idx_plus_L));
                 
@@ -313,7 +313,7 @@ if isfield(das_filtered, 'pumping_zone') && isfield(das_filtered.pumping_zone, '
                 strain_smoothed = delta_displacement / (gauge_length_m * 1e9);  % Units: 1/s
                 strain_raw = strain_smoothed;  % Save raw version before smoothing
                 
-                fprintf('  ✓ Using proper Becker spatial difference method (not approximation)\n');
+                console_log('  ✓ Using proper Becker spatial difference method (not approximation)\n');
                 
                 % Apply additional smoothing to strain rate (difference can amplify noise)
                 % This makes it look smooth like the drawdown rate plots
@@ -329,8 +329,8 @@ if isfield(das_filtered, 'pumping_zone') && isfield(das_filtered.pumping_zone, '
                 
                 if isfield(config, 'strain_rate_smoothing_window') && config.strain_rate_smoothing_window > 1
                     smoothing_window = config.strain_rate_smoothing_window;
-                    fprintf('  Applying post-difference smoothing to strain rate: %s, %d-sample window\n', smoothing_method, smoothing_window);
-                    fprintf('  ⚠ TIMING NOTE: Centered moving average introduces ~%.1f second delay\n', smoothing_window/2);
+                    console_log('  Applying post-difference smoothing to strain rate: %s, %d-sample window\n', smoothing_method, smoothing_window);
+                    console_log('  ⚠ TIMING NOTE: Centered moving average introduces ~%.1f second delay\n', smoothing_window/2);
                     
                     switch lower(smoothing_method)
                         case 'movmean'
@@ -338,19 +338,19 @@ if isfield(das_filtered, 'pumping_zone') && isfield(das_filtered.pumping_zone, '
                             
                         case 'movmedian'
                             strain_smoothed = movmedian(strain_smoothed, smoothing_window, 'Endpoints', 'shrink');
-                            fprintf('    Using median filter (better noise rejection)\n');
+                            console_log('    Using median filter (better noise rejection)\n');
                             
                         case 'gaussian'
                             % Gaussian smoothing (requires Image Processing Toolbox)
                             sigma = smoothing_window / 3;
                             strain_smoothed = imgaussfilt(strain_smoothed, sigma);
-                            fprintf('    Using Gaussian filter (sigma=%.2f)\n', sigma);
+                            console_log('    Using Gaussian filter (sigma=%.2f)\n', sigma);
                             
                         case 'double_pass'
                             % Apply smoothing twice for extra smoothness
                             strain_smoothed = movmean(strain_smoothed, smoothing_window, 'Endpoints', 'shrink');
                             strain_smoothed = movmean(strain_smoothed, smoothing_window, 'Endpoints', 'shrink');
-                            fprintf('    Using double-pass smoothing (applied twice)\n');
+                            console_log('    Using double-pass smoothing (applied twice)\n');
                             
                         case 'savgol'
                             % Savitzky-Golay filter (polynomial smoothing, preserves peaks better)
@@ -360,7 +360,7 @@ if isfield(das_filtered, 'pumping_zone') && isfield(das_filtered.pumping_zone, '
                                 smoothing_window = smoothing_window + 1;  % Must be odd
                             end
                             strain_smoothed = sgolayfilt(strain_smoothed, poly_order, smoothing_window);
-                            fprintf('    Using Savitzky-Golay filter (order=%d, window=%d)\n', poly_order, smoothing_window);
+                            console_log('    Using Savitzky-Golay filter (order=%d, window=%d)\n', poly_order, smoothing_window);
                             
                         case 'lowpass'
                             % Lowpass filter (removes high-frequency noise)
@@ -369,7 +369,7 @@ if isfield(das_filtered, 'pumping_zone') && isfield(das_filtered.pumping_zone, '
                             cutoff_freq = 1.0 / smoothing_window;  % Lower cutoff = more smoothing
                             [b, a] = butter(4, cutoff_freq, 'low');  % 4th order Butterworth
                             strain_smoothed = filtfilt(b, a, strain_smoothed);  % Zero-phase filtering
-                            fprintf('    Using lowpass Butterworth filter (cutoff=%.3f Hz)\n', cutoff_freq * 0.5);
+                            console_log('    Using lowpass Butterworth filter (cutoff=%.3f Hz)\n', cutoff_freq * 0.5);
                             
                         case 'exp_smooth'
                             % Exponential moving average (more weight on recent values)
@@ -380,54 +380,54 @@ if isfield(das_filtered, 'pumping_zone') && isfield(das_filtered.pumping_zone, '
                                 strain_smoothed_exp(i) = alpha * strain_smoothed(i) + (1 - alpha) * strain_smoothed_exp(i-1);
                             end
                             strain_smoothed = strain_smoothed_exp;
-                            fprintf('    Using exponential moving average (alpha=%.3f)\n', alpha);
+                            console_log('    Using exponential moving average (alpha=%.3f)\n', alpha);
                             
                         case 'triple_pass'
                             % Apply smoothing three times for maximum smoothness
                             strain_smoothed = movmean(strain_smoothed, smoothing_window, 'Endpoints', 'shrink');
                             strain_smoothed = movmean(strain_smoothed, smoothing_window, 'Endpoints', 'shrink');
                             strain_smoothed = movmean(strain_smoothed, smoothing_window, 'Endpoints', 'shrink');
-                            fprintf('    Using triple-pass smoothing (applied three times)\n');
+                            console_log('    Using triple-pass smoothing (applied three times)\n');
                             
                         case 'gaussian_double'
                             % Gaussian smoothing applied twice
                             sigma = smoothing_window / 3;
                             strain_smoothed = imgaussfilt(strain_smoothed, sigma);
                             strain_smoothed = imgaussfilt(strain_smoothed, sigma);
-                            fprintf('    Using double-pass Gaussian filter (sigma=%.2f, applied twice)\n', sigma);
+                            console_log('    Using double-pass Gaussian filter (sigma=%.2f, applied twice)\n', sigma);
                             
                         otherwise
                             strain_smoothed = movmean(strain_smoothed, smoothing_window, 'Endpoints', 'shrink');
                     end
                 elseif isfield(config, 'strain_rate_smoothing_window') && config.strain_rate_smoothing_window <= 1
                     % Explicitly disabled
-                    fprintf('  Strain rate smoothing disabled (window <= 1)\n');
+                    console_log('  Strain rate smoothing disabled (window <= 1)\n');
                 else
                     % Default: apply 5-second smoothing to match the displacement rate smoothing
                     smoothing_window = 5;
-                    fprintf('  Applying default 5-second smoothing to strain rate for smooth appearance\n');
-                    fprintf('  ⚠ TIMING NOTE: Centered moving average introduces ~2.5 second delay\n');
-                    fprintf('     Pump-off at 19:15:00 will appear at ~19:15:02.5 in smoothed signal\n');
+                    console_log('  Applying default 5-second smoothing to strain rate for smooth appearance\n');
+                    console_log('  ⚠ TIMING NOTE: Centered moving average introduces ~2.5 second delay\n');
+                    console_log('     Pump-off at 19:15:00 will appear at ~19:15:02.5 in smoothed signal\n');
                     strain_smoothed = movmean(strain_smoothed, smoothing_window, 'Endpoints', 'shrink');
                 end
                 
                 % Check if strain rate is mostly negative - if so, flip sign
                 % During recovery, strain should be positive (expansion)
                 if isfield(config, 'flip_strain_rate_sign') && config.flip_strain_rate_sign
-                    fprintf('  Flipping strain rate sign (user requested)\n');
+                    console_log('  Flipping strain rate sign (user requested)\n');
                     strain_smoothed = -strain_smoothed;
                 elseif mean(strain_smoothed) < 0
-                    fprintf('  WARNING: Average strain rate is negative, flipping sign for recovery convention\n');
+                    console_log('  WARNING: Average strain rate is negative, flipping sign for recovery convention\n');
                     strain_smoothed = -strain_smoothed;  % Flip sign so strain is positive during recovery
                 end
                 
-                fprintf('\n=== STRAIN RATE CALCULATION (Single Channel Method) ===\n');
-                fprintf('Formula: ε̇(z,t) = u̇(z,t) / L\n');
-                fprintf('  Channel z: %d (%.1f ft) → u̇(z,t) in nm/s\n', channel_idx, das_filtered.depth_ft(channel_idx));
-                fprintf('  Gauge length L: %.1f m = %.2e nm\n', gauge_length_m, gauge_length_m * 1e9);
-                fprintf('  Displacement rate u̇(z): %.2e to %.2e nm/s\n', min(displacement_at_z), max(displacement_at_z));
-                fprintf('  Strain rate ε̇ = u̇/L: %.2e to %.2e 1/s\n', min(strain_smoothed), max(strain_smoothed));
-                fprintf('  ✓ Single-channel method (matches amplitude calculation)\n');
+                console_log('\n=== STRAIN RATE CALCULATION (Single Channel Method) ===\n');
+                console_log('Formula: ε̇(z,t) = u̇(z,t) / L\n');
+                console_log('  Channel z: %d (%.1f ft) → u̇(z,t) in nm/s\n', channel_idx, das_filtered.depth_ft(channel_idx));
+                console_log('  Gauge length L: %.1f m = %.2e nm\n', gauge_length_m, gauge_length_m * 1e9);
+                console_log('  Displacement rate u̇(z): %.2e to %.2e nm/s\n', min(displacement_at_z), max(displacement_at_z));
+                console_log('  Strain rate ε̇ = u̇/L: %.2e to %.2e 1/s\n', min(strain_smoothed), max(strain_smoothed));
+                console_log('  ✓ Single-channel method (matches amplitude calculation)\n');
             end  % End of use_depth_averaging else block (single channel pair calculation)
         end  % End of use_depth_averaging if-else
     else
@@ -442,17 +442,17 @@ else
     if config.use_displacement_rate
         % Use displacement rate directly
         strain_smoothed = displacement_rate_smoothed;  % Store as strain_smoothed for compatibility
-        fprintf('Using displacement rate at single channel (fallback method)\n');
-        fprintf('Displacement rate range: %.2e to %.2e nm/s\n', min(displacement_rate_smoothed), max(displacement_rate_smoothed));
+        console_log('Using displacement rate at single channel (fallback method)\n');
+        console_log('Displacement rate range: %.2e to %.2e nm/s\n', min(displacement_rate_smoothed), max(displacement_rate_smoothed));
     else
         % Calculate strain rate using SINGLE CHANNEL METHOD (CORRECTED!)
         strain_smoothed = displacement_rate_smoothed / (gauge_length_m * 1e9);
-        fprintf('Using single-channel strain rate calculation (fallback path)\n');
-        fprintf('  Formula: strain_rate = displacement_rate / gauge_length\n');
-        fprintf('  Displacement rate range: %.2e to %.2e nm/s\n', min(displacement_rate_smoothed), max(displacement_rate_smoothed));
-        fprintf('  Gauge length: %.1f m = %.2e nm\n', gauge_length_m, gauge_length_m * 1e9);
-        fprintf('  Strain rate range: %.2e to %.2e 1/s\n', min(strain_smoothed), max(strain_smoothed));
-        fprintf('  ✓ Single-channel method (matches amplitude calculation)\n');
+        console_log('Using single-channel strain rate calculation (fallback path)\n');
+        console_log('  Formula: strain_rate = displacement_rate / gauge_length\n');
+        console_log('  Displacement rate range: %.2e to %.2e nm/s\n', min(displacement_rate_smoothed), max(displacement_rate_smoothed));
+        console_log('  Gauge length: %.1f m = %.2e nm\n', gauge_length_m, gauge_length_m * 1e9);
+        console_log('  Strain rate range: %.2e to %.2e 1/s\n', min(strain_smoothed), max(strain_smoothed));
+        console_log('  ✓ Single-channel method (matches amplitude calculation)\n');
     end
 end
 
@@ -461,13 +461,13 @@ zone_head = head_filtered.zones.(config.zone).recovery_data.Drawdownft;  % Drawd
 zone_time = head_filtered.zones.(config.zone).recovery_data.Date;  % Datetime array
 
 %% Apply timing correction
-fprintf('\n=== TIMING CORRECTION ===\n');
-fprintf('Original head time: %s to %s\n', datestr(zone_time(1)), datestr(zone_time(end)));
-fprintf('Shifting head data backward by %d seconds\n', config.timing_correction_sec);
+console_log('\n=== TIMING CORRECTION ===\n');
+console_log('Original head time: %s to %s\n', datestr(zone_time(1)), datestr(zone_time(end)));
+console_log('Shifting head data backward by %d seconds\n', config.timing_correction_sec);
 
 zone_time_corrected = zone_time - seconds(config.timing_correction_sec);
 
-fprintf('Corrected head time: %s to %s\n', datestr(zone_time_corrected(1)), datestr(zone_time_corrected(end)));
+console_log('Corrected head time: %s to %s\n', datestr(zone_time_corrected(1)), datestr(zone_time_corrected(end)));
 
 %% Calculate HEAD RATE (not drawdown rate!)
 % NOTE: zone_head is actually Drawdownft (drawdown, not head)
@@ -485,19 +485,19 @@ time_head_rate = zone_time_corrected(1:end-1);  % Time vector (one less after di
 % Apply smoothing to head rate to match strain rate smoothing level
 if isfield(config, 'head_rate_smoothing_window') && config.head_rate_smoothing_window > 1
     smoothing_window = config.head_rate_smoothing_window;
-    fprintf('\n=== SMOOTHING HEAD RATE ===\n');
-    fprintf('  Applying %d-point moving mean to head rate (matching strain rate smoothing)\n', smoothing_window);
-    fprintf('  Raw head rate range: %.4e to %.4e m/s\n', min(head_rate_mps), max(head_rate_mps));
+    console_log('\n=== SMOOTHING HEAD RATE ===\n');
+    console_log('  Applying %d-point moving mean to head rate (matching strain rate smoothing)\n', smoothing_window);
+    console_log('  Raw head rate range: %.4e to %.4e m/s\n', min(head_rate_mps), max(head_rate_mps));
     head_rate_mps = movmean(head_rate_mps, smoothing_window, 'Endpoints', 'shrink');
-    fprintf('  Smoothed head rate range: %.4e to %.4e m/s\n', min(head_rate_mps), max(head_rate_mps));
+    console_log('  Smoothed head rate range: %.4e to %.4e m/s\n', min(head_rate_mps), max(head_rate_mps));
 else
-    fprintf('\n⚠ WARNING: No smoothing applied to head rate\n');
-    fprintf('  Strain rate has smoothing but head rate does not - this may reduce correlation\n');
-    fprintf('  Consider setting config.head_rate_smoothing_window = 5 to match\n');
+    console_log('\n⚠ WARNING: No smoothing applied to head rate\n');
+    console_log('  Strain rate has smoothing but head rate does not - this may reduce correlation\n');
+    console_log('  Consider setting config.head_rate_smoothing_window = 5 to match\n');
 end
 
-fprintf('Drawdown rate range: %.4e to %.4e ft/s (negative during recovery)\n', min(drawdown_rate_ftps), max(drawdown_rate_ftps));
-fprintf('Head rate range: %.4e to %.4e m/s (positive during recovery)\n', min(head_rate_mps), max(head_rate_mps));
+console_log('Drawdown rate range: %.4e to %.4e ft/s (negative during recovery)\n', min(drawdown_rate_ftps), max(drawdown_rate_ftps));
+console_log('Head rate range: %.4e to %.4e m/s (positive during recovery)\n', min(head_rate_mps), max(head_rate_mps));
 
 %% Use the SAME time window as Figure 102 (analysis_time window)
 % This ensures we're looking at the exact same time period
@@ -505,18 +505,18 @@ fprintf('Head rate range: %.4e to %.4e m/s (positive during recovery)\n', min(he
 if isfield(config, 'recovery_window') && ~isempty(config.recovery_window)
     time_start = config.recovery_window(1);
     time_end = config.recovery_window(2);
-    fprintf('\n=== FOCUSED TIME WINDOW (from config) ===\n');
-    fprintf('Using recovery_window: %s to %s (%.1f seconds)\n', ...
+    console_log('\n=== FOCUSED TIME WINDOW (from config) ===\n');
+    console_log('Using recovery_window: %s to %s (%.1f seconds)\n', ...
         datestr(time_start), datestr(time_end), seconds(time_end - time_start));
 else
 time_start = time_das(1);  % Start of analysis_time window (same as Figure 102)
 time_end = time_das(end);  % End of analysis_time window (same as Figure 102)
-fprintf('\n=== TIME WINDOW (Same as Figure 102) ===\n');
-fprintf('Using analysis_time window: %s to %s (%.1f seconds)\n', ...
+console_log('\n=== TIME WINDOW (Same as Figure 102) ===\n');
+console_log('Using analysis_time window: %s to %s (%.1f seconds)\n', ...
     datestr(time_start), datestr(time_end), seconds(time_end - time_start));
 end
-fprintf('DAS time: %s to %s\n', datestr(min(time_das)), datestr(max(time_das)));
-fprintf('Head time (after correction): %s to %s\n', datestr(min(time_head_rate)), datestr(max(time_head_rate)));
+console_log('DAS time: %s to %s\n', datestr(min(time_das)), datestr(max(time_das)));
+console_log('Head time (after correction): %s to %s\n', datestr(min(time_head_rate)), datestr(max(time_head_rate)));
 
 % Extract DAS data for the full analysis_time window (same as Figure 102)
 % IMPORTANT: Use time_strain (which matches strain_smoothed) not time_das
@@ -527,23 +527,23 @@ strain_overlap_raw = strain_raw(valid_strain_idx);  % Raw strain rate (before sm
 
 % Also get time_das for reference (should match time_strain in this window)
 valid_das_idx = (time_das >= time_start) & (time_das <= time_end);
-fprintf('Strain data points: %d, DAS time points: %d (should match)\n', sum(valid_strain_idx), sum(valid_das_idx));
+console_log('Strain data points: %d, DAS time points: %d (should match)\n', sum(valid_strain_idx), sum(valid_das_idx));
 
 % Extract head data that falls within this window (after timing correction)
 valid_head_idx = (time_head_rate >= time_start) & (time_head_rate <= time_end);
 time_head_overlap = time_head_rate(valid_head_idx);
 head_rate_overlap = head_rate_mps(valid_head_idx);  % m/s (use head rate, not drawdown rate!)
 
-fprintf('Head points in overlap: %d\n', sum(valid_head_idx));
-fprintf('DAS points in overlap: %d\n', sum(valid_das_idx));
+console_log('Head points in overlap: %d\n', sum(valid_head_idx));
+console_log('DAS points in overlap: %d\n', sum(valid_das_idx));
 
 % Check if we have enough overlap
 if sum(valid_head_idx) < 10
-    fprintf('⚠⚠⚠ WARNING: Very few head points in overlap (%d points) ⚠⚠⚠\n', sum(valid_head_idx));
-    fprintf('   This may be due to timing correction pushing head data outside DAS window\n');
-    fprintf('   Head time range (after correction): %s to %s\n', datestr(min(time_head_rate)), datestr(max(time_head_rate)));
-    fprintf('   DAS time range: %s to %s\n', datestr(time_start), datestr(time_end));
-    fprintf('   Consider adjusting timing_correction_sec (current: %d)\n', config.timing_correction_sec);
+    console_log('⚠⚠⚠ WARNING: Very few head points in overlap (%d points) ⚠⚠⚠\n', sum(valid_head_idx));
+    console_log('   This may be due to timing correction pushing head data outside DAS window\n');
+    console_log('   Head time range (after correction): %s to %s\n', datestr(min(time_head_rate)), datestr(max(time_head_rate)));
+    console_log('   DAS time range: %s to %s\n', datestr(time_start), datestr(time_end));
+    console_log('   Consider adjusting timing_correction_sec (current: %d)\n', config.timing_correction_sec);
 end
 
 if sum(valid_das_idx) == 0
@@ -559,42 +559,42 @@ strain_clean = strain_interp(valid_idx);
 head_rate_clean = head_rate_overlap(valid_idx);  % Use head rate
 time_clean = time_head_overlap(valid_idx);
 
-fprintf('Valid points for regression: %d\n', length(strain_clean));
+console_log('Valid points for regression: %d\n', length(strain_clean));
 
 % Check signs and ensure both are in correct recovery convention
 % During RECOVERY: head rising (dh/dt > 0), rock expanding (dε/dt > 0) → both should be POSITIVE
-fprintf('\n=== SIGN CONVENTION CHECK ===\n');
-fprintf('  Mean head rate before adjustment: %.3e m/s\n', mean(head_rate_clean));
-fprintf('  Mean strain rate before adjustment: %.3e 1/s\n', mean(strain_clean));
+console_log('\n=== SIGN CONVENTION CHECK ===\n');
+console_log('  Mean head rate before adjustment: %.3e m/s\n', mean(head_rate_clean));
+console_log('  Mean strain rate before adjustment: %.3e 1/s\n', mean(strain_clean));
 
 % During recovery, head rate should be positive (water level rising)
 % If it's negative, the convention is wrong - flip it
 if mean(head_rate_clean) < 0
-    fprintf('  → Head rate is negative, flipping to positive (recovery = rising head)\n');
+    console_log('  → Head rate is negative, flipping to positive (recovery = rising head)\n');
     head_rate_clean = -head_rate_clean;
 else
-    fprintf('  ✓ Head rate is positive (correct for recovery)\n');
+    console_log('  ✓ Head rate is positive (correct for recovery)\n');
 end
 
 % During recovery, strain rate should be positive (rock expanding)  
 % If it's negative, flip it
 if mean(strain_clean) < 0
-    fprintf('  → Strain rate is negative, flipping to positive (recovery = expansion)\n');
+    console_log('  → Strain rate is negative, flipping to positive (recovery = expansion)\n');
     strain_clean = -strain_clean;
 else
-    fprintf('  ✓ Strain rate is positive (correct for recovery)\n');
+    console_log('  ✓ Strain rate is positive (correct for recovery)\n');
 end
 
-fprintf('  Final signs: head rate %.3e m/s, strain rate %.3e 1/s\n', mean(head_rate_clean), mean(strain_clean));
-fprintf('  Both signals now point in SAME DIRECTION (positive = recovery)\n');
+console_log('  Final signs: head rate %.3e m/s, strain rate %.3e 1/s\n', mean(head_rate_clean), mean(strain_clean));
+console_log('  Both signals now point in SAME DIRECTION (positive = recovery)\n');
 
 %% LINEAR REGRESSION OR AMPLITUDE ANALYSIS
 % Check if amplitude mode is requested (removes baseline drift)
 use_amplitude = isfield(config, 'use_amplitude') && config.use_amplitude;
 
 if use_amplitude
-    fprintf('\n=== AMPLITUDE ANALYSIS (Peak-to-Trough) ===\n');
-    fprintf('  Using max - min amplitude (matching advisor method)\n');
+    console_log('\n=== AMPLITUDE ANALYSIS (Peak-to-Trough) ===\n');
+    console_log('  Using max - min amplitude (matching advisor method)\n');
     
     % Find maximum and minimum values in the window
     max_strain = max(strain_clean);
@@ -607,42 +607,42 @@ if use_amplitude
     [~, max_head_idx] = max(head_rate_clean);
     [~, min_head_idx] = min(head_rate_clean);
     
-    fprintf('\n  Strain rate:\n');
-    fprintf('    Max: %.4e 1/s (at point %d)\n', max_strain, max_strain_idx);
-    fprintf('    Min: %.4e 1/s (at point %d)\n', min_strain, min_strain_idx);
+    console_log('\n  Strain rate:\n');
+    console_log('    Max: %.4e 1/s (at point %d)\n', max_strain, max_strain_idx);
+    console_log('    Min: %.4e 1/s (at point %d)\n', min_strain, min_strain_idx);
     
-    fprintf('  Head rate:\n');
-    fprintf('    Max: %.4e m/s (at point %d)\n', max_head, max_head_idx);
-    fprintf('    Min: %.4e m/s (at point %d)\n', min_head, min_head_idx);
+    console_log('  Head rate:\n');
+    console_log('    Max: %.4e m/s (at point %d)\n', max_head, max_head_idx);
+    console_log('    Min: %.4e m/s (at point %d)\n', min_head, min_head_idx);
     
     % Calculate amplitudes (max - min = peak-to-trough range)
     amplitude_strain = max_strain - min_strain;
     amplitude_head = max_head - min_head;
     
-    fprintf('\n  Amplitude (max - min):\n');
-    fprintf('    Strain rate: %.4e 1/s\n', amplitude_strain);
-    fprintf('    Head rate: %.4e m/s\n', amplitude_head);
+    console_log('\n  Amplitude (max - min):\n');
+    console_log('    Strain rate: %.4e 1/s\n', amplitude_strain);
+    console_log('    Head rate: %.4e m/s\n', amplitude_head);
     
     % Convert to advisor's units for comparison
     displacement_amp = amplitude_strain * (gauge_length_m * 1e9);  % nm/s
     head_amp_ft_per_min = (amplitude_head / 0.3048) * 60;  % ft/min
-    fprintf('\n  For comparison with advisor:\n');
-    fprintf('    Displacement amplitude: %.2f nm/s (advisor: 1.3 nm/s)\n', displacement_amp);
-    fprintf('    Head rate amplitude: %.4f ft/min (advisor: 0.09 ft/min)\n', head_amp_ft_per_min);
-    fprintf('    Strain rate amplitude: %.4e 1/s (advisor: 1.3e-10 1/s)\n', amplitude_strain);
+    console_log('\n  For comparison with advisor:\n');
+    console_log('    Displacement amplitude: %.2f nm/s (advisor: 1.3 nm/s)\n', displacement_amp);
+    console_log('    Head rate amplitude: %.4f ft/min (advisor: 0.09 ft/min)\n', head_amp_ft_per_min);
+    console_log('    Strain rate amplitude: %.4e 1/s (advisor: 1.3e-10 1/s)\n', amplitude_strain);
     
     % Slope = amplitude ratio
     slope = amplitude_strain / amplitude_head;
     
-    fprintf('\n  Your calculated slope: %.4e (1/s)/(m/s)\n', slope);
-    fprintf('  Advisor''s slope: 2.8434e-07 (1/s)/(m/s)\n');
-    fprintf('  Difference: %.2fx\n', 2.8434e-07 / slope);
+    console_log('\n  Your calculated slope: %.4e (1/s)/(m/s)\n', slope);
+    console_log('  Advisor''s slope: 2.8434e-07 (1/s)/(m/s)\n');
+    console_log('  Difference: %.2fx\n', 2.8434e-07 / slope);
     intercept = min_strain;  % Use min as intercept
     baseline_strain = min_strain;  % For compatibility
     baseline_head = min_head;
     
-    fprintf('\n  Slope (amplitude ratio): %.4e (1/s)/(m/s)\n', slope);
-    fprintf('  ✓ Using peak-to-trough range (advisor method)!\n');
+    console_log('\n  Slope (amplitude ratio): %.4e (1/s)/(m/s)\n', slope);
+    console_log('  ✓ Using peak-to-trough range (advisor method)!\n');
     
     % Calculate predicted values using amplitude-based slope
     strain_predicted = baseline_strain + slope * (head_rate_clean - baseline_head);
@@ -655,14 +655,14 @@ if use_amplitude
     R_squared = R_corr^2;
     RMSE = sqrt(mean(residuals.^2));
     
-    fprintf('\n  Correlation metrics (for quality assessment):\n');
-    fprintf('    R: %.4f\n', R_corr);
-    fprintf('    R^2: %.4f\n', R_squared);
-    fprintf('    RMSE: %.4e 1/s\n', RMSE);
+    console_log('\n  Correlation metrics (for quality assessment):\n');
+    console_log('    R: %.4f\n', R_corr);
+    console_log('    R^2: %.4f\n', R_squared);
+    console_log('    RMSE: %.4e 1/s\n', RMSE);
     
 else
     % Original regression approach
-    fprintf('\n=== REGRESSION RESULTS ===\n');
+    console_log('\n=== REGRESSION RESULTS ===\n');
     p_regression = polyfit(head_rate_clean, strain_clean, 1);
     slope = p_regression(1);  % (1/s) per (m/s) - strain rate per head rate
     intercept = p_regression(2);  % 1/s
@@ -681,27 +681,27 @@ end
 if ~use_amplitude
     % Only print regression metrics if not using amplitude mode
     if config.use_displacement_rate
-        fprintf('Slope: %.4e (nm/s)/(m/s)\n', slope);
-        fprintf('Intercept: %.4e nm/s\n', intercept);
+        console_log('Slope: %.4e (nm/s)/(m/s)\n', slope);
+        console_log('Intercept: %.4e nm/s\n', intercept);
     else
-        fprintf('Slope: %.4e (1/s)/(m/s)\n', slope);
-        fprintf('Intercept: %.4e 1/s\n', intercept);
+        console_log('Slope: %.4e (1/s)/(m/s)\n', slope);
+        console_log('Intercept: %.4e 1/s\n', intercept);
     end
-    fprintf('Correlation (R): %.4f\n', R_corr);
-    fprintf('R^2: %.4f\n', R_squared);
+    console_log('Correlation (R): %.4f\n', R_corr);
+    console_log('R^2: %.4f\n', R_squared);
     if config.use_displacement_rate
-        fprintf('RMSE: %.4e nm/s\n', RMSE);
+        console_log('RMSE: %.4e nm/s\n', RMSE);
     else
-        fprintf('RMSE: %.4e 1/s\n', RMSE);
+        console_log('RMSE: %.4e 1/s\n', RMSE);
     end
 
     % Quality assessment
     if R_squared > 0.5
-        fprintf('✓ GOOD correlation - suitable for storage calculation\n');
+        console_log('✓ GOOD correlation - suitable for storage calculation\n');
     elseif R_squared > 0.25
-        fprintf('⚠ MODERATE correlation - use with caution\n');
+        console_log('⚠ MODERATE correlation - use with caution\n');
     else
-        fprintf('✗ WEAK correlation - NOT suitable for storage calculation\n');
+        console_log('✗ WEAK correlation - NOT suitable for storage calculation\n');
     end
 end
 
@@ -859,8 +859,8 @@ if false && config.show_plots  % Disabled - using Figure 21 instead
             'FontSize', 16, 'FontWeight', 'bold');
     end
     
-    fprintf('\n=== OLD PLOT DISABLED ===\n');
-    fprintf('Figure 20: Disabled (using Figure 21 instead)\n');
+    console_log('\n=== OLD PLOT DISABLED ===\n');
+    console_log('Figure 20: Disabled (using Figure 21 instead)\n');
 end
 
 % MAIN PLOT (Figure 21): 4-subplot comparison (strain rate vs displacement rate)
@@ -1039,17 +1039,17 @@ if false && config.show_plots && ~config.use_displacement_rate && isfield(das_fi
     sgtitle(sprintf('Strain Rate Analysis - %s (Zone %s) - Single Channel', test_name, upper(config.zone)), ...
             'FontSize', 16, 'FontWeight', 'bold');
         
-    fprintf('\n=== SINGLE CHANNEL 4-SUBPLOT FIGURE GENERATED (Figure 21) ===\n');
-    fprintf('  Layout matches ROI analysis for easy comparison\n');
+    console_log('\n=== SINGLE CHANNEL 4-SUBPLOT FIGURE GENERATED (Figure 21) ===\n');
+    console_log('  Layout matches ROI analysis for easy comparison\n');
     catch ME
-        fprintf('\n✗ ERROR generating Figure 21:\n');
-        fprintf('  Message: %s\n', ME.message);
-        fprintf('  Location: %s (line %d)\n', ME.stack(1).name, ME.stack(1).line);
+        console_log('\n✗ ERROR generating Figure 21:\n');
+        console_log('  Message: %s\n', ME.message);
+        console_log('  Location: %s (line %d)\n', ME.stack(1).name, ME.stack(1).line);
     end
 end
 
-fprintf('\n✓ Linear regression analysis complete!\n');
-fprintf('Next: Adjust timing_correction_sec if peaks not aligned, or proceed to storage calculation\n\n');
+console_log('\n✓ Linear regression analysis complete!\n');
+console_log('Next: Adjust timing_correction_sec if peaks not aligned, or proceed to storage calculation\n\n');
 
 end
 

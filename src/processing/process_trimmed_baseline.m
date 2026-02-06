@@ -7,7 +7,7 @@ if nargin < 3
     smooth_window = 50;  % Heavy smoothing for flat plateaus
 end
 
-fprintf('=== PROCESSING TRIMMED BASELINE DATA ===\n');
+console_log('=== PROCESSING TRIMMED BASELINE DATA ===\n');
 
 %% Load data
 data = readtable(input_csv);
@@ -18,16 +18,16 @@ data = data(~isnan(data.Time_sec), :);
 time_sec = data.Time_sec;
 drawdown_ft = data.Drawdown_ft;
 
-fprintf('Loaded %d points\n', length(time_sec));
-fprintf('Time range: %.1f to %.1f seconds\n', min(time_sec), max(time_sec));
+console_log('Loaded %d points\n', length(time_sec));
+console_log('Time range: %.1f to %.1f seconds\n', min(time_sec), max(time_sec));
 
 %% Apply smoothing
 % Use both moving average AND Savitzky-Golay for maximum flatness
 drawdown_smoothed = movmean(drawdown_ft, smooth_window, 'omitnan');
 drawdown_smoothed = sgolayfilt(drawdown_smoothed, 2, min(smooth_window*2+1, 201));  % Polynomial smoothing
 
-fprintf('Applied %d-point smoothing + Savitzky-Golay\n', smooth_window);
-fprintf('Max value: %.4f ft\n', max(drawdown_smoothed));
+console_log('Applied %d-point smoothing + Savitzky-Golay\n', smooth_window);
+console_log('Max value: %.4f ft\n', max(drawdown_smoothed));
 
 %% Plot
 figure('Position', [50, 50, 1600, 600]);
@@ -45,7 +45,7 @@ export_table = table(time_sec, drawdown_smoothed, ...
 
 writetable(export_table, output_csv);
 
-fprintf('\nExported to: %s\n', output_csv);
-fprintf('Ready for AQTESOLV!\n');
+console_log('\nExported to: %s\n', output_csv);
+console_log('Ready for AQTESOLV!\n');
 
 end

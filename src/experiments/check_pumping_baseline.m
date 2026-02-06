@@ -11,23 +11,23 @@ data = readtable(csv_file, opts);
 timestamps = datetime(data{:,1}, 'InputFormat', 'MM/dd/yyyy HH:mm:ss');
 depth_ft = data{:,3};
 
-fprintf('=== PUMPING WELL BASELINE CHECK ===\n');
-fprintf('Depth range: %.2f to %.2f ft\n', min(depth_ft), max(depth_ft));
-fprintf('Total depth change: %.2f ft\n', max(depth_ft) - min(depth_ft));
-fprintf('\nFirst 10 values (baseline):\n');
+console_log('=== PUMPING WELL BASELINE CHECK ===\n');
+console_log('Depth range: %.2f to %.2f ft\n', min(depth_ft), max(depth_ft));
+console_log('Total depth change: %.2f ft\n', max(depth_ft) - min(depth_ft));
+console_log('\nFirst 10 values (baseline):\n');
 disp(depth_ft(1:10));
-fprintf('\nLast 10 values (max pumping):\n');
+console_log('\nLast 10 values (max pumping):\n');
 disp(depth_ft(end-9:end));
 
 % Check if we should use min or max as baseline
 baseline_min = min(depth_ft);
 baseline_max = max(depth_ft);
 
-fprintf('\nIf baseline = %.2f ft (minimum):\n', baseline_min);
-fprintf('  Max drawdown = %.2f ft\n', baseline_max - baseline_min);
+console_log('\nIf baseline = %.2f ft (minimum):\n', baseline_min);
+console_log('  Max drawdown = %.2f ft\n', baseline_max - baseline_min);
 
-fprintf('\nIf baseline = %.2f ft (maximum during pumping):\n', baseline_max);
-fprintf('  This would be NEGATIVE drawdown\n');
+console_log('\nIf baseline = %.2f ft (maximum during pumping):\n', baseline_max);
+console_log('  This would be NEGATIVE drawdown\n');
 
 % Plot to visualize
 figure;

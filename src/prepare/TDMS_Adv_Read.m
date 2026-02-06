@@ -238,7 +238,7 @@ for i = 1:n_chunks
     index = index+size(buffer,1);
     % Progress logging disabled for cleaner output
     % msg = sprintf('%3.2f (percent)\n', i/n_chunks*100);
-    % fprintf([clearLine,msg]);
+    % console_log([clearLine,msg]);
     % clearLine  =   repmat(sprintf('\b'),1,length(msg));
 end
 %% Close File

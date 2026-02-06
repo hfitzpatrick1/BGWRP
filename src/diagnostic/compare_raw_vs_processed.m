@@ -8,8 +8,8 @@ if nargin < 1
     dataset_name = 'TEST';
 end
 
-fprintf('=== DEFINITIVE RAW vs PROCESSED COMPARISON ===\n');
-fprintf('Dataset: %s\n', dataset_name);
+console_log('=== DEFINITIVE RAW vs PROCESSED COMPARISON ===\n');
+console_log('Dataset: %s\n', dataset_name);
 
 % Get the current directory structure  
 data_path = 'C:\Coding\BGWRP\data\_BATCH';
@@ -26,15 +26,15 @@ if ~exist(mat_file, 'file')
     error('Processed MAT file not found: %s', mat_file);
 end
 
-fprintf('Loading raw TDMS: %s\n', tdms_file);
+console_log('Loading raw TDMS: %s\n', tdms_file);
 
 % Load raw TDMS data (truly raw ADC values)
 arg.loading = 'data';
 raw_data = TDMS_Adv_Read(tdms_file, arg);
-fprintf('Raw TDMS loaded: [%d x %d], Range: [%.3f, %.3f]\n', ...
+console_log('Raw TDMS loaded: [%d x %d], Range: [%.3f, %.3f]\n', ...
     size(raw_data,1), size(raw_data,2), min(raw_data(:)), max(raw_data(:)));
 
-fprintf('Loading processed MAT: %s\n', mat_file);
+console_log('Loading processed MAT: %s\n', mat_file);
 
 % Load post-Silixa processed data
 mat_contents = load(mat_file);
@@ -47,7 +47,7 @@ else
     processed_data = mat_contents.(fields{1});
 end
 
-fprintf('Processed MAT loaded: [%d x %d], Range: [%.3f, %.3f]\n', ...
+console_log('Processed MAT loaded: [%d x %d], Range: [%.3f, %.3f]\n', ...
     size(processed_data,1), size(processed_data,2), min(processed_data(:)), max(processed_data(:)));
 
 % Create comparison plot
@@ -57,7 +57,7 @@ figure('Position', [100 100 1600 800]);
 max_samples = min(1000, min(size(raw_data,1), size(processed_data,1)));
 max_channels = min(200, min(size(raw_data,2), size(processed_data,2)));
 
-fprintf('Plotting region: [%d x %d]\n', max_samples, max_channels);
+console_log('Plotting region: [%d x %d]\n', max_samples, max_channels);
 
 % Plot 1: Raw TDMS (ADC values)
 subplot(1,2,1);
@@ -83,17 +83,17 @@ set(gca, 'YDir', 'normal');
 sgtitle(sprintf('DEFINITIVE COMPARISON: %s - Raw TDMS vs Post-Silixa Processing', dataset_name));
 
 % Print analysis
-fprintf('\n=== VISUAL ANALYSIS GUIDE ===\n');
-fprintf('Look for:\n');
-fprintf('• Grid patterns/pixelation in either plot\n');
-fprintf('• Horizontal or vertical striping\n');
-fprintf('• Regular patterns that look artificial\n');
-fprintf('• Differences in texture between left and right plots\n');
-fprintf('\nIf grid patterns appear ONLY in the right plot → Processing artifacts\n');
-fprintf('If grid patterns appear in BOTH plots → Real sensor characteristics\n');
+console_log('\n=== VISUAL ANALYSIS GUIDE ===\n');
+console_log('Look for:\n');
+console_log('• Grid patterns/pixelation in either plot\n');
+console_log('• Horizontal or vertical striping\n');
+console_log('• Regular patterns that look artificial\n');
+console_log('• Differences in texture between left and right plots\n');
+console_log('\nIf grid patterns appear ONLY in the right plot → Processing artifacts\n');
+console_log('If grid patterns appear in BOTH plots → Real sensor characteristics\n');
 
 % Calculate basic pattern metrics for comparison
-fprintf('\n=== QUANTITATIVE COMPARISON ===\n');
+console_log('\n=== QUANTITATIVE COMPARISON ===\n');
 
 % Simple pattern detection - look for regular variations
 raw_std_time = std(raw_region, 0, 2);  % Std across channels for each time
@@ -102,8 +102,8 @@ processed_std_time = std(processed_region, 0, 2);
 raw_pattern_strength = std(raw_std_time) / mean(raw_std_time) * 100;
 processed_pattern_strength = std(processed_std_time) / mean(processed_std_time) * 100;
 
-fprintf('Raw TDMS pattern variability: %.2f%%\n', raw_pattern_strength);
-fprintf('Processed pattern variability: %.2f%%\n', processed_pattern_strength);
-fprintf('Pattern increase during processing: %.2f%%\n', processed_pattern_strength - raw_pattern_strength);
+console_log('Raw TDMS pattern variability: %.2f%%\n', raw_pattern_strength);
+console_log('Processed pattern variability: %.2f%%\n', processed_pattern_strength);
+console_log('Pattern increase during processing: %.2f%%\n', processed_pattern_strength - raw_pattern_strength);
 
 end

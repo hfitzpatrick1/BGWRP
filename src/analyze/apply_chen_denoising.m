@@ -10,10 +10,10 @@ function denoised_data = apply_chen_denoising(data1Hz, config)
 % Output:
 %   denoised_data - Denoised DAS data [time x channels]
 
-fprintf('  Chen et al. (2023) 3-stage denoising framework:\n');
+console_log('  Chen et al. (2023) 3-stage denoising framework:\n');
 
 % Stage 1: Bandpass filtering for high-frequency noise suppression
-fprintf('    Stage 1: SKIPPED - Bandpass filtering disabled\n');
+console_log('    Stage 1: SKIPPED - Bandpass filtering disabled\n');
 
 % Stage 2: Structure-oriented median filtering for erratic noise (GENTLE VERSION)
 window_size = 3; % 3-second window for 1Hz data (smaller window)
@@ -24,13 +24,13 @@ for ch = 1:size(data1Hz, 2)
     % Combine with original to preserve large-scale trends (much gentler)
     data_med(:, ch) = data1Hz(:, ch) - (data1Hz(:, ch) - data_med(:, ch)) * 0.3;
 end
-fprintf('    Stage 2: Structure-oriented median filtering complete\n');
+console_log('    Stage 2: Structure-oriented median filtering complete\n');
 
 % Stage 3: Dip filtering in f-k domain for coherent vertical/horizontal noise
-fprintf('    Stage 3: SKIPPED - Coherent noise removal disabled\n');
+console_log('    Stage 3: SKIPPED - Coherent noise removal disabled\n');
 
 % Return denoised data (only median filtered)
 denoised_data = data_med;
-fprintf('  Chen et al. denoising complete. SNR improvement applied.\n');
+console_log('  Chen et al. denoising complete. SNR improvement applied.\n');
 
 end

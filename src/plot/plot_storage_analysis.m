@@ -5,11 +5,11 @@ function plot_storage_analysis(storage_results, config)
 %   storage_results - Results from analyze_storage_parameters
 %   config         - Configuration structure
 
-fprintf('\n=== PLOTTING STORAGE ANALYSIS ===\n');
-fprintf('Storage results fields: %s\n', strjoin(fieldnames(storage_results), ', '));
+console_log('\n=== PLOTTING STORAGE ANALYSIS ===\n');
+console_log('Storage results fields: %s\n', strjoin(fieldnames(storage_results), ', '));
 
 test_labels = storage_results.tests;
-fprintf('Test labels: %s\n', strjoin(test_labels, ', '));
+console_log('Test labels: %s\n', strjoin(test_labels, ', '));
 
 for i = 1:length(test_labels)
     test_label = test_labels{i};
@@ -21,10 +21,10 @@ for i = 1:length(test_labels)
     has_z4 = isfield(storage_results, z4_key);
     has_z5 = isfield(storage_results, z5_key);
     
-    fprintf('  Checking for %s: has_z4=%d, has_z5=%d\n', test_label, has_z4, has_z5);
+    console_log('  Checking for %s: has_z4=%d, has_z5=%d\n', test_label, has_z4, has_z5);
     
     if ~has_z4 && ~has_z5
-        fprintf('  No z4 or z5 results found for %s, skipping plot\n', test_label);
+        console_log('  No z4 or z5 results found for %s, skipping plot\n', test_label);
         continue;
     end
     
@@ -186,7 +186,7 @@ for i = 1:length(test_labels)
         end
         filename = fullfile(save_dir, sprintf('storage_analysis_%s.png', test_label));
         saveas(gcf, filename);
-        fprintf('Saved storage analysis plot: %s\n', filename);
+        console_log('Saved storage analysis plot: %s\n', filename);
     end
 end
 

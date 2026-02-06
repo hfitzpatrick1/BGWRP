@@ -42,9 +42,9 @@ dataset_info.types = {};
 dataset_info.file_counts = [];
 
 if options.verbose
-    fprintf('=== DATASET DISCOVERY ===\n');
-    fprintf('Base path: %s\n', base_input);
-    fprintf('Discovery mode: %s\n', discovery_mode);
+    console_log('=== DATASET DISCOVERY ===\n');
+    console_log('Base path: %s\n', base_input);
+    console_log('Discovery mode: %s\n', discovery_mode);
 end
 
 % Validate base path
@@ -60,7 +60,7 @@ switch lower(discovery_mode)
             error('DISCOVERY ERROR: Raw directory does not exist: %s\nCheck that raw data has been archived to _raw directory', scan_directory);
         end
         if options.verbose
-            fprintf('Scanning _raw directory for source datasets\n');
+            console_log('Scanning _raw directory for source datasets\n');
         end
         
     case 'active'
@@ -69,7 +69,7 @@ switch lower(discovery_mode)
             error('DISCOVERY ERROR: Active directory does not exist: %s\nRun prep mode first to create processed datasets', scan_directory);
         end
         if options.verbose
-            fprintf('Scanning _active directory for processed datasets\n');
+            console_log('Scanning _active directory for processed datasets\n');
         end
         
     otherwise
@@ -78,7 +78,7 @@ end
 
 %% Scan for dataset directories
 if options.verbose
-    fprintf('\nScanning directory: %s\n', scan_directory);
+    console_log('\nScanning directory: %s\n', scan_directory);
 end
 
 % Get all subdirectories (excluding those starting with . or _)
@@ -133,16 +133,16 @@ for i = 1:length(all_items)
             
             if options.verbose
                 if strcmp(dataset_type, 'both')
-                    fprintf('  ✓ Found dataset: %s (%d TDMS, %d MAT files)\n', ...
+                    console_log('  ✓ Found dataset: %s (%d TDMS, %d MAT files)\n', ...
                         item.name, length(tdms_files), length(mat_files));
                 elseif strcmp(dataset_type, 'tdms')
-                    fprintf('  ✓ Found dataset: %s (%d TDMS files)\n', ...
+                    console_log('  ✓ Found dataset: %s (%d TDMS files)\n', ...
                         item.name, length(tdms_files));
                 elseif strcmp(dataset_type, 'mat')
-                    fprintf('  ✓ Found dataset: %s (%d MAT files)\n', ...
+                    console_log('  ✓ Found dataset: %s (%d MAT files)\n', ...
                         item.name, length(mat_files));
                 else
-                    fprintf('  ⚠ Found empty dataset: %s (no data files)\n', item.name);
+                    console_log('  ⚠ Found empty dataset: %s (no data files)\n', item.name);
                 end
             end
         end
@@ -169,8 +169,8 @@ dataset_info.types = discovered_types;
 dataset_info.file_counts = discovered_counts;
 
 if options.verbose
-    fprintf('\n✓ Discovery complete: Found %d datasets\n', length(discovered_datasets));
-    fprintf('Dataset names: %s\n', strjoin(discovered_datasets, ', '));
+    console_log('\n✓ Discovery complete: Found %d datasets\n', length(discovered_datasets));
+    console_log('Dataset names: %s\n', strjoin(discovered_datasets, ', '));
 end
 
 end

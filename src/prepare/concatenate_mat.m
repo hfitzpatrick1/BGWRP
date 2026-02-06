@@ -11,8 +11,8 @@ function [concatenated_data, success] = concatenate_mat(input_directory)
 %   concatenated_data - Combined data matrix [time x channels]
 %   success          - true if successful, false otherwise
 
-fprintf('=== CONCATENATING MAT FILES ===\n');
-fprintf('Input directory: %s\n', input_directory);
+console_log('=== CONCATENATING MAT FILES ===\n');
+console_log('Input directory: %s\n', input_directory);
 
 success = false;
 concatenated_data = [];
@@ -29,7 +29,7 @@ try
         error('No MAT files found in directory: %s', input_directory);
     end
     
-    fprintf('Found %d MAT files to concatenate\n', length(files));
+    console_log('Found %d MAT files to concatenate\n', length(files));
     
     % Initialize variables
     rawdata = [];
@@ -38,7 +38,7 @@ try
     % Load and concatenate all files
     for nn = 1:length(files)
         if mod(nn, 5) == 1 || nn == length(files)  % Show every 5th file + last
-            fprintf('Loading file %d of %d: %s\n', nn, length(files), files(nn).name);
+            console_log('Loading file %d of %d: %s\n', nn, length(files), files(nn).name);
         end
         
         % Load data
@@ -68,14 +68,14 @@ try
         end
         
         if mod(nn, 5) == 1 || nn == length(files)  % Show details for same files
-            fprintf('  Data size: [%d x %d]\n', size(file_data, 1), size(file_data, 2));
+            console_log('  Data size: [%d x %d]\n', size(file_data, 1), size(file_data, 2));
         end
         
         % Check channel consistency
         if isempty(expected_channels)
             expected_channels = size(file_data, 2);
         elseif size(file_data, 2) ~= expected_channels
-            fprintf('  WARNING: Skipping file with different channel count: %d vs %d\n', ...
+            console_log('  WARNING: Skipping file with different channel count: %d vs %d\n', ...
                     size(file_data, 2), expected_channels);
             continue;
         end
@@ -84,7 +84,7 @@ try
         rawdata = [rawdata; file_data];
         
         if mod(nn, 5) == 1 || nn == length(files)  % Show progress for same files
-            fprintf('  Concatenated size: [%d x %d]\n', size(rawdata, 1), size(rawdata, 2));
+            console_log('  Concatenated size: [%d x %d]\n', size(rawdata, 1), size(rawdata, 2));
         end
     end
     
@@ -96,10 +96,10 @@ try
     concatenated_data = rawdata;
     success = true;
     
-    fprintf('✓ Concatenation complete: [%d x %d]\n', size(concatenated_data, 1), size(concatenated_data, 2));
+    console_log('✓ Concatenation complete: [%d x %d]\n', size(concatenated_data, 1), size(concatenated_data, 2));
     
 catch ME
-    fprintf('✗ Error during concatenation: %s\n', ME.message);
+    console_log('✗ Error during concatenation: %s\n', ME.message);
     success = false;
     concatenated_data = [];
 end

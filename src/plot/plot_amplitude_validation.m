@@ -74,10 +74,10 @@ text(0.05, 0.88, '(Correct e^{-10} values!)', ...
     'Units', 'normalized', 'FontSize', 11, 'FontWeight', 'bold', 'Color', 'green', ...
     'BackgroundColor', 'white', 'EdgeColor', 'k');
 
-fprintf('\n=== VALIDATION RESULTS ===\n');
-fprintf('Strain rate range: %.2e to %.2e 1/s\n', min(strain_rate), max(strain_rate));
-fprintf('✓ Correct order of magnitude: e^{-10}\n');
-fprintf('Channel: %d at %.1f ft\n', ch_idx, depth_ft(ch_idx));
-fprintf('\nIf signals track together in left plot → Good data alignment!\n');
-fprintf('If scatter plot shows trend → Good correlation!\n');
+console_log('\n=== VALIDATION RESULTS ===\n');
+console_log('Strain rate range: %.2e to %.2e 1/s\n', min(strain_rate), max(strain_rate));
+console_log('✓ Correct order of magnitude: e^{-10}\n');
+console_log('Channel: %d at %.1f ft\n', ch_idx, depth_ft(ch_idx));
+console_log('\nIf signals track together in left plot → Good data alignment!\n');
+console_log('If scatter plot shows trend → Good correlation!\n');
 

@@ -15,7 +15,7 @@ function plot_fft_analysis(das_data, fft_results, test_label, analysis_start, an
 %   analysis_end   - Analysis window end time  
 %   config         - Configuration structure
 
-fprintf('      Creating FFT analysis figure...\n');
+console_log('      Creating FFT analysis figure...\n');
 
 %% Subplot 1: Power Spectral Density (PSD)
 subplot(2,2,1);
@@ -198,6 +198,6 @@ annotation('textbox', [0.02 0.02 0.96 0.08], 'String', summary_text, ...
     'FitBoxToText', 'on', 'FontSize', 10, 'BackgroundColor', 'white', ...
     'EdgeColor', 'black', 'HorizontalAlignment', 'left');
 
-fprintf('        FFT analysis figure created\n');
+console_log('        FFT analysis figure created\n');
 
 end

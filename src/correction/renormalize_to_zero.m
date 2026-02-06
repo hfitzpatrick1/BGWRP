@@ -12,7 +12,7 @@ if nargin < 4
     baseline_window = [1800, 7200];  % 30 min to 2 hours
 end
 
-fprintf('=== RENORMALIZING TO ZERO BASELINE ===\n');
+console_log('=== RENORMALIZING TO ZERO BASELINE ===\n');
 
 %% Load data
 data = readtable(input_csv);
@@ -25,17 +25,17 @@ drawdown_ft = data.(col_names{2});
 baseline_mask = time_sec >= baseline_window(1) & time_sec <= baseline_window(2);
 baseline_value = mean(drawdown_ft(baseline_mask), 'omitnan');
 
-fprintf('Baseline period: %.1f to %.1f seconds\n', baseline_window(1), baseline_window(2));
-fprintf('Original baseline value: %.4f ft\n', baseline_value);
-fprintf('Using %d points for baseline\n', sum(baseline_mask));
+console_log('Baseline period: %.1f to %.1f seconds\n', baseline_window(1), baseline_window(2));
+console_log('Original baseline value: %.4f ft\n', baseline_value);
+console_log('Using %d points for baseline\n', sum(baseline_mask));
 
 %% Normalize to zero
 drawdown_normalized = drawdown_ft - baseline_value;
 
-fprintf('After normalization:\n');
-fprintf('  Pre-test mean: %.6f ft (should be ~0)\n', mean(drawdown_normalized(baseline_mask)));
-fprintf('  Max value: %.4f ft\n', max(drawdown_normalized));
-fprintf('  Min value: %.4f ft\n', min(drawdown_normalized));
+console_log('After normalization:\n');
+console_log('  Pre-test mean: %.6f ft (should be ~0)\n', mean(drawdown_normalized(baseline_mask)));
+console_log('  Max value: %.4f ft\n', max(drawdown_normalized));
+console_log('  Min value: %.4f ft\n', min(drawdown_normalized));
 
 %% Plot comparison
 pump_times = pump_start_elapsed + [0, 3600, 7200, 10800, 14400];
@@ -86,7 +86,7 @@ export_table = table(time_sec, drawdown_normalized, ...
 
 writetable(export_table, output_csv);
 
-fprintf('\nExported normalized data to:\n%s\n', output_csv);
-fprintf('Baseline shifted by %.4f ft to normalize to zero\n', baseline_value);
+console_log('\nExported normalized data to:\n%s\n', output_csv);
+console_log('Baseline shifted by %.4f ft to normalize to zero\n', baseline_value);
 
 end

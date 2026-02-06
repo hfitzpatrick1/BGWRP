@@ -5,7 +5,7 @@ function flatten_plateaus(input_csv, output_csv, pump_start_elapsed)
 %
 % Creates perfectly flat horizontal lines for each pump rate period
 
-fprintf('=== FLATTENING PLATEAUS ===\n');
+console_log('=== FLATTENING PLATEAUS ===\n');
 
 %% Load data
 data = readtable(input_csv);
@@ -14,7 +14,7 @@ data = data(~isnan(data.Time_sec), :);
 time_sec = data.Time_sec;
 drawdown_ft = data.Drawdown_ft;
 
-fprintf('Loaded %d points\n', length(time_sec));
+console_log('Loaded %d points\n', length(time_sec));
 
 %% Define pump rate periods
 pump_times = pump_start_elapsed + [0, 3600, 7200, 10800, 14400, 18000];  % Add end buffer
@@ -45,7 +45,7 @@ for i = 1:length(rates)
         % Replace with perfectly flat value
         drawdown_flat(plateau_mask) = plateau_value;
         
-        fprintf('Plateau %d (%d GPM): Flattened %d points at %.4f ft\n', ...
+        console_log('Plateau %d (%d GPM): Flattened %d points at %.4f ft\n', ...
             i, rates(i), sum(plateau_mask), plateau_value);
     end
 end
@@ -114,7 +114,7 @@ export_table = table(time_sec, drawdown_final, ...
 
 writetable(export_table, output_csv);
 
-fprintf('\nExported to: %s\n', output_csv);
-fprintf('Plateaus are now perfectly flat!\n');
+console_log('\nExported to: %s\n', output_csv);
+console_log('Plateaus are now perfectly flat!\n');
 
 end

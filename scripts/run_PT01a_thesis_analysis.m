@@ -44,12 +44,12 @@ try
 
     %% STEP 1: Run Correlation Analysis
     % This processes the raw DAS and head data with optimal smoothing
-    fprintf('STEP 1/2: Running correlation analysis...\n');
-    fprintf('  - Loading 100Hz DAS data\n');
-    fprintf('  - Applying the SAME anti-aliasing filter used for 1Hz data\n');
-    fprintf('  - Filter: Kaiser window FIR lowpass (cutoff 0.5 Hz)\n');
-    fprintf('  - Processing head data\n');
-    fprintf('  - Applying +90s time shift to DAS data\n\n');
+    console_log('STEP 1/2: Running correlation analysis...\n');
+    console_log('  - Loading 100Hz DAS data\n');
+    console_log('  - Applying the SAME anti-aliasing filter used for 1Hz data\n');
+    console_log('  - Filter: Kaiser window FIR lowpass (cutoff 0.5 Hz)\n');
+    console_log('  - Processing head data\n');
+    console_log('  - Applying +90s time shift to DAS data\n\n');
     
     % Add parent directory's src to path
     script_dir = fileparts(mfilename('fullpath'));
@@ -71,41 +71,38 @@ try
     
     BGWRP_Toolkit;
     
-    fprintf('\n✓ Correlation analysis complete!\n\n');
+    console_log('\n✓ Correlation analysis complete!\n\n');
     pause(2);  % Brief pause to see the message
     
     %% STEP 2: Run ROI Linear Regression Analysis
     % This performs spatial processing and linear regression on the focused region
-    fprintf('STEP 2/2: Running ROI linear regression analysis...\n');
-    fprintf('  - Depth range: 450-510 ft (PT-01a pumping zone)\n');
-    fprintf('  - Regression window: 20:45:15 to 20:46:30 UTC\n');
-    fprintf('  - Head timing correction: 14 seconds backward\n\n');
+    console_log('STEP 2/2: Running ROI linear regression analysis...\n');
+    console_log('  - Depth range: 450-510 ft (PT-01a pumping zone)\n');
+    console_log('  - Regression window: 20:45:15 to 20:46:30 UTC\n');
+    console_log('  - Head timing correction: 14 seconds backward\n\n');
     
     run_roi_analysis;
     
-    fprintf('\n=== ANALYSIS COMPLETE ===\n');
-    fprintf('Results saved to workspace as ''roi_results''\n');
-    fprintf('Key metrics:\n');
-    fprintf('  - R² value: %.3f\n', roi_results.R_squared);
-    fprintf('  - Slope: %.2e\n', roi_results.slope);
-    fprintf('  - Correlation (R): %.3f\n', roi_results.R);
-    fprintf('  - RMSE: %.2e 1/s\n', roi_results.RMSE);
-    fprintf('\nFigures generated:\n');
-    fprintf('  - Figure 101: DAS Displacement Rate (waterfall)\n');
-    fprintf('  - Figure 102: Displacement Rate with monitoring wells\n');
-    fprintf('  - Figure 103: Strain with head data\n');
-    fprintf('  - Figure: 4-subplot regression analysis\n');
-    fprintf('\nAll plots ready for thesis!\n');
-    fprintf('\n*** Using 100Hz data with resample anti-aliasing filter (same as 1Hz data!) ***\n');
+    console_log('\n=== ANALYSIS COMPLETE ===\n');
+    console_log('Results saved to workspace as ''roi_results''\n');
+    console_log('Key metrics:\n');
+    console_log('  - R² value: %.3f\n', roi_results.R_squared);
+    console_log('  - Slope: %.2e\n', roi_results.slope);
+    console_log('  - Correlation (R): %.3f\n', roi_results.R);
+    console_log('  - RMSE: %.2e 1/s\n', roi_results.RMSE);
+    console_log('\nFigures generated:\n');
+    console_log('  - Figure 101: DAS Displacement Rate (waterfall)\n');
+    console_log('  - Figure 102: Displacement Rate with monitoring wells\n');
+    console_log('  - Figure 103: Strain with head data\n');
+    console_log('  - Figure: 4-subplot regression analysis\n');
+    console_log('\nAll plots ready for thesis!\n');
+    console_log('\n*** Using 100Hz data with resample anti-aliasing filter (same as 1Hz data!) ***\n');
     
 catch ME
-    % Ensure diary is closed even if error occurs
-    diary off;
-    fprintf('\nERROR: %s\n', ME.message);
-    fprintf('Console log saved to: %s\n', diary_log_path);
+    console_log('\nERROR: %s\n', ME.message);
+    console_log('close');
     rethrow(ME);
 end
 
-% Normal completion - close diary
-diary off;
-fprintf('\nConsole log saved to: %s\n', diary_log_path);
+% Normal completion - close log
+console_log('close');

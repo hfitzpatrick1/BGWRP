@@ -9,7 +9,7 @@ function plot_fft_analysis_improved(das_data, fft_results, test_label, analysis_
 % - Low frequencies (< 0.1 Hz): Groundwater recovery signals
 % - High frequencies (> 0.1 Hz): Equipment noise and artifacts
 
-fprintf('      Creating groundwater DAS FFT analysis figure...\n');
+console_log('      Creating groundwater DAS FFT analysis figure...\n');
 
 %% Left Plot: Recovery Spectrogram
 subplot(1,2,1);
@@ -192,6 +192,6 @@ annotation('textbox', [0.2 0.02 0.6 0.05], ...
     'HorizontalAlignment', 'center', 'FontSize', 11, ...
     'EdgeColor', 'none', 'BackgroundColor', 'none');
 
-fprintf('        Fundamental FFT analysis figure created\n');
+console_log('        Fundamental FFT analysis figure created\n');
 
 end

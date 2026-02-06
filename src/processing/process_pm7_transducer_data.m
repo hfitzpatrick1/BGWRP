@@ -15,13 +15,13 @@ if nargin < 2
     zone_name = 'PM7 Transducer';
 end
 
-fprintf('=== PM7 TRANSDUCER DATA PROCESSING ===\n');
-fprintf('Processing: %s\n', zone_name);
-fprintf('File: %s\n\n', csv_file);
+console_log('=== PM7 TRANSDUCER DATA PROCESSING ===\n');
+console_log('Processing: %s\n', zone_name);
+console_log('File: %s\n\n', csv_file);
 
 %% STEP 1: Load Raw Data
-fprintf('STEP 1: Load Raw Data\n');
-fprintf('------------------------------------------------------\n');
+console_log('STEP 1: Load Raw Data\n');
+console_log('------------------------------------------------------\n');
 
 if ~exist(csv_file, 'file')
     error('Data file not found: %s', csv_file);
@@ -35,7 +35,7 @@ try
         line = fgetl(fid);
         line_count = line_count + 1;
         if contains(line, 'Date Time') && contains(line, 'Depth')
-            fprintf('Found header at line %d\n', line_count);
+            console_log('Found header at line %d\n', line_count);
             break;
         end
     end
@@ -48,17 +48,17 @@ try
     
     data_table = readtable(csv_file, opts);
     
-    fprintf('✓ Data loaded successfully\n');
-    fprintf('  Rows: %d\n', height(data_table));
-    fprintf('  Columns: DateTime, Pressure_psi, Temperature_C, Depth_ft\n');
+    console_log('✓ Data loaded successfully\n');
+    console_log('  Rows: %d\n', height(data_table));
+    console_log('  Columns: DateTime, Pressure_psi, Temperature_C, Depth_ft\n');
     
 catch ME
     error('Failed to load data: %s', ME.message);
 end
 
 %% STEP 2: Parse Time and Data
-fprintf('\nSTEP 2: Parse Time and Data\n');
-fprintf('------------------------------------------------------\n');
+console_log('\nSTEP 2: Parse Time and Data\n');
+console_log('------------------------------------------------------\n');
 
 try
     % Parse timestamps (local time, then convert to UTC)
@@ -74,21 +74,21 @@ try
     temperature = data_table.Temperature_C;
     depth_ft_raw = data_table.Depth_ft;
     
-    fprintf('✓ Data parsed successfully\n');
-    fprintf('  Time range (UTC): %s to %s\n', timestamps(1), timestamps(end));
-    fprintf('  Duration: %.2f hours\n', hours(timestamps(end) - timestamps(1)));
-    fprintf('  Sampling interval: %.2f seconds (median)\n', median(seconds(diff(timestamps))));
-    fprintf('  Pressure range: %.3f to %.3f psi\n', min(pressure_raw), max(pressure_raw));
-    fprintf('  Depth range: %.3f to %.3f ft\n', min(depth_ft_raw), max(depth_ft_raw));
-    fprintf('  Temperature range: %.2f to %.2f °C\n', min(temperature), max(temperature));
+    console_log('✓ Data parsed successfully\n');
+    console_log('  Time range (UTC): %s to %s\n', timestamps(1), timestamps(end));
+    console_log('  Duration: %.2f hours\n', hours(timestamps(end) - timestamps(1)));
+    console_log('  Sampling interval: %.2f seconds (median)\n', median(seconds(diff(timestamps))));
+    console_log('  Pressure range: %.3f to %.3f psi\n', min(pressure_raw), max(pressure_raw));
+    console_log('  Depth range: %.3f to %.3f ft\n', min(depth_ft_raw), max(depth_ft_raw));
+    console_log('  Temperature range: %.2f to %.2f °C\n', min(temperature), max(temperature));
     
 catch ME
     error('Failed to parse data: %s', ME.message);
 end
 
 %% STEP 3: Visualize Raw Data
-fprintf('\nSTEP 3: Visualize Raw Data\n');
-fprintf('------------------------------------------------------\n');
+console_log('\nSTEP 3: Visualize Raw Data\n');
+console_log('------------------------------------------------------\n');
 
 figure('Name', sprintf('%s - Raw Data', zone_name), 'Position', [100, 100, 1400, 900]);
 
@@ -134,13 +134,13 @@ xlabel('Time (UTC)');
 title('Outlier Detection (3-MAD threshold)');
 grid on;
 
-fprintf('✓ Raw data visualization created\n');
-fprintf('  Identified %d potential outlier points (%.2f%% of data)\n', ...
+console_log('✓ Raw data visualization created\n');
+console_log('  Identified %d potential outlier points (%.2f%% of data)\n', ...
     sum(outliers), 100*sum(outliers)/length(outliers));
 
 %% STEP 4: Remove Outliers and Bad Data
-fprintf('\nSTEP 4: Remove Outliers and Bad Data\n');
-fprintf('------------------------------------------------------\n');
+console_log('\nSTEP 4: Remove Outliers and Bad Data\n');
+console_log('------------------------------------------------------\n');
 
 % Create cleaned arrays
 pressure_cleaned = pressure_raw;
@@ -149,28 +149,28 @@ depth_cleaned = depth_ft_raw;
 % Remove outliers from both pressure and depth
 pressure_cleaned(outliers) = NaN;
 depth_cleaned(outliers) = NaN;
-fprintf('✓ Removed %d outliers\n', sum(outliers));
+console_log('✓ Removed %d outliers\n', sum(outliers));
 
 % Interpolate over small gaps
 max_gap = 5;
 pressure_cleaned = fillmissing(pressure_cleaned, 'linear', 'MaxGap', max_gap);
 depth_cleaned = fillmissing(depth_cleaned, 'linear', 'MaxGap', max_gap);
 remaining_nans = sum(isnan(pressure_cleaned));
-fprintf('✓ Interpolated small gaps (<= %d points)\n', max_gap);
+console_log('✓ Interpolated small gaps (<= %d points)\n', max_gap);
 if remaining_nans > 0
-    fprintf('⚠ %d NaN values remain (larger gaps not interpolated)\n', remaining_nans);
+    console_log('⚠ %d NaN values remain (larger gaps not interpolated)\n', remaining_nans);
 end
 
 %% STEP 5: Apply Smoothing Filters
-fprintf('\nSTEP 5: Apply Smoothing Filters\n');
-fprintf('------------------------------------------------------\n');
+console_log('\nSTEP 5: Apply Smoothing Filters\n');
+console_log('------------------------------------------------------\n');
 
 % Moving average smoothing (adjust window based on sampling rate)
 % For 5-second sampling, 21 points ≈ 1.75 minutes
 smooth_window = 21;
 pressure_smoothed = movmean(pressure_cleaned, smooth_window, 'omitnan');
 depth_smoothed = movmean(depth_cleaned, smooth_window, 'omitnan');
-fprintf('✓ Applied %d-point moving average filter\n', smooth_window);
+console_log('✓ Applied %d-point moving average filter\n', smooth_window);
 
 % Savitzky-Golay filter for better edge preservation
 try
@@ -180,39 +180,39 @@ try
     pressure_final = sgolayfilt(pressure_smoothed, savgol_order, savgol_framelen);
     depth_final = sgolayfilt(depth_smoothed, savgol_order, savgol_framelen);
     
-    fprintf('✓ Applied Savitzky-Golay filter (order=%d, framelen=%d)\n', ...
+    console_log('✓ Applied Savitzky-Golay filter (order=%d, framelen=%d)\n', ...
         savgol_order, savgol_framelen);
 catch ME
-    fprintf('⚠ Savitzky-Golay filter failed: %s\n', ME.message);
+    console_log('⚠ Savitzky-Golay filter failed: %s\n', ME.message);
     pressure_final = pressure_smoothed;
     depth_final = depth_smoothed;
 end
 
 %% STEP 6: Calculate Drawdown
-fprintf('\nSTEP 6: Calculate Drawdown\n');
-fprintf('------------------------------------------------------\n');
+console_log('\nSTEP 6: Calculate Drawdown\n');
+console_log('------------------------------------------------------\n');
 
 % Use first 60 points as baseline (matching your existing scripts)
 baseline_points = min(60, floor(length(depth_final)/10));
 baseline_depth_ft = mean(depth_final(1:baseline_points), 'omitnan');
 baseline_pressure_psi = mean(pressure_final(1:baseline_points), 'omitnan');
 
-fprintf('Using first %d points for baseline\n', baseline_points);
-fprintf('  Baseline depth: %.3f ft\n', baseline_depth_ft);
-fprintf('  Baseline pressure: %.3f psi\n', baseline_pressure_psi);
+console_log('Using first %d points for baseline\n', baseline_points);
+console_log('  Baseline depth: %.3f ft\n', baseline_depth_ft);
+console_log('  Baseline pressure: %.3f psi\n', baseline_pressure_psi);
 
 % Calculate drawdown (positive = deeper water = more drawdown)
 drawdown_ft = depth_final - baseline_depth_ft;
 pressure_change_psi = pressure_raw - baseline_pressure_psi;
 
-fprintf('✓ Calculated drawdown\n');
-fprintf('  Maximum drawdown: %.3f ft\n', max(drawdown_ft, [], 'omitnan'));
-fprintf('  Minimum drawdown: %.3f ft\n', min(drawdown_ft, [], 'omitnan'));
-fprintf('  Maximum pressure change: %.3f psi\n', max(pressure_change_psi, [], 'omitnan'));
+console_log('✓ Calculated drawdown\n');
+console_log('  Maximum drawdown: %.3f ft\n', max(drawdown_ft, [], 'omitnan'));
+console_log('  Minimum drawdown: %.3f ft\n', min(drawdown_ft, [], 'omitnan'));
+console_log('  Maximum pressure change: %.3f psi\n', max(pressure_change_psi, [], 'omitnan'));
 
 %% STEP 7: Calculate Drawdown Rate (for correlation with DAS)
-fprintf('\nSTEP 7: Calculate Drawdown Rate\n');
-fprintf('------------------------------------------------------\n');
+console_log('\nSTEP 7: Calculate Drawdown Rate\n');
+console_log('------------------------------------------------------\n');
 
 % Calculate time derivative of drawdown (ft/s)
 dt_seconds = seconds(diff(timestamps));
@@ -221,14 +221,14 @@ drawdown_rate_ft_s = [0; diff(drawdown_ft) ./ dt_seconds];
 % Smooth the rate (it's typically noisy)
 drawdown_rate_smoothed = movmean(drawdown_rate_ft_s, smooth_window, 'omitnan');
 
-fprintf('✓ Calculated drawdown rate\n');
-fprintf('  Rate range: %.6f to %.6f ft/s\n', ...
+console_log('✓ Calculated drawdown rate\n');
+console_log('  Rate range: %.6f to %.6f ft/s\n', ...
     min(drawdown_rate_smoothed, [], 'omitnan'), ...
     max(drawdown_rate_smoothed, [], 'omitnan'));
 
 %% STEP 8: Visualize Cleaned Data
-fprintf('\nSTEP 8: Visualize Cleaned Data\n');
-fprintf('------------------------------------------------------\n');
+console_log('\nSTEP 8: Visualize Cleaned Data\n');
+console_log('------------------------------------------------------\n');
 
 figure('Name', sprintf('%s - Cleaned Data', zone_name), 'Position', [150, 150, 1400, 1000]);
 
@@ -274,27 +274,27 @@ xlabel('Time (UTC)');
 title('Temperature Profile');
 grid on;
 
-fprintf('✓ Cleaned data visualization created\n');
+console_log('✓ Cleaned data visualization created\n');
 
 %% STEP 9: Quality Metrics
-fprintf('\nSTEP 9: Data Quality Metrics\n');
-fprintf('------------------------------------------------------\n');
+console_log('\nSTEP 9: Data Quality Metrics\n');
+console_log('------------------------------------------------------\n');
 
 noise_rms = rms(noise, 'omitnan');
 signal_std = std(pressure_final, 'omitnan');
 snr = 20 * log10(signal_std / noise_rms);
 
-fprintf('Quality Metrics:\n');
-fprintf('  RMS Noise: %.4f psi (%.3f ft of water)\n', noise_rms, noise_rms * 2.31);
-fprintf('  Signal Std Dev: %.4f psi\n', signal_std);
-fprintf('  Signal-to-Noise Ratio: %.1f dB\n', snr);
-fprintf('  Data completeness: %.1f%% (%d/%d points)\n', ...
+console_log('Quality Metrics:\n');
+console_log('  RMS Noise: %.4f psi (%.3f ft of water)\n', noise_rms, noise_rms * 2.31);
+console_log('  Signal Std Dev: %.4f psi\n', signal_std);
+console_log('  Signal-to-Noise Ratio: %.1f dB\n', snr);
+console_log('  Data completeness: %.1f%% (%d/%d points)\n', ...
     100*sum(~isnan(pressure_final))/length(pressure_final), ...
     sum(~isnan(pressure_final)), length(pressure_final));
 
 %% STEP 10: Export Cleaned Data
-fprintf('\nSTEP 10: Export Cleaned Data\n');
-fprintf('------------------------------------------------------\n');
+console_log('\nSTEP 10: Export Cleaned Data\n');
+console_log('------------------------------------------------------\n');
 
 % Create output directory
 [input_dir, ~, ~] = fileparts(csv_file);
@@ -316,7 +316,7 @@ Temperature_C = temperature;
 mat_output = fullfile(output_dir, sprintf('%s_cleaned.mat', base_name));
 save(mat_output, 'Date', 'Drawdownft', 'Pressurepsi', 'Depthft', ...
     'DrawdownRate_ft_s', 'Temperature_C', 'baseline_depth_ft', 'baseline_pressure_psi');
-fprintf('✓ Exported MAT file: %s\n', mat_output);
+console_log('✓ Exported MAT file: %s\n', mat_output);
 
 % Also save as CSV for easy viewing
 output_table = table(timestamps, pressure_raw, pressure_final, depth_ft_raw, depth_final, ...
@@ -326,25 +326,25 @@ output_table = table(timestamps, pressure_raw, pressure_final, depth_ft_raw, dep
 
 csv_output = fullfile(output_dir, sprintf('%s_cleaned.csv', base_name));
 writetable(output_table, csv_output);
-fprintf('✓ Exported CSV file: %s\n', csv_output);
+console_log('✓ Exported CSV file: %s\n', csv_output);
 
 %% Summary
-fprintf('\n=== PROCESSING COMPLETE ===\n');
-fprintf('Zone: %s\n', zone_name);
-fprintf('✓ Raw data points: %d\n', length(pressure_raw));
-fprintf('✓ Outliers removed: %d (%.2f%%)\n', sum(outliers), 100*sum(outliers)/length(outliers));
-fprintf('✓ RMS noise: %.4f psi\n', noise_rms);
-fprintf('✓ Maximum drawdown: %.3f ft\n', max(drawdown_ft, [], 'omitnan'));
-fprintf('✓ Output files saved to: %s\n', output_dir);
+console_log('\n=== PROCESSING COMPLETE ===\n');
+console_log('Zone: %s\n', zone_name);
+console_log('✓ Raw data points: %d\n', length(pressure_raw));
+console_log('✓ Outliers removed: %d (%.2f%%)\n', sum(outliers), 100*sum(outliers)/length(outliers));
+console_log('✓ RMS noise: %.4f psi\n', noise_rms);
+console_log('✓ Maximum drawdown: %.3f ft\n', max(drawdown_ft, [], 'omitnan'));
+console_log('✓ Output files saved to: %s\n', output_dir);
 
-fprintf('\n📋 DATA READY FOR:\n');
-fprintf('   - Pump test analysis (drawdown vs time)\n');
-fprintf('   - DAS correlation (using DrawdownRate_ft_s)\n');
-fprintf('   - Storage parameter estimation\n');
-fprintf('   - Multi-zone comparison\n\n');
+console_log('\n📋 DATA READY FOR:\n');
+console_log('   - Pump test analysis (drawdown vs time)\n');
+console_log('   - DAS correlation (using DrawdownRate_ft_s)\n');
+console_log('   - Storage parameter estimation\n');
+console_log('   - Multi-zone comparison\n\n');
 
-fprintf('💡 TIP: Load the cleaned MAT file for further analysis:\n');
-fprintf('   >> load(''%s'');\n', mat_output);
-fprintf('   >> plot(Date, Drawdownft);\n\n');
+console_log('💡 TIP: Load the cleaned MAT file for further analysis:\n');
+console_log('   >> load(''%s'');\n', mat_output);
+console_log('   >> plot(Date, Drawdownft);\n\n');
 
 end

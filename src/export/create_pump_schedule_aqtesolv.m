@@ -27,9 +27,9 @@ schedule_table = table(time_sec, pump_rate_gpm, ...
 %% Export
 writetable(schedule_table, output_file);
 
-fprintf('=== PUMP SCHEDULE FOR AQTESOLV ===\n');
-fprintf('Exported to: %s\n\n', output_file);
+console_log('=== PUMP SCHEDULE FOR AQTESOLV ===\n');
+console_log('Exported to: %s\n\n', output_file);
 disp(schedule_table);
 
-fprintf('\n✓ Time starts at t=0 (pump ON)\n');
-fprintf('✓ Use this file in AQTESOLV for pump schedule\n');
+console_log('\n✓ Time starts at t=0 (pump ON)\n');
+console_log('✓ Use this file in AQTESOLV for pump schedule\n');

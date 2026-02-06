@@ -14,14 +14,14 @@ function add_weights_to_data(input_csv, output_csv, weight_ranges)
 %   };
 %   add_weights_to_data('input.csv', 'output.csv', weights);
 
-fprintf('=== ADDING WEIGHTS TO DATA ===\n');
+console_log('=== ADDING WEIGHTS TO DATA ===\n');
 
 %% Load data
 data = readtable(input_csv);
 time_sec = data.Time_sec;
 drawdown_ft = data.Drawdown_ft;
 
-fprintf('Loaded %d points\n', length(time_sec));
+console_log('Loaded %d points\n', length(time_sec));
 
 %% Initialize weights (default = 1.0)
 weights = ones(length(time_sec), 1);
@@ -36,7 +36,7 @@ for i = 1:size(weight_ranges, 1)
     mask = time_sec >= start_time & time_sec <= end_time;
     weights(mask) = weight_value;
     
-    fprintf('Range %.0f-%.0f sec: weight=%.2f (%d points)\n', ...
+    console_log('Range %.0f-%.0f sec: weight=%.2f (%d points)\n', ...
         start_time, end_time, weight_value, sum(mask));
 end
 
@@ -74,7 +74,7 @@ export_table = table(time_sec, drawdown_ft, weights, ...
 
 writetable(export_table, output_csv);
 
-fprintf('\n✓ Exported to: %s\n', output_csv);
-fprintf('✓ Ready for AQTESOLV with custom weights!\n');
+console_log('\n✓ Exported to: %s\n', output_csv);
+console_log('✓ Ready for AQTESOLV with custom weights!\n');
 
 end

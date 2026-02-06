@@ -23,7 +23,7 @@ filter_strength = get_param(config, 'chen_somf_strength', 0.3);
 preserve_factor = get_param(config, 'chen_somf_preserve', 0.7);
 adaptive = get_param(config, 'chen_somf_adaptive', true);
 
-fprintf('      SOMF: window=%d, strength=%.2f, adaptive=%d\n', ...
+console_log('      SOMF: window=%d, strength=%.2f, adaptive=%d\n', ...
     window_size, filter_strength, adaptive);
 
 [num_time, num_channels] = size(data);
@@ -49,7 +49,7 @@ end
 
 % Apply gentle spatial coherence enhancement
 if get_param(config, 'chen_somf_spatial_enhance', true)
-    fprintf('        Applying spatial coherence enhancement...\n');
+    console_log('        Applying spatial coherence enhancement...\n');
     spatial_window = min(5, num_channels);
     
     for t = 1:num_time
@@ -70,7 +70,7 @@ if get_param(config, 'chen_somf_spatial_enhance', true)
     end
 end
 
-fprintf('        SOMF filtering complete\n');
+console_log('        SOMF filtering complete\n');
 
 end
 

@@ -7,12 +7,12 @@
 % 1. Run: mode = 'run_correlation_analysis'; BGWRP_Toolkit
 % 2. Ensure das_results and head_results are in workspace
 
-fprintf('\n');
-fprintf('╔═══════════════════════════════════════════════════════════════╗\n');
-fprintf('║  DEPTH-SPECIFIC STORAGE CALCULATION (190-340 ft)              ║\n');
-fprintf('║  Becker (2022) Simplified Poroelasticity Method              ║\n');
-fprintf('╚═══════════════════════════════════════════════════════════════╝\n');
-fprintf('\n');
+console_log('\n');
+console_log('╔═══════════════════════════════════════════════════════════════╗\n');
+console_log('║  DEPTH-SPECIFIC STORAGE CALCULATION (190-340 ft)              ║\n');
+console_log('║  Becker (2022) Simplified Poroelasticity Method              ║\n');
+console_log('╚═══════════════════════════════════════════════════════════════╝\n');
+console_log('\n');
 
 %% Check if data exists
 if ~exist('das_results', 'var') || ~exist('head_results', 'var')
@@ -27,7 +27,7 @@ if ~isfield(das_results, test_name)
 end
 
 %% Step 1: Linear Regression for Depth Range 190-340 ft
-fprintf('\n=== STEP 1: LINEAR REGRESSION FOR DEPTH RANGE ===\n');
+console_log('\n=== STEP 1: LINEAR REGRESSION FOR DEPTH RANGE ===\n');
 
 lr_config.timing_correction_sec = 8;  % Optimized timing correction
 lr_config.zone = 'z5';
@@ -39,56 +39,56 @@ lr_results = linear_regression_depth_range(das_results, head_results, test_name,
 % Store in das_results
 das_results.(test_name).linear_regression_depth_range = lr_results;
 
-fprintf('\n✓ Linear regression complete for %.0f-%.0f ft (R=%.3f, R^2=%.3f)\n', ...
+console_log('\n✓ Linear regression complete for %.0f-%.0f ft (R=%.3f, R^2=%.3f)\n', ...
     lr_results.depth_range_ft(1), lr_results.depth_range_ft(2), lr_results.R, lr_results.R_squared);
 
 %% Step 2: Calculate Storage Parameters
-fprintf('\n=== STEP 2: CALCULATE STORAGE PARAMETERS ===\n');
+console_log('\n=== STEP 2: CALCULATE STORAGE PARAMETERS ===\n');
 
 storage_config.alpha = 0.95;  % Biot-Willis coefficient for clean/gravelly sand
 storage_config.gamma_unit = 'SI';
 storage_config.aquifer_thickness_ft = lr_results.depth_range_ft(2) - lr_results.depth_range_ft(1);  % Use depth range thickness!
 storage_config.S_traditional = 0.002955;  % From Aqtesolv for comparison
 
-fprintf('Using aquifer thickness: %.0f ft (depth range %.0f-%.0f ft)\n', ...
+console_log('Using aquifer thickness: %.0f ft (depth range %.0f-%.0f ft)\n', ...
     storage_config.aquifer_thickness_ft, lr_results.depth_range_ft(1), lr_results.depth_range_ft(2));
 
 storage_results = calculate_specific_storage_becker(lr_results, storage_config);
 
 %% Step 3: Summary comparison
-fprintf('\n');
-fprintf('╔═══════════════════════════════════════════════════════════════╗\n');
-fprintf('║  COMPARISON: SINGLE CHANNEL vs DEPTH RANGE                   ║\n');
-fprintf('╚═══════════════════════════════════════════════════════════════╝\n');
-fprintf('\n');
+console_log('\n');
+console_log('╔═══════════════════════════════════════════════════════════════╗\n');
+console_log('║  COMPARISON: SINGLE CHANNEL vs DEPTH RANGE                   ║\n');
+console_log('╚═══════════════════════════════════════════════════════════════╝\n');
+console_log('\n');
 
 if isfield(das_results.(test_name), 'linear_regression')
     single_channel = das_results.(test_name).linear_regression;
     
-    fprintf('SINGLE CHANNEL (285 ft):\n');
-    fprintf('  R^2: %.4f\n', single_channel.R_squared);
-    fprintf('  Slope: %.4e (1/s) per (ft/min)\n', single_channel.slope);
-    fprintf('  N points: %d\n', single_channel.n_points);
-    fprintf('\n');
+    console_log('SINGLE CHANNEL (285 ft):\n');
+    console_log('  R^2: %.4f\n', single_channel.R_squared);
+    console_log('  Slope: %.4e (1/s) per (ft/min)\n', single_channel.slope);
+    console_log('  N points: %d\n', single_channel.n_points);
+    console_log('\n');
 end
 
-fprintf('DEPTH RANGE (%.0f-%.0f ft, %d channels averaged):\n', ...
+console_log('DEPTH RANGE (%.0f-%.0f ft, %d channels averaged):\n', ...
     lr_results.depth_range_ft(1), lr_results.depth_range_ft(2), lr_results.n_channels);
-fprintf('  R^2: %.4f\n', lr_results.R_squared);
-fprintf('  Slope: %.4e (1/s) per (ft/min)\n', lr_results.slope);
-fprintf('  N points: %d\n', lr_results.n_points);
-fprintf('  Storage (S): %.4e\n', storage_results.S);
-fprintf('  Specific storage (Ss): %.4e 1/m\n', storage_results.S_s);
-fprintf('\n');
+console_log('  R^2: %.4f\n', lr_results.R_squared);
+console_log('  Slope: %.4e (1/s) per (ft/min)\n', lr_results.slope);
+console_log('  N points: %d\n', lr_results.n_points);
+console_log('  Storage (S): %.4e\n', storage_results.S);
+console_log('  Specific storage (Ss): %.4e 1/m\n', storage_results.S_s);
+console_log('\n');
 
-fprintf('TRADITIONAL (Aqtesolv, bulk 380 ft):\n');
-fprintf('  Storage (S): %.4e\n', storage_config.S_traditional);
-fprintf('  Ratio (DAS/Traditional): %.4f\n', storage_results.S / storage_config.S_traditional);
-fprintf('\n');
+console_log('TRADITIONAL (Aqtesolv, bulk 380 ft):\n');
+console_log('  Storage (S): %.4e\n', storage_config.S_traditional);
+console_log('  Ratio (DAS/Traditional): %.4f\n', storage_results.S / storage_config.S_traditional);
+console_log('\n');
 
-fprintf('✓ Depth-specific storage analysis complete!\n');
-fprintf('  Results stored in: das_results.%s.linear_regression_depth_range\n', test_name);
-fprintf('\n');
+console_log('✓ Depth-specific storage analysis complete!\n');
+console_log('  Results stored in: das_results.%s.linear_regression_depth_range\n', test_name);
+console_log('\n');
 
 
 

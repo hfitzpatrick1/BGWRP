@@ -20,5 +20,5 @@ ylabel('Depth to Water (ft)');
 title('Pumping Well PT-01a - Depth vs Time');
 grid on;
 
-fprintf('Depth range: %.2f to %.2f ft\n', min(depth_ft), max(depth_ft));
-fprintf('Total change: %.2f ft\n', max(depth_ft) - min(depth_ft));
+console_log('Depth range: %.2f to %.2f ft\n', min(depth_ft), max(depth_ft));
+console_log('Total change: %.2f ft\n', max(depth_ft) - min(depth_ft));

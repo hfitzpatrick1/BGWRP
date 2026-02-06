@@ -28,7 +28,7 @@ if mod(channels_window, 2) == 0
     channels_window = channels_window + 1;
 end
 
-fprintf('    Spatial median: %d channels, strength=%.2f, temporal=%d\n', ...
+console_log('    Spatial median: %d channels, strength=%.2f, temporal=%d\n', ...
     channels_window, filter_strength, temporal_window);
 
 [num_time, num_channels] = size(data);
@@ -57,13 +57,13 @@ end
 
 % Optional temporal smoothing
 if temporal_window > 1
-    fprintf('      Applying temporal smoothing (window: %d)\n', temporal_window);
+    console_log('      Applying temporal smoothing (window: %d)\n', temporal_window);
     for ch = 1:num_channels
         filtered_data(:, ch) = movmean(filtered_data(:, ch), temporal_window);
     end
 end
 
-fprintf('      Spatial filtering complete\n');
+console_log('      Spatial filtering complete\n');
 
 end
 

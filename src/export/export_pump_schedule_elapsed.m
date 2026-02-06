@@ -50,18 +50,18 @@ schedule_table = table(pump_times_elapsed, pump_rates, event_names, ...
 % Write to CSV
 writetable(schedule_table, output_csv);
 
-fprintf('\n=== PUMP SCHEDULE (Elapsed Time from File Start) ===\n');
-fprintf('File starts at: %s UTC\n', datestr(file_start));
-fprintf('Pump starts at: %s UTC (%.1f sec elapsed)\n\n', datestr(pump_start_time), pump_start_elapsed);
-fprintf('Exported to: %s\n\n', output_csv);
-fprintf('Time (sec)  Time (hr:min)  Rate (GPM)  Event\n');
-fprintf('-----------------------------------------------------------\n');
+console_log('\n=== PUMP SCHEDULE (Elapsed Time from File Start) ===\n');
+console_log('File starts at: %s UTC\n', datestr(file_start));
+console_log('Pump starts at: %s UTC (%.1f sec elapsed)\n\n', datestr(pump_start_time), pump_start_elapsed);
+console_log('Exported to: %s\n\n', output_csv);
+console_log('Time (sec)  Time (hr:min)  Rate (GPM)  Event\n');
+console_log('-----------------------------------------------------------\n');
 for i = 1:length(pump_times_elapsed)
     hours = floor(pump_times_elapsed(i) / 3600);
     mins = floor(mod(pump_times_elapsed(i), 3600) / 60);
-    fprintf('%10.1f  %02d:%02d          %3d         %s\n', ...
+    console_log('%10.1f  %02d:%02d          %3d         %s\n', ...
         pump_times_elapsed(i), hours, mins, pump_rates(i), event_names{i});
 end
-fprintf('\nSchedule saved!\n');
+console_log('\nSchedule saved!\n');
 
 end

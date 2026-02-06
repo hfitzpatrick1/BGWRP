@@ -14,12 +14,12 @@ depth_ft = data{:,3};
 % Convert pressure to ft (1 psi ≈ 2.31 ft of water)
 pressure_ft = pressure_psi * 2.31;
 
-fprintf('=== PRESSURE vs DEPTH COMPARISON ===\n');
-fprintf('Pressure range: %.2f to %.2f psi (%.2f to %.2f ft)\n', ...
+console_log('=== PRESSURE vs DEPTH COMPARISON ===\n');
+console_log('Pressure range: %.2f to %.2f psi (%.2f to %.2f ft)\n', ...
     min(pressure_psi), max(pressure_psi), min(pressure_ft), max(pressure_ft));
-fprintf('Depth range: %.2f to %.2f ft\n', min(depth_ft), max(depth_ft));
-fprintf('\nPressure total change: %.2f ft\n', max(pressure_ft) - min(pressure_ft));
-fprintf('Depth total change: %.2f ft\n', max(depth_ft) - min(depth_ft));
+console_log('Depth range: %.2f to %.2f ft\n', min(depth_ft), max(depth_ft));
+console_log('\nPressure total change: %.2f ft\n', max(pressure_ft) - min(pressure_ft));
+console_log('Depth total change: %.2f ft\n', max(depth_ft) - min(depth_ft));
 
 figure('Position', [50, 50, 1400, 800]);
 
@@ -36,4 +36,4 @@ xlabel('DateTime');
 title('Depth Sensor Reading');
 grid on;
 
-fprintf('\n⚠ Which one has values matching your reference (~24 ft max)?\n');
+console_log('\n⚠ Which one has values matching your reference (~24 ft max)?\n');

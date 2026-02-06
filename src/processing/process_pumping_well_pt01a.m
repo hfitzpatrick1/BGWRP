@@ -19,11 +19,11 @@ temp_c = data{:,4};
 % Convert pressure to feet of water (1 psi = 2.31 ft)
 depth_ft = pressure_psi * 2.31;
 
-fprintf('=== PUMPING WELL PT-01a DATA ===\n');
-fprintf('Total points: %d\n', length(timestamps));
-fprintf('Time range: %s to %s\n', timestamps(1), timestamps(end));
-fprintf('Pressure range: %.2f to %.2f psi\n', min(pressure_psi), max(pressure_psi));
-fprintf('Depth (from pressure): %.2f to %.2f ft\n', min(depth_ft), max(depth_ft));
+console_log('=== PUMPING WELL PT-01a DATA ===\n');
+console_log('Total points: %d\n', length(timestamps));
+console_log('Time range: %s to %s\n', timestamps(1), timestamps(end));
+console_log('Pressure range: %.2f to %.2f psi\n', min(pressure_psi), max(pressure_psi));
+console_log('Depth (from pressure): %.2f to %.2f ft\n', min(depth_ft), max(depth_ft));
 
 %% Find pump start - use known time (8:45 AM)
 % File starts at 08:00:00, pump starts at 08:45:00 = 45 minutes = 2700 seconds
@@ -38,11 +38,11 @@ pump_start_time = timestamps(pump_start_idx);
 baseline_mask = timestamps < (file_start + minutes(30));
 baseline_depth = median(depth_ft(baseline_mask), 'omitnan');
 
-fprintf('\nFile starts: %s\n', file_start);
-fprintf('Pump starts: %s (index %d)\n', pump_start_time, pump_start_idx);
-fprintf('Baseline depth: %.2f ft\n', baseline_depth);
-fprintf('Max depth during pumping: %.2f ft\n', max(depth_ft));
-fprintf('Total depth change: %.2f ft\n', max(depth_ft) - baseline_depth);
+console_log('\nFile starts: %s\n', file_start);
+console_log('Pump starts: %s (index %d)\n', pump_start_time, pump_start_idx);
+console_log('Baseline depth: %.2f ft\n', baseline_depth);
+console_log('Max depth during pumping: %.2f ft\n', max(depth_ft));
+console_log('Total depth change: %.2f ft\n', max(depth_ft) - baseline_depth);
 
 %% Calculate elapsed time from pump start
 elapsed_time_sec = seconds(timestamps - pump_start_time);
@@ -56,14 +56,14 @@ baseline_depth_final = baseline_depth;
 % Calculate drawdown (positive = water level drop = pressure drop)
 % Pressure DROPS during pumping, so drawdown = baseline - current
 drawdown_ft = baseline_depth_final - depth_final;
-fprintf('Using PRESSURE data (converted to ft)\n');
+console_log('Using PRESSURE data (converted to ft)\n');
 
 % MINIMAL smoothing to preserve steps (5-point moving average only)
 drawdown_ft = movmean(drawdown_ft, 5, 'omitnan');
 
-fprintf('\nKept %d points from pump start\n', sum(mask));
-fprintf('Drawdown range: %.2f to %.2f ft\n', min(drawdown_ft), max(drawdown_ft));
-fprintf('Applied minimal 5-point smoothing to preserve steps\n');
+console_log('\nKept %d points from pump start\n', sum(mask));
+console_log('Drawdown range: %.2f to %.2f ft\n', min(drawdown_ft), max(drawdown_ft));
+console_log('Applied minimal 5-point smoothing to preserve steps\n');
 
 %% Export for AQTESOLV
 output_file = 'E:/Transducer Data 10_24_2023/Cleaned/PT01a/PT01a_PUMPING_WELL_AQTESOLV.csv';
@@ -73,8 +73,8 @@ export_table = table(time_final, drawdown_ft, ...
 
 writetable(export_table, output_file);
 
-fprintf('\n✓ Exported to: %s\n', output_file);
-fprintf('✓ Ready for AQTESOLV as PUMPING WELL data!\n');
+console_log('\n✓ Exported to: %s\n', output_file);
+console_log('✓ Ready for AQTESOLV as PUMPING WELL data!\n');
 
 %% Plot
 figure('Position', [50, 50, 1400, 800]);
@@ -105,8 +105,8 @@ for i = 1:length(pump_changes)
     end
 end
 
-fprintf('\n=== NEXT STEPS ===\n');
-fprintf('1. Import PT01a_PUMPING_WELL_AQTESOLV.csv as PUMPING WELL\n');
-fprintf('2. Import PM7_Zone2_FINAL_AQTESOLV.csv as OBSERVATION WELL\n');
-fprintf('3. Use Pump_Schedule_AQTESOLV.csv for pump schedule\n');
-fprintf('4. AQTESOLV will use both wells to estimate parameters!\n');
+console_log('\n=== NEXT STEPS ===\n');
+console_log('1. Import PT01a_PUMPING_WELL_AQTESOLV.csv as PUMPING WELL\n');
+console_log('2. Import PM7_Zone2_FINAL_AQTESOLV.csv as OBSERVATION WELL\n');
+console_log('3. Use Pump_Schedule_AQTESOLV.csv for pump schedule\n');
+console_log('4. AQTESOLV will use both wells to estimate parameters!\n');

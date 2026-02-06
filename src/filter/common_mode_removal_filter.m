@@ -18,7 +18,7 @@ function filtered_data = common_mode_removal_filter(data, time_array, config)
 %   config.smooth_reference  - Smooth reference signal (default: true)
 %   config.smooth_window     - Smoothing window for reference (default: 3)
 
-fprintf('  Applying common mode removal filter...\n');
+console_log('  Applying common mode removal filter...\n');
 
 % Get configuration parameters
 ref_start_time = get_param(config, 'ref_start_time', []);
@@ -31,7 +31,7 @@ if isempty(ref_start_time) || isempty(ref_end_time)
     error('Reference time window must be specified in config (ref_start_time, ref_end_time)');
 end
 
-fprintf('    Reference window: %s to %s\n', ref_start_time, ref_end_time);
+console_log('    Reference window: %s to %s\n', ref_start_time, ref_end_time);
 
 % Find reference window indices
 ref_mask = time_array >= ref_start_time & time_array <= ref_end_time;
@@ -41,7 +41,7 @@ if length(ref_indices) < 2
     error('Reference window too short or not found in time array');
 end
 
-fprintf('    Reference window: %d time points\n', length(ref_indices));
+console_log('    Reference window: %d time points\n', length(ref_indices));
 
 % Calculate depth-averaged reference signal for each time step
 % This captures the common mode component
@@ -50,7 +50,7 @@ reference_signal = mean(data(ref_indices, :), 2);  % Average across depths (chan
 % Optional: smooth the reference signal to avoid amplifying noise
 if smooth_reference
     reference_signal = movmean(reference_signal, smooth_window, 'omitnan');
-    fprintf('    Smoothed reference signal with %d-point window\n', smooth_window);
+    console_log('    Smoothed reference signal with %d-point window\n', smooth_window);
 end
 
 % Handle potential zero-crossings in reference signal
@@ -76,8 +76,8 @@ for t = 1:size(data, 1)
 end
 
 % Report results
-fprintf('    Common mode removal complete\n');
-fprintf('    Data range: [%.3f, %.3f] -> [%.3f, %.3f]\n', ...
+console_log('    Common mode removal complete\n');
+console_log('    Data range: [%.3f, %.3f] -> [%.3f, %.3f]\n', ...
     min(data(:)), max(data(:)), min(filtered_data(:)), max(filtered_data(:)));
 
 end

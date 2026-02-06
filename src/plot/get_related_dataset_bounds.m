@@ -12,7 +12,7 @@ function unified_bounds = get_related_dataset_bounds(das_data_array, data_type, 
 % Output:
 %   unified_bounds - [lower_bound, upper_bound] suitable for all datasets
 
-fprintf('Calculating unified bounds for %d related datasets (%s data)\n', ...
+console_log('Calculating unified bounds for %d related datasets (%s data)\n', ...
         length(das_data_array), data_type);
 
 % Extract data from all datasets
@@ -67,7 +67,7 @@ for i = 1:length(das_data_array)
     % Store data for combined analysis
     if ~isempty(data) && isnumeric(data)
         all_data{end+1} = data;
-        fprintf('  %s: [%.3f, %.3f] (size: %dx%d)\n', ...
+        console_log('  %s: [%.3f, %.3f] (size: %dx%d)\n', ...
                 dataset_names{i}, min(data(:)), max(data(:)), size(data, 1), size(data, 2));
     end
 end
@@ -87,7 +87,7 @@ else
 end
 
 % Calculate unified bounds using all data
-fprintf('Calculating unified bounds using mode: %s\n', mode);
+console_log('Calculating unified bounds using mode: %s\n', mode);
 
 % Apply different parameters based on data type
 switch lower(data_type)
@@ -109,14 +109,14 @@ switch lower(data_type)
                                                 'Symmetric', true);
 end
 
-fprintf('✓ Unified bounds: [%.6f, %.6f]\n', unified_bounds(1), unified_bounds(2));
+console_log('✓ Unified bounds: [%.6f, %.6f]\n', unified_bounds(1), unified_bounds(2));
 
 % Provide individual dataset statistics for comparison
-fprintf('\nIndividual dataset ranges:\n');
+console_log('\nIndividual dataset ranges:\n');
 for i = 1:length(all_data)
     data = all_data{i};
     individual_bounds = calculate_dynamic_bounds(data, mode);
-    fprintf('  %s: [%.6f, %.6f]\n', dataset_names{i}, individual_bounds(1), individual_bounds(2));
+    console_log('  %s: [%.6f, %.6f]\n', dataset_names{i}, individual_bounds(1), individual_bounds(2));
 end
 
 end

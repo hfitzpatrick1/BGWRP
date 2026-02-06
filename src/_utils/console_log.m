@@ -47,18 +47,20 @@ if ischar(action) && strcmp(action, 'close')
 end
 
 % Handle regular logging (message + optional args)
-if nargin > 1
-    msg = sprintf(action, varargin{:});
-else
-    msg = action;
-end
-
 % Write to console
-fprintf('%s', msg);
+if nargin > 1
+    fprintf(action, varargin{:});
+else
+    fprintf(action);  % Use action as format string directly to interpret \n
+end
 
 % Write to file if open
 if ~isempty(log_fid) && log_fid ~= -1
-    fprintf(log_fid, '%s', msg);
+    if nargin > 1
+        fprintf(log_fid, action, varargin{:});
+    else
+        fprintf(log_fid, action);  % Use action as format string directly to interpret \n
+    end
 end
 
 end

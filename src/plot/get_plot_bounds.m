@@ -27,9 +27,9 @@ if ~isfield(config, 'dynamic_bounds') || ~config.dynamic_bounds
         bounds = get_fixed_bounds(data_type, config);
     end
     if isfield(config, 'manual_bounds')
-        fprintf('    Manual %s bounds: [%.3f, %.3f]\n', data_type, bounds(1), bounds(2));
+        console_log('    Manual %s bounds: [%.3f, %.3f]\n', data_type, bounds(1), bounds(2));
     else
-        fprintf('    Fixed %s bounds: [%.3f, %.3f]\n', data_type, bounds(1), bounds(2));
+        console_log('    Fixed %s bounds: [%.3f, %.3f]\n', data_type, bounds(1), bounds(2));
     end
     return;
 end
@@ -38,7 +38,7 @@ end
 if length(das_data_array) > 1 && isfield(config, 'use_related_bounds') && config.use_related_bounds
     % Calculate unified bounds across all datasets
     bounds = get_related_dataset_bounds(das_data_array, data_type, config);
-    fprintf('    Unified %s bounds: [%.6f, %.6f]\n', data_type, bounds(1), bounds(2));
+    console_log('    Unified %s bounds: [%.6f, %.6f]\n', data_type, bounds(1), bounds(2));
 else
     % Calculate bounds for single dataset
     if nargin >= 4 && ~isempty(dataset_name)
@@ -46,7 +46,7 @@ else
     else
         bounds = get_individual_dataset_bounds(das_data_array{1}, data_type, config);
     end
-    fprintf('    Individual %s bounds: [%.6f, %.6f]\n', data_type, bounds(1), bounds(2));
+    console_log('    Individual %s bounds: [%.6f, %.6f]\n', data_type, bounds(1), bounds(2));
 end
 
 end

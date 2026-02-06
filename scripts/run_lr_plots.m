@@ -10,7 +10,7 @@ mode = 'run_linear_regression';
 % Run the BGWRP Toolkit
 BGWRP_Toolkit;
 
-fprintf('\n✓ Done! Check Figures 200 & 201 for standalone plots\n');
+console_log('\n✓ Done! Check Figures 200 & 201 for standalone plots\n');
 
 
 

@@ -3,8 +3,8 @@ function process_pm7_detrended(csv_file, zone_name, pump_start_time)
 %
 % Removes linear drift observed before pumping to reveal true pump response
 
-fprintf('=== PM7 TRANSDUCER - DRIFT CORRECTED ===\n');
-fprintf('Zone: %s\n', zone_name);
+console_log('=== PM7 TRANSDUCER - DRIFT CORRECTED ===\n');
+console_log('Zone: %s\n', zone_name);
 
 %% Load data
 fid = fopen(csv_file, 'r');
@@ -61,12 +61,12 @@ if sum(valid_pre) > 10
     p = polyfit(pre_test_time_numeric(valid_pre), pre_test_depth(valid_pre), 1);
     drift_trend = polyval(p, time_numeric);
     
-    fprintf('Drift correction:\n');
-    fprintf('  Drift rate: %.6f ft/day\n', p(1) * 24 * 60);  % Convert to ft/day
-    fprintf('  Total pre-test drift: %.4f ft\n', drift_trend(find(pre_test_mask,1,'last')) - drift_trend(1));
+    console_log('Drift correction:\n');
+    console_log('  Drift rate: %.6f ft/day\n', p(1) * 24 * 60);  % Convert to ft/day
+    console_log('  Total pre-test drift: %.4f ft\n', drift_trend(find(pre_test_mask,1,'last')) - drift_trend(1));
 else
     drift_trend = zeros(size(time_numeric));
-    fprintf('Not enough pre-test data for drift correction\n');
+    console_log('Not enough pre-test data for drift correction\n');
 end
 
 % Remove drift trend
@@ -85,7 +85,7 @@ end
 
 drawdown_ft = depth_detrended - baseline_depth;
 
-fprintf('  Baseline depth (detrended): %.3f ft\n\n', baseline_depth);
+console_log('  Baseline depth (detrended): %.3f ft\n\n', baseline_depth);
 
 %% Create comparison plots
 valid_times = timestamps(~isnat(timestamps));
@@ -152,8 +152,8 @@ Depthft = baseline_depth;
 mat_output = fullfile(output_dir, sprintf('%s_detrended.mat', base_name));
 save(mat_output, 'Date', 'Drawdownft', 'Depthft', 'pump_start_time');
 
-fprintf('=== COMPLETE ===\n');
-fprintf('Saved: %s\n', mat_output);
-fprintf('\nNow you should see clear step responses at each pump rate change!\n');
+console_log('=== COMPLETE ===\n');
+console_log('Saved: %s\n', mat_output);
+console_log('\nNow you should see clear step responses at each pump rate change!\n');
 
 end

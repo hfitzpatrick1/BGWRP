@@ -14,19 +14,19 @@ function filtered_data = resample_antialias_filter(data, config)
 
 % Get parameters
 decimation_factor = get_param(config, 'decimation_factor', 100);
-fprintf('      Applying resample anti-alias filter (simulating %dx decimation)\n', decimation_factor);
-fprintf('      This uses the SAME filter as your 1Hz data!\n');
+console_log('      Applying resample anti-alias filter (simulating %dx decimation)\n', decimation_factor);
+console_log('      This uses the SAME filter as your 1Hz data!\n');
 
 [num_time, num_channels] = size(data);
-fprintf('      Data size: [%d time points x %d channels]\n', num_time, num_channels);
-fprintf('      Data range before filter: [%.3e, %.3e]\n', min(data(:)), max(data(:)));
+console_log('      Data size: [%d time points x %d channels]\n', num_time, num_channels);
+console_log('      Data range before filter: [%.3e, %.3e]\n', min(data(:)), max(data(:)));
 
 % Apply resampling filter to each channel
 filtered_data = zeros(size(data));
 
 for ch = 1:num_channels
     if mod(ch, 100) == 0
-        fprintf('      Processing channel %d/%d...\n', ch, num_channels);
+        console_log('      Processing channel %d/%d...\n', ch, num_channels);
     end
     
     try
@@ -68,13 +68,13 @@ for ch = 1:num_channels
         
     catch ME
         warning('Channel %d filtering failed: %s', ch, ME.message);
-        fprintf('      Error details: %s\n', getReport(ME, 'basic'));
+        console_log('      Error details: %s\n', getReport(ME, 'basic'));
         filtered_data(:, ch) = data(:, ch);  % Keep original if filtering fails
     end
 end
 
-fprintf('      Data range after filter: [%.3e, %.3e]\n', min(filtered_data(:)), max(filtered_data(:)));
-fprintf('      Filter complete!\n');
+console_log('      Data range after filter: [%.3e, %.3e]\n', min(filtered_data(:)), max(filtered_data(:)));
+console_log('      Filter complete!\n');
 
 end
 

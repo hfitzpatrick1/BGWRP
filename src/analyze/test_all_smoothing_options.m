@@ -5,7 +5,7 @@
 clear all;
 close all;
 
-fprintf('\n=== TESTING ALL SMOOTHING OPTIONS FOR STRAIN RATE ===\n\n');
+console_log('\n=== TESTING ALL SMOOTHING OPTIONS FOR STRAIN RATE ===\n\n');
 
 % Base configuration
 base_config.timing_correction_sec = 1;
@@ -119,7 +119,7 @@ test_configs{16}.pre_diff_smoothing_window = 5;
 test_configs{16}.strain_rate_smoothing_window = 10;
 test_configs{16}.strain_rate_smoothing_method = 'lowpass';
 
-fprintf('Testing %d smoothing configurations...\n\n', length(test_configs));
+console_log('Testing %d smoothing configurations...\n\n', length(test_configs));
 
 % Store all results
 all_results = cell(length(test_configs), 1);
@@ -127,7 +127,7 @@ all_configs = cell(length(test_configs), 1);
 
 % Run all tests
 for i = 1:length(test_configs)
-    fprintf('\n--- Test %d/%d: %s ---\n', i, length(test_configs), test_configs{i}.name);
+    console_log('\n--- Test %d/%d: %s ---\n', i, length(test_configs), test_configs{i}.name);
     
     try
         % Extract config (without name field)
@@ -143,17 +143,17 @@ for i = 1:length(test_configs)
         all_configs{i} = config;
         all_configs{i}.name = config_name;
         
-        fprintf('  ✓ Completed: R² = %.3f, R = %.3f\n', results.R_squared, results.R);
+        console_log('  ✓ Completed: R² = %.3f, R = %.3f\n', results.R_squared, results.R);
         
     catch ME
-        fprintf('  ✗ Failed: %s\n', ME.message);
+        console_log('  ✗ Failed: %s\n', ME.message);
         all_results{i} = [];
         all_configs{i} = test_configs{i};
     end
 end
 
 % Create comparison plots
-fprintf('\n=== CREATING COMPARISON PLOTS ===\n');
+console_log('\n=== CREATING COMPARISON PLOTS ===\n');
 
 % Plot 1: Time series comparison (all methods)
 figure(100); clf;
@@ -236,24 +236,24 @@ legend('Location', 'best', 'FontSize', 9);
 grid on;
 
 % Summary table
-fprintf('\n=== SUMMARY TABLE ===\n');
-fprintf('%-40s | %8s | %8s | %10s\n', 'Method', 'R²', 'R', 'RMSE');
-fprintf('%s\n', repmat('-', 1, 80));
+console_log('\n=== SUMMARY TABLE ===\n');
+console_log('%-40s | %8s | %8s | %10s\n', 'Method', 'R²', 'R', 'RMSE');
+console_log('%s\n', repmat('-', 1, 80));
 
 for i = 1:length(valid_results)
     results = valid_results{i};
-    fprintf('%-40s | %8.3f | %8.3f | %10.2e\n', ...
+    console_log('%-40s | %8.3f | %8.3f | %10.2e\n', ...
         valid_configs{i}.name, results.R_squared, results.R, results.RMSE);
 end
 
 % Find best method
 [best_R2, best_idx] = max(R_squared);
-fprintf('\n=== BEST METHOD ===\n');
-fprintf('Method: %s\n', valid_configs{best_idx}.name);
-fprintf('R²: %.3f\n', best_R2);
-fprintf('R: %.3f\n', R_corr(best_idx));
-fprintf('RMSE: %.2e\n', valid_results{best_idx}.RMSE);
+console_log('\n=== BEST METHOD ===\n');
+console_log('Method: %s\n', valid_configs{best_idx}.name);
+console_log('R²: %.3f\n', best_R2);
+console_log('R: %.3f\n', R_corr(best_idx));
+console_log('RMSE: %.2e\n', valid_results{best_idx}.RMSE);
 
-fprintf('\n=== COMPARISON COMPLETE ===\n');
-fprintf('Check figures 100, 101, and 102 for visual comparisons\n');
+console_log('\n=== COMPARISON COMPLETE ===\n');
+console_log('Check figures 100, 101, and 102 for visual comparisons\n');
 

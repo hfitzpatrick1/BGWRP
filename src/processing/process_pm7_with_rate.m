@@ -10,8 +10,8 @@ if nargin < 4
     smooth_window = 10;  % 50 seconds at 5s sampling
 end
 
-fprintf('=== DISPLACEMENT RATE CALCULATION ===\n');
-fprintf('Smoothing window: %d points\n', smooth_window);
+console_log('=== DISPLACEMENT RATE CALCULATION ===\n');
+console_log('Smoothing window: %d points\n', smooth_window);
 
 %% Load data
 fid = fopen(csv_file, 'r');
@@ -73,9 +73,9 @@ dt = median(diff(elapsed_time_sec));  % Sampling interval
 % Central difference for derivative
 displacement_rate = gradient(displacement_ft, elapsed_time_sec);
 
-fprintf('Sampling interval: %.1f seconds\n', dt);
-fprintf('Max displacement: %.4f ft\n', max(displacement_ft));
-fprintf('Max displacement rate: %.6f ft/sec\n', max(abs(displacement_rate)));
+console_log('Sampling interval: %.1f seconds\n', dt);
+console_log('Max displacement: %.4f ft\n', max(displacement_ft));
+console_log('Max displacement rate: %.6f ft/sec\n', max(abs(displacement_rate)));
 
 %% Calculate pump timing
 pump_start_elapsed = seconds(pump_start_time - timestamps(1));
@@ -153,7 +153,7 @@ export_table = table(Time_sec, Displacement_ft, Displacement_rate_ft_per_sec, ..
     'VariableNames', {'Time_sec', 'Displacement_ft', 'DisplacementRate_ft_per_sec'});
 writetable(export_table, fullfile(output_dir, sprintf('%s_DISPLACEMENT_with_RATE.csv', base_name)));
 
-fprintf('\nSaved MAT and CSV to: %s\n', output_dir);
-fprintf('CSV columns: Time_sec, Displacement_ft, DisplacementRate_ft_per_sec\n');
+console_log('\nSaved MAT and CSV to: %s\n', output_dir);
+console_log('CSV columns: Time_sec, Displacement_ft, DisplacementRate_ft_per_sec\n');
 
 end

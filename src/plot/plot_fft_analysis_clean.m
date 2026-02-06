@@ -7,7 +7,7 @@ function plot_fft_analysis_clean(das_data, fft_results, test_label, analysis_sta
 %
 % Designed for reliability and professional appearance
 
-fprintf('      Creating clean FFT analysis figure...\n');
+console_log('      Creating clean FFT analysis figure...\n');
 
 %% Setup figure
 figure;
@@ -170,7 +170,7 @@ sgtitle(sprintf('Groundwater DAS: Time-Frequency Analysis of %s Signal', upper(t
 % Force rendering
 drawnow;
 
-fprintf('        Clean FFT analysis figure created\n');
+console_log('        Clean FFT analysis figure created\n');
 
 end
 

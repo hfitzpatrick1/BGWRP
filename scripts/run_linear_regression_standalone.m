@@ -16,7 +16,7 @@
 clear; clc;
 
 %% Configuration
-fprintf('\n=== STANDALONE LINEAR REGRESSION ANALYSIS ===\n');
+console_log('\n=== STANDALONE LINEAR REGRESSION ANALYSIS ===\n');
 
 % Load configuration
 cfg = config();
@@ -49,13 +49,13 @@ lr_config.strain_rate_smoothing_method = 'movmean';
 lr_config.head_rate_smoothing_window = 5;  % Match strain rate smoothing
 
 %% Load Data
-fprintf('\nLoading DAS and pressure data...\n');
+console_log('\nLoading DAS and pressure data...\n');
 
 % Check if data is already in workspace
 if ~exist('das_results', 'var') || ~exist('head_results', 'var')
-    fprintf('⚠ Warning: das_results or head_results not found in workspace\n');
-    fprintf('   You need to run the batch processor first.\n');
-    fprintf('   Running batch processor now...\n\n');
+    console_log('⚠ Warning: das_results or head_results not found in workspace\n');
+    console_log('   You need to run the batch processor first.\n');
+    console_log('   Running batch processor now...\n\n');
     
     % Run batch processor to generate data
     addpath(fullfile(pwd, 'src'));
@@ -71,29 +71,29 @@ if ~exist('das_results', 'var') || ~exist('head_results', 'var')
     cfg.save_charts = true;
     
     % Run batch processor for this test
-    fprintf('Processing test: %s\n', test_name);
+    console_log('Processing test: %s\n', test_name);
     [das_results, head_results] = batch_processor(test_name, cfg);
     
-    fprintf('\n✓ Batch processing complete\n');
+    console_log('\n✓ Batch processing complete\n');
 end
 
 %% Run Linear Regression
-fprintf('\nRunning linear regression analysis...\n');
-fprintf('  Test: %s\n', test_name);
-fprintf('  Zone: %s\n', zone);
-fprintf('  Timing correction: %d seconds\n', lr_config.timing_correction_sec);
-fprintf('  Depth range: %.1f - %.1f ft (%.1f - %.1f m)\n', ...
+console_log('\nRunning linear regression analysis...\n');
+console_log('  Test: %s\n', test_name);
+console_log('  Zone: %s\n', zone);
+console_log('  Timing correction: %d seconds\n', lr_config.timing_correction_sec);
+console_log('  Depth range: %.1f - %.1f ft (%.1f - %.1f m)\n', ...
     depth_min_ft, depth_max_ft, depth_min_m, depth_max_m);
 
 % Perform linear regression
 lr_results = linear_regression_strain_drawdown(das_results, head_results, test_name, lr_config);
 
-fprintf('\n=== REGRESSION RESULTS ===\n');
-fprintf('Slope: %.4e (1/s)/(m/s)\n', lr_results.slope);
-fprintf('R: %.3f\n', lr_results.R);
-fprintf('R²: %.3f\n', lr_results.R_squared);
-fprintf('RMSE: %.4e 1/s\n', lr_results.RMSE);
-fprintf('N points: %d\n', lr_results.n_points);
+console_log('\n=== REGRESSION RESULTS ===\n');
+console_log('Slope: %.4e (1/s)/(m/s)\n', lr_results.slope);
+console_log('R: %.3f\n', lr_results.R);
+console_log('R²: %.3f\n', lr_results.R_squared);
+console_log('RMSE: %.4e 1/s\n', lr_results.RMSE);
+console_log('N points: %d\n', lr_results.n_points);
 
 %% Generate Standalone Figures
 
@@ -103,11 +103,11 @@ if cfg.save_charts
     if ~exist(output_dir, 'dir')
         mkdir(output_dir);
     end
-    fprintf('\nSaving figures to: %s\n', output_dir);
+    console_log('\nSaving figures to: %s\n', output_dir);
 end
 
 %% FIGURE 100: Linear Regression Scatter Plot
-fprintf('\nGenerating Figure 100: Linear Regression Scatter...\n');
+console_log('\nGenerating Figure 100: Linear Regression Scatter...\n');
 fig100 = figure(100); clf;
 set(fig100, 'Position', [100 100 800 700], 'Color', 'white');
 set(fig100, 'Name', 'Poroelastic Storage Analysis: PT-01c Zone 5 (76-107 m) - Linear Regression');
@@ -173,11 +173,11 @@ if cfg.save_charts
     saveas(fig100, fullfile(output_dir, 'Fig100_Linear_Regression_Scatter.svg'));
     % Save as MATLAB figure
     savefig(fig100, fullfile(output_dir, 'Fig100_Linear_Regression_Scatter.fig'));
-    fprintf('  ✓ Saved Figure 100\n');
+    console_log('  ✓ Saved Figure 100\n');
 end
 
 %% FIGURE 101: Time Series (Strain Rate and Drawdown Rate)
-fprintf('Generating Figure 101: Time Series...\n');
+console_log('Generating Figure 101: Time Series...\n');
 fig101 = figure(101); clf;
 set(fig101, 'Position', [150 150 1000 600], 'Color', 'white');
 set(fig101, 'Name', 'Time Series (13s correction) - Depth 76-107 m');
@@ -224,25 +224,25 @@ if cfg.save_charts
     saveas(fig101, fullfile(output_dir, 'Fig101_Time_Series.png'));
     saveas(fig101, fullfile(output_dir, 'Fig101_Time_Series.svg'));
     savefig(fig101, fullfile(output_dir, 'Fig101_Time_Series.fig'));
-    fprintf('  ✓ Saved Figure 101\n');
+    console_log('  ✓ Saved Figure 101\n');
 end
 
 %% Display Summary
-fprintf('\n=== ANALYSIS COMPLETE ===\n');
-fprintf('Generated figures:\n');
-fprintf('  - Figure 100: Linear Regression Scatter Plot\n');
-fprintf('  - Figure 101: Time Series (Strain Rate and Drawdown Rate)\n');
+console_log('\n=== ANALYSIS COMPLETE ===\n');
+console_log('Generated figures:\n');
+console_log('  - Figure 100: Linear Regression Scatter Plot\n');
+console_log('  - Figure 101: Time Series (Strain Rate and Drawdown Rate)\n');
 
 if cfg.save_charts
-    fprintf('\nFigures saved to:\n  %s\n', output_dir);
-    fprintf('\nFile formats:\n');
-    fprintf('  - PNG (high resolution, for PowerPoint/Word)\n');
-    fprintf('  - SVG (vector graphics, for Adobe Illustrator/Inkscape)\n');
-    fprintf('  - FIG (MATLAB format, for further editing)\n');
+    console_log('\nFigures saved to:\n  %s\n', output_dir);
+    console_log('\nFile formats:\n');
+    console_log('  - PNG (high resolution, for PowerPoint/Word)\n');
+    console_log('  - SVG (vector graphics, for Adobe Illustrator/Inkscape)\n');
+    console_log('  - FIG (MATLAB format, for further editing)\n');
 end
 
 %% Calculate Storage Parameters
-fprintf('\n=== STORAGE PARAMETER CALCULATION ===\n');
+console_log('\n=== STORAGE PARAMETER CALCULATION ===\n');
 
 % Biot-Willis coefficient (from thesis)
 alpha = 0.90;  % For unconsolidated sediments
@@ -254,10 +254,10 @@ gamma_w = 9810;  % N/m³
 S_epsilon = lr_results.slope * (alpha / gamma_w);  % 1/Pa
 S_s = S_epsilon * gamma_w;  % Specific storage (1/m)
 
-fprintf('Biot-Willis coefficient (α): %.2f\n', alpha);
-fprintf('Specific weight of water (γ): %.0f N/m³\n', gamma_w);
-fprintf('Poroelastic storage (Sε): %.4e 1/Pa\n', S_epsilon);
-fprintf('Specific storage (Ss): %.4e 1/m\n', S_s);
+console_log('Biot-Willis coefficient (α): %.2f\n', alpha);
+console_log('Specific weight of water (γ): %.0f N/m³\n', gamma_w);
+console_log('Poroelastic storage (Sε): %.4e 1/Pa\n', S_epsilon);
+console_log('Specific storage (Ss): %.4e 1/m\n', S_s);
 
-fprintf('\n✓ Script complete!\n\n');
+console_log('\n✓ Script complete!\n\n');
 

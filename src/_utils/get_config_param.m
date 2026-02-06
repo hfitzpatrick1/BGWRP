@@ -15,7 +15,7 @@ if isstruct(config) && isfield(config, param_name)
 else
     value = default_value;
     if nargin >= 3
-        fprintf('      Warning: Parameter "%s" not found, using default: %s\n', ...
+        console_log('      Warning: Parameter "%s" not found, using default: %s\n', ...
             param_name, mat2str(default_value));
     end
 end

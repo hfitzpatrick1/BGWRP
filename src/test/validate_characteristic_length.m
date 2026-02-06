@@ -26,16 +26,16 @@ test_name = 'PT01c_Recovery_short';
 depth_range = [230 330];  % ft
 pump_test_Ss = 2.56e-05;  % 1/m (AQTESOLV reference)
 
-fprintf('\n');
-fprintf('========================================================================\n');
-fprintf('STATISTICAL VALIDATION OF CHARACTERISTIC LENGTH\n');
-fprintf('========================================================================\n');
-fprintf('Test: %s\n', test_name);
-fprintf('Reference: Pump test Ss = %.2e 1/m\n', pump_test_Ss);
-fprintf('========================================================================\n\n');
+console_log('\n');
+console_log('========================================================================\n');
+console_log('STATISTICAL VALIDATION OF CHARACTERISTIC LENGTH\n');
+console_log('========================================================================\n');
+console_log('Test: %s\n', test_name);
+console_log('Reference: Pump test Ss = %.2e 1/m\n', pump_test_Ss);
+console_log('========================================================================\n\n');
 
 %% Run linear regression once
-fprintf('>>> Running Linear Regression <<<\n\n');
+console_log('>>> Running Linear Regression <<<\n\n');
 lr_config.depth_range_ft = depth_range;
 lr_config.depth_averaging_method = 'mean';
 lr_config.timing_correction_sec = -1;
@@ -46,10 +46,10 @@ lr_config.use_displacement_rate = false;
 lr_results = linear_regression_strain_drawdown(das_results, head_results, test_name, lr_config);
 
 %% TEST 1: Sensitivity Analysis - Optimal Characteristic Length
-fprintf('========================================================================\n');
-fprintf('TEST 1: SENSITIVITY ANALYSIS\n');
-fprintf('========================================================================\n');
-fprintf('Testing range of characteristic lengths to find optimal value\n\n');
+console_log('========================================================================\n');
+console_log('TEST 1: SENSITIVITY ANALYSIS\n');
+console_log('========================================================================\n');
+console_log('Testing range of characteristic lengths to find optimal value\n\n');
 
 % Test range of characteristic lengths
 L_char_values = [0.0001, 0.0005, 0.001, 0.002, 0.005, 0.01, 0.05, 0.1];  % meters (0.1mm to 10cm)
@@ -74,23 +74,23 @@ end
 optimal_L_char = L_char_values(min_idx);
 optimal_Ss = Ss_values(min_idx);
 
-fprintf('Results:\n');
-fprintf('%-15s | %-15s | %-15s | %-15s\n', 'L_char [mm]', 'Ss [1/m]', 'Error [1/m]', 'Error [%%]');
-fprintf('%s\n', repmat('-', 1, 70));
+console_log('Results:\n');
+console_log('%-15s | %-15s | %-15s | %-15s\n', 'L_char [mm]', 'Ss [1/m]', 'Error [1/m]', 'Error [%%]');
+console_log('%s\n', repmat('-', 1, 70));
 for i = 1:length(L_char_values)
     marker = '';
     if i == min_idx
         marker = ' <-- OPTIMAL';
     end
-    fprintf('%-15.2f | %-15.2e | %-15.2e | %-15.1f%s\n', ...
+    console_log('%-15.2f | %-15.2e | %-15.2e | %-15.1f%s\n', ...
         L_char_values(i)*1000, Ss_values(i), error_values(i), percent_error(i), marker);
 end
 
-fprintf('\n');
-fprintf('OPTIMAL CHARACTERISTIC LENGTH: %.2f mm\n', optimal_L_char*1000);
-fprintf('  Ss = %.2e 1/m\n', optimal_Ss);
-fprintf('  Error = %.1f%% vs pump test\n', percent_error(min_idx));
-fprintf('\n');
+console_log('\n');
+console_log('OPTIMAL CHARACTERISTIC LENGTH: %.2f mm\n', optimal_L_char*1000);
+console_log('  Ss = %.2e 1/m\n', optimal_Ss);
+console_log('  Error = %.1f%% vs pump test\n', percent_error(min_idx));
+console_log('\n');
 
 % Create sensitivity plot
 figure(30);
@@ -118,10 +118,10 @@ grid on;
 legend('Percent error', sprintf('Optimal (%.1fmm)', optimal_L_char*1000), '25% threshold', 'Location', 'best');
 
 %% TEST 2: Goodness of Fit Metrics
-fprintf('========================================================================\n');
-fprintf('TEST 2: GOODNESS OF FIT COMPARISON\n');
-fprintf('========================================================================\n');
-fprintf('Comparing regression quality with different corrections\n\n');
+console_log('========================================================================\n');
+console_log('TEST 2: GOODNESS OF FIT COMPARISON\n');
+console_log('========================================================================\n');
+console_log('Comparing regression quality with different corrections\n\n');
 
 % Method 1: No correction
 config_none.alpha = 0.95;
@@ -141,26 +141,26 @@ config_combined.poisson_ratio = 0.35;  % Upper end for sand/sandstone
 config_combined.strain_rate_characteristic_length_m = optimal_L_char;
 results_combined = calculate_specific_storage_becker(lr_results, config_combined);
 
-fprintf('%-25s | %-15s | %-15s | %-15s\n', 'Method', 'No Correction', 'Poisson Only', 'Poisson+1mm');
-fprintf('%s\n', repmat('-', 1, 80));
-fprintf('%-25s | %-15.2e | %-15.2e | %-15.2e\n', 'Ss [1/m]', results_none.S_s, results_poisson.S_s, results_combined.S_s);
-fprintf('%-25s | %-15.1f | %-15.1f | %-15.1f\n', 'Error vs pump test [%]', ...
+console_log('%-25s | %-15s | %-15s | %-15s\n', 'Method', 'No Correction', 'Poisson Only', 'Poisson+1mm');
+console_log('%s\n', repmat('-', 1, 80));
+console_log('%-25s | %-15.2e | %-15.2e | %-15.2e\n', 'Ss [1/m]', results_none.S_s, results_poisson.S_s, results_combined.S_s);
+console_log('%-25s | %-15.1f | %-15.1f | %-15.1f\n', 'Error vs pump test [%]', ...
     abs(results_none.S_s - pump_test_Ss)/pump_test_Ss*100, ...
     abs(results_poisson.S_s - pump_test_Ss)/pump_test_Ss*100, ...
     abs(results_combined.S_s - pump_test_Ss)/pump_test_Ss*100);
-fprintf('%-25s | %-15.3f | %-15.3f | %-15.3f\n', 'R²', lr_results.R_squared, lr_results.R_squared, lr_results.R_squared);
-fprintf('\n');
-fprintf('NOTE: R² is same for all methods (corrections applied post-regression)\n');
-fprintf('      But error vs pump test shows dramatic improvement\n\n');
+console_log('%-25s | %-15.3f | %-15.3f | %-15.3f\n', 'R²', lr_results.R_squared, lr_results.R_squared, lr_results.R_squared);
+console_log('\n');
+console_log('NOTE: R² is same for all methods (corrections applied post-regression)\n');
+console_log('      But error vs pump test shows dramatic improvement\n\n');
 
 %% TEST 3: Bootstrap Uncertainty Analysis
-fprintf('========================================================================\n');
-fprintf('TEST 3: BOOTSTRAP UNCERTAINTY ANALYSIS\n');
-fprintf('========================================================================\n');
-fprintf('Estimating confidence intervals on characteristic length\n\n');
+console_log('========================================================================\n');
+console_log('TEST 3: BOOTSTRAP UNCERTAINTY ANALYSIS\n');
+console_log('========================================================================\n');
+console_log('Estimating confidence intervals on characteristic length\n\n');
 
 n_bootstrap = 1000;
-fprintf('Running %d bootstrap iterations...\n', n_bootstrap);
+console_log('Running %d bootstrap iterations...\n', n_bootstrap);
 
 % Get the time series data
 strain_rate = lr_results.strain_rate;
@@ -194,7 +194,7 @@ for i = 1:n_bootstrap
     Ss_bootstrap(i) = results_boot.S_s;
     
     if mod(i, 100) == 0
-        fprintf('  Progress: %d/%d iterations\n', i, n_bootstrap);
+        console_log('  Progress: %d/%d iterations\n', i, n_bootstrap);
     end
 end
 
@@ -203,17 +203,17 @@ Ss_mean = mean(Ss_bootstrap);
 Ss_std = std(Ss_bootstrap);
 Ss_ci_95 = prctile(Ss_bootstrap, [2.5, 97.5]);
 
-fprintf('\nBootstrap Results (n=%d):\n', n_bootstrap);
-fprintf('  Mean Ss: %.2e 1/m\n', Ss_mean);
-fprintf('  Std Dev: %.2e 1/m\n', Ss_std);
-fprintf('  95%% CI: [%.2e, %.2e] 1/m\n', Ss_ci_95(1), Ss_ci_95(2));
-fprintf('  Pump test value: %.2e 1/m\n', pump_test_Ss);
+console_log('\nBootstrap Results (n=%d):\n', n_bootstrap);
+console_log('  Mean Ss: %.2e 1/m\n', Ss_mean);
+console_log('  Std Dev: %.2e 1/m\n', Ss_std);
+console_log('  95%% CI: [%.2e, %.2e] 1/m\n', Ss_ci_95(1), Ss_ci_95(2));
+console_log('  Pump test value: %.2e 1/m\n', pump_test_Ss);
 if pump_test_Ss >= Ss_ci_95(1) && pump_test_Ss <= Ss_ci_95(2)
-    fprintf('  ✓ Pump test WITHIN 95%% confidence interval\n');
+    console_log('  ✓ Pump test WITHIN 95%% confidence interval\n');
 else
-    fprintf('  ✗ Pump test OUTSIDE 95%% confidence interval\n');
+    console_log('  ✗ Pump test OUTSIDE 95%% confidence interval\n');
 end
-fprintf('\n');
+console_log('\n');
 
 % Plot bootstrap distribution
 figure(31);
@@ -231,10 +231,10 @@ legend('Location', 'best');
 grid on;
 
 %% TEST 4: Model Selection Statistics
-fprintf('========================================================================\n');
-fprintf('TEST 4: MODEL SELECTION STATISTICS\n');
-fprintf('========================================================================\n');
-fprintf('Comparing models using information criteria\n\n');
+console_log('========================================================================\n');
+console_log('TEST 4: MODEL SELECTION STATISTICS\n');
+console_log('========================================================================\n');
+console_log('Comparing models using information criteria\n\n');
 
 % For each model, calculate AIC and BIC
 % AIC = 2k - 2ln(L)
@@ -269,77 +269,77 @@ for i = 1:3
     BIC(i) = k_params(i)*log(n_obs) - 2*log_likelihood(i);
 end
 
-fprintf('%-25s | %-10s | %-10s | %-10s\n', 'Metric', models{1}, models{2}, models{3});
-fprintf('%s\n', repmat('-', 1, 70));
-fprintf('%-25s | %-10d | %-10d | %-10d\n', 'Parameters (k)', k_params(1), k_params(2), k_params(3));
-fprintf('%-25s | %-10.2e | %-10.2e | %-10.2e\n', 'Residual', residual(1), residual(2), residual(3));
-fprintf('%-25s | %-10.2e | %-10.2e | %-10.2e\n', 'RSS', RSS(1), RSS(2), RSS(3));
-fprintf('%-25s | %-10.2f | %-10.2f | %-10.2f\n', 'AIC', AIC(1), AIC(2), AIC(3));
-fprintf('%-25s | %-10.2f | %-10.2f | %-10.2f\n', 'BIC', BIC(1), BIC(2), BIC(3));
-fprintf('\n');
+console_log('%-25s | %-10s | %-10s | %-10s\n', 'Metric', models{1}, models{2}, models{3});
+console_log('%s\n', repmat('-', 1, 70));
+console_log('%-25s | %-10d | %-10d | %-10d\n', 'Parameters (k)', k_params(1), k_params(2), k_params(3));
+console_log('%-25s | %-10.2e | %-10.2e | %-10.2e\n', 'Residual', residual(1), residual(2), residual(3));
+console_log('%-25s | %-10.2e | %-10.2e | %-10.2e\n', 'RSS', RSS(1), RSS(2), RSS(3));
+console_log('%-25s | %-10.2f | %-10.2f | %-10.2f\n', 'AIC', AIC(1), AIC(2), AIC(3));
+console_log('%-25s | %-10.2f | %-10.2f | %-10.2f\n', 'BIC', BIC(1), BIC(2), BIC(3));
+console_log('\n');
 
 [~, best_AIC_idx] = min(AIC);
 [~, best_BIC_idx] = min(BIC);
-fprintf('Best model by AIC: %s\n', models{best_AIC_idx});
-fprintf('Best model by BIC: %s\n', models{best_BIC_idx});
-fprintf('\n');
-fprintf('Lower AIC/BIC = better model (balances fit quality and complexity)\n\n');
+console_log('Best model by AIC: %s\n', models{best_AIC_idx});
+console_log('Best model by BIC: %s\n', models{best_BIC_idx});
+console_log('\n');
+console_log('Lower AIC/BIC = better model (balances fit quality and complexity)\n\n');
 
 %% TEST 5: Physical Plausibility Check
-fprintf('========================================================================\n');
-fprintf('TEST 5: PHYSICAL PLAUSIBILITY\n');
-fprintf('========================================================================\n');
-fprintf('Checking if characteristic length is physically reasonable\n\n');
+console_log('========================================================================\n');
+console_log('TEST 5: PHYSICAL PLAUSIBILITY\n');
+console_log('========================================================================\n');
+console_log('Checking if characteristic length is physically reasonable\n\n');
 
-fprintf('GRAIN SIZE COMPARISON:\n');
-fprintf('  Characteristic length: %.2f mm\n', optimal_L_char*1000);
-fprintf('  Coarse sand: 0.5 - 2 mm\n');
-fprintf('  Very coarse sand: 1 - 2 mm\n');
-fprintf('  Fine gravel: 2 - 4 mm\n');
-fprintf('  ✓ Optimal value falls within very coarse sand to fine gravel range\n\n');
+console_log('GRAIN SIZE COMPARISON:\n');
+console_log('  Characteristic length: %.2f mm\n', optimal_L_char*1000);
+console_log('  Coarse sand: 0.5 - 2 mm\n');
+console_log('  Very coarse sand: 1 - 2 mm\n');
+console_log('  Fine gravel: 2 - 4 mm\n');
+console_log('  ✓ Optimal value falls within very coarse sand to fine gravel range\n\n');
 
-fprintf('SCALE HIERARCHY:\n');
-fprintf('  Grain diameter: ~%.1f mm (microscale)\n', optimal_L_char*1000);
-fprintf('  DAS gauge length: 10 m (mesoscale)\n');
-fprintf('  Aquifer thickness: 400 ft (~122 m) (macroscale)\n');
-fprintf('  ✓ Characteristic length represents grain-contact scale, physically plausible\n\n');
+console_log('SCALE HIERARCHY:\n');
+console_log('  Grain diameter: ~%.1f mm (microscale)\n', optimal_L_char*1000);
+console_log('  DAS gauge length: 10 m (mesoscale)\n');
+console_log('  Aquifer thickness: 400 ft (~122 m) (macroscale)\n');
+console_log('  ✓ Characteristic length represents grain-contact scale, physically plausible\n\n');
 
-fprintf('POROELASTIC COUPLING:\n');
-fprintf('  Bulk modulus ratio: K_solid/K_fluid ~ 100-1000\n');
-fprintf('  Poisson ratio: 0.35 (upper end for sand/sandstone, range: 0.25-0.35)\n');
-fprintf('  ✓ Parameters within expected ranges for sand/sandstone\n\n');
+console_log('POROELASTIC COUPLING:\n');
+console_log('  Bulk modulus ratio: K_solid/K_fluid ~ 100-1000\n');
+console_log('  Poisson ratio: 0.35 (upper end for sand/sandstone, range: 0.25-0.35)\n');
+console_log('  ✓ Parameters within expected ranges for sand/sandstone\n\n');
 
 %% Summary and Recommendations
-fprintf('========================================================================\n');
-fprintf('SUMMARY AND RECOMMENDATIONS\n');
-fprintf('========================================================================\n\n');
+console_log('========================================================================\n');
+console_log('SUMMARY AND RECOMMENDATIONS\n');
+console_log('========================================================================\n\n');
 
-fprintf('STATISTICAL VALIDATION RESULTS:\n');
-fprintf('  ✓ TEST 1 (Sensitivity): Optimal L_char = %.2f mm (%.1f%% error)\n', optimal_L_char*1000, percent_error(min_idx));
-fprintf('  ✓ TEST 2 (Goodness-of-fit): Poisson+1mm reduces error from %.0f%% to %.0f%%\n', ...
+console_log('STATISTICAL VALIDATION RESULTS:\n');
+console_log('  ✓ TEST 1 (Sensitivity): Optimal L_char = %.2f mm (%.1f%% error)\n', optimal_L_char*1000, percent_error(min_idx));
+console_log('  ✓ TEST 2 (Goodness-of-fit): Poisson+1mm reduces error from %.0f%% to %.0f%%\n', ...
     abs(results_none.S_s - pump_test_Ss)/pump_test_Ss*100, ...
     abs(results_combined.S_s - pump_test_Ss)/pump_test_Ss*100);
-fprintf('  ✓ TEST 3 (Bootstrap): 95%% CI = [%.2e, %.2e], includes pump test\n', Ss_ci_95(1), Ss_ci_95(2));
-fprintf('  ✓ TEST 4 (Model selection): Poisson+1mm is best by AIC/BIC\n');
-fprintf('  ✓ TEST 5 (Physical plausibility): 1mm ≈ grain diameter (coarse sand)\n\n');
+console_log('  ✓ TEST 3 (Bootstrap): 95%% CI = [%.2e, %.2e], includes pump test\n', Ss_ci_95(1), Ss_ci_95(2));
+console_log('  ✓ TEST 4 (Model selection): Poisson+1mm is best by AIC/BIC\n');
+console_log('  ✓ TEST 5 (Physical plausibility): 1mm ≈ grain diameter (coarse sand)\n\n');
 
-fprintf('STRENGTH OF EVIDENCE:\n');
-fprintf('  • Independent validation: Pump test agreement (%.0f%%)\n', (1-abs(results_combined.S_s - pump_test_Ss)/pump_test_Ss)*100);
-fprintf('  • Statistical optimality: Minimizes error vs reference\n');
-fprintf('  • Physical consistency: Matches grain-scale deformation\n');
-fprintf('  • Model parsimony: Best by AIC/BIC (balances fit and complexity)\n');
-fprintf('  • Robust: Pump test within 95%% bootstrap confidence interval\n\n');
+console_log('STRENGTH OF EVIDENCE:\n');
+console_log('  • Independent validation: Pump test agreement (%.0f%%)\n', (1-abs(results_combined.S_s - pump_test_Ss)/pump_test_Ss)*100);
+console_log('  • Statistical optimality: Minimizes error vs reference\n');
+console_log('  • Physical consistency: Matches grain-scale deformation\n');
+console_log('  • Model parsimony: Best by AIC/BIC (balances fit and complexity)\n');
+console_log('  • Robust: Pump test within 95%% bootstrap confidence interval\n\n');
 
-fprintf('RECOMMENDATIONS FOR ADVISOR:\n');
-fprintf('  1. The 1mm characteristic length is statistically optimal\n');
-fprintf('  2. Multiple independent validation metrics support this value\n');
-fprintf('  3. Physical interpretation (grain diameter) is plausible\n');
-fprintf('  4. Uncertainty analysis confirms robustness\n');
-fprintf('  5. Recommend using Poisson + 1mm method for publication\n\n');
+console_log('RECOMMENDATIONS FOR ADVISOR:\n');
+console_log('  1. The 1mm characteristic length is statistically optimal\n');
+console_log('  2. Multiple independent validation metrics support this value\n');
+console_log('  3. Physical interpretation (grain diameter) is plausible\n');
+console_log('  4. Uncertainty analysis confirms robustness\n');
+console_log('  5. Recommend using Poisson + 1mm method for publication\n\n');
 
-fprintf('========================================================================\n');
-fprintf('Analysis complete! See Figures 30 and 31 for visualizations.\n');
-fprintf('========================================================================\n\n');
+console_log('========================================================================\n');
+console_log('Analysis complete! See Figures 30 and 31 for visualizations.\n');
+console_log('========================================================================\n\n');
 
 %% Save results
 validation_results.test1_sensitivity.L_char_values = L_char_values;
@@ -364,5 +364,5 @@ validation_results.pump_test_reference = pump_test_Ss;
 
 das_results.(test_name).validation = validation_results;
 
-fprintf('✓ Results saved to: das_results.%s.validation\n\n', test_name);
+console_log('✓ Results saved to: das_results.%s.validation\n\n', test_name);
 

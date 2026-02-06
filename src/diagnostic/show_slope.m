@@ -1,38 +1,38 @@
 % Simple script to show slope and amplitude values
 
 if ~exist('das_results', 'var')
-    fprintf('ERROR: das_results not in workspace\n');
+    console_log('ERROR: das_results not in workspace\n');
     return
 end
 
 % Show what's actually in das_results
-fprintf('Fields in das_results:\n');
+console_log('Fields in das_results:\n');
 test_names = fieldnames(das_results);
 for i = 1:length(test_names)
-    fprintf('  - %s\n', test_names{i});
+    console_log('  - %s\n', test_names{i});
     if isstruct(das_results.(test_names{i}))
         subfields = fieldnames(das_results.(test_names{i}));
-        fprintf('    Subfields: %s\n', strjoin(subfields, ', '));
+        console_log('    Subfields: %s\n', strjoin(subfields, ', '));
     end
 end
-fprintf('\n');
+console_log('\n');
 
 test_name = 'PT01c_Recovery_short';
 if ~isfield(das_results, test_name)
     if ~isempty(test_names)
         test_name = test_names{1};
-        fprintf('Using test: %s\n', test_name);
+        console_log('Using test: %s\n', test_name);
     else
-        fprintf('ERROR: No test data found\n');
+        console_log('ERROR: No test data found\n');
         return
     end
 end
 
 if ~isfield(das_results.(test_name), 'linear_regression')
-    fprintf('Linear regression not found. Running it now...\n');
+    console_log('Linear regression not found. Running it now...\n');
     if ~exist('head_results', 'var')
-        fprintf('ERROR: Need head_results in workspace\n');
-        fprintf('Run: mode = ''run_correlation_analysis''; BGWRP_Toolkit\n');
+        console_log('ERROR: Need head_results in workspace\n');
+        console_log('Run: mode = ''run_correlation_analysis''; BGWRP_Toolkit\n');
         return
     end
     
@@ -52,30 +52,30 @@ else
     lr = das_results.(test_name).linear_regression;
 end
 
-fprintf('\n=== YOUR RESULTS ===\n');
-fprintf('Slope: %.4e (1/s)/(m/s)\n', lr.slope);
-fprintf('R: %.4f\n', lr.R);
-fprintf('R²: %.4f\n\n', lr.R_squared);
+console_log('\n=== YOUR RESULTS ===\n');
+console_log('Slope: %.4e (1/s)/(m/s)\n', lr.slope);
+console_log('R: %.4f\n', lr.R);
+console_log('R²: %.4f\n\n', lr.R_squared);
 
-fprintf('=== ADVISOR GROUND TRUTH ===\n');
-fprintf('Advisor slope: 2.8434e-07 (1/s)/(m/s)\n');
-fprintf('Your slope: %.4e (1/s)/(m/s)\n', lr.slope);
-fprintf('Difference: %.2fx\n\n', 2.8434e-07 / lr.slope);
+console_log('=== ADVISOR GROUND TRUTH ===\n');
+console_log('Advisor slope: 2.8434e-07 (1/s)/(m/s)\n');
+console_log('Your slope: %.4e (1/s)/(m/s)\n', lr.slope);
+console_log('Difference: %.2fx\n\n', 2.8434e-07 / lr.slope);
 
 % Check if amplitude values are stored in results
 if isfield(lr, 'displacement_amplitude_nm_per_s')
-    fprintf('=== AMPLITUDE COMPARISON (from results) ===\n');
-    fprintf('Your displacement amplitude: %.2f nm/s\n', lr.displacement_amplitude_nm_per_s);
-    fprintf('Advisor displacement amplitude: 1.3 nm/s\n');
-    fprintf('Difference: %.2fx\n\n', 1.3 / lr.displacement_amplitude_nm_per_s);
+    console_log('=== AMPLITUDE COMPARISON (from results) ===\n');
+    console_log('Your displacement amplitude: %.2f nm/s\n', lr.displacement_amplitude_nm_per_s);
+    console_log('Advisor displacement amplitude: 1.3 nm/s\n');
+    console_log('Difference: %.2fx\n\n', 1.3 / lr.displacement_amplitude_nm_per_s);
     
-    fprintf('Your head rate amplitude: %.4f ft/min\n', lr.head_rate_amplitude_ft_per_min);
-    fprintf('Advisor head rate amplitude: 0.09 ft/min\n');
-    fprintf('Difference: %.2fx\n\n', 0.09 / lr.head_rate_amplitude_ft_per_min);
+    console_log('Your head rate amplitude: %.4f ft/min\n', lr.head_rate_amplitude_ft_per_min);
+    console_log('Advisor head rate amplitude: 0.09 ft/min\n');
+    console_log('Difference: %.2fx\n\n', 0.09 / lr.head_rate_amplitude_ft_per_min);
     
-    fprintf('Your strain rate amplitude: %.4e 1/s\n', lr.strain_rate_amplitude);
-    fprintf('Advisor strain rate amplitude: 1.3e-10 1/s\n');
-    fprintf('Difference: %.2fx\n', 1.3e-10 / lr.strain_rate_amplitude);
+    console_log('Your strain rate amplitude: %.4e 1/s\n', lr.strain_rate_amplitude);
+    console_log('Advisor strain rate amplitude: 1.3e-10 1/s\n');
+    console_log('Difference: %.2fx\n', 1.3e-10 / lr.strain_rate_amplitude);
 elseif isfield(lr, 'strain_rate') && isfield(lr, 'drawdown_rate')
     % Calculate from data
     strain_amp = max(lr.strain_rate) - min(lr.strain_rate);
@@ -83,19 +83,19 @@ elseif isfield(lr, 'strain_rate') && isfield(lr, 'drawdown_rate')
     head_amp_ft_min = (head_amp_mps / 0.3048) * 60;
     disp_amp = strain_amp * 10e9;
     
-    fprintf('=== AMPLITUDE COMPARISON (calculated) ===\n');
-    fprintf('Your displacement amplitude: %.2f nm/s\n', disp_amp);
-    fprintf('Advisor displacement amplitude: 1.3 nm/s\n');
-    fprintf('Difference: %.2fx\n\n', 1.3 / disp_amp);
+    console_log('=== AMPLITUDE COMPARISON (calculated) ===\n');
+    console_log('Your displacement amplitude: %.2f nm/s\n', disp_amp);
+    console_log('Advisor displacement amplitude: 1.3 nm/s\n');
+    console_log('Difference: %.2fx\n\n', 1.3 / disp_amp);
     
-    fprintf('Your head rate amplitude: %.4f ft/min\n', head_amp_ft_min);
-    fprintf('Advisor head rate amplitude: 0.09 ft/min\n');
-    fprintf('Difference: %.2fx\n\n', 0.09 / head_amp_ft_min);
+    console_log('Your head rate amplitude: %.4f ft/min\n', head_amp_ft_min);
+    console_log('Advisor head rate amplitude: 0.09 ft/min\n');
+    console_log('Difference: %.2fx\n\n', 0.09 / head_amp_ft_min);
     
-    fprintf('Your strain rate amplitude: %.4e 1/s\n', strain_amp);
-    fprintf('Advisor strain rate amplitude: 1.3e-10 1/s\n');
-    fprintf('Difference: %.2fx\n', 1.3e-10 / strain_amp);
+    console_log('Your strain rate amplitude: %.4e 1/s\n', strain_amp);
+    console_log('Advisor strain rate amplitude: 1.3e-10 1/s\n');
+    console_log('Difference: %.2fx\n', 1.3e-10 / strain_amp);
 else
-    fprintf('No amplitude data available\n');
+    console_log('No amplitude data available\n');
 end
 

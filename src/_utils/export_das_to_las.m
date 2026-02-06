@@ -29,10 +29,10 @@ if nargin < 2 || isempty(output_filename)
     end
 end
 
-fprintf('=== EXPORTING DAS DATA TO LAS FORMAT ===\n');
-fprintf('Dataset: %s\n', dataset_name);
-fprintf('Export type: %s\n', export_type);
-fprintf('Output: %s\n', output_filename);
+console_log('=== EXPORTING DAS DATA TO LAS FORMAT ===\n');
+console_log('Dataset: %s\n', dataset_name);
+console_log('Export type: %s\n', export_type);
+console_log('Output: %s\n', output_filename);
 
 %% Load DAS data
 base_path = 'C:\Coding\BGWRP\data\_BATCH\_active\';
@@ -42,7 +42,7 @@ if ~exist(das_file, 'file')
     error('DAS data file not found: %s', das_file);
 end
 
-fprintf('Loading DAS data: %s\n', das_file);
+console_log('Loading DAS data: %s\n', das_file);
 loaded = load(das_file);
 
 if isfield(loaded, 'decdata')
@@ -51,7 +51,7 @@ else
     error('No decdata field found in DAS file');
 end
 
-fprintf('Loaded DAS data: [%d x %d] (time x channels)\n', size(data));
+console_log('Loaded DAS data: [%d x %d] (time x channels)\n', size(data));
 
 %% Load timing configuration for calibration
 timing_dir = fullfile(base_path, dataset_name, '_das_timing');
@@ -62,14 +62,14 @@ if length(m_files) == 1
     addpath(timing_dir);
     try
         timing_config = feval(func_name);
-        fprintf('Loaded timing config: %s\n', func_name);
+        console_log('Loaded timing config: %s\n', func_name);
     catch ME
-        fprintf('Warning: Could not load timing config: %s\n', ME.message);
+        console_log('Warning: Could not load timing config: %s\n', ME.message);
         timing_config = struct();
     end
     rmpath(timing_dir);
 else
-    fprintf('Warning: No timing config found, using default calibration\n');
+    console_log('Warning: No timing config found, using default calibration\n');
     timing_config = struct();
 end
 
@@ -86,7 +86,7 @@ else
     MperChan = 0.263;  % Default for PT01c
 end
 
-fprintf('Using calibration: C1=%d, MperChan=%.3f\n', C1, MperChan);
+console_log('Using calibration: C1=%d, MperChan=%.3f\n', C1, MperChan);
 
 %% Calculate depth array
 num_channels = size(data, 2);
@@ -94,12 +94,12 @@ channel_indices = (1:num_channels) - 1;  % 0-based indexing
 depth_m = (channel_indices - C1) * MperChan;
 depth_ft = depth_m * 3.28084;  % Convert to feet
 
-fprintf('Depth range: [%.1f, %.1f] ft\n', min(depth_ft), max(depth_ft));
+console_log('Depth range: [%.1f, %.1f] ft\n', min(depth_ft), max(depth_ft));
 
 %% Process data based on export type
 switch export_type
     case 'event'
-        fprintf('Filtering to event window (19:14-19:17)...\n');
+        console_log('Filtering to event window (19:14-19:17)...\n');
         % Define event window - adjust these times based on your actual event
         event_start_str = '24-Oct-2023 19:14:00';
         event_end_str = '24-Oct-2023 19:17:00';
@@ -109,10 +109,10 @@ switch export_type
         event_samples = min(180, size(data, 1)); % 3 minutes at 1Hz = 180 samples
         data = data(1:event_samples, :);
         
-        fprintf('Event window data: [%d x %d] samples\n', size(data, 1), size(data, 2));
+        console_log('Event window data: [%d x %d] samples\n', size(data, 1), size(data, 2));
         
     case 'displacement'
-        fprintf('Calculating displacement rate (derivative)...\n');
+        console_log('Calculating displacement rate (derivative)...\n');
         % Calculate displacement rate as time derivative
         dt = 1.0; % 1 second sampling interval for 1Hz data
         data_displacement = zeros(size(data));
@@ -123,14 +123,14 @@ switch export_type
         data_displacement(end, :) = (data(end, :) - data(end-1, :)) / dt; % Backward difference for last point
         
         data = data_displacement;
-        fprintf('Displacement rate calculated\n');
+        console_log('Displacement rate calculated\n');
         
     otherwise
-        fprintf('Using full dataset for statistics...\n');
+        console_log('Using full dataset for statistics...\n');
 end
 
 %% Calculate amplitude statistics for each depth
-fprintf('Calculating amplitude statistics...\n');
+console_log('Calculating amplitude statistics...\n');
 
 % Remove any NaN or infinite values
 data_clean = data;
@@ -143,10 +143,10 @@ std_data = std(data_clean, 0, 1)';           % Standard deviation across time
 mean_data = mean(data_clean, 1)';            % Mean across time
 max_data = max(abs(data_clean), [], 1)';     % Maximum absolute value
 
-fprintf('Statistics calculated for %d depth points\n', length(variance_data));
+console_log('Statistics calculated for %d depth points\n', length(variance_data));
 
 %% Create LAS file
-fprintf('Writing LAS file: %s\n', output_filename);
+console_log('Writing LAS file: %s\n', output_filename);
 
 fid = fopen(output_filename, 'w');
 if fid == -1
@@ -155,54 +155,54 @@ end
 
 try
     % Version Information
-    fprintf(fid, '~Version Information\n');
-    fprintf(fid, 'VERS. 2.0:\n');
-    fprintf(fid, 'WRAP. NO:\n');
-    fprintf(fid, '\n');
+    console_log(fid, '~Version Information\n');
+    console_log(fid, 'VERS. 2.0:\n');
+    console_log(fid, 'WRAP. NO:\n');
+    console_log(fid, '\n');
     
     % Well Information
-    fprintf(fid, '~Well Information\n');
-    fprintf(fid, 'STRT.FT %.2f:\n', min(depth_ft));
-    fprintf(fid, 'STOP.FT %.2f:\n', max(depth_ft));
-    fprintf(fid, 'STEP.FT %.3f:\n', mean(diff(depth_ft)));  % Average step size
-    fprintf(fid, 'NULL. -999.25:\n');
-    fprintf(fid, '\n');
+    console_log(fid, '~Well Information\n');
+    console_log(fid, 'STRT.FT %.2f:\n', min(depth_ft));
+    console_log(fid, 'STOP.FT %.2f:\n', max(depth_ft));
+    console_log(fid, 'STEP.FT %.3f:\n', mean(diff(depth_ft)));  % Average step size
+    console_log(fid, 'NULL. -999.25:\n');
+    console_log(fid, '\n');
     
     % Curve Information
-    fprintf(fid, '~Curve Information\n');
-    fprintf(fid, 'DEPT.FT     : Depth below casing\n');
-    fprintf(fid, 'DAS_VAR.NM  : DAS Amplitude Variance\n');
-    fprintf(fid, 'DAS_RMS.NM  : DAS RMS Amplitude\n');
-    fprintf(fid, 'DAS_STD.NM  : DAS Standard Deviation\n');
-    fprintf(fid, 'DAS_MEAN.NM : DAS Mean Amplitude\n');
-    fprintf(fid, 'DAS_MAX.NM  : DAS Maximum Absolute Amplitude\n');
-    fprintf(fid, '\n');
+    console_log(fid, '~Curve Information\n');
+    console_log(fid, 'DEPT.FT     : Depth below casing\n');
+    console_log(fid, 'DAS_VAR.NM  : DAS Amplitude Variance\n');
+    console_log(fid, 'DAS_RMS.NM  : DAS RMS Amplitude\n');
+    console_log(fid, 'DAS_STD.NM  : DAS Standard Deviation\n');
+    console_log(fid, 'DAS_MEAN.NM : DAS Mean Amplitude\n');
+    console_log(fid, 'DAS_MAX.NM  : DAS Maximum Absolute Amplitude\n');
+    console_log(fid, '\n');
     
     % ASCII Data Header
-    fprintf(fid, '~A  DEPT  DAS_VAR  DAS_RMS  DAS_STD  DAS_MEAN  DAS_MAX\n');
+    console_log(fid, '~A  DEPT  DAS_VAR  DAS_RMS  DAS_STD  DAS_MEAN  DAS_MAX\n');
     
     % Write data
     for i = 1:length(depth_ft)
-        fprintf(fid, '%8.2f %10.5f %10.5f %10.5f %10.5f %10.5f\n', ...
+        console_log(fid, '%8.2f %10.5f %10.5f %10.5f %10.5f %10.5f\n', ...
             depth_ft(i), variance_data(i), rms_data(i), std_data(i), ...
             mean_data(i), max_data(i));
     end
     
     fclose(fid);
-    fprintf('✓ LAS file created successfully: %s\n', output_filename);
+    console_log('✓ LAS file created successfully: %s\n', output_filename);
     
     % Display summary statistics
-    fprintf('\n=== DAS AMPLITUDE STATISTICS SUMMARY ===\n');
-    fprintf('Depth range: [%.1f, %.1f] ft (%d points)\n', min(depth_ft), max(depth_ft), length(depth_ft));
-    fprintf('Variance range: [%.3e, %.3e]\n', min(variance_data), max(variance_data));
-    fprintf('RMS range: [%.3f, %.3f]\n', min(rms_data), max(rms_data));
-    fprintf('Max amplitude: %.3f nm/s\n', max(max_data));
+    console_log('\n=== DAS AMPLITUDE STATISTICS SUMMARY ===\n');
+    console_log('Depth range: [%.1f, %.1f] ft (%d points)\n', min(depth_ft), max(depth_ft), length(depth_ft));
+    console_log('Variance range: [%.3e, %.3e]\n', min(variance_data), max(variance_data));
+    console_log('RMS range: [%.3f, %.3f]\n', min(rms_data), max(rms_data));
+    console_log('Max amplitude: %.3f nm/s\n', max(max_data));
     
 catch ME
     fclose(fid);
     error('Error writing LAS file: %s', ME.message);
 end
 
-fprintf('\n✓ Export complete! Load %s into WellCAD for visualization.\n', output_filename);
+console_log('\n✓ Export complete! Load %s into WellCAD for visualization.\n', output_filename);
 
 end

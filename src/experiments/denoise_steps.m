@@ -9,7 +9,7 @@ if nargin < 3
     smooth_window = 7;  % Light smoothing
 end
 
-fprintf('=== DENOISING WITH %d-POINT SMOOTHING ===\n', smooth_window);
+console_log('=== DENOISING WITH %d-POINT SMOOTHING ===\n', smooth_window);
 
 %% Load data
 data = readtable(input_csv);
@@ -21,8 +21,8 @@ drawdown_ft = data.(col_names{2});
 %% Apply light moving average smoothing
 drawdown_smoothed = movmean(drawdown_ft, smooth_window, 'omitnan');
 
-fprintf('Original data range: %.4f to %.4f ft\n', min(drawdown_ft), max(drawdown_ft));
-fprintf('Smoothed data range: %.4f to %.4f ft\n', min(drawdown_smoothed), max(drawdown_smoothed));
+console_log('Original data range: %.4f to %.4f ft\n', min(drawdown_ft), max(drawdown_ft));
+console_log('Smoothed data range: %.4f to %.4f ft\n', min(drawdown_smoothed), max(drawdown_smoothed));
 
 %% Plot comparison
 figure('Position', [50, 50, 1600, 800]);
@@ -48,7 +48,7 @@ export_table = table(time_sec, drawdown_smoothed, ...
 
 writetable(export_table, output_csv);
 
-fprintf('\nExported to: %s\n', output_csv);
-fprintf('Steps preserved with reduced noise!\n');
+console_log('\nExported to: %s\n', output_csv);
+console_log('Steps preserved with reduced noise!\n');
 
 end

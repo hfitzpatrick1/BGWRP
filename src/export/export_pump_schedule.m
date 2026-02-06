@@ -32,16 +32,16 @@ schedule_table = table(pump_times_relative, pump_rates, event_names, ...
 % Write to CSV
 writetable(schedule_table, output_csv);
 
-fprintf('\n=== PUMP SCHEDULE ===\n');
-fprintf('Exported to: %s\n\n', output_csv);
-fprintf('Time (sec)  Time (hr:min)  Rate (GPM)  Event\n');
-fprintf('-----------------------------------------------------------\n');
+console_log('\n=== PUMP SCHEDULE ===\n');
+console_log('Exported to: %s\n\n', output_csv);
+console_log('Time (sec)  Time (hr:min)  Rate (GPM)  Event\n');
+console_log('-----------------------------------------------------------\n');
 for i = 1:length(pump_times_relative)
     hours = floor(pump_times_relative(i) / 3600);
     mins = floor(mod(pump_times_relative(i), 3600) / 60);
-    fprintf('%10d  %02d:%02d          %3d         %s\n', ...
+    console_log('%10d  %02d:%02d          %3d         %s\n', ...
         pump_times_relative(i), hours, mins, pump_rates(i), event_names{i});
 end
-fprintf('\nSchedule complete!\n');
+console_log('\nSchedule complete!\n');
 
 end

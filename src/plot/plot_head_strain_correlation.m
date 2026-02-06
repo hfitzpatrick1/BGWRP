@@ -91,7 +91,7 @@ function plot_strain_head_correlation(correlation_results, config)
             end
             filename = fullfile(save_dir, sprintf('strain_head_correlation_%s.png', test_label));
             saveas(gcf, filename);
-            fprintf('Saved correlation plot: %s\n', filename);
+            console_log('Saved correlation plot: %s\n', filename);
         end
     end
     end
