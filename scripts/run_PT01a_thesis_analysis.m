@@ -23,6 +23,9 @@ clear all;
 close all;
 clc;
 
+% Start logging all console output
+diary('C:\Coding\BGWRP\matlab_output.log');
+
 fprintf('=== PT-01a RECOVERY ANALYSIS FOR THESIS (100Hz Data) ===\n');
 fprintf('Starting analysis...\n\n');
 
@@ -35,7 +38,10 @@ fprintf('  - Filter: Kaiser window FIR lowpass (cutoff 0.5 Hz)\n');
 fprintf('  - Processing head data\n');
 fprintf('  - Applying +90s time shift to DAS data\n\n');
 
-addpath(genpath('src'));
+% Add parent directory's src to path
+script_dir = fileparts(mfilename('fullpath'));
+parent_dir = fileparts(script_dir);
+addpath(genpath(fullfile(parent_dir, 'src')));
 
 % Choose your filtering approach:
 % Option 1: Resample anti-alias filter (attempts to match 1Hz filter exactly)
@@ -78,3 +84,6 @@ fprintf('  - Figure 103: Strain with head data\n');
 fprintf('  - Figure: 4-subplot regression analysis\n');
 fprintf('\nAll plots ready for thesis!\n');
 fprintf('\n*** Using 100Hz data with resample anti-aliasing filter (same as 1Hz data!) ***\n');
+
+% Stop logging
+diary off;
