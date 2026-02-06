@@ -339,11 +339,22 @@ for i = 1:length(test_labels)
     filtered_time = das_data.time_array(analysis_mask_fig101);
     filtered_data = das_data.smoothed_data(analysis_mask_fig101, :);
     
+    % Downsample for plotting if data is high-resolution (>2000 time points)
+    % Keeps analysis at full resolution, only reduces plot rendering load
+    plot_time = filtered_time;
+    plot_data = filtered_data;
+    if length(filtered_time) > 2000
+        ds_factor = ceil(length(filtered_time) / 2000);
+        plot_time = filtered_time(1:ds_factor:end);
+        plot_data = filtered_data(1:ds_factor:end, :);
+        chart_logger('    Downsampled for plotting: %d -> %d time points (factor %dx)', length(filtered_time), length(plot_time), ds_factor);
+    end
+    
     % Convert depth from feet to meters
     depth_m = das_data.depth_ft * 0.3048;
     
     % Apply configurable plotting method to test pixelation sources
-    apply_plot_config(filtered_time, depth_m, filtered_data', config, 'waterfall');
+    apply_plot_config(plot_time, depth_m, plot_data', config, 'waterfall');
     
     % Overlay head data if available
     if ~isempty(head_data) && isfield(head_data, 'zones')
@@ -371,10 +382,11 @@ for i = 1:length(test_labels)
     chart_logger('    Figure 101: Actual data range: [%.3f, %.3f] nm/s', actual_min, actual_max);
     chart_logger('    Figure 101: Advisor''s range: [-0.25, 0.15] nm/s');
     
-    % Colorbar bounds optimized for PT01a data (blue background at baseline)
-    raw_bounds = [0, 0.2];
+    % Colorbar bounds - use percentile of analysis window data for robust range
+    analysis_data = filtered_data(:);
+    raw_bounds = [prctile(analysis_data, 2), prctile(analysis_data, 98)];
     clim(raw_bounds);
-    chart_logger('    Figure 101: Fixed colorbar bounds: [%.2f, %.2f] nm/s', raw_bounds(1), raw_bounds(2));
+    chart_logger('    Figure 101: Auto colorbar bounds (2nd-98th percentile): [%.2f, %.2f] nm/s', raw_bounds(1), raw_bounds(2));
     
     % Warn if data is outside bounds
     if actual_min < raw_bounds(1) || actual_max > raw_bounds(2)
@@ -436,15 +448,24 @@ for i = 1:length(test_labels)
     analysis_mask = das_data.time_array >= analysis_start & das_data.time_array <= analysis_end;
     analysis_smoothed_data = das_data.smoothed_data(analysis_mask, :);
     analysis_time_array = das_data.time_array(analysis_mask);
+    % Downsample for plotting if high-resolution
+    plot_time_102 = analysis_time_array;
+    plot_data_102 = analysis_smoothed_data;
+    if length(analysis_time_array) > 2000
+        ds_factor = ceil(length(analysis_time_array) / 2000);
+        plot_time_102 = analysis_time_array(1:ds_factor:end);
+        plot_data_102 = analysis_smoothed_data(1:ds_factor:end, :);
+        chart_logger('    Downsampled Fig 102 waterfall: %d -> %d points', length(analysis_time_array), length(plot_time_102));
+    end
     % Convert depth from feet to meters
     depth_m = das_data.depth_ft * 0.3048;
-    apply_plot_config(analysis_time_array, depth_m, analysis_smoothed_data', config, 'waterfall');
+    apply_plot_config(plot_time_102, depth_m, plot_data_102', config, 'waterfall');
     
-    % Set displacement rate bounds for Figure 102 subplot 1 (waterfall)
-    % Optimized for PT01a data (blue background at baseline)
-    disp_bounds = [0.1, 0.22];
+    % Colorbar bounds - use percentile of analysis window data for robust range
+    analysis_disp_data = analysis_smoothed_data(:);
+    disp_bounds = [prctile(analysis_disp_data, 2), prctile(analysis_disp_data, 98)];
     set(gca, 'clim', disp_bounds);
-    chart_logger('    Figure 102 subplot 1: Fixed displacement rate colorbar bounds: [%.2f, %.2f] nm/s', disp_bounds(1), disp_bounds(2));
+    chart_logger('    Figure 102 subplot 1: Auto colorbar bounds (2nd-98th percentile): [%.2f, %.2f] nm/s', disp_bounds(1), disp_bounds(2));
     
     % Colormap is set by apply_plot_config, but ensure consistency for colorbar
     if isfield(config, 'colormap_name') && isfield(config, 'colormap_resolution')
@@ -520,10 +541,10 @@ for i = 1:length(test_labels)
                         plot(das_data.analysis_time, das_data.analysis_strain_rate, 'Color', [0 0 0], 'LineStyle', '-', 'LineWidth', 1.2, 'DisplayName', 'Displacement Rate PM-07 z1');
                         ylabel('Displacement Rate (nm/s)');
                         % Set fixed bounds for Figure 102 subplot 2
-                        ylim([0.11, 0.18]);
+                        % ylim auto-scales for different data resolutions
                         legend('show', 'Location', 'best');
                         chart_logger('    Plotted averaged drawdown rate from %d monitoring zones', length(monitoring_zones));
-                        chart_logger('    Figure 102 subplot 2: Fixed displacement rate y-axis bounds: [0.11, 0.18] nm/s');
+                        chart_logger('    Figure 102 subplot 2: Fixed displacement rate y-axis bounds: [0.34, 0.37] nm/s');
                     end
                 else
                     % Plot multiple monitoring zones (excluding pw)
@@ -574,10 +595,9 @@ for i = 1:length(test_labels)
                     plot(das_data.analysis_time, das_data.analysis_strain_rate, 'Color', [0 0 0], 'LineStyle', '-', 'LineWidth', 1.2, 'DisplayName', 'Displacement Rate PM-07 z1');
                     ylabel('Displacement Rate (nm/s)');
                     % Set fixed bounds for Figure 102 subplot 2
-                    ylim([0.11, 0.18]);
+                    % ylim auto-scales for different data resolutions
                     legend('show', 'Location', 'best');
                     chart_logger('    Plotted monitoring well drawdown rate data from zones: %s', strjoin(monitoring_zones, ', '));
-                    chart_logger('    Figure 102 subplot 2: Fixed displacement rate y-axis bounds: [0.11, 0.18] nm/s');
                 end
             else
                 % No valid head data, just plot DAS
@@ -594,7 +614,7 @@ for i = 1:length(test_labels)
                 end
                 ylabel('Displacement Rate (nm/s)');
                 xlabel('Date Time UTC');
-                ylim([0.11, 0.18]);  % Fixed bounds for Figure 102 subplot 2
+                % ylim auto-scales for different data resolutions
             end
         else
             % No head data, just plot DAS
@@ -607,7 +627,7 @@ for i = 1:length(test_labels)
     end
             ylabel('Displacement Rate (nm/s)');
             xlabel('Date Time UTC');
-            ylim([0.11, 0.18]);  % Fixed bounds for Figure 102 subplot 2
+            % ylim auto-scales for different data resolutions
         end
     else
         % No head data, just plot DAS
@@ -620,7 +640,7 @@ for i = 1:length(test_labels)
     end
         ylabel('Displacement Rate (nm/s)');
         xlabel('Date Time UTC');
-        ylim([0.11, 0.18]);  % Fixed bounds for Figure 102 subplot 2
+            % ylim auto-scales for different data resolutions
     end
     title('Drawdown Rate & Displacement Rate at PM-07');
     grid on;
@@ -655,9 +675,7 @@ for i = 1:length(test_labels)
             plot(das_data.analysis_time, das_data.analysis_strain_rate, 'Color', [0 0 0], 'LineStyle', '-', 'LineWidth', 1.2, 'DisplayName', 'Displacement Rate PM-07 z1');
             ylabel('Displacement Rate (nm/s)');
             
-            % Set fixed bounds for Figure 102 subplot 3 to match subplot 2
-            ylim([0.11, 0.18]);
-            chart_logger('    Figure 102 subplot 3: Fixed displacement rate y-axis bounds: [0.11, 0.18] nm/s');
+            % ylim auto-scales for subplot 3 to match data resolution
             
             legend('show', 'Location', 'best');
             title('Drawdown Rate at PT-01a & Displacement Rate at PM-07');
@@ -688,47 +706,57 @@ for i = 1:length(test_labels)
     clf;
     
     % Calculate integrated data using absolute time-based integration
-    % Start integration 10 minutes before analysis window for consistent baseline
-    integration_reference_time = analysis_start - minutes(10);
+    % Use a small buffer (1 minute) before analysis window for baseline
+    % This avoids loading the entire dataset into memory for large (100Hz) data
+    integration_buffer = minutes(1);
+    integration_reference_time = analysis_start - integration_buffer;
     
-    % Find the integration start index in the actual data
+    % Find the integration start and end indices
     integration_start_idx = find(das_data.time_array >= integration_reference_time, 1);
+    analysis_end_idx = find(das_data.time_array <= analysis_end, 1, 'last');
     
     if isempty(integration_start_idx)
-        % Analysis window is outside dataset bounds - use beginning of dataset
         integration_start_idx = 1;
-        chart_logger('    WARNING: Analysis window outside dataset - using dataset start for integration');
-    else
-        chart_logger('    Integration starting at: %s (10 min before analysis)', integration_reference_time);
+        chart_logger('    WARNING: Using dataset start for integration');
     end
-    
-    % Check if analysis window is actually available in the dataset
-    analysis_end_idx = find(das_data.time_array <= analysis_end, 1, 'last');
     if isempty(analysis_end_idx) || das_data.time_array(end) < analysis_start
-        error('Analysis window (%s to %s) is completely outside dataset bounds (%s to %s)', ...
-            analysis_start, analysis_end, das_data.time_array(1), das_data.time_array(end));
+        error('Analysis window is outside dataset bounds');
     end
     
-    subdata1Hz = das_data.smoothed_data(integration_start_idx:end, :);
-    intdata = cumtrapz(subdata1Hz, 1);
-    iTdas = das_data.time_array(integration_start_idx:end);
+    chart_logger('    Integration window: indices %d to %d (%d samples)', integration_start_idx, analysis_end_idx, analysis_end_idx - integration_start_idx + 1);
     
-    % Detrend integrated data
-    dintdata = zeros(size(intdata));
+    % Only extract the needed slice (saves memory for 100Hz data)
+    subdata1Hz = das_data.smoothed_data(integration_start_idx:analysis_end_idx, :);
+    iTdas = das_data.time_array(integration_start_idx:analysis_end_idx);
+    
+    intdata = cumtrapz(subdata1Hz, 1);
+    clear subdata1Hz;  % Free memory immediately
+    
+    % Detrend integrated data (in-place to save memory)
     for nn = 1:size(intdata, 2)
-        dintdata(:, nn) = detrend(intdata(:, nn), 2);
+        intdata(:, nn) = detrend(intdata(:, nn), 2);
     end
     
     subplot(3,1,1);
-    % Filter strain data to analysis window BEFORE plotting
+    % Filter to analysis window for plotting
     strain_mask_fig103 = iTdas >= analysis_start & iTdas <= analysis_end;
     filtered_time_strain = iTdas(strain_mask_fig103);
-    filtered_strain_data = dintdata(strain_mask_fig103, :);
+    filtered_strain_data = intdata(strain_mask_fig103, :);
+    
+    % Downsample for plotting if high-resolution
+    plot_time_103 = filtered_time_strain;
+    plot_strain_103 = filtered_strain_data;
+    if length(filtered_time_strain) > 2000
+        ds_factor = ceil(length(filtered_time_strain) / 2000);
+        plot_time_103 = filtered_time_strain(1:ds_factor:end);
+        plot_strain_103 = filtered_strain_data(1:ds_factor:end, :);
+        chart_logger('    Downsampled Fig 103 waterfall: %d -> %d points', length(filtered_time_strain), length(plot_time_103));
+    end
     
     % Apply configurable plotting method to test pixelation sources
-    apply_plot_config(filtered_time_strain, das_data.depth_ft, filtered_strain_data'/10, config, 'waterfall');
+    apply_plot_config(plot_time_103, das_data.depth_ft, plot_strain_103'/10, config, 'waterfall');
     
-    % Set strain bounds using actual plotted data (dintdata/10)
+    % Set strain bounds using actual plotted data (intdata/10, already detrended)
     if ~isempty(unified_bounds) && isfield(unified_bounds, 'strain')
         % Use pre-calculated unified bounds
         strain_bounds = unified_bounds.strain;
@@ -739,7 +767,7 @@ for i = 1:length(test_labels)
         if isfield(config, 'dynamic_bounds') && config.dynamic_bounds
             % Focus on pumping zone for strain bounds
             zone_mask = das_data.depth_ft >= das_data.pumping_zone.min_ft & das_data.depth_ft <= das_data.pumping_zone.max_ft;
-            strain_data = dintdata(:, zone_mask) / 10;  % Same as plotted data
+            strain_data = intdata(:, zone_mask) / 10;  % Same as plotted data
             
             % Get bounds mode from config
             if isfield(config, 'dynamic_bounds_mode')

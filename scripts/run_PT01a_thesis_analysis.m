@@ -56,12 +56,11 @@ try
     addpath(genpath(fullfile(parent_dir, 'src')));
     
     % Choose your filtering approach:
-    % Option 1: Resample anti-alias filter (attempts to match 1Hz filter exactly)
-    % mode = 'run_correlation_analysis_lowpass';
+    % Option 1: Resample anti-alias filter (matches 1Hz decimation filter exactly)
+    % mode = 'run_correlation_analysis_lowpass_PT01a';  % Kaiser FIR lowpass (cutoff 0.5 Hz)
     
-    % Option 2: Moving average filters
-    % FOR 1 HZ DATA: Use standard mode (already clean)
-    mode = 'run_correlation_analysis';  % Standard (15-second = 15 samples at 1Hz)
+    % Option 2: Moving average filters (ACTIVE - best R² = 0.936)
+    mode = 'run_correlation_analysis';  % Standard movmean (50-sec window at 100Hz = 5000 samples)
     
     % FOR 100 HZ DATA: Use longer smoothing
     % mode = 'run_correlation_analysis_15sec';  % 15-second (1500 samples)

@@ -428,9 +428,9 @@ if exist('mode', 'var') && ischar(mode)
                                         datetime('2023-11-07 20:46:30', 'TimeZone', 'UTC')];
             % Apply smoothing for cleaner signal visualization
             config.smoothing_method = 'matlab_movmean';
-            config.matlab_movmean_window = 50;  % 50 seconds
+            config.matlab_movmean_window = 5000;  % 50 seconds at 100Hz (5000 samples)
             % Apply smoothing to strain rate
-            config.strain_rate_smoothing_window = 50;  % 50 seconds
+            config.strain_rate_smoothing_window = 5000;  % 50 seconds at 100Hz (5000 samples)
             config.strain_rate_smoothing_method = 'movmean';  % Moving average
             config.apply_concatenation_filter = false;
             config.filter_method = 'none';

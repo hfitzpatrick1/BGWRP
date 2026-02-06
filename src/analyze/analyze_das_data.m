@@ -247,11 +247,27 @@ for i = 1:length(test_labels)
     end
     
     n_samples = size(data1Hz, 1);
-    time_array = data_start + seconds(0:n_samples-1);
+    
+    % Determine actual sampling rate for this dataset
+    % Check dataset-specific config first, then loaded data, then default to 1 Hz
+    test_label_upper = upper(strrep(test_label, ' ', '_'));
+    actual_fs = 1;  % Default: 1 Hz
+    if isfield(config, 'dataset_smoothing') && isfield(config.dataset_smoothing, test_label_upper)
+        ds_config_temp = config.dataset_smoothing.(test_label_upper);
+        if isfield(ds_config_temp, 'fs')
+            actual_fs = ds_config_temp.fs;
+        end
+    elseif isfield(loaded_data, 'fs_f')
+        actual_fs = loaded_data.fs_f;
+    end
+    
+    % Build time array using actual sampling rate
+    time_array = data_start + seconds((0:n_samples-1) / actual_fs);
+    duration_sec = n_samples / actual_fs;
+    console_log('  Time array: %d samples at %d Hz = %.1f seconds (%.1f minutes)\n', n_samples, actual_fs, duration_sec, duration_sec/60);
     
     % Check for dataset-specific smoothing configuration
     % Keys are stored in UPPERCASE (e.g., PT01A_RECOVERY_SHORT), so convert test_label
-    test_label_upper = upper(strrep(test_label, ' ', '_'));
     console_log('  DEBUG: Checking dataset-specific smoothing for test_label="%s" (key="%s")\n', test_label, test_label_upper);
     if isfield(config, 'dataset_smoothing')
         console_log('    DEBUG: config.dataset_smoothing exists\n');
@@ -422,6 +438,18 @@ for i = 1:length(test_labels)
             smoothed_data = apply_filter(smoothed_data, 'chen_stage3', config);
             console_log('  F-K filter complete\n');
         end
+    end
+    
+    % Apply spatial smoothing to reduce horizontal banding artifacts (opt-in)
+    % Horizontal bands are caused by per-channel offsets; smoothing across
+    % neighboring channels reduces these while preserving the signal baseline.
+    if isfield(config, 'enable_spatial_smooth') && config.enable_spatial_smooth
+        spatial_window = 5;  % Smooth across 5 neighboring channels
+        if isfield(config, 'spatial_smooth_window')
+            spatial_window = config.spatial_smooth_window;
+        end
+        smoothed_data = movmean(smoothed_data, spatial_window, 2);  % dim=2 = across channels
+        console_log('  Applied spatial smoothing (window=%d channels) to reduce horizontal banding\n', spatial_window);
     end
     
     % DEBUG: Check data after smoothing

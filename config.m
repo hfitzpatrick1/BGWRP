@@ -63,6 +63,10 @@ config.analysis_windows.PT01b_Recovery_short.end = datetime(2023,10,31,19,32,00,
 config.analysis_windows.PT01a_Recovery_short.start = datetime(2023,11,07,20,44,30,00,'TimeZone','UTC');
 config.analysis_windows.PT01a_Recovery_short.end = datetime(2023,11,07,20,47,30,00,'TimeZone','UTC');
 
+% PT01a_Recovery_100 analysis window (100Hz data - same time window as 1Hz)
+config.analysis_windows.PT01a_Recovery_100.start = datetime(2023,11,07,20,44,30,00,'TimeZone','UTC');
+config.analysis_windows.PT01a_Recovery_100.end = datetime(2023,11,07,20,47,30,00,'TimeZone','UTC');
+
 %% Zone Filtering Configuration (per dataset)
 % PT-01a START OF PUMPING configurations (NEW DATASET)
 config.waterfall_zones.PT01a_start_of_pumping.min_depth = 260;

@@ -18,6 +18,16 @@ if isstruct(das_data_array)
     das_data_array = {das_data_array};
 end
 
+% If no data provided, fall back to fixed bounds regardless of dynamic_bounds setting
+if isempty(das_data_array)
+    if nargin >= 4 && ~isempty(dataset_name)
+        bounds = get_fixed_bounds(data_type, config, dataset_name);
+    else
+        bounds = get_fixed_bounds(data_type, config);
+    end
+    return;
+end
+
 % Check configuration for bounds calculation method
 if ~isfield(config, 'dynamic_bounds') || ~config.dynamic_bounds
     % Use fixed bounds (manual or traditional)
