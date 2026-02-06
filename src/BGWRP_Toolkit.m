@@ -28,7 +28,6 @@ end
 clear config
 file_config = config();
 
-
 % Handle shorthand mode parameter
 if exist('mode', 'var') && ischar(mode)
     console_log('Using shorthand mode: %s\n', mode);
@@ -2084,6 +2083,15 @@ if config.run_data_analysis
             
             % Analyze DAS data
             console_log('Running DAS data analysis...\n');
+            
+            % DEBUG: Check config before passing to analyze_das_data
+            if isfield(config, 'dataset_smoothing')
+                fprintf('DEBUG Toolkit before analyze_das_data: dataset_smoothing EXISTS\n');
+                fprintf('  Fields: %s\n', strjoin(fieldnames(config.dataset_smoothing), ', '));
+            else
+                fprintf('DEBUG Toolkit before analyze_das_data: dataset_smoothing MISSING\n');
+            end
+            
             das_results = analyze_das_data(timing_config, available_tests, config);
         end
         

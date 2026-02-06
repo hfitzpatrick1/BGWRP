@@ -13,6 +13,17 @@ function das_results = analyze_das_data(timing_config, test_labels, config)
 
 console_log('=== DAS DATA ANALYSIS ===\n');
 
+% DEBUG: Check if config has dataset_smoothing when function is called
+console_log('DEBUG analyze_das_data ENTRY: Checking config.dataset_smoothing...\n');
+if isfield(config, 'dataset_smoothing')
+    ds_fields = fieldnames(config.dataset_smoothing);
+    console_log('  ✓ config.dataset_smoothing EXISTS with fields: %s\n', strjoin(ds_fields, ', '));
+else
+    console_log('  ✗ config.dataset_smoothing DOES NOT EXIST in config struct\n');
+    all_fields = fieldnames(config);
+    console_log('  Available config fields (%d total): %s...\n', length(all_fields), strjoin(all_fields(1:min(10,end)), ', '));
+end
+
 % Initialize results structure
 das_results = struct();
 das_results.tests = test_labels;

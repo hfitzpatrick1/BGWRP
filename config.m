@@ -331,6 +331,9 @@ config.smoothing_method = 'none';
 % Dataset-specific smoothing parameters (in SECONDS, not samples)
 % These override global mode settings for specific datasets
 
+% Initialize the dataset_smoothing struct
+config.dataset_smoothing = struct();
+
 % PT01a_Recovery_short (1 Hz data) - UPPERCASE to match test_label
 config.dataset_smoothing.PT01A_RECOVERY_SHORT.fs = 1;  % Sampling rate (Hz)
 config.dataset_smoothing.PT01A_RECOVERY_SHORT.preprocessing_window_sec = 50;  % Analysis smoothing
