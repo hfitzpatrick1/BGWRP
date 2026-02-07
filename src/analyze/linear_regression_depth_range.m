@@ -719,14 +719,12 @@ if config.show_plots
     % Scale strain rate to match subplot 2 (×10^-11)
     strain_scale_plot = 1e-11;
     % Plot raw strain as faint background
-    plot(time_das_full_plot, -strain_raw_plot / strain_scale_plot, 'Color', [1 0.8 0.8], 'LineWidth', 0.8, 'DisplayName', 'Strain Rate (raw)');
+    plot(time_das_full_plot, strain_raw_plot / strain_scale_plot, 'Color', [1 0.8 0.8], 'LineWidth', 0.8, 'DisplayName', 'Strain Rate (raw)');
     hold on;
-    % Plot smoothed strain as bold line (matching subplot 2)
-    plot(time_das_full_plot, -strain_smoothed_plot / strain_scale_plot, 'r-', 'LineWidth', 2.5, 'DisplayName', 'Strain Rate (smoothed)');
+    % Plot smoothed strain as bold line
+    plot(time_das_full_plot, strain_smoothed_plot / strain_scale_plot, 'r-', 'LineWidth', 2.5, 'DisplayName', 'Strain Rate (smoothed)');
     ylabel(sprintf('Strain Rate (1/s) ×10^{-11}'), 'Color', 'r', 'FontSize', 12, 'FontWeight', 'bold');
     ax.YColor = 'r';
-    % Match y-axis range to subplot 2 for consistency
-    ylim([-0.3, 0.1]);
     xlabel('Time UTC', 'FontSize', 12, 'FontWeight', 'bold');
     title('Raw vs Smoothed Comparison at PM-07', 'FontSize', 14);
     legend('Location', 'best');
@@ -734,27 +732,14 @@ if config.show_plots
     % Set x-axis limits (extended to show context)
     xlim([datetime('2023-11-07 20:44:53', 'TimeZone', 'UTC'), datetime('2023-11-07 20:46:30', 'TimeZone', 'UTC')]);
     
-    % BOTTOM RIGHT (4): Head rate overlay for timing reference - USE FULL WINDOW DATA
-    subplot(2,2,4);
-    yyaxis left;
-    % Normalize strain rate for full window
-    strain_norm_abs = abs(-strain_smoothed_plot);
-    strain_norm_abs = (strain_norm_abs - min(strain_norm_abs)) / (max(strain_norm_abs) - min(strain_norm_abs) + eps);
-    plot(time_das_full_plot, strain_norm_abs, 'r-', 'LineWidth', 2, 'DisplayName', 'Strain Rate (norm)');
-    ylabel('Normalized Strain Rate', 'Color', 'r');
-    ax = gca;
-    ax.YColor = 'r';
-    
     % BOTTOM RIGHT (4): Strain Rate vs Head Rate overlay - SHOW ACTUAL MAGNITUDES
     subplot(2,2,4);
     
-    % Plot the same data as subplot 2 for consistency
     yyaxis left;
-    % Plot strain rate (same as subplot 2)
+    % Plot strain rate (no negation — positive = expansion during recovery)
     strain_scale_subplot4 = 1e-11;
-    plot(time_das_full_plot, -strain_smoothed_plot / strain_scale_subplot4, 'r-', 'LineWidth', 2.5, 'DisplayName', 'Strain Rate PM-07 z1');
+    plot(time_das_full_plot, strain_smoothed_plot / strain_scale_subplot4, 'r-', 'LineWidth', 2.5, 'DisplayName', 'Strain Rate PM-07 z1');
     ylabel(sprintf('Strain Rate (1/s) ×10^{-11}'), 'Color', 'r', 'FontSize', 12, 'FontWeight', 'bold');
-    ylim([-0.3, 0.1]);  % Match subplot 2
     ax = gca;
     ax.YColor = 'r';
     

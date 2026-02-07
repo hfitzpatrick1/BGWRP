@@ -461,7 +461,15 @@ for i = 1:length(test_labels)
             zone_mid_ft = (zone_min_ft + zone_max_ft) / 2;
             [~, channel_idx] = min(abs(depth_ft - zone_mid_ft));
             
-    % Get analysis window from config
+    % Apply time shift FIRST (before analysis window masking)
+    if isfield(config, 'das_time_shift_seconds') && config.das_time_shift_seconds ~= 0
+        time_array_shifted = time_array + seconds(config.das_time_shift_seconds);
+        console_log('  Applied DAS time shift: +%d seconds\n', config.das_time_shift_seconds);
+    else
+        time_array_shifted = time_array;
+    end
+    
+    % Get analysis window from config and apply to SHIFTED time
     if isfield(config, 'analysis_windows') && isfield(config.analysis_windows, test_label)
         analysis_start = config.analysis_windows.(test_label).start;
         analysis_end = config.analysis_windows.(test_label).end;
@@ -469,15 +477,7 @@ for i = 1:length(test_labels)
                 analysis_start = test_timing.start;
                 analysis_end = test_timing.end;
             end
-            analysis_mask = time_array >= analysis_start & time_array <= analysis_end;
-            
-    % Apply time shift if configured (for alignment with head data)
-    if isfield(config, 'das_time_shift_seconds') && config.das_time_shift_seconds ~= 0
-        time_array_shifted = time_array + seconds(config.das_time_shift_seconds);
-        console_log('  Applied DAS time shift: +%d seconds\n', config.das_time_shift_seconds);
-    else
-        time_array_shifted = time_array;
-    end
+            analysis_mask = time_array_shifted >= analysis_start & time_array_shifted <= analysis_end;
     
     % Store essential results (simplified structure)
     das_results.(test_label).data_file = das_filepath;

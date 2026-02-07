@@ -495,8 +495,28 @@ for i = 1:length(test_labels)
         xlim([analysis_start analysis_end]);
     end
     
+    % Add screened interval label (450-510 ft converted to meters)
+    screened_top_m = 450 * 0.3048;  % 137.16 m
+    screened_bot_m = 510 * 0.3048;  % 155.45 m
+    hold on;
+    yline(screened_top_m, '--k', 'LineWidth', 1.5);
+    yline(screened_bot_m, '--k', 'LineWidth', 1.5);
+    % Place label at the midpoint of the screened interval, near the right edge
+    xl = xlim;
+    text(xl(2), mean([screened_top_m, screened_bot_m]), ...
+        sprintf('  Screened Interval\n  (%.0f–%.0f m)', screened_top_m, screened_bot_m), ...
+        'Color', 'k', 'FontSize', 9, 'FontWeight', 'bold', ...
+        'VerticalAlignment', 'middle', 'HorizontalAlignment', 'left');
+    hold off;
+    
     xlabel('Date Time UTC');
     title(sprintf('DAS Displacement Rate - Test %s', strrep(upper(test_label), '_', ' ')));
+    
+    % Pre-compute extended DAS displacement rate for subplots 2 & 3
+    % Extends 15s past analysis_end to compensate for the -10s plot shift
+    ext_mask = das_data.time_array >= analysis_start & das_data.time_array <= analysis_end + seconds(15);
+    plot_das_time_ext = das_data.time_array(ext_mask) - seconds(13);
+    plot_das_rate_ext = das_data.smoothed_data(ext_mask, das_data.pumping_zone.channel_idx);
     
     subplot(3,1,2);
     if ~isempty(head_data)
@@ -536,7 +556,7 @@ for i = 1:length(test_labels)
                         ylabel('Drawdown Rate (m/s)');
                         
                         yyaxis right;
-                        plot(das_data.analysis_time, das_data.analysis_strain_rate, 'Color', [0 0 0], 'LineStyle', '-', 'LineWidth', 1.2, 'DisplayName', 'Displacement Rate PM-07 z1');
+                        plot(plot_das_time_ext, plot_das_rate_ext, 'Color', [0 0 0], 'LineStyle', '-', 'LineWidth', 1.2, 'DisplayName', 'Displacement Rate PM-07 z1');
                         ylabel('Displacement Rate (nm/s)');
                         % Set fixed bounds for Figure 102 subplot 2
                         % ylim auto-scales for different data resolutions
@@ -590,7 +610,7 @@ for i = 1:length(test_labels)
                     end
                     
                     yyaxis right;
-                    plot(das_data.analysis_time, das_data.analysis_strain_rate, 'Color', [0 0 0], 'LineStyle', '-', 'LineWidth', 1.2, 'DisplayName', 'Displacement Rate PM-07 z1');
+                    plot(plot_das_time_ext, plot_das_rate_ext, 'Color', [0 0 0], 'LineStyle', '-', 'LineWidth', 1.2, 'DisplayName', 'Displacement Rate PM-07 z1');
                     ylabel('Displacement Rate (nm/s)');
                     % Set fixed bounds for Figure 102 subplot 2
                     % ylim auto-scales for different data resolutions
@@ -599,7 +619,7 @@ for i = 1:length(test_labels)
                 end
             else
                 % No valid head data, just plot DAS
-                plot(das_data.analysis_time, das_data.analysis_strain_rate, 'Color', [0 0 0], 'LineStyle', '-', 'LineWidth', 1.2, 'DisplayName', 'Displacement Rate PM-07 z1');
+                plot(plot_das_time_ext, plot_das_rate_ext, 'Color', [0 0 0], 'LineStyle', '-', 'LineWidth', 1.2, 'DisplayName', 'Displacement Rate PM-07 z1');
                 if strcmpi(test_label, 'PT01a_Recovery_short')
                     xlim([datetime('2023-11-07 20:44:30', 'TimeZone', 'UTC'), datetime('2023-11-07 20:47:30', 'TimeZone', 'UTC')]);
                 else
@@ -616,7 +636,7 @@ for i = 1:length(test_labels)
             end
         else
             % No head data, just plot DAS
-            plot(das_data.analysis_time, das_data.analysis_strain_rate, 'Color', [0 0 0], 'LineStyle', '-', 'LineWidth', 1.2, 'DisplayName', 'Displacement Rate PM-07 z1');
+            plot(plot_das_time_ext, plot_das_rate_ext, 'Color', [0 0 0], 'LineStyle', '-', 'LineWidth', 1.2, 'DisplayName', 'Displacement Rate PM-07 z1');
             % Set focused time window for PT01a (recognize both 1Hz and 100Hz datasets)
     if contains(test_label, 'PT01a', 'IgnoreCase', true)
         xlim([datetime('2023-11-07 20:44:30', 'TimeZone', 'UTC'), datetime('2023-11-07 20:47:30', 'TimeZone', 'UTC')]);
@@ -629,7 +649,7 @@ for i = 1:length(test_labels)
         end
     else
         % No head data, just plot DAS
-        plot(das_data.analysis_time, das_data.analysis_strain_rate, 'Color', [0 0 0], 'LineStyle', '-', 'LineWidth', 1.2, 'DisplayName', 'Displacement Rate PM-07 z1');
+        plot(plot_das_time_ext, plot_das_rate_ext, 'Color', [0 0 0], 'LineStyle', '-', 'LineWidth', 1.2, 'DisplayName', 'Displacement Rate PM-07 z1');
         % Set focused time window for PT01a (recognize both 1Hz and 100Hz datasets)
     if contains(test_label, 'PT01a', 'IgnoreCase', true)
         xlim([datetime('2023-11-07 20:44:30', 'TimeZone', 'UTC'), datetime('2023-11-07 20:47:30', 'TimeZone', 'UTC')]);
@@ -670,7 +690,7 @@ for i = 1:length(test_labels)
             ylabel('Drawdown Rate (m/s)');
             
             yyaxis right;
-            plot(das_data.analysis_time, das_data.analysis_strain_rate, 'Color', [0 0 0], 'LineStyle', '-', 'LineWidth', 1.2, 'DisplayName', 'Displacement Rate PM-07 z1');
+            plot(plot_das_time_ext, plot_das_rate_ext, 'Color', [0 0 0], 'LineStyle', '-', 'LineWidth', 1.2, 'DisplayName', 'Displacement Rate PM-07 z1');
             ylabel('Displacement Rate (nm/s)');
             
             % ylim auto-scales for subplot 3 to match data resolution

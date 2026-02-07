@@ -137,8 +137,8 @@ end
 
 %% Recovery rate calculation function
 function [recovery_rate_ms, recovery_time, recovery_data] = calc_recovery_rate(Date, Drawdownft, recovery_start, recovery_end, smooth_window)
-    % Filter to recovery period
-    recovery_mask = Date >= recovery_start & Date <= recovery_end;
+    % Filter to recovery period (include 15s buffer past end for plotting)
+    recovery_mask = Date >= recovery_start & Date <= recovery_end + seconds(15);
     recovery_data.Date = Date(recovery_mask);
     recovery_data.Drawdownft = Drawdownft(recovery_mask);
     
