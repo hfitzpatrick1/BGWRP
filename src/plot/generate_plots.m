@@ -382,11 +382,10 @@ for i = 1:length(test_labels)
     chart_logger('    Figure 101: Actual data range: [%.3f, %.3f] nm/s', actual_min, actual_max);
     chart_logger('    Figure 101: Advisor''s range: [-0.25, 0.15] nm/s');
     
-    % Colorbar bounds - use percentile of analysis window data for robust range
-    analysis_data = filtered_data(:);
-    raw_bounds = [prctile(analysis_data, 2), prctile(analysis_data, 98)];
+    % Colorbar bounds - fixed range for thesis consistency
+    raw_bounds = [0.35, 0.50];
     clim(raw_bounds);
-    chart_logger('    Figure 101: Auto colorbar bounds (2nd-98th percentile): [%.2f, %.2f] nm/s', raw_bounds(1), raw_bounds(2));
+    chart_logger('    Figure 101: Fixed colorbar bounds: [%.2f, %.2f] nm/s', raw_bounds(1), raw_bounds(2));
     
     % Warn if data is outside bounds
     if actual_min < raw_bounds(1) || actual_max > raw_bounds(2)
@@ -461,11 +460,10 @@ for i = 1:length(test_labels)
     depth_m = das_data.depth_ft * 0.3048;
     apply_plot_config(plot_time_102, depth_m, plot_data_102', config, 'waterfall');
     
-    % Colorbar bounds - use percentile of analysis window data for robust range
-    analysis_disp_data = analysis_smoothed_data(:);
-    disp_bounds = [prctile(analysis_disp_data, 2), prctile(analysis_disp_data, 98)];
+    % Colorbar bounds - fixed range for thesis consistency (matches Figure 101)
+    disp_bounds = [0.35, 0.50];
     set(gca, 'clim', disp_bounds);
-    chart_logger('    Figure 102 subplot 1: Auto colorbar bounds (2nd-98th percentile): [%.2f, %.2f] nm/s', disp_bounds(1), disp_bounds(2));
+    chart_logger('    Figure 102 subplot 1: Fixed colorbar bounds: [%.2f, %.2f] nm/s', disp_bounds(1), disp_bounds(2));
     
     % Colormap is set by apply_plot_config, but ensure consistency for colorbar
     if isfield(config, 'colormap_name') && isfield(config, 'colormap_resolution')
