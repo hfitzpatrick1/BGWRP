@@ -21,6 +21,7 @@ lr_config = struct();
 lr_config.zone = 'z2';  % USING ZONE 2 (updated from z5)
 lr_config.depth_range_ft = [450, 510];  % PT01a pumping zone (includes channel 1099 at 480 ft)
 lr_config.timing_correction_sec = 14;  % Optimal timing correction
+lr_config.visual_strain_shift_sec = -5;  % Extra visual shift (seconds) for strain rate in subplots 2 & 4 (positive = shift strain left/earlier)
 lr_config.show_plots = true;  % Set to false for cleaner output
 
 % Focus on PEAK REGION for best correlation (PT01a dates: Nov 7, 2023)

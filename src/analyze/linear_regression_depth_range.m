@@ -517,6 +517,19 @@ else
     console_log('  Using regression window data for plotting (no full window available)\n');
 end
 
+% Force column vectors to prevent implicit expansion issues
+strain_smoothed_plot = strain_smoothed_plot(:);
+strain_raw_plot = strain_raw_plot(:);
+head_rate_plot = head_rate_plot(:);
+
+% Visual strain shift for subplots 2 & 4 (configurable, does NOT affect regression)
+if isfield(config, 'visual_strain_shift_sec') && config.visual_strain_shift_sec ~= 0
+    strain_time_shift = seconds(config.visual_strain_shift_sec);
+    console_log('  Visual strain shift: %.1f seconds (positive = strain plotted earlier)\n', config.visual_strain_shift_sec);
+else
+    strain_time_shift = seconds(0);
+end
+
 % Weighted least squares regression
 % Minimize: sum(weights .* (y - (mx + b))^2)
 X = [drawdown_rate_clean, ones(size(drawdown_rate_clean))];
@@ -647,8 +660,8 @@ if config.show_plots
     ax.YColor = [0.4660 0.6740 0.1880];
     
     yyaxis right;
-    % Plot strain rate for full window
-    plot(time_das_full_plot, -strain_smoothed_plot / strain_scale, ...
+    % Plot strain rate for full window (shifted by cross-correlation lag for visual alignment)
+    plot(time_das_full_plot - strain_time_shift, -strain_smoothed_plot / strain_scale, ...
         'Color', [0 0 0], 'LineWidth', 2.5, 'DisplayName', 'Strain Rate PM-07 z1');
     ylabel(sprintf('Strain Rate (1/s) ×10^{%d}', round(log10(strain_scale))), 'FontSize', 12, 'FontWeight', 'bold');
     ax.YColor = 'k';
@@ -738,7 +751,7 @@ if config.show_plots
     yyaxis left;
     % Plot strain rate (no negation — positive = expansion during recovery)
     strain_scale_subplot4 = 1e-11;
-    plot(time_das_full_plot, strain_smoothed_plot / strain_scale_subplot4, 'r-', 'LineWidth', 2.5, 'DisplayName', 'Strain Rate PM-07 z1');
+    plot(time_das_full_plot - strain_time_shift, -strain_smoothed_plot / strain_scale_subplot4, 'r-', 'LineWidth', 2.5, 'DisplayName', 'Strain Rate PM-07 z1');
     ylabel(sprintf('Strain Rate (1/s) ×10^{-11}'), 'Color', 'r', 'FontSize', 12, 'FontWeight', 'bold');
     ax = gca;
     ax.YColor = 'r';

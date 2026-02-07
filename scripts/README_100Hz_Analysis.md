@@ -1,7 +1,9 @@
-# PT01a 100 Hz Data Analysis with Anti-Aliasing
+# PT01a 100 Hz Data Analysis
 
-## Overview
-This analysis processes PT01a 100 Hz data using the **same anti-aliasing filter** that was used to create the clean 1 Hz data. This gives you 1 Hz smoothness with 100 Hz time resolution!
+> **OUTDATED** — This file describes an earlier approach using the anti-aliasing (Kaiser FIR) filter, which was **reverted**. The current workflow uses a 50-second `movmean` instead. See **[docs/100Hz_Thesis_Analysis_Workflow.md](../docs/100Hz_Thesis_Analysis_Workflow.md)** for the complete, current workflow.
+
+## Overview (ARCHIVED)
+This analysis previously processed PT01a 100 Hz data using the same anti-aliasing filter that was used to create the clean 1 Hz data. That approach was replaced with a simpler movmean filter.
 
 ## What's New
 - **Filter:** Resample anti-aliasing filter (Kaiser window FIR lowpass, cutoff 0.5 Hz)

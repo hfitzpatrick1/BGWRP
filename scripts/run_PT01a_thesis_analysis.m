@@ -1,22 +1,23 @@
 %% PT-01a Recovery Analysis for Thesis
 % This script runs the complete DAS-Head correlation and linear regression analysis
-% for PT-01a Recovery test data
+% for PT-01a Recovery test data (100Hz)
 %
-% Optimized settings (as of Feb 2026):
-%   - **100Hz DATA** with the SAME anti-aliasing filter used for 1Hz data!
-%   - Filter: Kaiser window FIR lowpass (cutoff 0.5 Hz)
-%   - This is the EXACT filter that makes 1Hz data look clean
-%   - Preserves signal while removing high-frequency noise
-%   - DAS time shift: +90 seconds forward
-%   - Head timing correction: 14 seconds backward
+% Current settings (as of Feb 2026):
+%   - 100Hz DAS data with 50-second movmean filter (5000 samples)
+%   - DAS time shift: +38 seconds forward
+%   - Head timing correction: 14 seconds backward (in run_roi_analysis.m)
 %   - Analysis window: 20:44:30 to 20:47:30 UTC (Nov 7, 2023)
 %   - Regression window: 20:45:15 to 20:46:30 UTC (peak region)
 %   - Depth range: 450-510 ft (PT-01a pumping zone)
-%   - Dynamic colorbar bounds enabled
+%   - Colorbar bounds: [0.35, 0.50] nm/s
+%   - R² = 0.934, Ss = 4.17e-08 1/m
+%
+% See docs/100Hz_Thesis_Analysis_Workflow.md for full workflow documentation
+% and checklist for running PT01b/PT01c datasets.
 %
 % Usage:
 %   1. Simply run this script in MATLAB
-%   2. Generates all plots automatically
+%   2. Generates Figures 101, 102, 103 + 4-subplot regression figure
 %   3. Linear regression results saved to workspace as 'roi_results'
 
 clear all;
