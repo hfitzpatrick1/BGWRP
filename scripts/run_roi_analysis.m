@@ -6,6 +6,16 @@ if ~exist('das_results', 'var') || ~exist('head_results', 'var')
     error('Need to run correlation analysis first: mode = ''run_correlation_analysis''; BGWRP_Toolkit');
 end
 
+% Auto-detect the PT01a dataset name from das_results
+% Works with either PT01a_Recovery_short (1Hz) or PT01a_Recovery_100 (100Hz)
+das_fields = fieldnames(das_results);
+pt01a_idx = find(startsWith(das_fields, 'PT01a_Recovery'));
+if isempty(pt01a_idx)
+    error('No PT01a_Recovery dataset found in das_results. Available fields: %s', strjoin(das_fields, ', '));
+end
+test_name = das_fields{pt01a_idx(1)};
+console_log('Auto-detected dataset: %s\n', test_name);
+
 % Set up ROI analysis configuration - FOCUS ON PT01a PUMPING ZONE
 lr_config = struct();
 lr_config.zone = 'z2';  % USING ZONE 2 (updated from z5)
@@ -24,7 +34,7 @@ console_log('Method: Proper Becker spatial difference ε̇ = [u̇(z+L) - u̇(z)]
 console_log('Parameters: Temporal weighting, maximum envelope, Bourdet, narrowed window\n\n');
 
 % Run ROI depth range analysis
-roi_results = linear_regression_depth_range(das_results, head_results, 'PT01a_Recovery_short', lr_config);
+roi_results = linear_regression_depth_range(das_results, head_results, test_name, lr_config);
 
 console_log('\n=== ROI STRAIN RATE RESULTS (PT01a PUMPING ZONE) ===\n');
 console_log('Depth range: %.0f-%.0f ft (PT01a pumping zone centered on 480 ft)\n', roi_results.depth_range_ft(1), roi_results.depth_range_ft(2));
@@ -36,8 +46,8 @@ console_log('Method: Proper Becker ε̇ = [u̇(z+L) - u̇(z)] / L\n');
 console_log('Processing: Temporal weighting, maximum envelope, Bourdet derivative\n');
 
 % Compare with single channel results if available
-if isfield(das_results.PT01a_Recovery_short, 'linear_regression')
-    single_results = das_results.PT01a_Recovery_short.linear_regression;
+if isfield(das_results.(test_name), 'linear_regression')
+    single_results = das_results.(test_name).linear_regression;
     console_log('\n=== COMPARISON WITH SINGLE CHANNEL ===\n');
     console_log('Single Channel (285 ft):\n');
     console_log('  Slope: %.4e (1/s)/(ft/s)\n', single_results.slope);
@@ -80,8 +90,8 @@ console_log('\n');
 storage_results = calculate_specific_storage_becker(roi_results, storage_config);
 
 % Store results
-das_results.PT01a_Recovery_short.roi_storage = storage_results;
-das_results.PT01a_Recovery_short.roi_linear_regression = roi_results;
+das_results.(test_name).roi_storage = storage_results;
+das_results.(test_name).roi_linear_regression = roi_results;
 
 %% Final Summary
 console_log('\n');
@@ -100,8 +110,8 @@ console_log('  S_ε (constrained): %.4e 1/Pa\n', storage_results.S_epsilon);
 console_log('\n');
 
 % Compare with single channel if available
-if isfield(das_results.PT01a_Recovery_short, 'storage_results')
-    single_storage = das_results.PT01a_Recovery_short.storage_results;
+if isfield(das_results.(test_name), 'storage_results')
+    single_storage = das_results.(test_name).storage_results;
     console_log('COMPARISON WITH SINGLE CHANNEL (285 ft):\n');
     console_log('  Single Channel Ss: %.4e 1/m\n', single_storage.S_s);
     console_log('  ROI Ss: %.4e 1/m\n', storage_results.S_s);
