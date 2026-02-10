@@ -1,6 +1,6 @@
 # 100Hz DAS Thesis Analysis Workflow
 
-> **Last updated:** 2026-02-06 (PT01a complete, PT01b and PT01c pending)
+> **Last updated:** 2026-02-06 (PT01a complete, PT01b scripts ready, PT01c pending)
 > **Author:** Generated from PT01a_Recovery_100 analysis session
 
 ## Overview
@@ -11,7 +11,7 @@ This document describes the complete workflow for processing 100Hz DAS recovery 
 | Dataset | Directory name | Status |
 |---------|---------------|--------|
 | PT-01a Recovery | `PT01a_Recovery_100` | Done (R² = 0.934) |
-| PT-01b Recovery | `PT01b_Recovery_100` (TBD) | Pending |
+| PT-01b Recovery | `PT01b_Recovery_100` | Scripts ready, prep pending |
 | PT-01c Recovery | `PT01c_Recovery_100` (TBD) | Pending |
 
 ---
@@ -19,11 +19,14 @@ This document describes the complete workflow for processing 100Hz DAS recovery 
 ## Quick Start (Copy-paste for new dataset)
 
 ```matlab
-cd('C:\Coding\BGWRP');
-run('scripts\run_PT01a_thesis_analysis.m')
+% PT-01a
+cd('C:\Coding\BGWRP'); run('scripts\run_PT01a_thesis_analysis.m')
+
+% PT-01b
+cd('C:\Coding\BGWRP'); run('scripts\run_PT01b_thesis_analysis.m')
 ```
 
-To create a new dataset script, copy `run_PT01a_thesis_analysis.m` and `run_roi_analysis.m`, then adjust the parameters listed in the **Dataset-Specific Parameters** section below.
+Each dataset has its own run script and ROI analysis script. See `scripts/` directory.
 
 ---
 

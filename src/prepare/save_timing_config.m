@@ -22,44 +22,46 @@ end
 
 try
     % Write function header
-    console_log(fid, 'function timing_config = %s()\n', func_name);
-    console_log(fid, '%%GET_TIMING_%s Timing configuration for %s\n', upper(source_folder), source_folder);
-    console_log(fid, '%%\n');
-    console_log(fid, '%% Auto-generated timing configuration\n');
-    console_log(fid, '%% Generated: %s\n', datetime('now'));
-    console_log(fid, '%%\n');
-    console_log(fid, '%% Output:\n');
-    console_log(fid, '%%   timing_config - Timing configuration structure\n\n');
+    % NOTE: use fprintf(fid, ...) here -- writing to the .m file, NOT logging.
+    % console_log does not accept a file handle as first arg.
+    fprintf(fid, 'function timing_config = %s()\n', func_name);
+    fprintf(fid, '%%GET_TIMING_%s Timing configuration for %s\n', upper(source_folder), source_folder);
+    fprintf(fid, '%%\n');
+    fprintf(fid, '%% Auto-generated timing configuration\n');
+    fprintf(fid, '%% Generated: %s\n', datestr(now));
+    fprintf(fid, '%%\n');
+    fprintf(fid, '%% Output:\n');
+    fprintf(fid, '%%   timing_config - Timing configuration structure\n\n');
     
     % Write basic configuration data
-    console_log(fid, '%% Dataset Information\n');
-    console_log(fid, 'timing_config.source = ''%s'';\n', test_config.source);
-    console_log(fid, 'timing_config.num_files = %d;\n', test_config.num_files);
+    fprintf(fid, '%% Dataset Information\n');
+    fprintf(fid, 'timing_config.source = ''%s'';\n', test_config.source);
+    fprintf(fid, 'timing_config.num_files = %d;\n', test_config.num_files);
     
     if isfield(test_config, 'first_file')
-        console_log(fid, 'timing_config.first_file = ''%s'';\n', test_config.first_file);
+        fprintf(fid, 'timing_config.first_file = ''%s'';\n', test_config.first_file);
     end
     
     % Write timing information
-    console_log(fid, '\n%% Timing Information\n');
+    fprintf(fid, '\n%% Timing Information\n');
     start_vec = datevec(test_config.start);
-    console_log(fid, 'timing_config.start = datetime(%d, %d, %d, %d, %d, %.3f, ''TimeZone'', ''UTC'');\n', ...
+    fprintf(fid, 'timing_config.start = datetime(%d, %d, %d, %d, %d, %.3f, ''TimeZone'', ''UTC'');\n', ...
         start_vec(1), start_vec(2), start_vec(3), start_vec(4), start_vec(5), start_vec(6));
     
     if isfield(test_config, 'end')
         end_vec = datevec(test_config.end);
-        console_log(fid, 'timing_config.end = datetime(%d, %d, %d, %d, %d, %.3f, ''TimeZone'', ''UTC'');\n', ...
+        fprintf(fid, 'timing_config.end = datetime(%d, %d, %d, %d, %d, %.3f, ''TimeZone'', ''UTC'');\n', ...
             end_vec(1), end_vec(2), end_vec(3), end_vec(4), end_vec(5), end_vec(6));
-        console_log(fid, 'timing_config.duration_minutes = %.1f;\n', test_config.duration_minutes);
+        fprintf(fid, 'timing_config.duration_minutes = %.1f;\n', test_config.duration_minutes);
     end
     
     % Add dataset-specific parameters based on source folder
     write_dataset_parameters(fid, source_folder);
     
-    console_log(fid, '\nend\n');
+    fprintf(fid, '\nend\n');
     
     fclose(fid);
-    console_log('✓ Saved timing configuration: %s\n', func_filename);
+    console_log('Saved timing configuration: %s\n', func_filename);
     
 catch ME
     fclose(fid);
@@ -71,16 +73,16 @@ end
 function write_dataset_parameters(fid, source_folder)
 %WRITE_DATASET_PARAMETERS Write dataset-specific parameters
 
-console_log(fid, '\n%% Dataset-Specific Parameters\n');
-console_log(fid, '%% Auto-detected parameters for: %s\n', source_folder);
+fprintf(fid, '\n%% Dataset-Specific Parameters\n');
+fprintf(fid, '%% Auto-detected parameters for: %s\n', source_folder);
 
 % Use dynamic defaults - no hardcoded naming patterns
-console_log(fid, 'timing_config.head_timing_adjustment = 0;   %% seconds\n');
-console_log(fid, 'timing_config.das_timing_adjustment = 0;    %% seconds\n');
-console_log(fid, 'timing_config.C1 = 200;  %% Dynamic default\n');
-console_log(fid, 'timing_config.pumping_zone_min_ft = 200;\n');
-console_log(fid, 'timing_config.pumping_zone_max_ft = 400;\n');
+fprintf(fid, 'timing_config.head_timing_adjustment = 0;   %% seconds\n');
+fprintf(fid, 'timing_config.das_timing_adjustment = 0;    %% seconds\n');
+fprintf(fid, 'timing_config.C1 = 200;  %% Dynamic default\n');
+fprintf(fid, 'timing_config.pumping_zone_min_ft = 200;\n');
+fprintf(fid, 'timing_config.pumping_zone_max_ft = 400;\n');
 
-console_log(fid, '\n%% Note: Adjust parameters in config.m if needed\n');
+fprintf(fid, '\n%% Note: Adjust parameters in config.m if needed\n');
 
 end

@@ -350,6 +350,9 @@ for i = 1:length(test_labels)
         chart_logger('    Downsampled for plotting: %d -> %d time points (factor %dx)', length(filtered_time), length(plot_time), ds_factor);
     end
     
+    % Fix bad DAS channels (display only) - replace outliers with neighbor average
+    plot_data = fix_bad_channels(plot_data);
+    
     % Convert depth from feet to meters
     depth_m = das_data.depth_ft * 0.3048;
     
@@ -382,10 +385,10 @@ for i = 1:length(test_labels)
     chart_logger('    Figure 101: Actual data range: [%.3f, %.3f] nm/s', actual_min, actual_max);
     chart_logger('    Figure 101: Advisor''s range: [-0.25, 0.15] nm/s');
     
-    % Colorbar bounds - fixed range for thesis consistency
-    raw_bounds = [0.35, 0.50];
+    % Colorbar bounds from config (per-dataset)
+    raw_bounds = get_plot_bounds(das_data, 'raw', config, test_label);
     clim(raw_bounds);
-    chart_logger('    Figure 101: Fixed colorbar bounds: [%.2f, %.2f] nm/s', raw_bounds(1), raw_bounds(2));
+    chart_logger('    Figure 101: Colorbar bounds: [%.2f, %.2f] nm/s', raw_bounds(1), raw_bounds(2));
     
     % Warn if data is outside bounds
     if actual_min < raw_bounds(1) || actual_max > raw_bounds(2)
@@ -456,14 +459,17 @@ for i = 1:length(test_labels)
         plot_data_102 = analysis_smoothed_data(1:ds_factor:end, :);
         chart_logger('    Downsampled Fig 102 waterfall: %d -> %d points', length(analysis_time_array), length(plot_time_102));
     end
+    
+    % Fix bad DAS channels (display only)
+    plot_data_102 = fix_bad_channels(plot_data_102);
     % Convert depth from feet to meters
     depth_m = das_data.depth_ft * 0.3048;
     apply_plot_config(plot_time_102, depth_m, plot_data_102', config, 'waterfall');
     
-    % Colorbar bounds - fixed range for thesis consistency (matches Figure 101)
-    disp_bounds = [0.35, 0.50];
+    % Colorbar bounds from config (per-dataset, matches Figure 101)
+    disp_bounds = get_plot_bounds(das_data, 'displacement', config, test_label);
     set(gca, 'clim', disp_bounds);
-    chart_logger('    Figure 102 subplot 1: Fixed colorbar bounds: [%.2f, %.2f] nm/s', disp_bounds(1), disp_bounds(2));
+    chart_logger('    Figure 102 subplot 1: Colorbar bounds: [%.2f, %.2f] nm/s', disp_bounds(1), disp_bounds(2));
     
     % Colormap is set by apply_plot_config, but ensure consistency for colorbar
     if isfield(config, 'colormap_name') && isfield(config, 'colormap_resolution')
@@ -495,9 +501,14 @@ for i = 1:length(test_labels)
         xlim([analysis_start analysis_end]);
     end
     
-    % Add screened interval label (450-510 ft converted to meters)
-    screened_top_m = 450 * 0.3048;  % 137.16 m
-    screened_bot_m = 510 * 0.3048;  % 155.45 m
+    % Add screened interval label (per-dataset)
+    if contains(test_label, 'PT01b', 'IgnoreCase', true)
+        screened_top_m = 350 * 0.3048;  % 106.68 m (PT01b)
+        screened_bot_m = 400 * 0.3048;  % 121.92 m
+    else
+        screened_top_m = 450 * 0.3048;  % 137.16 m (PT01a/default)
+        screened_bot_m = 510 * 0.3048;  % 155.45 m
+    end
     hold on;
     yline(screened_top_m, '--k', 'LineWidth', 1.5);
     yline(screened_bot_m, '--k', 'LineWidth', 1.5);
@@ -719,7 +730,9 @@ for i = 1:length(test_labels)
         chart_logger('  Saved: %s', filename);
     end
     
-    %% Figure 3: Strain (integrated data) - from simple script Figure 3
+    %% Figure 3: Strain (integrated data) - DISABLED for thesis
+    % To re-enable, uncomment this block through the saveas call below.
+    if false  % Disabled: strain waterfall + head overlay not needed for thesis
     fig3_num = 100 + i*3;
     chart_logger('  Creating Figure %d: Strain', fig3_num);
     figure(fig3_num);
@@ -1030,6 +1043,7 @@ for i = 1:length(test_labels)
         plot_results.figures_created{end+1} = filename;
         chart_logger('  Saved: %s', filename);
     end
+    end  % End of disabled Figure 3 (Strain) block
     
     %% Figure 4: Simple FFT Analysis (DISABLED)
     % fig4_num = 100 + i*4;
