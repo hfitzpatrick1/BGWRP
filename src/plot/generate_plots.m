@@ -511,6 +511,7 @@ for i = 1:length(test_labels)
     
     xlabel('Date Time UTC');
     title(sprintf('DAS Displacement Rate - Test %s', strrep(upper(test_label), '_', ' ')));
+    text(0.02, 0.95, '(a)', 'Units', 'normalized', 'FontSize', 14, 'FontWeight', 'bold', 'VerticalAlignment', 'top');
     
     % Pre-compute extended DAS displacement rate for subplots 2 & 3
     % Extends 15s past analysis_end to compensate for the -10s plot shift
@@ -661,6 +662,7 @@ for i = 1:length(test_labels)
             % ylim auto-scales for different data resolutions
     end
     title('Drawdown Rate & Displacement Rate at PM-07');
+    text(0.02, 0.95, '(b)', 'Units', 'normalized', 'FontSize', 14, 'FontWeight', 'bold', 'VerticalAlignment', 'top');
     grid on;
     
     % Third subplot: Pumping Well (pw) data
@@ -697,6 +699,7 @@ for i = 1:length(test_labels)
             
             legend('show', 'Location', 'best');
             title('Drawdown Rate at PT-01a & Displacement Rate at PM-07');
+            text(0.02, 0.95, '(c)', 'Units', 'normalized', 'FontSize', 14, 'FontWeight', 'bold', 'VerticalAlignment', 'top');
             grid on;
             chart_logger('    Plotted pumping well (pw) drawdown rate data');
         else

@@ -118,13 +118,63 @@ try
     console_log('  - Slope: %.2e\n', roi_results.slope);
     console_log('  - Correlation (R): %.3f\n', roi_results.R);
     console_log('  - RMSE: %.2e 1/s\n', roi_results.RMSE);
+    %% STEP 3: Depth Profile Plot
+    console_log('\nGenerating depth profile plot...\n');
+    
+    das_data_dp = das_results.(test_name);
+    
+    % Average displacement rate over regression window
+    reg_start = datetime('2023-11-07 20:45:15', 'TimeZone', 'UTC');
+    reg_end   = datetime('2023-11-07 20:46:30', 'TimeZone', 'UTC');
+    reg_mask = das_data_dp.time_array >= reg_start & das_data_dp.time_array <= reg_end;
+    mean_disp_rate = mean(das_data_dp.smoothed_data(reg_mask, :), 1, 'omitnan');
+    
+    % Spatial smoothing (20 channels = 5m at 0.25m/channel)
+    mean_disp_rate = movmean(mean_disp_rate, 20);
+    
+    % Depth in meters
+    depth_m = das_data_dp.depth_ft * 0.3048;
+    screened_top_m = 450 * 0.3048;
+    screened_bot_m = 510 * 0.3048;
+    depth_bounds = get_plot_bounds([], 'depth_axis', config(), test_name);
+    depth_bounds_m = depth_bounds * 0.3048;
+    
+    figure(104);
+    set(104, 'Visible', 'on');
+    clf;
+    
+    plot(mean_disp_rate, depth_m, 'b-', 'LineWidth', 1.2);
+    hold on;
+    yline(screened_top_m, '--k', 'LineWidth', 1.2);
+    yline(screened_bot_m, '--k', 'LineWidth', 1.2);
+    fill([min(xlim) max(xlim) max(xlim) min(xlim)], ...
+         [screened_top_m screened_top_m screened_bot_m screened_bot_m], ...
+         [0.9 0.9 0.9], 'FaceAlpha', 0.3, 'EdgeColor', 'none');
+    plot(mean_disp_rate, depth_m, 'b-', 'LineWidth', 1.2);
+    hold off;
+    
+    set(gca, 'YDir', 'reverse');
+    ylim(depth_bounds_m);
+    xlim([0.2, 0.5]);
+    xlabel('Displacement Rate (nm/s)', 'FontSize', 12, 'FontWeight', 'bold');
+    ylabel('Depth (m)', 'FontSize', 12, 'FontWeight', 'bold');
+    title(sprintf('Depth Profile - Mean Displacement Rate\n%s to %s UTC', ...
+        datestr(reg_start, 'HH:MM:SS'), datestr(reg_end, 'HH:MM:SS')), 'FontSize', 13);
+    text(max(xlim)*0.98, mean([screened_top_m screened_bot_m]), ...
+        sprintf('Screened Interval\n(%.0f–%.0f m)', screened_top_m, screened_bot_m), ...
+        'FontSize', 9, 'FontWeight', 'bold', 'HorizontalAlignment', 'right', ...
+        'VerticalAlignment', 'middle');
+    grid on;
+    
+    console_log('  ✓ Figure 104: Depth profile (%d time points averaged)\n', sum(reg_mask));
+    
     console_log('\nFigures generated:\n');
     console_log('  - Figure 101: DAS Displacement Rate (waterfall)\n');
     console_log('  - Figure 102: Displacement Rate with monitoring wells\n');
     console_log('  - Figure 103: Strain with head data\n');
+    console_log('  - Figure 104: Depth profile of displacement rate\n');
     console_log('  - Figure: 4-subplot regression analysis\n');
     console_log('\nAll plots ready for thesis!\n');
-    console_log('\n*** Using 100Hz data with resample anti-aliasing filter (same as 1Hz data!) ***\n');
     
 catch ME
     console_log('\nERROR: %s\n', ME.message);

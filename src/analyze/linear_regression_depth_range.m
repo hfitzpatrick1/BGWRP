@@ -628,6 +628,7 @@ if config.show_plots
     xlabel('Drawdown Rate (m/s)', 'FontSize', 12, 'FontWeight', 'bold');
     ylabel('Strain Rate (1/s) ×10^{-11}', 'FontSize', 12, 'FontWeight', 'bold');
     title(sprintf('Linear Regression: R² = %.3f', R_squared), 'FontSize', 14);
+    text(0.02, 0.02, '(a)', 'Units', 'normalized', 'FontSize', 14, 'FontWeight', 'bold', 'VerticalAlignment', 'bottom');
     grid on;
     legend('Data', sprintf('Fit: y = %.2e*x + %.2e', slope, intercept), 'Location', 'best');
     
@@ -668,6 +669,7 @@ if config.show_plots
     
     xlabel('Date Time UTC', 'FontSize', 12, 'FontWeight', 'bold');
     title(sprintf('Time Series - Depth %.0f-%.0f m', config.depth_range_ft(1)*0.3048, config.depth_range_ft(2)*0.3048), 'FontSize', 14);
+    text(0.02, 0.95, '(b)', 'Units', 'normalized', 'FontSize', 14, 'FontWeight', 'bold', 'VerticalAlignment', 'top');
     legend('show', 'Location', 'best');
     grid on;
     % Set x-axis limits to match regression window (extended to show context)
@@ -740,6 +742,7 @@ if config.show_plots
     ax.YColor = 'r';
     xlabel('Time UTC', 'FontSize', 12, 'FontWeight', 'bold');
     title('Raw vs Smoothed Comparison at PM-07', 'FontSize', 14);
+    text(0.02, 0.95, '(c)', 'Units', 'normalized', 'FontSize', 14, 'FontWeight', 'bold', 'VerticalAlignment', 'top');
     legend('Location', 'best');
     grid on;
     % Set x-axis limits (extended to show context)
@@ -772,6 +775,7 @@ if config.show_plots
     end
     xlabel('Time UTC', 'FontSize', 12, 'FontWeight', 'bold');
     title('Strain Rate vs Drawdown Rate (Alignment Check)', 'FontSize', 14);
+    text(0.02, 0.95, '(d)', 'Units', 'normalized', 'FontSize', 14, 'FontWeight', 'bold', 'VerticalAlignment', 'top');
     legend('Location', 'best');
     grid on;
     % Set x-axis limits (extended to show context)
