@@ -431,9 +431,10 @@ if length(strain_clean) < 2
     error('Not enough valid points for regression! Only %d valid points found. Check if DAS filtering produced NaN values.', length(strain_clean));
 end
 
-% Flip strain rate to match drawdown rate direction
-console_log('  Flipping strain rate to match drawdown rate direction\n');
-strain_clean = -strain_clean;  % Flip strain rate so both spikes at 19:15 point same direction
+% For RECOVERY: positive strain (expansion) should correlate with positive drawdown rate
+% No flip needed - both should be positive during recovery
+console_log('  Using strain rate as-is (positive = expansion during recovery)\n');
+% strain_clean = -strain_clean;  % DISABLED: only needed for pumping phase
 
 % TEMPORAL WEIGHTING: Emphasize regions where strain and drawdown align best
 console_log('  Using TEMPORAL WEIGHTING to emphasize well-aligned regions\n');
@@ -628,7 +629,7 @@ if config.show_plots
     xlabel('Drawdown Rate (m/s)', 'FontSize', 12, 'FontWeight', 'bold');
     ylabel('Strain Rate (1/s) ×10^{-11}', 'FontSize', 12, 'FontWeight', 'bold');
     title(sprintf('Linear Regression: R² = %.3f', R_squared), 'FontSize', 14);
-    text(0.02, 0.02, '(a)', 'Units', 'normalized', 'FontSize', 14, 'FontWeight', 'bold', 'VerticalAlignment', 'bottom');
+    text(-0.12, 0.02, '(a)', 'Units', 'normalized', 'FontSize', 14, 'FontWeight', 'bold', 'VerticalAlignment', 'bottom');
     grid on;
     legend('Data', sprintf('Fit: y = %.2e*x + %.2e', slope, intercept), 'Location', 'best');
     
@@ -662,21 +663,22 @@ if config.show_plots
     
     yyaxis right;
     % Plot strain rate for full window (shifted by cross-correlation lag for visual alignment)
-    plot(time_das_full_plot - strain_time_shift, -strain_smoothed_plot / strain_scale, ...
+    % Positive strain rate = expansion during recovery
+    plot(time_das_full_plot - strain_time_shift, strain_smoothed_plot / strain_scale, ...
         'Color', [0 0 0], 'LineWidth', 2.5, 'DisplayName', 'Strain Rate PM-07 z1');
     ylabel(sprintf('Strain Rate (1/s) ×10^{%d}', round(log10(strain_scale))), 'FontSize', 12, 'FontWeight', 'bold');
     ax.YColor = 'k';
     
     xlabel('Date Time UTC', 'FontSize', 12, 'FontWeight', 'bold');
     title(sprintf('Time Series - Depth %.0f-%.0f m', config.depth_range_ft(1)*0.3048, config.depth_range_ft(2)*0.3048), 'FontSize', 14);
-    text(0.02, 0.95, '(b)', 'Units', 'normalized', 'FontSize', 14, 'FontWeight', 'bold', 'VerticalAlignment', 'top');
+    text(-0.12, 0.95, '(b)', 'Units', 'normalized', 'FontSize', 14, 'FontWeight', 'bold', 'VerticalAlignment', 'top');
     legend('show', 'Location', 'best');
     grid on;
     % Set x-axis limits to match regression window (extended to show context)
-    xlim([datetime('2023-11-07 20:44:53', 'TimeZone', 'UTC'), datetime('2023-11-07 20:46:30', 'TimeZone', 'UTC')]);
+    xlim([datetime('2023-10-31 19:29:30', 'TimeZone', 'UTC'), datetime('2023-10-31 19:31:30', 'TimeZone', 'UTC')]);
     
     % Overall title - concise and descriptive
-    sgtitle('Poroelastic Storage Analysis: PT-01a Recovery observed through PM-07', ...
+    sgtitle('Poroelastic Storage Analysis: PT-01b Recovery observed through PM-07', ...
         'FontSize', 16, 'FontWeight', 'bold');
     
     % REMOVE SEPARATE FIGURE - Now consolidated into main figure
@@ -742,19 +744,19 @@ if config.show_plots
     ax.YColor = 'r';
     xlabel('Time UTC', 'FontSize', 12, 'FontWeight', 'bold');
     title('Raw vs Smoothed Comparison at PM-07', 'FontSize', 14);
-    text(0.02, 0.95, '(c)', 'Units', 'normalized', 'FontSize', 14, 'FontWeight', 'bold', 'VerticalAlignment', 'top');
+    text(-0.12, 0.95, '(c)', 'Units', 'normalized', 'FontSize', 14, 'FontWeight', 'bold', 'VerticalAlignment', 'top');
     legend('Location', 'best');
     grid on;
     % Set x-axis limits (extended to show context)
-    xlim([datetime('2023-11-07 20:44:53', 'TimeZone', 'UTC'), datetime('2023-11-07 20:46:30', 'TimeZone', 'UTC')]);
+    xlim([datetime('2023-10-31 19:29:30', 'TimeZone', 'UTC'), datetime('2023-10-31 19:31:30', 'TimeZone', 'UTC')]);
     
     % BOTTOM RIGHT (4): Strain Rate vs Head Rate overlay - SHOW ACTUAL MAGNITUDES
     subplot(2,2,4);
     
     yyaxis left;
-    % Plot strain rate (no negation — positive = expansion during recovery)
+    % Plot strain rate (positive = expansion during recovery)
     strain_scale_subplot4 = 1e-11;
-    plot(time_das_full_plot - strain_time_shift, -strain_smoothed_plot / strain_scale_subplot4, 'r-', 'LineWidth', 2.5, 'DisplayName', 'Strain Rate PM-07 z1');
+    plot(time_das_full_plot - strain_time_shift, strain_smoothed_plot / strain_scale_subplot4, 'r-', 'LineWidth', 2.5, 'DisplayName', 'Strain Rate PM-07 z1');
     ylabel(sprintf('Strain Rate (1/s) ×10^{-11}'), 'Color', 'r', 'FontSize', 12, 'FontWeight', 'bold');
     ax = gca;
     ax.YColor = 'r';
@@ -775,11 +777,11 @@ if config.show_plots
     end
     xlabel('Time UTC', 'FontSize', 12, 'FontWeight', 'bold');
     title('Strain Rate vs Drawdown Rate (Alignment Check)', 'FontSize', 14);
-    text(0.02, 0.95, '(d)', 'Units', 'normalized', 'FontSize', 14, 'FontWeight', 'bold', 'VerticalAlignment', 'top');
+    text(-0.12, 0.95, '(d)', 'Units', 'normalized', 'FontSize', 14, 'FontWeight', 'bold', 'VerticalAlignment', 'top');
     legend('Location', 'best');
     grid on;
     % Set x-axis limits (extended to show context)
-    xlim([datetime('2023-11-07 20:44:53', 'TimeZone', 'UTC'), datetime('2023-11-07 20:46:30', 'TimeZone', 'UTC')]);
+    xlim([datetime('2023-10-31 19:29:30', 'TimeZone', 'UTC'), datetime('2023-10-31 19:31:30', 'TimeZone', 'UTC')]);
     
     console_log('\n=== 4-SUBPLOT FIGURE GENERATED ===\n');
     console_log('  Top Left: Linear Regression (Strain vs Drawdown)\n');

@@ -323,9 +323,9 @@ config.manual_bounds.PT01a_Recovery_100.pw_head_strain.max = 5;
 % ===== PT01b_Recovery_100 bounds (100Hz data - same well as Recovery_short) =====
 % Starting values copied from PT01b_Recovery_short; adjust after first run
 config.manual_bounds.PT01b_Recovery_100.raw_data.min = -0.45;
-config.manual_bounds.PT01b_Recovery_100.raw_data.max = -0.05;
+config.manual_bounds.PT01b_Recovery_100.raw_data.max = -0.1;
 config.manual_bounds.PT01b_Recovery_100.displacement_rate.min = -0.45;
-config.manual_bounds.PT01b_Recovery_100.displacement_rate.max = -0.05;
+config.manual_bounds.PT01b_Recovery_100.displacement_rate.max = -0.1;
 config.manual_bounds.PT01b_Recovery_100.strain.min = -0.2;
 config.manual_bounds.PT01b_Recovery_100.strain.max = 0.2;
 config.manual_bounds.PT01b_Recovery_100.head_data.min = -0.0001;

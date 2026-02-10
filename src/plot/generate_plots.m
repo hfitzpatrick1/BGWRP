@@ -428,6 +428,7 @@ for i = 1:length(test_labels)
     
     xlabel('Date Time UTC');
     title(sprintf('Raw Data - Test %s', upper(test_label)));
+    text(-0.12, 0.95, '(a)', 'Units', 'normalized', 'FontSize', 14, 'FontWeight', 'bold', 'VerticalAlignment', 'top');
     
     if plot_results.save_enabled
         filename = sprintf('test_%s_raw_data.png', test_label);
@@ -522,7 +523,7 @@ for i = 1:length(test_labels)
     
     xlabel('Date Time UTC');
     title(sprintf('DAS Displacement Rate - Test %s', strrep(upper(test_label), '_', ' ')));
-    text(0.02, 0.95, '(a)', 'Units', 'normalized', 'FontSize', 14, 'FontWeight', 'bold', 'VerticalAlignment', 'top');
+    text(-0.12, 0.95, '(a)', 'Units', 'normalized', 'FontSize', 14, 'FontWeight', 'bold', 'VerticalAlignment', 'top');
     
     % Pre-compute extended DAS displacement rate for subplots 2 & 3
     % Extends 15s past analysis_end to compensate for the -10s plot shift
@@ -673,7 +674,7 @@ for i = 1:length(test_labels)
             % ylim auto-scales for different data resolutions
     end
     title('Drawdown Rate & Displacement Rate at PM-07');
-    text(0.02, 0.95, '(b)', 'Units', 'normalized', 'FontSize', 14, 'FontWeight', 'bold', 'VerticalAlignment', 'top');
+    text(-0.12, 0.95, '(b)', 'Units', 'normalized', 'FontSize', 14, 'FontWeight', 'bold', 'VerticalAlignment', 'top');
     grid on;
     
     % Third subplot: Pumping Well (pw) data
@@ -687,7 +688,8 @@ for i = 1:length(test_labels)
             % Convert head levels to drawdown rate for better comparison with displacement rate
             [drawdown_rate_ftmin, rate_time] = calculate_drawdown_rate(pw_data.recovery_data.Date, pw_data.recovery_data.Drawdownft, 'ft_per_min');
             % Convert from ft/min to m/s: 1 ft/min = 0.3048/60 m/s = 0.00508 m/s
-            drawdown_rate = drawdown_rate_ftmin * 0.00508;
+            % Flip sign for recovery (negative drawdown rate = recovery)
+            drawdown_rate = -drawdown_rate_ftmin * 0.00508;
             plot(rate_time, drawdown_rate, 'Color', [0.0000 1.0000 1.0000], 'LineStyle', '-', 'LineWidth', 0.8, 'DisplayName', 'Drawdown Rate PT-01a');
             if strcmpi(test_label, 'PT01a_Recovery_short')
                 xlim([datetime('2023-11-07 20:44:30', 'TimeZone', 'UTC'), datetime('2023-11-07 20:47:30', 'TimeZone', 'UTC')]);
@@ -710,7 +712,7 @@ for i = 1:length(test_labels)
             
             legend('show', 'Location', 'best');
             title('Drawdown Rate at PT-01a & Displacement Rate at PM-07');
-            text(0.02, 0.95, '(c)', 'Units', 'normalized', 'FontSize', 14, 'FontWeight', 'bold', 'VerticalAlignment', 'top');
+            text(-0.12, 0.95, '(c)', 'Units', 'normalized', 'FontSize', 14, 'FontWeight', 'bold', 'VerticalAlignment', 'top');
             grid on;
             chart_logger('    Plotted pumping well (pw) drawdown rate data');
         else

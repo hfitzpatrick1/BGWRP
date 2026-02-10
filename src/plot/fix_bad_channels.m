@@ -14,7 +14,7 @@ function data_out = fix_bad_channels(data_in)
 ch_median = median(data_in, 1, 'omitnan');
 data_out = data_in - ch_median;
 
-% Optional: add back the overall median so colorbar bounds stay similar
+% Add back the overall median so colorbar bounds stay similar
 overall_median = median(ch_median);
 data_out = data_out + overall_median;
 
