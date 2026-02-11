@@ -20,9 +20,9 @@
 %   2. Generates Figures 101, 102, 103 + 4-subplot regression figure
 %   3. Linear regression results saved to workspace as 'roi_results'
 
-clear all;
-close all;
-clc;
+%clear all;
+%close all;
+%clc;
 
 % Initialize console logging (overwrites same file each run)
 log_dir = fullfile('C:', 'Coding', 'BGWRP', 'data', '_BATCH', '_log');

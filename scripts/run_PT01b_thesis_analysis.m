@@ -12,9 +12,9 @@
 % Usage:
 %   cd('C:\Coding\BGWRP'); run('scripts\run_PT01b_thesis_analysis.m')
 
-clear all;
-close all;
-clc;
+%clear all;
+%close all;
+%clc;
 
 % Initialize console logging (overwrites same file each run)
 log_dir = fullfile('C:', 'Coding', 'BGWRP', 'data', '_BATCH', '_log');
