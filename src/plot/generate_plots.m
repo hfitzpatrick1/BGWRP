@@ -531,7 +531,7 @@ for i = 1:length(test_labels)
     % Pre-compute extended DAS displacement rate for subplots 2 & 3
     % Apply dataset-specific DAS time shift to align with head data
     if contains(test_label, 'PT01c', 'IgnoreCase', true)
-        das_plot_shift = 46;  % PT01c: 46s forward to match strain_shift_sec
+        das_plot_shift = 0;   % PT01c: no shift for Figure 102 (shift only in regression figure)
     else
         das_plot_shift = 13;  % PT01a/b: original shift
     end

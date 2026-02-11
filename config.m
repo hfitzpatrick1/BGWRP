@@ -319,8 +319,8 @@ config.manual_bounds.PT01a_Recovery_100.strain_line.min = -0.2;
 config.manual_bounds.PT01a_Recovery_100.strain_line.max = 0.2;
 config.manual_bounds.PT01a_Recovery_100.head_data_strain.min = 0;
 config.manual_bounds.PT01a_Recovery_100.head_data_strain.max = 0.13;
-config.manual_bounds.PT01a_Recovery_100.depth_axis.min = 200;
-config.manual_bounds.PT01a_Recovery_100.depth_axis.max = 665;
+config.manual_bounds.PT01a_Recovery_100.depth_axis.min = 89;   % ~27 m
+config.manual_bounds.PT01a_Recovery_100.depth_axis.max = 656;  % ~200 m
 config.manual_bounds.PT01a_Recovery_100.pw_head_strain.min = -24;
 config.manual_bounds.PT01a_Recovery_100.pw_head_strain.max = 5;
 
@@ -453,8 +453,8 @@ config.dataset_smoothing.PT01C_RECOVERY_SHORT.regression_window_sec = 40;
 config.dataset_smoothing.PT01C_RECOVERY_100.fs = 100;  % Sampling rate (Hz)
 config.dataset_smoothing.PT01C_RECOVERY_100.preprocessing_window_sec = 60;    % Analysis smoothing (for waterfall plots)
 config.dataset_smoothing.PT01C_RECOVERY_100.strain_rate_window_sec = 60;      % Strain rate smoothing (for waterfall plots)
-config.dataset_smoothing.PT01C_RECOVERY_100.regression_window_sec = 80;       % Linear regression smoothing (applied twice)
-config.dataset_smoothing.PT01C_RECOVERY_100.regression_smooth_passes = 2;     % Number of smoothing passes for regression
+config.dataset_smoothing.PT01C_RECOVERY_100.regression_window_sec = 15;       % Linear regression smoothing (22% of 75s window)
+config.dataset_smoothing.PT01C_RECOVERY_100.regression_smooth_passes = 1;     % Single pass (match 1 Hz pipeline)
 
 % PT01b_Recovery_short (1 Hz data) - UPPERCASE to match test_label
 config.dataset_smoothing.PT01B_RECOVERY_SHORT.fs = 1;  % Sampling rate (Hz)

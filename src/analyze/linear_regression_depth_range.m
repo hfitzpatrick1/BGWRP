@@ -292,20 +292,24 @@ console_log('  BEFORE additional smoothing: PEAK = %.4e 1/s\n', max(abs(strain_r
 strain_raw = strain_rate_zone;
 
 % Check for dataset-specific regression smoothing configuration
+% Use UPPERCASE test name for config lookup (config keys are uppercase)
+test_name_upper = upper(strrep(test_name, ' ', '_'));
 regression_smooth_samples = 40;  % Default for 1 Hz data
-if isfield(config, 'dataset_smoothing') && isfield(config.dataset_smoothing, test_name)
-    ds_config = config.dataset_smoothing.(test_name);
+if isfield(config, 'dataset_smoothing') && isfield(config.dataset_smoothing, test_name_upper)
+    ds_config = config.dataset_smoothing.(test_name_upper);
     if isfield(ds_config, 'fs') && isfield(ds_config, 'regression_window_sec')
         regression_smooth_samples = round(ds_config.regression_window_sec * ds_config.fs);
         console_log('  Using dataset-specific regression smoothing: %d seconds = %d samples at %d Hz\n', ...
             ds_config.regression_window_sec, regression_smooth_samples, ds_config.fs);
     end
+else
+    console_log('  No dataset-specific smoothing found for %s, using default %d samples\n', test_name_upper, regression_smooth_samples);
 end
 
 % Determine number of smoothing passes
 n_passes = 1;  % Default single pass
-if isfield(config, 'dataset_smoothing') && isfield(config.dataset_smoothing, test_name)
-    ds_config = config.dataset_smoothing.(test_name);
+if isfield(config, 'dataset_smoothing') && isfield(config.dataset_smoothing, test_name_upper)
+    ds_config = config.dataset_smoothing.(test_name_upper);
     if isfield(ds_config, 'regression_smooth_passes')
         n_passes = ds_config.regression_smooth_passes;
     end
@@ -392,9 +396,9 @@ console_log('Overlap: %s to %s (%.1f seconds)\n', datestr(time_start), datestr(t
 % Extract data only within overlapping window
 valid_head_idx = (time_head_rate >= time_start) & (time_head_rate <= time_end);
 time_head_overlap = time_head_rate(valid_head_idx);
-% Convert drawdown rate from ft/s to m/s (to match single channel units!)
+% Convert drawdown rate from ft/s to m/s (matches 1 Hz pipeline)
 ft_to_m = 0.3048;
-head_rate_overlap = drawdown_rate_ftps(valid_head_idx) * ft_to_m;  % m/s (converted from ft/s)
+head_rate_overlap = drawdown_rate_ftps(valid_head_idx) * ft_to_m;  % m/s
 
 % ADDITIONAL SMOOTHING to Bourdet derivative - MATCH STRAIN RATE SMOOTHING
 console_log('\n=== ADDITIONAL SMOOTHING TO BOURDET DERIVATIVE ===\n');
@@ -783,10 +787,17 @@ if config.show_plots
     % NO additional smoothing - the 50-second moving average is already applied
     % (Removed 10s + 5s double-pass smoothing)
     
+    % Shift displacement time LEFT by strain_shift_sec to align with strain rate timing
+    if config.strain_shift_sec ~= 0
+        time_disp_plot = time_das_full_plot - seconds(config.strain_shift_sec);
+    else
+        time_disp_plot = time_das_full_plot;
+    end
+    
     yyaxis left;
-    plot(time_das_full_plot, displacement_rate_avg_raw_plot, 'b-', 'LineWidth', 0.8, 'DisplayName', 'Displacement Rate (raw)', 'Color', [0.7 0.7 1]);
+    plot(time_disp_plot, displacement_rate_avg_raw_plot, 'b-', 'LineWidth', 0.8, 'DisplayName', 'Displacement Rate (raw)', 'Color', [0.7 0.7 1]);
     hold on;
-    plot(time_das_full_plot, displacement_rate_avg_full_plot, 'b-', 'LineWidth', 2.5, 'DisplayName', 'Displacement Rate (smoothed)');
+    plot(time_disp_plot, displacement_rate_avg_full_plot, 'b-', 'LineWidth', 2.5, 'DisplayName', 'Displacement Rate (smoothed)');
     ylabel('Displacement Rate (nm/s)', 'Color', 'b');
     ax = gca;
     ax.YColor = 'b';

@@ -25,8 +25,14 @@ lr_config.strain_shift_sec = 46;
 lr_config.visual_strain_shift_sec = 0;
 lr_config.show_plots = true;
 
+% Pass dataset smoothing config from global config
+run('config.m');
+if isfield(config, 'dataset_smoothing')
+    lr_config.dataset_smoothing = config.dataset_smoothing;
+end
+
 % Focus on PEAK REGION for best correlation (PT01c dates: Oct 24, 2023)
-% 75-second window - shifted later to avoid early spike
+% 75-second window - best R² region
 lr_config.recovery_window = [datetime('2023-10-24 19:15:15', 'TimeZone', 'UTC'), ...
                             datetime('2023-10-24 19:16:30', 'TimeZone', 'UTC')];
 

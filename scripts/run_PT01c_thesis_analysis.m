@@ -101,6 +101,7 @@ try
     
     set(gca, 'YDir', 'reverse');
     ylim(depth_bounds_m);
+    xlim([-0.25 0]);
     xlabel('Displacement Rate (nm/s)', 'FontSize', 12, 'FontWeight', 'bold');
     ylabel('Depth (m)', 'FontSize', 12, 'FontWeight', 'bold');
     title(sprintf('Depth Profile - Mean Displacement Rate\n%s to %s UTC', ...
