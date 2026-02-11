@@ -529,9 +529,14 @@ for i = 1:length(test_labels)
     text(-0.12, 0.95, '(a)', 'Units', 'normalized', 'FontSize', 14, 'FontWeight', 'bold', 'VerticalAlignment', 'top');
     
     % Pre-compute extended DAS displacement rate for subplots 2 & 3
-    % Extends 15s past analysis_end to compensate for the -10s plot shift
-    ext_mask = das_data.time_array >= analysis_start & das_data.time_array <= analysis_end + seconds(15);
-    plot_das_time_ext = das_data.time_array(ext_mask) - seconds(13);
+    % Apply dataset-specific DAS time shift to align with head data
+    if contains(test_label, 'PT01c', 'IgnoreCase', true)
+        das_plot_shift = 46;  % PT01c: 46s forward to match strain_shift_sec
+    else
+        das_plot_shift = 13;  % PT01a/b: original shift
+    end
+    ext_mask = das_data.time_array >= analysis_start & das_data.time_array <= analysis_end + seconds(das_plot_shift + 15);
+    plot_das_time_ext = das_data.time_array(ext_mask) + seconds(das_plot_shift);
     plot_das_rate_ext = das_data.smoothed_data(ext_mask, das_data.pumping_zone.channel_idx);
     
     subplot(3,1,2);
@@ -692,7 +697,7 @@ for i = 1:length(test_labels)
             [drawdown_rate_ftmin, rate_time] = calculate_drawdown_rate(pw_data.recovery_data.Date, pw_data.recovery_data.Drawdownft, 'ft_per_min');
             % Convert from ft/min to m/s: 1 ft/min = 0.3048/60 m/s = 0.00508 m/s
             % Flip sign for recovery (negative drawdown rate = recovery)
-            drawdown_rate = -drawdown_rate_ftmin * 0.00508;
+            drawdown_rate = drawdown_rate_ftmin * 0.00508;
             plot(rate_time, drawdown_rate, 'Color', [0.0000 1.0000 1.0000], 'LineStyle', '-', 'LineWidth', 0.8, 'DisplayName', 'Drawdown Rate PT-01a');
             if strcmpi(test_label, 'PT01a_Recovery_short')
                 xlim([datetime('2023-11-07 20:44:30', 'TimeZone', 'UTC'), datetime('2023-11-07 20:47:30', 'TimeZone', 'UTC')]);

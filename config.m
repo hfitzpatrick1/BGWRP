@@ -451,9 +451,10 @@ config.dataset_smoothing.PT01C_RECOVERY_SHORT.regression_window_sec = 40;
 
 % PT01c_Recovery_100 (100 Hz data) - UPPERCASE to match test_label
 config.dataset_smoothing.PT01C_RECOVERY_100.fs = 100;  % Sampling rate (Hz)
-config.dataset_smoothing.PT01C_RECOVERY_100.preprocessing_window_sec = 50;    % Analysis smoothing
-config.dataset_smoothing.PT01C_RECOVERY_100.strain_rate_window_sec = 50;      % Strain rate smoothing
-config.dataset_smoothing.PT01C_RECOVERY_100.regression_window_sec = 40;       % Linear regression smoothing
+config.dataset_smoothing.PT01C_RECOVERY_100.preprocessing_window_sec = 60;    % Analysis smoothing (for waterfall plots)
+config.dataset_smoothing.PT01C_RECOVERY_100.strain_rate_window_sec = 60;      % Strain rate smoothing (for waterfall plots)
+config.dataset_smoothing.PT01C_RECOVERY_100.regression_window_sec = 80;       % Linear regression smoothing (applied twice)
+config.dataset_smoothing.PT01C_RECOVERY_100.regression_smooth_passes = 2;     % Number of smoothing passes for regression
 
 % PT01b_Recovery_short (1 Hz data) - UPPERCASE to match test_label
 config.dataset_smoothing.PT01B_RECOVERY_SHORT.fs = 1;  % Sampling rate (Hz)

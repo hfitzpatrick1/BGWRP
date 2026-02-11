@@ -22,6 +22,7 @@ function results = linear_regression_depth_range(das_results, head_results, test
 if ~isfield(config, 'zone'), config.zone = 'z5'; end
 if ~isfield(config, 'show_plots'), config.show_plots = true; end
 if ~isfield(config, 'timing_correction_sec'), config.timing_correction_sec = 8; end
+if ~isfield(config, 'strain_shift_sec'), config.strain_shift_sec = 0; end
 if ~isfield(config, 'depth_range_ft'), config.depth_range_ft = [190, 340]; end
 
 %% Extract data
@@ -301,11 +302,23 @@ if isfield(config, 'dataset_smoothing') && isfield(config.dataset_smoothing, tes
     end
 end
 
-strain_smoothed = movmean(strain_rate_zone, regression_smooth_samples, 'omitnan');
+% Determine number of smoothing passes
+n_passes = 1;  % Default single pass
+if isfield(config, 'dataset_smoothing') && isfield(config.dataset_smoothing, test_name)
+    ds_config = config.dataset_smoothing.(test_name);
+    if isfield(ds_config, 'regression_smooth_passes')
+        n_passes = ds_config.regression_smooth_passes;
+    end
+end
 
-console_log('  AFTER %d-sample moving average: PEAK = %.4e 1/s\n', regression_smooth_samples, max(abs(strain_smoothed)));
+strain_smoothed = strain_rate_zone;
+for pass_i = 1:n_passes
+    strain_smoothed = movmean(strain_smoothed, regression_smooth_samples, 'omitnan');
+end
+
+console_log('  AFTER %d-sample moving average (%d passes): PEAK = %.4e 1/s\n', regression_smooth_samples, n_passes, max(abs(strain_smoothed)));
 console_log('  Peak retention: %.2f%%\n', 100 * max(abs(strain_smoothed)) / max(abs(strain_rate_zone)));
-console_log('✓ Regression smoothing applied (%d samples)\n', regression_smooth_samples);
+console_log('✓ Regression smoothing applied (%d samples x %d passes)\n', regression_smooth_samples, n_passes);
 
 console_log('Displacement rate range: %.2e to %.2e nm/s\n', ...
     min(displacement_rate_zone(:)), max(displacement_rate_zone(:)));
@@ -362,9 +375,16 @@ console_log('  Original points: %d → Bourdet points: %d (lost 2 edge points)\n
 console_log('Drawdown rate range: %.4e to %.4e ft/s (negative during recovery)\n', min(drawdown_rate_ftps), max(drawdown_rate_ftps));
 console_log('Head rate range: %.4e to %.4e ft/s (positive during recovery)\n', min(head_rate_ftps), max(head_rate_ftps));
 
-%% Find overlapping time range
-time_start = max(min(time_das), min(time_head_rate));
-time_end = min(max(time_das), max(time_head_rate));
+%% Apply strain shift to DAS time
+time_das_overlap = time_das;  % Start with regression window
+if config.strain_shift_sec ~= 0
+    console_log('Applying strain shift: +%.1f seconds (strain shifted forward)\n', config.strain_shift_sec);
+    time_das_overlap = time_das_overlap + seconds(config.strain_shift_sec);
+end
+
+%% Find overlapping time range (AFTER strain shift)
+time_start = max(min(time_das_overlap), min(time_head_rate));
+time_end = min(max(time_das_overlap), max(time_head_rate));
 
 console_log('\n=== OVERLAPPING TIME RANGE ===\n');
 console_log('Overlap: %s to %s (%.1f seconds)\n', datestr(time_start), datestr(time_end), seconds(time_end - time_start));
@@ -384,8 +404,6 @@ console_log('Applying 12-point (~60s) moving average to MATCH strain rate Butter
 % This matches the 60s Butterworth filter applied to strain rate
 head_rate_overlap = movmean(head_rate_overlap, 12, 'omitnan');
 console_log('✓ Applied 12-point moving average to match 60s strain rate smoothing\n');
-
-time_das_overlap = time_das;  % Already the right window
 % strain_smoothed should be from the windowed data, but check sizes
 if length(strain_smoothed) ~= length(time_das)
     console_log('WARNING: strain_smoothed (%d) and time_das (%d) size mismatch!\n', ...
@@ -465,9 +483,9 @@ if time_clean(1) > datetime('2023-11-01', 'TimeZone', 'UTC')
     end
     console_log('    PT01a: Using temporal weighting (improves R²)\n');
 else
-    % PT01b dates (October 31, 2023) - use uniform weighting
+    % PT01b/PT01c - use uniform weighting
     weights = ones(size(time_clean));
-    console_log('    PT01b: Using uniform weighting (temporal weighting degraded R²)\n');
+    console_log('    Using uniform weighting\n');
 end
 
 %% LINEAR REGRESSION: Strain Rate vs Drawdown Rate (with temporal weighting)
@@ -630,6 +648,13 @@ results.n_channels = n_channels;
 
 %% PLOTTING
 if config.show_plots
+    % Keep original time for head data plotting
+    time_head_plot = time_das_full_plot;
+    % Apply strain shift to DAS plotting time only
+    if config.strain_shift_sec ~= 0
+        time_das_full_plot = time_das_full_plot + seconds(config.strain_shift_sec);
+    end
+    
     figure('Name', sprintf('Depth-Range Linear Regression: %s', test_name), 'Position', [50, 50, 1600, 900]);
     
     % TOP LEFT (1): Linear Regression Scatter
@@ -680,8 +705,8 @@ if config.show_plots
     % Plot head rate for full window (may have NaNs outside overlap region)
     valid_head = ~isnan(head_rate_plot);
     if any(valid_head)
-        plot(time_das_full_plot(valid_head), head_rate_plot(valid_head) / head_scale, ...
-            'Color', [0.4660 0.6740 0.1880], 'LineWidth', 2.5, 'DisplayName', 'Drawdown Rate PM-07 z2');
+        plot(time_head_plot(valid_head), head_rate_plot(valid_head) / head_scale, ...
+            'Color', [0.4660 0.6740 0.1880], 'LineWidth', 2.5, 'DisplayName', sprintf('Drawdown Rate PM-07 %s', config.zone));
     end
     ylabel(sprintf('Drawdown Rate (m/s) ×10^{%d}', round(log10(head_scale))), 'FontSize', 12, 'FontWeight', 'bold');
     ax = gca;
@@ -801,8 +826,8 @@ if config.show_plots
         head_scale_subplot4 = 1e-4;
         valid_head = ~isnan(head_rate_plot);
         if any(valid_head)
-            plot(time_das_full_plot(valid_head), head_rate_plot(valid_head) / head_scale_subplot4, ...
-                'Color', [0.4660 0.6740 0.1880], 'LineWidth', 2.5, 'DisplayName', 'Drawdown Rate PM-07 z2');
+            plot(time_head_plot(valid_head), head_rate_plot(valid_head) / head_scale_subplot4, ...
+                'Color', [0.4660 0.6740 0.1880], 'LineWidth', 2.5, 'DisplayName', sprintf('Drawdown Rate PM-07 %s', config.zone));
             ylabel(sprintf('Drawdown Rate (m/s) ×10^{%d}', round(log10(head_scale_subplot4))), ...
                 'Color', [0.4660 0.6740 0.1880], 'FontSize', 12, 'FontWeight', 'bold');
             ax = gca;
@@ -815,7 +840,7 @@ if config.show_plots
     legend('Location', 'best');
     grid on;
     % Set x-axis limits (extended to show context)
-    xlim([datetime('2023-10-31 19:29:30', 'TimeZone', 'UTC'), datetime('2023-10-31 19:31:30', 'TimeZone', 'UTC')]);
+    xlim([recovery_start - seconds(30), recovery_end + seconds(15)]);
     
     console_log('\n=== 4-SUBPLOT FIGURE GENERATED ===\n');
     console_log('  Top Left: Linear Regression (Strain vs Drawdown)\n');
