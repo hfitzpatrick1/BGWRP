@@ -71,6 +71,10 @@ config.analysis_windows.PT01a_Recovery_100.end = datetime(2023,11,07,20,47,30,00
 config.analysis_windows.PT01b_Recovery_100.start = datetime(2023,10,31,19,29,00,00,'TimeZone','UTC');
 config.analysis_windows.PT01b_Recovery_100.end = datetime(2023,10,31,19,32,00,00,'TimeZone','UTC');
 
+% PT01c_Recovery_100 analysis window (100Hz data - same time window as 1Hz)
+config.analysis_windows.PT01c_Recovery_100.start = datetime(2023,10,24,19,14,00,00,'TimeZone','UTC');
+config.analysis_windows.PT01c_Recovery_100.end = datetime(2023,10,24,19,19,00,00,'TimeZone','UTC');
+
 %% Zone Filtering Configuration (per dataset)
 % PT-01a START OF PUMPING configurations (NEW DATASET)
 config.waterfall_zones.PT01a_start_of_pumping.min_depth = 260;
@@ -343,6 +347,29 @@ config.manual_bounds.PT01b_Recovery_100.depth_axis.max = 665;
 config.manual_bounds.PT01b_Recovery_100.pw_head_strain.min = -0.025;
 config.manual_bounds.PT01b_Recovery_100.pw_head_strain.max = 0.076;
 
+% ===== PT01c_Recovery_100 bounds (100Hz data - same well as Recovery_short) =====
+% Starting values copied from PT01c_Recovery_short; adjust after first run
+config.manual_bounds.PT01c_Recovery_100.raw_data.min = -0.25;
+config.manual_bounds.PT01c_Recovery_100.raw_data.max = 0;
+config.manual_bounds.PT01c_Recovery_100.displacement_rate.min = -0.25;
+config.manual_bounds.PT01c_Recovery_100.displacement_rate.max = 0;
+config.manual_bounds.PT01c_Recovery_100.strain.min = -0.2;
+config.manual_bounds.PT01c_Recovery_100.strain.max = 0.2;
+config.manual_bounds.PT01c_Recovery_100.head_data.min = -0.02;
+config.manual_bounds.PT01c_Recovery_100.head_data.max = 0.1;
+config.manual_bounds.PT01c_Recovery_100.pw_head_data.min = -1;
+config.manual_bounds.PT01c_Recovery_100.pw_head_data.max = 55;
+config.manual_bounds.PT01c_Recovery_100.displacement_rate_line.min = -0.2;
+config.manual_bounds.PT01c_Recovery_100.displacement_rate_line.max = 0.15;
+config.manual_bounds.PT01c_Recovery_100.strain_line.min = -0.2;
+config.manual_bounds.PT01c_Recovery_100.strain_line.max = 0.2;
+config.manual_bounds.PT01c_Recovery_100.head_data_strain.min = -0.02;
+config.manual_bounds.PT01c_Recovery_100.head_data_strain.max = 0.1;
+config.manual_bounds.PT01c_Recovery_100.depth_axis.min = 90;
+config.manual_bounds.PT01c_Recovery_100.depth_axis.max = 656;
+config.manual_bounds.PT01c_Recovery_100.pw_head_strain.min = -1;
+config.manual_bounds.PT01c_Recovery_100.pw_head_strain.max = 55;
+
 %% Head Data Zone Configuration (per dataset)
 % PT01a START OF PUMPING zone configuration  
 config.head_zones.PT01a_start_of_pumping.zones = {'z2', 'z3', 'z4', 'z5', 'pw'};  % Zones 2-5 and pumping well
@@ -379,6 +406,10 @@ config.head_zones.PT01b_Recovery_short.display_mode = 'multiple';
 % PT01b_Recovery_100 zone configuration (same zones as Recovery_short)
 config.head_zones.PT01b_Recovery_100.zones = {'z2', 'z3', 'z4', 'z5', 'pw'};
 config.head_zones.PT01b_Recovery_100.display_mode = 'multiple';
+
+% PT01c_Recovery_100 zone configuration (same zones as Recovery_short)
+config.head_zones.PT01c_Recovery_100.zones = {'z2', 'z3', 'z4', 'z5', 'pw'};
+config.head_zones.PT01c_Recovery_100.display_mode = 'multiple';
 
 %% Additional Configuration Parameters
 config.apply_concatenation_filter = false;
@@ -417,6 +448,12 @@ config.dataset_smoothing.PT01C_RECOVERY_SHORT.fs = 1;  % Sampling rate (Hz)
 config.dataset_smoothing.PT01C_RECOVERY_SHORT.preprocessing_window_sec = 50;
 config.dataset_smoothing.PT01C_RECOVERY_SHORT.strain_rate_window_sec = 50;
 config.dataset_smoothing.PT01C_RECOVERY_SHORT.regression_window_sec = 40;
+
+% PT01c_Recovery_100 (100 Hz data) - UPPERCASE to match test_label
+config.dataset_smoothing.PT01C_RECOVERY_100.fs = 100;  % Sampling rate (Hz)
+config.dataset_smoothing.PT01C_RECOVERY_100.preprocessing_window_sec = 50;    % Analysis smoothing
+config.dataset_smoothing.PT01C_RECOVERY_100.strain_rate_window_sec = 50;      % Strain rate smoothing
+config.dataset_smoothing.PT01C_RECOVERY_100.regression_window_sec = 40;       % Linear regression smoothing
 
 % PT01b_Recovery_short (1 Hz data) - UPPERCASE to match test_label
 config.dataset_smoothing.PT01B_RECOVERY_SHORT.fs = 1;  % Sampling rate (Hz)

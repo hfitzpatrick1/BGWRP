@@ -503,7 +503,10 @@ for i = 1:length(test_labels)
     end
     
     % Add screened interval label (per-dataset)
-    if contains(test_label, 'PT01b', 'IgnoreCase', true)
+    if contains(test_label, 'PT01c', 'IgnoreCase', true)
+        screened_top_m = 260 * 0.3048;  % 79.25 m (PT01c)
+        screened_bot_m = 310 * 0.3048;  % 94.49 m
+    elseif contains(test_label, 'PT01b', 'IgnoreCase', true)
         screened_top_m = 350 * 0.3048;  % 106.68 m (PT01b)
         screened_bot_m = 400 * 0.3048;  % 121.92 m
     else

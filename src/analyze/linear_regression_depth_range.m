@@ -701,11 +701,19 @@ if config.show_plots
     legend('show', 'Location', 'best');
     grid on;
     % Set x-axis limits to match regression window (extended to show context)
-    xlim([datetime('2023-10-31 19:29:30', 'TimeZone', 'UTC'), datetime('2023-10-31 19:31:30', 'TimeZone', 'UTC')]);
+    xlim([recovery_start - seconds(30), recovery_end + seconds(15)]);
     
-    % Overall title - concise and descriptive
-    sgtitle('Poroelastic Storage Analysis: PT-01b Recovery observed through PM-07', ...
-        'FontSize', 16, 'FontWeight', 'bold');
+    % Overall title - detect dataset from test_name
+    if contains(test_name, 'PT01c', 'IgnoreCase', true)
+        sgtitle('Poroelastic Storage Analysis: PT-01c Recovery observed through PM-07', ...
+            'FontSize', 16, 'FontWeight', 'bold');
+    elseif contains(test_name, 'PT01b', 'IgnoreCase', true)
+        sgtitle('Poroelastic Storage Analysis: PT-01b Recovery observed through PM-07', ...
+            'FontSize', 16, 'FontWeight', 'bold');
+    else
+        sgtitle('Poroelastic Storage Analysis: PT-01a Recovery observed through PM-07', ...
+            'FontSize', 16, 'FontWeight', 'bold');
+    end
     
     % REMOVE SEPARATE FIGURE - Now consolidated into main figure
     % Prepare data for bottom row subplots
@@ -774,7 +782,7 @@ if config.show_plots
     legend('Location', 'best');
     grid on;
     % Set x-axis limits (extended to show context)
-    xlim([datetime('2023-10-31 19:29:30', 'TimeZone', 'UTC'), datetime('2023-10-31 19:31:30', 'TimeZone', 'UTC')]);
+    xlim([recovery_start - seconds(30), recovery_end + seconds(15)]);
     
     % BOTTOM RIGHT (4): Strain Rate vs Head Rate overlay - SHOW ACTUAL MAGNITUDES
     subplot(2,2,4);
