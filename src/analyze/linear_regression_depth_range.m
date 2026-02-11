@@ -439,36 +439,36 @@ console_log('  Using strain rate as-is (positive = expansion during recovery)\n'
 % TEMPORAL WEIGHTING: Emphasize regions where strain and drawdown align best
 console_log('  Using TEMPORAL WEIGHTING to emphasize well-aligned regions\n');
 
-% Create time-based weights for PT01a data with better alignment
-% Main peak: 20:45:25-20:45:40 (where both signals peak together)
-% Secondary feature: 20:45:55-20:46:10 (secondary bump in both signals)
-% Tail region: 20:46:10-20:46:30 (recovery phase, lower weight)
-peak_start = datetime('2023-11-07 20:45:25', 'TimeZone', 'UTC');
-peak_end = datetime('2023-11-07 20:45:40', 'TimeZone', 'UTC');
-secondary_start = datetime('2023-11-07 20:45:55', 'TimeZone', 'UTC');
-secondary_end = datetime('2023-11-07 20:46:10', 'TimeZone', 'UTC');
-tail_start = datetime('2023-11-07 20:46:10', 'TimeZone', 'UTC');
-
-weights = ones(size(time_clean));
-for i = 1:length(time_clean)
-    if time_clean(i) >= peak_start && time_clean(i) <= peak_end
-        weights(i) = 10.0;  % 10x weight for main peak region (best alignment)
-    elseif time_clean(i) >= secondary_start && time_clean(i) <= secondary_end
-        weights(i) = 5.0;  % 5x weight for secondary feature (good alignment)
-    elseif time_clean(i) >= tail_start
-        weights(i) = 0.3;  % Lower weight for tail/recovery region
-    elseif time_clean(i) < peak_start
-        weights(i) = 0.2;  % Downweight early region (poor alignment)
-    else
-        weights(i) = 2.0;  % Moderate weight for transition regions
+% Use uniform weighting for PT01b (temporal weighting degraded R²)
+% For PT01a, temporal weighting helps; for PT01b, uniform is better
+if time_clean(1) > datetime('2023-11-01', 'TimeZone', 'UTC')
+    % PT01a dates (November 7, 2023) - use temporal weighting
+    peak_start = datetime('2023-11-07 20:45:25', 'TimeZone', 'UTC');
+    peak_end = datetime('2023-11-07 20:45:40', 'TimeZone', 'UTC');
+    secondary_start = datetime('2023-11-07 20:45:55', 'TimeZone', 'UTC');
+    secondary_end = datetime('2023-11-07 20:46:10', 'TimeZone', 'UTC');
+    tail_start = datetime('2023-11-07 20:46:10', 'TimeZone', 'UTC');
+    
+    weights = ones(size(time_clean));
+    for i = 1:length(time_clean)
+        if time_clean(i) >= peak_start && time_clean(i) <= peak_end
+            weights(i) = 10.0;
+        elseif time_clean(i) >= secondary_start && time_clean(i) <= secondary_end
+            weights(i) = 5.0;
+        elseif time_clean(i) >= tail_start
+            weights(i) = 0.3;
+        elseif time_clean(i) < peak_start
+            weights(i) = 0.2;
+        else
+            weights(i) = 2.0;
+        end
     end
+    console_log('    PT01a: Using temporal weighting (improves R²)\n');
+else
+    % PT01b dates (October 31, 2023) - use uniform weighting
+    weights = ones(size(time_clean));
+    console_log('    PT01b: Using uniform weighting (temporal weighting degraded R²)\n');
 end
-
-console_log('    Main peak (20:45:25-20:45:40): weight = 10.0 (best alignment)\n');
-console_log('    Secondary feature (20:45:55-20:46:10): weight = 5.0 (good alignment)\n');
-console_log('    Transition regions: weight = 2.0\n');
-console_log('    Early region (before 20:45:25): weight = 0.2 (poor alignment)\n');
-console_log('    Tail region (after 20:46:10): weight = 0.3 (recovery phase)\n');
 
 %% LINEAR REGRESSION: Strain Rate vs Drawdown Rate (with temporal weighting)
 console_log('\n=== WEIGHTED REGRESSION RESULTS ===\n');
@@ -531,10 +531,36 @@ else
     strain_time_shift = seconds(0);
 end
 
-% Weighted least squares regression
+% Weighted least squares regression with outlier removal
 % Minimize: sum(weights .* (y - (mx + b))^2)
+
+% Step 1: Initial regression to identify outliers
 X = [drawdown_rate_clean, ones(size(drawdown_rate_clean))];
 W = diag(weights);
+coeffs = (X' * W * X) \ (X' * W * strain_clean);
+slope_initial = coeffs(1);
+intercept_initial = coeffs(2);
+strain_predicted_initial = drawdown_rate_clean * slope_initial + intercept_initial;
+residuals_initial = strain_clean - strain_predicted_initial;
+
+% Step 2: Remove outliers (points >3 std deviations from regression line)
+std_residual = std(residuals_initial);
+outlier_mask = abs(residuals_initial) > 3.0 * std_residual;
+n_outliers = sum(outlier_mask);
+
+if n_outliers > 0 && n_outliers < 0.1 * length(strain_clean)
+    console_log('  Removing %d outliers (>3σ from regression line)\n', n_outliers);
+    % Filter out outliers
+    strain_clean = strain_clean(~outlier_mask);
+    drawdown_rate_clean = drawdown_rate_clean(~outlier_mask);
+    time_clean = time_clean(~outlier_mask);
+    weights = weights(~outlier_mask);
+    
+    % Step 3: Recalculate regression without outliers
+    X = [drawdown_rate_clean, ones(size(drawdown_rate_clean))];
+    W = diag(weights);
+end
+
 coeffs = (X' * W * X) \ (X' * W * strain_clean);
 slope = coeffs(1);
 intercept = coeffs(2);

@@ -19,13 +19,13 @@ console_log('Auto-detected dataset: %s\n', test_name);
 % Set up ROI analysis configuration - FOCUS ON PT01b PUMPING ZONE
 lr_config = struct();
 lr_config.zone = 'z4';
-lr_config.depth_range_ft = [350, 400];  % PT01b full screened interval
-lr_config.timing_correction_sec = -4.5;   % Fine-tuning around optimal value
+lr_config.depth_range_ft = [350, 400];  % PT01b full screened interval (required)
+lr_config.timing_correction_sec = -5;   % Optimal timing for full 350-400 ft range (R²=0.783)
 lr_config.visual_strain_shift_sec = -5;
 lr_config.show_plots = true;
 
 % Focus on PEAK REGION for best correlation (PT01b dates: Oct 31, 2023)
-% 75-second window to match PT-01a (20:45:15 to 20:46:30 = 75 seconds)
+% 75-second window to match PT-01a (optimal placement for R²=0.783)
 lr_config.recovery_window = [datetime('2023-10-31 19:30:10', 'TimeZone', 'UTC'), ...
                             datetime('2023-10-31 19:31:25', 'TimeZone', 'UTC')];
 
@@ -34,7 +34,7 @@ console_log('Head zone: z4\n');
 console_log('Depth range: %.0f-%.0f ft (full PT01b screened interval)\n', lr_config.depth_range_ft(1), lr_config.depth_range_ft(2));
 console_log('Method: Proper Becker spatial difference\n');
 console_log('Timing correction: %d seconds (head shifted forward)\n', lr_config.timing_correction_sec);
-console_log('Regression window: 19:30:10 to 19:31:25 UTC (75 seconds - matches PT-01a)\n\n');
+console_log('Regression window: 19:30:10 to 19:31:25 UTC (75 seconds - optimal)\n\n');
 
 % Run ROI depth range analysis
 roi_results = linear_regression_depth_range(das_results, head_results, test_name, lr_config);

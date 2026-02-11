@@ -426,8 +426,8 @@ config.dataset_smoothing.PT01B_RECOVERY_SHORT.regression_window_sec = 40;
 
 % PT01b_Recovery_100 (100 Hz data) - UPPERCASE to match test_label
 config.dataset_smoothing.PT01B_RECOVERY_100.fs = 100;  % Sampling rate (Hz)
-config.dataset_smoothing.PT01B_RECOVERY_100.preprocessing_window_sec = 50;    % Analysis smoothing
-config.dataset_smoothing.PT01B_RECOVERY_100.strain_rate_window_sec = 50;      % Strain rate smoothing
+config.dataset_smoothing.PT01B_RECOVERY_100.preprocessing_window_sec = 50;    % Analysis smoothing (optimal)
+config.dataset_smoothing.PT01B_RECOVERY_100.strain_rate_window_sec = 50;      % Strain rate smoothing (optimal)
 config.dataset_smoothing.PT01B_RECOVERY_100.regression_window_sec = 40;       % Linear regression smoothing
 
 %% Storage Analysis Parameters (Traditional Pump Test Values for Comparison)
