@@ -74,8 +74,8 @@ try
     reg_mask = das_data_dp.time_array >= reg_start & das_data_dp.time_array <= reg_end;
     mean_disp_rate = mean(das_data_dp.smoothed_data(reg_mask, :), 1, 'omitnan');
     
-    % Spatial smoothing (20 channels = 5m at 0.25m/channel)
-    mean_disp_rate = movmean(mean_disp_rate, 20);
+    % Spatial smoothing (60 channels = 15m at 0.25m/channel)
+    mean_disp_rate = movmean(mean_disp_rate, 60);
     
     % Depth in meters
     depth_m = das_data_dp.depth_ft * 0.3048;
@@ -92,7 +92,7 @@ try
     hold on;
     yline(screened_top_m, '--k', 'LineWidth', 1.2);
     yline(screened_bot_m, '--k', 'LineWidth', 1.2);
-    fill([min(xlim) max(xlim) max(xlim) min(xlim)], ...
+    fill([-0.4 -0.32 -0.32 -0.4], ...
          [screened_top_m screened_top_m screened_bot_m screened_bot_m], ...
          [0.9 0.9 0.9], 'FaceAlpha', 0.3, 'EdgeColor', 'none');
     plot(mean_disp_rate, depth_m, 'b-', 'LineWidth', 1.2);
@@ -100,6 +100,7 @@ try
     
     set(gca, 'YDir', 'reverse');
     ylim(depth_bounds_m);
+    xlim([-0.4, -0.32]);
     xlabel('Displacement Rate (nm/s)', 'FontSize', 12, 'FontWeight', 'bold');
     ylabel('Depth (m)', 'FontSize', 12, 'FontWeight', 'bold');
     title(sprintf('Depth Profile - Mean Displacement Rate\n%s to %s UTC', ...
