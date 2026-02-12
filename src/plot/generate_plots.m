@@ -353,6 +353,33 @@ for i = 1:length(test_labels)
     % Fix bad DAS channels (display only) - replace outliers with neighbor average
     plot_data = fix_bad_channels(plot_data);
     
+    % Spatial smoothing to reduce horizontal banding (Figure 101)
+    if contains(test_label, 'PT01b', 'IgnoreCase', true)
+        % PT01b: blend shallow artifacts first, then spatial smooth
+        shallow_mask_101 = das_data.depth_ft < 262;
+        clean_band_101 = das_data.depth_ft >= 262 & das_data.depth_ft <= 330;
+        bg_values_101 = mean(plot_data(:, clean_band_101), 2, 'omitnan');
+        plot_data(:, shallow_mask_101) = repmat(bg_values_101, 1, sum(shallow_mask_101));
+        plot_data = movmean(plot_data, 40, 2, 'omitnan');
+        chart_logger('    Figure 101 PT01b: Blended %d shallow channels + 40-ch spatial smoothing', sum(shallow_mask_101));
+    elseif contains(test_label, 'PT01a', 'IgnoreCase', true)
+        % PT01a: blend shallow artifacts first, then spatial smooth
+        shallow_mask_101 = das_data.depth_ft < 262;
+        clean_band_101 = das_data.depth_ft >= 262 & das_data.depth_ft <= 350;
+        bg_values_101 = mean(plot_data(:, clean_band_101), 2, 'omitnan');
+        plot_data(:, shallow_mask_101) = repmat(bg_values_101, 1, sum(shallow_mask_101));
+        plot_data = movmean(plot_data, 40, 2, 'omitnan');
+        chart_logger('    Figure 101 PT01a: Blended %d shallow channels + 40-ch spatial smoothing', sum(shallow_mask_101));
+    elseif contains(test_label, 'PT01c', 'IgnoreCase', true)
+        % PT01c: blend shallow artifacts first, then spatial smooth
+        shallow_mask_101 = das_data.depth_ft < 256;
+        clean_band_101 = das_data.depth_ft >= 310 & das_data.depth_ft <= 380;
+        bg_values_101 = mean(plot_data(:, clean_band_101), 2, 'omitnan');
+        plot_data(:, shallow_mask_101) = repmat(bg_values_101, 1, sum(shallow_mask_101));
+        plot_data = movmean(plot_data, 40, 2, 'omitnan');
+        chart_logger('    Figure 101 PT01c: Blended %d shallow channels + 40-ch spatial smoothing', sum(shallow_mask_101));
+    end
+    
     % Convert depth from feet to meters
     depth_m = das_data.depth_ft * 0.3048;
     
@@ -464,10 +491,31 @@ for i = 1:length(test_labels)
     % Fix bad DAS channels (display only)
     plot_data_102 = fix_bad_channels(plot_data_102);
     
-    % Spatial smoothing across channels to reduce horizontal banding (PT01b)
+    % Spatial smoothing to reduce horizontal banding (Figure 102)
     if contains(test_label, 'PT01b', 'IgnoreCase', true)
-        plot_data_102 = movmean(plot_data_102, 40, 2, 'omitnan');  % 40 channels (~10m) spatial smoothing
-        chart_logger('    Applied 40-channel spatial smoothing to reduce banding');
+        % PT01b: blend shallow artifacts first, then spatial smooth
+        shallow_mask = das_data.depth_ft < 262;
+        clean_band = das_data.depth_ft >= 262 & das_data.depth_ft <= 330;
+        bg_values = mean(plot_data_102(:, clean_band), 2, 'omitnan');
+        plot_data_102(:, shallow_mask) = repmat(bg_values, 1, sum(shallow_mask));
+        plot_data_102 = movmean(plot_data_102, 40, 2, 'omitnan');
+        chart_logger('    Figure 102 PT01b: Blended %d shallow channels + 40-ch spatial smoothing', sum(shallow_mask));
+    elseif contains(test_label, 'PT01a', 'IgnoreCase', true)
+        % PT01a: blend shallow artifacts first, then spatial smooth
+        shallow_mask = das_data.depth_ft < 262;
+        clean_band = das_data.depth_ft >= 262 & das_data.depth_ft <= 350;
+        bg_values = mean(plot_data_102(:, clean_band), 2, 'omitnan');
+        plot_data_102(:, shallow_mask) = repmat(bg_values, 1, sum(shallow_mask));
+        plot_data_102 = movmean(plot_data_102, 40, 2, 'omitnan');
+        chart_logger('    Figure 102 PT01a: Blended %d shallow channels + 40-ch spatial smoothing', sum(shallow_mask));
+    elseif contains(test_label, 'PT01c', 'IgnoreCase', true)
+        % PT01c: blend shallow artifacts first, then spatial smooth
+        shallow_mask = das_data.depth_ft < 256;
+        clean_band = das_data.depth_ft >= 310 & das_data.depth_ft <= 380;
+        bg_values = mean(plot_data_102(:, clean_band), 2, 'omitnan');
+        plot_data_102(:, shallow_mask) = repmat(bg_values, 1, sum(shallow_mask));
+        plot_data_102 = movmean(plot_data_102, 40, 2, 'omitnan');
+        chart_logger('    Figure 102 PT01c: Blended %d shallow channels + 40-ch spatial smoothing', sum(shallow_mask));
     end
     
     % Convert depth from feet to meters

@@ -326,10 +326,10 @@ config.manual_bounds.PT01a_Recovery_100.pw_head_strain.max = 5;
 
 % ===== PT01b_Recovery_100 bounds (100Hz data - same well as Recovery_short) =====
 % Starting values copied from PT01b_Recovery_short; adjust after first run
-config.manual_bounds.PT01b_Recovery_100.raw_data.min = -0.45;
-config.manual_bounds.PT01b_Recovery_100.raw_data.max = -0.1;
-config.manual_bounds.PT01b_Recovery_100.displacement_rate.min = -0.45;
-config.manual_bounds.PT01b_Recovery_100.displacement_rate.max = -0.1;
+config.manual_bounds.PT01b_Recovery_100.raw_data.min = -0.38;
+config.manual_bounds.PT01b_Recovery_100.raw_data.max = -0.18
+config.manual_bounds.PT01b_Recovery_100.displacement_rate.min = -0.38;
+config.manual_bounds.PT01b_Recovery_100.displacement_rate.max = -0.18
 config.manual_bounds.PT01b_Recovery_100.strain.min = -0.2;
 config.manual_bounds.PT01b_Recovery_100.strain.max = 0.2;
 config.manual_bounds.PT01b_Recovery_100.head_data.min = -0.0001;
@@ -342,7 +342,7 @@ config.manual_bounds.PT01b_Recovery_100.strain_line.min = -0.2;
 config.manual_bounds.PT01b_Recovery_100.strain_line.max = 0.2;
 config.manual_bounds.PT01b_Recovery_100.head_data_strain.min = -0.0001;
 config.manual_bounds.PT01b_Recovery_100.head_data_strain.max = 0.0003;
-config.manual_bounds.PT01b_Recovery_100.depth_axis.min = 164;  % ~50 m (excludes near-surface artifacts)
+config.manual_bounds.PT01b_Recovery_100.depth_axis.min = 89;   % ~27 m (uniform with PT01a/c)
 config.manual_bounds.PT01b_Recovery_100.depth_axis.max = 656;  % ~200 m
 config.manual_bounds.PT01b_Recovery_100.pw_head_strain.min = -0.025;
 config.manual_bounds.PT01b_Recovery_100.pw_head_strain.max = 0.076;
@@ -350,9 +350,9 @@ config.manual_bounds.PT01b_Recovery_100.pw_head_strain.max = 0.076;
 % ===== PT01c_Recovery_100 bounds (100Hz data - same well as Recovery_short) =====
 % Starting values copied from PT01c_Recovery_short; adjust after first run
 config.manual_bounds.PT01c_Recovery_100.raw_data.min = -0.25;
-config.manual_bounds.PT01c_Recovery_100.raw_data.max = 0;
+config.manual_bounds.PT01c_Recovery_100.raw_data.max = -0.03;
 config.manual_bounds.PT01c_Recovery_100.displacement_rate.min = -0.25;
-config.manual_bounds.PT01c_Recovery_100.displacement_rate.max = 0;
+config.manual_bounds.PT01c_Recovery_100.displacement_rate.max = -0.03;
 config.manual_bounds.PT01c_Recovery_100.strain.min = -0.2;
 config.manual_bounds.PT01c_Recovery_100.strain.max = 0.2;
 config.manual_bounds.PT01c_Recovery_100.head_data.min = -0.02;
@@ -439,10 +439,10 @@ config.dataset_smoothing.PT01A_RECOVERY_SHORT.regression_window_sec = 40;     % 
 
 % PT01a_Recovery_100 (100 Hz data) - UPPERCASE to match test_label
 config.dataset_smoothing.PT01A_RECOVERY_100.fs = 100;  % Sampling rate (Hz)
-config.dataset_smoothing.PT01A_RECOVERY_100.preprocessing_window_sec = 60;    % Analysis smoothing (uniform with PT01c)
-config.dataset_smoothing.PT01A_RECOVERY_100.strain_rate_window_sec = 60;      % Strain rate smoothing (uniform with PT01c)
-config.dataset_smoothing.PT01A_RECOVERY_100.regression_window_sec = 15;       % Linear regression smoothing (matches PT01c)
-config.dataset_smoothing.PT01A_RECOVERY_100.regression_smooth_passes = 1;     % Single pass (matches PT01c)
+config.dataset_smoothing.PT01A_RECOVERY_100.preprocessing_window_sec = 30;    % Analysis smoothing (reduced for weaker signal)
+config.dataset_smoothing.PT01A_RECOVERY_100.strain_rate_window_sec = 30;      % Strain rate smoothing (reduced for weaker signal)
+config.dataset_smoothing.PT01A_RECOVERY_100.regression_window_sec = 20;       % Linear regression smoothing
+config.dataset_smoothing.PT01A_RECOVERY_100.regression_smooth_passes = 2;     % Double pass for tighter fit
 
 % PT01c_Recovery_short (1 Hz data) - UPPERCASE to match test_label  
 config.dataset_smoothing.PT01C_RECOVERY_SHORT.fs = 1;  % Sampling rate (Hz)
@@ -452,10 +452,10 @@ config.dataset_smoothing.PT01C_RECOVERY_SHORT.regression_window_sec = 40;
 
 % PT01c_Recovery_100 (100 Hz data) - UPPERCASE to match test_label
 config.dataset_smoothing.PT01C_RECOVERY_100.fs = 100;  % Sampling rate (Hz)
-config.dataset_smoothing.PT01C_RECOVERY_100.preprocessing_window_sec = 60;    % Analysis smoothing (for waterfall plots)
-config.dataset_smoothing.PT01C_RECOVERY_100.strain_rate_window_sec = 60;      % Strain rate smoothing (for waterfall plots)
-config.dataset_smoothing.PT01C_RECOVERY_100.regression_window_sec = 15;       % Linear regression smoothing (22% of 75s window)
-config.dataset_smoothing.PT01C_RECOVERY_100.regression_smooth_passes = 1;     % Single pass (match 1 Hz pipeline)
+config.dataset_smoothing.PT01C_RECOVERY_100.preprocessing_window_sec = 30;    % Analysis smoothing (reduced, matches PT01a/b)
+config.dataset_smoothing.PT01C_RECOVERY_100.strain_rate_window_sec = 30;      % Strain rate smoothing (reduced, matches PT01a/b)
+config.dataset_smoothing.PT01C_RECOVERY_100.regression_window_sec = 20;       % Linear regression smoothing (increased for 30s data)
+config.dataset_smoothing.PT01C_RECOVERY_100.regression_smooth_passes = 2;     % Two passes (matches PT01a)
 
 % PT01b_Recovery_short (1 Hz data) - UPPERCASE to match test_label
 config.dataset_smoothing.PT01B_RECOVERY_SHORT.fs = 1;  % Sampling rate (Hz)
@@ -467,8 +467,8 @@ config.dataset_smoothing.PT01B_RECOVERY_SHORT.regression_window_sec = 40;
 config.dataset_smoothing.PT01B_RECOVERY_100.fs = 100;  % Sampling rate (Hz)
 config.dataset_smoothing.PT01B_RECOVERY_100.preprocessing_window_sec = 30;    % Analysis smoothing (reduced - weaker signal)
 config.dataset_smoothing.PT01B_RECOVERY_100.strain_rate_window_sec = 30;      % Strain rate smoothing (reduced - weaker signal)
-config.dataset_smoothing.PT01B_RECOVERY_100.regression_window_sec = 15;       % Linear regression smoothing (matches PT01c)
-config.dataset_smoothing.PT01B_RECOVERY_100.regression_smooth_passes = 1;     % Single pass (matches PT01c)
+config.dataset_smoothing.PT01B_RECOVERY_100.regression_window_sec = 30;       % Linear regression smoothing (more aggressive for weaker signal)
+config.dataset_smoothing.PT01B_RECOVERY_100.regression_smooth_passes = 3;     % Multi-pass to reduce noise
 
 %% Storage Analysis Parameters (Traditional Pump Test Values for Comparison)
 % From PT-01A Step Drawdown Test (10/24/23)
