@@ -530,12 +530,8 @@ for i = 1:length(test_labels)
     
     % Pre-compute extended DAS displacement rate for subplots 2 & 3
     % Apply dataset-specific DAS time shift to align with head data
-    if contains(test_label, 'PT01c', 'IgnoreCase', true)
-        das_plot_shift = 0;   % PT01c: no shift for Figure 102 (shift only in regression figure)
-    else
-        das_plot_shift = 13;  % PT01a/b: original shift
-    end
-    ext_mask = das_data.time_array >= analysis_start & das_data.time_array <= analysis_end + seconds(das_plot_shift + 15);
+    das_plot_shift = -13;  % No shift for Figure 102 (shift only applied in regression figure)
+    ext_mask = das_data.time_array >= analysis_start - seconds(abs(das_plot_shift) + 15) & das_data.time_array <= analysis_end + seconds(abs(das_plot_shift) + 15);
     plot_das_time_ext = das_data.time_array(ext_mask) + seconds(das_plot_shift);
     plot_das_rate_ext = das_data.smoothed_data(ext_mask, das_data.pumping_zone.channel_idx);
     
