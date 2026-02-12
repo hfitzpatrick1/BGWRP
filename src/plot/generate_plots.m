@@ -463,6 +463,7 @@ for i = 1:length(test_labels)
     
     % Fix bad DAS channels (display only)
     plot_data_102 = fix_bad_channels(plot_data_102);
+    
     % Convert depth from feet to meters
     depth_m = das_data.depth_ft * 0.3048;
     apply_plot_config(plot_time_102, depth_m, plot_data_102', config, 'waterfall');
@@ -692,9 +693,22 @@ for i = 1:length(test_labels)
             % Convert head levels to drawdown rate for better comparison with displacement rate
             [drawdown_rate_ftmin, rate_time] = calculate_drawdown_rate(pw_data.recovery_data.Date, pw_data.recovery_data.Drawdownft, 'ft_per_min');
             % Convert from ft/min to m/s: 1 ft/min = 0.3048/60 m/s = 0.00508 m/s
-            % Flip sign for recovery (negative drawdown rate = recovery)
             drawdown_rate = drawdown_rate_ftmin * 0.00508;
-            plot(rate_time, drawdown_rate, 'Color', [0.0000 1.0000 1.0000], 'LineStyle', '-', 'LineWidth', 0.8, 'DisplayName', 'Drawdown Rate PT-01a');
+            % Flip sign for PT01b (recovery appears inverted)
+            if contains(test_label, 'PT01b', 'IgnoreCase', true)
+                drawdown_rate = -drawdown_rate;
+            end
+            % Determine well name for label
+            if contains(test_label, 'PT01a', 'IgnoreCase', true)
+                pw_label = 'PT-01a';
+            elseif contains(test_label, 'PT01b', 'IgnoreCase', true)
+                pw_label = 'PT-01b';
+            elseif contains(test_label, 'PT01c', 'IgnoreCase', true)
+                pw_label = 'PT-01c';
+            else
+                pw_label = 'PW';
+            end
+            plot(rate_time, drawdown_rate, 'Color', [0.0000 1.0000 1.0000], 'LineStyle', '-', 'LineWidth', 0.8, 'DisplayName', sprintf('Drawdown Rate %s', pw_label));
             if strcmpi(test_label, 'PT01a_Recovery_short')
                 xlim([datetime('2023-11-07 20:44:30', 'TimeZone', 'UTC'), datetime('2023-11-07 20:47:30', 'TimeZone', 'UTC')]);
             else
@@ -715,7 +729,7 @@ for i = 1:length(test_labels)
             % ylim auto-scales for subplot 3 to match data resolution
             
             legend('show', 'Location', 'best');
-            title('Drawdown Rate at PT-01a & Displacement Rate at PM-07');
+            title(sprintf('Drawdown Rate at %s & Displacement Rate at PM-07', pw_label));
             text(-0.12, 0.95, '(c)', 'Units', 'normalized', 'FontSize', 14, 'FontWeight', 'bold', 'VerticalAlignment', 'top');
             grid on;
             chart_logger('    Plotted pumping well (pw) drawdown rate data');

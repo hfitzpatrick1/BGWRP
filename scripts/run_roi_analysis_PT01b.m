@@ -20,9 +20,16 @@ console_log('Auto-detected dataset: %s\n', test_name);
 lr_config = struct();
 lr_config.zone = 'z4';
 lr_config.depth_range_ft = [350, 400];  % PT01b full screened interval (required)
-lr_config.timing_correction_sec = -5;   % Optimal timing for full 350-400 ft range (R²=0.783)
-lr_config.visual_strain_shift_sec = -5;
+lr_config.timing_correction_sec = 0;    % Head data stays fixed (same approach as PT01c)
+lr_config.strain_shift_sec = 0;         % Strain shift for regression alignment (tune as needed)
+lr_config.visual_strain_shift_sec = 0;
 lr_config.show_plots = true;
+
+% Pass dataset smoothing config from global config
+run('config.m');
+if isfield(config, 'dataset_smoothing')
+    lr_config.dataset_smoothing = config.dataset_smoothing;
+end
 
 % Focus on PEAK REGION for best correlation (PT01b dates: Oct 31, 2023)
 % 75-second window to match PT-01a (optimal placement for R²=0.783)

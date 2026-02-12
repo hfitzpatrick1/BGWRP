@@ -67,8 +67,8 @@ config.analysis_windows.PT01a_Recovery_short.end = datetime(2023,11,07,20,47,30,
 config.analysis_windows.PT01a_Recovery_100.start = datetime(2023,11,07,20,44,30,00,'TimeZone','UTC');
 config.analysis_windows.PT01a_Recovery_100.end = datetime(2023,11,07,20,47,30,00,'TimeZone','UTC');
 
-% PT01b_Recovery_100 analysis window (100Hz data - same time window as 1Hz)
-config.analysis_windows.PT01b_Recovery_100.start = datetime(2023,10,31,19,29,00,00,'TimeZone','UTC');
+% PT01b_Recovery_100 analysis window (100Hz data - adjusted for Figure 102)
+config.analysis_windows.PT01b_Recovery_100.start = datetime(2023,10,31,19,29,30,00,'TimeZone','UTC');
 config.analysis_windows.PT01b_Recovery_100.end = datetime(2023,10,31,19,32,00,00,'TimeZone','UTC');
 
 % PT01c_Recovery_100 analysis window (100Hz data - same time window as 1Hz)
@@ -326,10 +326,10 @@ config.manual_bounds.PT01a_Recovery_100.pw_head_strain.max = 5;
 
 % ===== PT01b_Recovery_100 bounds (100Hz data - same well as Recovery_short) =====
 % Starting values copied from PT01b_Recovery_short; adjust after first run
-config.manual_bounds.PT01b_Recovery_100.raw_data.min = -0.45;
-config.manual_bounds.PT01b_Recovery_100.raw_data.max = -0.1;
-config.manual_bounds.PT01b_Recovery_100.displacement_rate.min = -0.45;
-config.manual_bounds.PT01b_Recovery_100.displacement_rate.max = -0.1;
+config.manual_bounds.PT01b_Recovery_100.raw_data.min = -0.43;
+config.manual_bounds.PT01b_Recovery_100.raw_data.max = -0.22;
+config.manual_bounds.PT01b_Recovery_100.displacement_rate.min = -0.43;
+config.manual_bounds.PT01b_Recovery_100.displacement_rate.max = -0.22;
 config.manual_bounds.PT01b_Recovery_100.strain.min = -0.2;
 config.manual_bounds.PT01b_Recovery_100.strain.max = 0.2;
 config.manual_bounds.PT01b_Recovery_100.head_data.min = -0.0001;
@@ -342,7 +342,7 @@ config.manual_bounds.PT01b_Recovery_100.strain_line.min = -0.2;
 config.manual_bounds.PT01b_Recovery_100.strain_line.max = 0.2;
 config.manual_bounds.PT01b_Recovery_100.head_data_strain.min = -0.0001;
 config.manual_bounds.PT01b_Recovery_100.head_data_strain.max = 0.0003;
-config.manual_bounds.PT01b_Recovery_100.depth_axis.min = 89;   % ~27 m
+config.manual_bounds.PT01b_Recovery_100.depth_axis.min = 164;  % ~50 m (excludes near-surface artifacts)
 config.manual_bounds.PT01b_Recovery_100.depth_axis.max = 656;  % ~200 m
 config.manual_bounds.PT01b_Recovery_100.pw_head_strain.min = -0.025;
 config.manual_bounds.PT01b_Recovery_100.pw_head_strain.max = 0.076;
@@ -467,7 +467,8 @@ config.dataset_smoothing.PT01B_RECOVERY_SHORT.regression_window_sec = 40;
 config.dataset_smoothing.PT01B_RECOVERY_100.fs = 100;  % Sampling rate (Hz)
 config.dataset_smoothing.PT01B_RECOVERY_100.preprocessing_window_sec = 60;    % Analysis smoothing (uniform with PT01c)
 config.dataset_smoothing.PT01B_RECOVERY_100.strain_rate_window_sec = 60;      % Strain rate smoothing (uniform with PT01c)
-config.dataset_smoothing.PT01B_RECOVERY_100.regression_window_sec = 40;       % Linear regression smoothing
+config.dataset_smoothing.PT01B_RECOVERY_100.regression_window_sec = 15;       % Linear regression smoothing (matches PT01c)
+config.dataset_smoothing.PT01B_RECOVERY_100.regression_smooth_passes = 1;     % Single pass (matches PT01c)
 
 %% Storage Analysis Parameters (Traditional Pump Test Values for Comparison)
 % From PT-01A Step Drawdown Test (10/24/23)
