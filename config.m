@@ -326,10 +326,10 @@ config.manual_bounds.PT01a_Recovery_100.pw_head_strain.max = 5;
 
 % ===== PT01b_Recovery_100 bounds (100Hz data - same well as Recovery_short) =====
 % Starting values copied from PT01b_Recovery_short; adjust after first run
-config.manual_bounds.PT01b_Recovery_100.raw_data.min = -0.43;
-config.manual_bounds.PT01b_Recovery_100.raw_data.max = -0.22;
-config.manual_bounds.PT01b_Recovery_100.displacement_rate.min = -0.43;
-config.manual_bounds.PT01b_Recovery_100.displacement_rate.max = -0.22;
+config.manual_bounds.PT01b_Recovery_100.raw_data.min = -0.45;
+config.manual_bounds.PT01b_Recovery_100.raw_data.max = -0.1;
+config.manual_bounds.PT01b_Recovery_100.displacement_rate.min = -0.45;
+config.manual_bounds.PT01b_Recovery_100.displacement_rate.max = -0.1;
 config.manual_bounds.PT01b_Recovery_100.strain.min = -0.2;
 config.manual_bounds.PT01b_Recovery_100.strain.max = 0.2;
 config.manual_bounds.PT01b_Recovery_100.head_data.min = -0.0001;
@@ -465,8 +465,8 @@ config.dataset_smoothing.PT01B_RECOVERY_SHORT.regression_window_sec = 40;
 
 % PT01b_Recovery_100 (100 Hz data) - UPPERCASE to match test_label
 config.dataset_smoothing.PT01B_RECOVERY_100.fs = 100;  % Sampling rate (Hz)
-config.dataset_smoothing.PT01B_RECOVERY_100.preprocessing_window_sec = 60;    % Analysis smoothing (uniform with PT01c)
-config.dataset_smoothing.PT01B_RECOVERY_100.strain_rate_window_sec = 60;      % Strain rate smoothing (uniform with PT01c)
+config.dataset_smoothing.PT01B_RECOVERY_100.preprocessing_window_sec = 30;    % Analysis smoothing (reduced - weaker signal)
+config.dataset_smoothing.PT01B_RECOVERY_100.strain_rate_window_sec = 30;      % Strain rate smoothing (reduced - weaker signal)
 config.dataset_smoothing.PT01B_RECOVERY_100.regression_window_sec = 15;       % Linear regression smoothing (matches PT01c)
 config.dataset_smoothing.PT01B_RECOVERY_100.regression_smooth_passes = 1;     % Single pass (matches PT01c)
 

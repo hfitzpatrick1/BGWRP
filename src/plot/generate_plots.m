@@ -464,6 +464,12 @@ for i = 1:length(test_labels)
     % Fix bad DAS channels (display only)
     plot_data_102 = fix_bad_channels(plot_data_102);
     
+    % Spatial smoothing across channels to reduce horizontal banding (PT01b)
+    if contains(test_label, 'PT01b', 'IgnoreCase', true)
+        plot_data_102 = movmean(plot_data_102, 40, 2, 'omitnan');  % 40 channels (~10m) spatial smoothing
+        chart_logger('    Applied 40-channel spatial smoothing to reduce banding');
+    end
+    
     % Convert depth from feet to meters
     depth_m = das_data.depth_ft * 0.3048;
     apply_plot_config(plot_time_102, depth_m, plot_data_102', config, 'waterfall');
@@ -534,7 +540,19 @@ for i = 1:length(test_labels)
     das_plot_shift = -13;  % No shift for Figure 102 (shift only applied in regression figure)
     ext_mask = das_data.time_array >= analysis_start - seconds(abs(das_plot_shift) + 15) & das_data.time_array <= analysis_end + seconds(abs(das_plot_shift) + 15);
     plot_das_time_ext = das_data.time_array(ext_mask) + seconds(das_plot_shift);
-    plot_das_rate_ext = das_data.smoothed_data(ext_mask, das_data.pumping_zone.channel_idx);
+    % For PT01b: pick the most responsive channel in the screened interval
+    if contains(test_label, 'PT01b', 'IgnoreCase', true)
+        screen_ch_mask = das_data.depth_ft >= 350 & das_data.depth_ft <= 400;
+        screen_data = das_data.smoothed_data(ext_mask, screen_ch_mask);
+        ch_variance = var(screen_data, 0, 1, 'omitnan');
+        [~, best_ch_local] = max(ch_variance);
+        screen_indices = find(screen_ch_mask);
+        best_ch_idx = screen_indices(best_ch_local);
+        plot_das_rate_ext = das_data.smoothed_data(ext_mask, best_ch_idx);
+        chart_logger('    PT01b: Using most responsive channel at %.1f ft (idx %d, variance=%.2e)', das_data.depth_ft(best_ch_idx), best_ch_idx, ch_variance(best_ch_local));
+    else
+        plot_das_rate_ext = das_data.smoothed_data(ext_mask, das_data.pumping_zone.channel_idx);
+    end
     
     subplot(3,1,2);
     if ~isempty(head_data)
