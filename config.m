@@ -69,11 +69,11 @@ config.analysis_windows.PT01a_Recovery_100.end = datetime(2023,11,07,20,47,30,00
 
 % PT01b_Recovery_100 analysis window (100Hz data - adjusted for Figure 102)
 config.analysis_windows.PT01b_Recovery_100.start = datetime(2023,10,31,19,29,30,00,'TimeZone','UTC');
-config.analysis_windows.PT01b_Recovery_100.end = datetime(2023,10,31,19,32,00,00,'TimeZone','UTC');
+config.analysis_windows.PT01b_Recovery_100.end = datetime(2023,10,31,19,32,30,00,'TimeZone','UTC');
 
 % PT01c_Recovery_100 analysis window (100Hz data - same time window as 1Hz)
-config.analysis_windows.PT01c_Recovery_100.start = datetime(2023,10,24,19,14,00,00,'TimeZone','UTC');
-config.analysis_windows.PT01c_Recovery_100.end = datetime(2023,10,24,19,19,00,00,'TimeZone','UTC');
+config.analysis_windows.PT01c_Recovery_100.start = datetime(2023,10,24,19,14,30,00,'TimeZone','UTC');
+config.analysis_windows.PT01c_Recovery_100.end = datetime(2023,10,24,19,17,30,00,'TimeZone','UTC');
 
 %% Zone Filtering Configuration (per dataset)
 % PT-01a START OF PUMPING configurations (NEW DATASET)
@@ -467,8 +467,8 @@ config.dataset_smoothing.PT01B_RECOVERY_SHORT.regression_window_sec = 40;
 config.dataset_smoothing.PT01B_RECOVERY_100.fs = 100;  % Sampling rate (Hz)
 config.dataset_smoothing.PT01B_RECOVERY_100.preprocessing_window_sec = 30;    % Analysis smoothing (reduced - weaker signal)
 config.dataset_smoothing.PT01B_RECOVERY_100.strain_rate_window_sec = 30;      % Strain rate smoothing (reduced - weaker signal)
-config.dataset_smoothing.PT01B_RECOVERY_100.regression_window_sec = 30;       % Linear regression smoothing (more aggressive for weaker signal)
-config.dataset_smoothing.PT01B_RECOVERY_100.regression_smooth_passes = 3;     % Multi-pass to reduce noise
+config.dataset_smoothing.PT01B_RECOVERY_100.regression_window_sec = 20;       % Linear regression smoothing (best R² balance)
+config.dataset_smoothing.PT01B_RECOVERY_100.regression_smooth_passes = 1;     % Single pass (matches PT-01c approach)
 
 %% Storage Analysis Parameters (Traditional Pump Test Values for Comparison)
 % From PT-01A Step Drawdown Test (10/24/23)

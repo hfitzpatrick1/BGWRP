@@ -74,8 +74,8 @@ try
     reg_mask = das_data_dp.time_array >= reg_start & das_data_dp.time_array <= reg_end;
     mean_disp_rate = mean(das_data_dp.smoothed_data(reg_mask, :), 1, 'omitnan');
     
-    % Spatial smoothing (60 channels = 15m at 0.25m/channel)
-    mean_disp_rate = movmean(mean_disp_rate, 60);
+    % Spatial smoothing (120 channels = 30m at 0.25m/channel)
+    mean_disp_rate = movmean(mean_disp_rate, 120);
     
     % Depth in meters
     depth_m = das_data_dp.depth_ft * 0.3048;

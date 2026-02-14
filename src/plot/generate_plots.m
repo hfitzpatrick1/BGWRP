@@ -335,8 +335,17 @@ for i = 1:length(test_labels)
     end
     
     % Filter data to analysis window BEFORE plotting
-    analysis_mask_fig101 = das_data.time_array >= analysis_start & das_data.time_array <= analysis_end;
-    filtered_time = das_data.time_array(analysis_mask_fig101);
+    % Apply waterfall time shift to align DAS waterfall with head data
+    % Per-dataset waterfall time shift to align DAS waterfall with head data
+    % PT-01c needs -10s, PT-01b may need different value
+    if contains(test_name, 'PT01c', 'IgnoreCase', true)
+        waterfall_shift_sec = -10;  % PT-01c: shift left 10 seconds
+    else
+        waterfall_shift_sec = -15;  % Default: shift left 15 seconds
+    end
+    % Grab extra data to compensate for the shift so the plot fills the full window
+    analysis_mask_fig101 = das_data.time_array >= analysis_start & das_data.time_array <= analysis_end - seconds(waterfall_shift_sec);
+    filtered_time = das_data.time_array(analysis_mask_fig101) + seconds(waterfall_shift_sec);
     filtered_data = das_data.smoothed_data(analysis_mask_fig101, :);
     
     % Downsample for plotting if data is high-resolution (>2000 time points)
@@ -475,9 +484,10 @@ for i = 1:length(test_labels)
     subplot(3,1,1);
     % Apply configurable plotting method to test pixelation sources
     % For displacement rate, use the analysis window data only
-    analysis_mask = das_data.time_array >= analysis_start & das_data.time_array <= analysis_end;
+    % Grab extra data to compensate for the shift so the plot fills the full window
+    analysis_mask = das_data.time_array >= analysis_start & das_data.time_array <= analysis_end - seconds(waterfall_shift_sec);
     analysis_smoothed_data = das_data.smoothed_data(analysis_mask, :);
-    analysis_time_array = das_data.time_array(analysis_mask);
+    analysis_time_array = das_data.time_array(analysis_mask) + seconds(waterfall_shift_sec);
     % Downsample for plotting if high-resolution
     plot_time_102 = analysis_time_array;
     plot_data_102 = analysis_smoothed_data;
@@ -672,7 +682,7 @@ for i = 1:length(test_labels)
                             % Convert from ft/min to m/s: 1 ft/min = 0.3048/60 m/s = 0.00508 m/s
                             drawdown_rate = drawdown_rate_ftmin * 0.00508;
                             plot(rate_time, drawdown_rate, ...
-                                'Color', zone_color, 'LineStyle', '-', 'LineWidth', 1.2, ...
+                                'Color', zone_color, 'LineStyle', '-', 'LineWidth', 2.0, ...
                                 'DisplayName', sprintf('Drawdown Rate %s', zone_name));
                         end
                     end
@@ -774,7 +784,7 @@ for i = 1:length(test_labels)
             else
                 pw_label = 'PW';
             end
-            plot(rate_time, drawdown_rate, 'Color', [0.0000 1.0000 1.0000], 'LineStyle', '-', 'LineWidth', 0.8, 'DisplayName', sprintf('Drawdown Rate %s', pw_label));
+            plot(rate_time, drawdown_rate, 'Color', [0.0000 1.0000 1.0000], 'LineStyle', '-', 'LineWidth', 2.0, 'DisplayName', sprintf('Drawdown Rate %s', pw_label));
             if strcmpi(test_label, 'PT01a_Recovery_short')
                 xlim([datetime('2023-11-07 20:44:30', 'TimeZone', 'UTC'), datetime('2023-11-07 20:47:30', 'TimeZone', 'UTC')]);
             else
@@ -1083,7 +1093,7 @@ for i = 1:length(test_labels)
            isfield(pw_data.recovery_data, 'Date') && length(pw_data.recovery_data.Date) > 1
             
             yyaxis left;
-            plot(pw_data.recovery_data.Date, pw_data.recovery_data.Drawdownft, 'Color', [0.0000 1.0000 1.0000], 'LineStyle', '-', 'LineWidth', 0.8, 'DisplayName', 'Pumping Well Head');
+            plot(pw_data.recovery_data.Date, pw_data.recovery_data.Drawdownft, 'Color', [0.0000 1.0000 1.0000], 'LineStyle', '-', 'LineWidth', 2.0, 'DisplayName', 'Pumping Well Head');
             if strcmpi(test_label, 'PT01a_Recovery_short')
                 xlim([datetime('2023-11-07 20:44:30', 'TimeZone', 'UTC'), datetime('2023-11-07 20:47:30', 'TimeZone', 'UTC')]);
             else
