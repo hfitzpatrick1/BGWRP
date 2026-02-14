@@ -454,8 +454,8 @@ config.dataset_smoothing.PT01C_RECOVERY_SHORT.regression_window_sec = 40;
 config.dataset_smoothing.PT01C_RECOVERY_100.fs = 100;  % Sampling rate (Hz)
 config.dataset_smoothing.PT01C_RECOVERY_100.preprocessing_window_sec = 30;    % Analysis smoothing (reduced, matches PT01a/b)
 config.dataset_smoothing.PT01C_RECOVERY_100.strain_rate_window_sec = 30;      % Strain rate smoothing (reduced, matches PT01a/b)
-config.dataset_smoothing.PT01C_RECOVERY_100.regression_window_sec = 20;       % Linear regression smoothing (increased for 30s data)
-config.dataset_smoothing.PT01C_RECOVERY_100.regression_smooth_passes = 2;     % Two passes (matches PT01a)
+config.dataset_smoothing.PT01C_RECOVERY_100.regression_window_sec = 20;       % Linear regression smoothing
+config.dataset_smoothing.PT01C_RECOVERY_100.regression_smooth_passes = 1;     % Single pass
 
 % PT01b_Recovery_short (1 Hz data) - UPPERCASE to match test_label
 config.dataset_smoothing.PT01B_RECOVERY_SHORT.fs = 1;  % Sampling rate (Hz)

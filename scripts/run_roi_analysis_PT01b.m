@@ -74,7 +74,7 @@ console_log('\n');
 
 % Storage configuration
 storage_config = struct();
-storage_config.alpha = 0.90;
+storage_config.alpha = 1.0;  % Biot-Willis coefficient for unconsolidated alluvium
 storage_config.gamma_unit = 'SI';
 storage_config.poisson_ratio = 0.30;
 

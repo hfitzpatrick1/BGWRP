@@ -80,7 +80,7 @@ console_log('\n');
 
 % Storage configuration - MATCH SINGLE CHANNEL SETTINGS
 storage_config = struct();
-storage_config.alpha = 0.90;  % Same as single channel (was 0.95)
+storage_config.alpha = 1.0;  % Biot-Willis coefficient for unconsolidated alluvium
 storage_config.gamma_unit = 'SI';  % Use SI units
 storage_config.poisson_ratio = 0.30;  % Typical for sand/sandstone
 

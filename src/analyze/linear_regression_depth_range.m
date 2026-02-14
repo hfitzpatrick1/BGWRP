@@ -188,103 +188,23 @@ end
 console_log('✓ Applied 5-second smoothing to all channels in zone\n');
 console_log('✓ This matches single-channel processing and reduces spatial difference noise\n');
 
-%% Convert to strain rate using correct formula: ε̇ = [u̇(z+L) - u̇(z)] / L
+%% Convert to strain rate: ε̇(z,t) = u̇_DAS(z,t) / L
+% DAS output is the integrated strain over the gauge length:
+%   u̇_DAS = ε̇ × L → ε̇ = u̇_DAS / L
 gauge_length_m = 10;  % DAS gauge length in meters
-spatial_resolution_m = 0.25;  % Spatial resolution per channel (0.2496 m with scaling)
-channels_per_gauge = round(gauge_length_m / spatial_resolution_m);  % ~40 channels
 
-console_log('Calculating strain rate using difference across gauge length:\n');
+console_log('\n=== STRAIN RATE CALCULATION ===\n');
+console_log('  Formula: ε̇(z,t) = u̇_DAS(z,t) / L\n');
 console_log('  Gauge length: %.1f m\n', gauge_length_m);
-console_log('  Spatial resolution: %.3f m/channel\n', spatial_resolution_m);
-console_log('  Channels per gauge: %d\n', channels_per_gauge);
-
-% Calculate strain rate using CLEAN implementation of ε̇ = [u̇(z+L) - u̇(z)] / L
-% Using correct 10m gauge length as per DAS specifications
-gauge_length_m = 10;  % DAS gauge length - instrument specification
-channels_per_gauge = round(gauge_length_m / spatial_resolution_m);  % ~40 channels
-
-console_log('Using spatial difference with correct DAS gauge length:\n');
-console_log('  Gauge length: %.1f m (DAS specification)\n', gauge_length_m);
-console_log('  Channels per gauge: %d\n', channels_per_gauge);
-
-n_channels_zone = size(displacement_rate_zone, 2);
-console_log('DEBUG: n_channels_zone = %d, channels_per_gauge = %d\n', n_channels_zone, channels_per_gauge);
-console_log('DEBUG: strain_rate_zone will have %d columns\n', n_channels_zone - channels_per_gauge);
-
-if n_channels_zone <= channels_per_gauge
-    error('Not enough channels in depth range (%d) to calculate strain rate with %d-channel gauge length', ...
-        n_channels_zone, channels_per_gauge);
-end
-
-strain_rate_zone = zeros(size(displacement_rate_zone, 1), n_channels_zone - channels_per_gauge);
-
-% BECKER APPROACH: Find most responsive zones first, then analyze separately
-console_log('\n=== IDENTIFYING RESPONSIVE ZONES (Becker Method) ===\n');
-
-% Calculate strain rate for each possible channel pair
-n_channels_zone = size(displacement_rate_zone, 2);
-all_strain_rates = zeros(size(displacement_rate_zone, 1), n_channels_zone - channels_per_gauge);
-
-% CORRECTED: Use CENTERED difference like the DAS instrument does internally
-% From the paper: DAS uses [u(z+dz/2) - u(z-dz/2)] not [u(z+dz) - u(z)]
-console_log('CRITICAL INSIGHT: Using CENTERED spatial difference (like DAS instrument)\n');
-console_log('Formula: ε̇ = [u̇(z+L/2) - u̇(z-L/2)] / L (centered difference)\n');
-
-half_gauge_channels = round(channels_per_gauge / 2);  % 20 channels = 5m
-all_strain_rates = zeros(size(displacement_rate_zone, 1), n_channels_zone - channels_per_gauge);
-
-for ch = (half_gauge_channels + 1):(n_channels_zone - half_gauge_channels)
-    % Centered difference: u̇(z+5m) - u̇(z-5m) over 10m gauge length
-    displacement_diff = displacement_rate_zone(:, ch + half_gauge_channels) - displacement_rate_zone(:, ch - half_gauge_channels);
-    all_strain_rates(:, ch - half_gauge_channels) = displacement_diff / (gauge_length_m * 1e9);
-end
-
-console_log('✓ Using centered spatial difference (matches DAS instrument design)\n');
-
-% ADAPTIVE APPROACH: Find the depth with maximum spatial gradient (best for strain rate)
-% Calculate spatial gradients across the zone to find most responsive area
-spatial_gradients = zeros(size(displacement_rate_zone, 1), size(displacement_rate_zone, 2) - channels_per_gauge);
-for t = 1:size(displacement_rate_zone, 1)
-    for ch = 1:(size(displacement_rate_zone, 2) - channels_per_gauge)
-        spatial_gradients(t, ch) = abs(displacement_rate_zone(t, ch + channels_per_gauge) - displacement_rate_zone(t, ch));
-    end
-end
-
-% AUTOMATIC DEPTH SELECTION: Find most responsive depth pair in the zone
-console_log('\n=== CALCULATING STRAIN RATES ACROSS ENTIRE ZONE ===\n');
-console_log('  Will calculate strain rate at every valid depth using 10m gauge\n');
-console_log('  Then select the MOST RESPONSIVE depth pair (maximum peak strain)\n');
-
-% For each valid starting position in the zone
-n_valid_points = n_channels_zone - channels_per_gauge;
-all_strain_rates = zeros(size(displacement_rate_zone, 1), n_valid_points);
-
-console_log('  Depth range: %.1f to %.1f ft\n', depth_ft_zone(1), depth_ft_zone(end));
-console_log('  Valid depth pairs: %d\n', n_valid_points);
-
-for i = 1:n_valid_points
-    ch_start_i = i;
-    ch_end_i = i + channels_per_gauge;
-    displacement_diff_i = displacement_rate_zone(:, ch_end_i) - displacement_rate_zone(:, ch_start_i);
-    all_strain_rates(:, i) = displacement_diff_i / (gauge_length_m * 1e9);
-end
-
-% MAXIMUM ENVELOPE with MOVING AVERAGE (to match Bourdet-style smoothing on head data)
-console_log('\n=== MAXIMUM ENVELOPE + MOVING AVERAGE SMOOTHING ===\n');
-console_log('  Step 1: Maximum envelope across all depths (preserves peak)\n');
-console_log('  Step 2: Apply 60-second moving average (matching head data smoothing)\n');
+console_log('  Channels in ROI: %d\n', size(displacement_rate_zone, 2));
 console_log('  Depth range: %.0f-%.0f ft\n', config.depth_range_ft(1), config.depth_range_ft(2));
 
-% Take maximum absolute value at each time point across all depths
-strain_rate_zone = max(abs(all_strain_rates), [], 2);
+% Average displacement rate across all channels in the ROI, then divide by L
+avg_displacement_rate = mean(displacement_rate_zone, 2, 'omitnan');
+strain_rate_zone = avg_displacement_rate / (gauge_length_m * 1e9);
 
-% Preserve original sign
-[~, max_idx] = max(abs(all_strain_rates), [], 2);
-for t = 1:length(strain_rate_zone)
-    strain_rate_zone(t) = strain_rate_zone(t) * sign(all_strain_rates(t, max_idx(t)));
-end
-
-console_log('  Calculated maximum envelope at %d depths\n', n_valid_points);
+n_valid_points = size(displacement_rate_zone, 2);
+console_log('  Averaged across %d channels, divided by L = %.0f m\n', n_valid_points, gauge_length_m);
 console_log('  BEFORE additional smoothing: PEAK = %.4e 1/s\n', max(abs(strain_rate_zone)));
 
 % Apply smoothing (default 40 seconds, or dataset-specific)
@@ -400,14 +320,13 @@ time_head_overlap = time_head_rate(valid_head_idx);
 ft_to_m = 0.3048;
 head_rate_overlap = drawdown_rate_ftps(valid_head_idx) * ft_to_m;  % m/s
 
-% ADDITIONAL SMOOTHING to Bourdet derivative - MATCH STRAIN RATE SMOOTHING
+% LIGHT SMOOTHING to Bourdet derivative
 console_log('\n=== ADDITIONAL SMOOTHING TO BOURDET DERIVATIVE ===\n');
 console_log('Note: Bourdet derivative already provides noise reduction\n');
-console_log('Applying 12-point (~60s) moving average to MATCH strain rate Butterworth period...\n');
-% Since drawdown is sampled at 0.2 Hz (every 5 sec), 12 points = 60 seconds
-% This matches the 60s Butterworth filter applied to strain rate
-head_rate_overlap = movmean(head_rate_overlap, 12, 'omitnan');
-console_log('✓ Applied 12-point moving average to match 60s strain rate smoothing\n');
+% Since drawdown is sampled at 0.2 Hz (every 5 sec), 3 points = 15 seconds
+% Light smoothing preserves signal shape for correlation with strain rate
+head_rate_overlap = movmean(head_rate_overlap, 3, 'omitnan');
+console_log('✓ Applied 3-point (~15s) moving average to Bourdet derivative\n');
 % strain_smoothed should be from the windowed data, but check sizes
 if length(strain_smoothed) ~= length(time_das)
     console_log('WARNING: strain_smoothed (%d) and time_das (%d) size mismatch!\n', ...
@@ -499,24 +418,12 @@ console_log('\n=== WEIGHTED REGRESSION RESULTS ===\n');
 % This will allow plots to show context around the regression window
 console_log('\n=== PREPARING FULL WINDOW DATA FOR PLOTTING ===\n');
 if exist('time_das_full_plot', 'var') && exist('displacement_rate_full_plot', 'var')
-    % Calculate strain rate for full plotting window (same process as regression window)
+    % Calculate strain rate for full plotting window (same method as regression window)
     displacement_rate_zone_plot = displacement_rate_full_plot(:, depth_mask);
     
-    % Calculate strain rate across gauge length for full window
-    n_channels_plot = size(displacement_rate_zone_plot, 2);
-    all_strain_rates_plot = zeros(size(displacement_rate_zone_plot, 1), n_channels_plot - channels_per_gauge);
-    
-    for ch = (half_gauge_channels + 1):(n_channels_plot - half_gauge_channels)
-        displacement_diff = displacement_rate_zone_plot(:, ch + half_gauge_channels) - displacement_rate_zone_plot(:, ch - half_gauge_channels);
-        all_strain_rates_plot(:, ch - half_gauge_channels) = displacement_diff / (gauge_length_m * 1e9);
-    end
-    
-    % Maximum envelope + smoothing for full window
-    strain_rate_zone_plot = max(abs(all_strain_rates_plot), [], 2);
-    [~, max_idx_plot] = max(abs(all_strain_rates_plot), [], 2);
-    for t = 1:length(strain_rate_zone_plot)
-        strain_rate_zone_plot(t) = strain_rate_zone_plot(t) * sign(all_strain_rates_plot(t, max_idx_plot(t)));
-    end
+    % Average displacement rate across ROI and divide by gauge length
+    avg_displacement_rate_plot = mean(displacement_rate_zone_plot, 2, 'omitnan');
+    strain_rate_zone_plot = avg_displacement_rate_plot / (gauge_length_m * 1e9);
     
     strain_raw_plot = strain_rate_zone_plot;
     strain_smoothed_plot = movmean(strain_rate_zone_plot, 40, 'omitnan');  % 40-second smoothing
@@ -787,12 +694,9 @@ if config.show_plots
     % NO additional smoothing - the 50-second moving average is already applied
     % (Removed 10s + 5s double-pass smoothing)
     
-    % Shift displacement time LEFT by strain_shift_sec to align with strain rate timing
-    if config.strain_shift_sec ~= 0
-        time_disp_plot = time_das_full_plot - seconds(config.strain_shift_sec);
-    else
-        time_disp_plot = time_das_full_plot;
-    end
+    % Displacement rate and strain rate both come from DAS — use same time axis
+    % (Strain shift only applies when aligning DAS with head data in subplots 2 & 4)
+    time_disp_plot = time_das_full_plot;
     
     yyaxis left;
     plot(time_disp_plot, displacement_rate_avg_raw_plot, 'b-', 'LineWidth', 0.8, 'DisplayName', 'Displacement Rate (raw)', 'Color', [0.7 0.7 1]);

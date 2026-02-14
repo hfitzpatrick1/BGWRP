@@ -21,7 +21,7 @@ lr_config = struct();
 lr_config.zone = 'z5';
 lr_config.depth_range_ft = [260, 310];  % PT01c screened interval (79.25-94.49 m)
 lr_config.timing_correction_sec = 0;
-lr_config.strain_shift_sec =58
+lr_config.strain_shift_sec = -14;
 lr_config.visual_strain_shift_sec = 0;
 lr_config.show_plots = true;
 
@@ -74,7 +74,7 @@ console_log('\n');
 
 % Storage configuration
 storage_config = struct();
-storage_config.alpha = 0.90;
+storage_config.alpha = 1.0;  % Biot-Willis coefficient for unconsolidated alluvium
 storage_config.gamma_unit = 'SI';
 storage_config.poisson_ratio = 0.30;
 
