@@ -1,0 +1,293 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Conclusion slide: PM-07 cross-section with key findings annotated -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 2400 1200" width="2400" height="1200">
+  <defs>
+    <linearGradient id="bellflower" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#e9b3b3"/>
+      <stop offset="100%" stop-color="#d28686"/>
+    </linearGradient>
+    <linearGradient id="gage" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#ffe792"/>
+      <stop offset="100%" stop-color="#e7c760"/>
+    </linearGradient>
+    <linearGradient id="lynwood" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#97b7ff"/>
+      <stop offset="100%" stop-color="#6a93f0"/>
+    </linearGradient>
+    <linearGradient id="brackish" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#6e6c97"/>
+      <stop offset="100%" stop-color="#56547a"/>
+    </linearGradient>
+    <linearGradient id="lsp" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#6fb788"/>
+      <stop offset="100%" stop-color="#4f9b6b"/>
+    </linearGradient>
+    <pattern id="screen-hatch" patternUnits="userSpaceOnUse" width="8" height="8" patternTransform="rotate(45)">
+      <rect width="8" height="8" fill="#e3f2ff"/>
+      <path d="M0 0 L0 8" stroke="#5b9fff" stroke-width="2"/>
+    </pattern>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L10,5 L0,10 Z" fill="#1f2937"/>
+    </marker>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#000" flood-opacity="0.25" />
+    </filter>
+    <!-- DAS response glow -->
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="6" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- Title bar -->
+  <rect x="0" y="0" width="2400" height="90" fill="#2D2D2D"/>
+  <text x="40" y="58" fill="#ffffff" font-size="38" font-family="Segoe UI, Roboto, Helvetica, Arial, sans-serif" font-weight="700">Conclusion: DAS + DTS Results at PM-07 Across Three Pump Tests</text>
+
+  <!-- ============================================================ -->
+  <!-- CROSS-SECTION AREA (left ~65%) -->
+  <!-- ============================================================ -->
+
+  <!-- Depth axis and grid (0-170 m, 4 px/m, offset by title) -->
+  <g id="grid" transform="translate(0,90)" font-family="Segoe UI, Roboto, Helvetica, Arial, sans-serif">
+    <rect x="0" y="0" width="1600" height="700" fill="#ffffff"/>
+    <g stroke="#d1d5db" stroke-dasharray="4 4" opacity="0.5">
+      <line x1="20" y1="0" x2="1580" y2="0"/>
+      <line x1="20" y1="60" x2="1580" y2="60"/>
+      <line x1="20" y1="120" x2="1580" y2="120"/>
+      <line x1="20" y1="180" x2="1580" y2="180"/>
+      <line x1="20" y1="240" x2="1580" y2="240"/>
+      <line x1="20" y1="300" x2="1580" y2="300"/>
+      <line x1="20" y1="360" x2="1580" y2="360"/>
+      <line x1="20" y1="420" x2="1580" y2="420"/>
+      <line x1="20" y1="480" x2="1580" y2="480"/>
+      <line x1="20" y1="540" x2="1580" y2="540"/>
+      <line x1="20" y1="600" x2="1580" y2="600"/>
+      <line x1="20" y1="660" x2="1580" y2="660"/>
+    </g>
+    <g id="depth-axis" transform="translate(20,0)" fill="#374151" font-size="14" font-weight="600">
+      <rect x="-6" y="0" width="6" height="700" fill="#000000"/>
+      <text x="14" y="14">0 m</text>
+      <text x="14" y="74">15 m</text>
+      <text x="14" y="134">30 m</text>
+      <text x="14" y="194">45 m</text>
+      <text x="14" y="254">60 m</text>
+      <text x="14" y="314">75 m</text>
+      <text x="14" y="374">90 m</text>
+      <text x="14" y="434">105 m</text>
+      <text x="14" y="494">120 m</text>
+      <text x="14" y="554">135 m</text>
+      <text x="14" y="614">150 m</text>
+      <text x="14" y="674">165 m</text>
+    </g>
+  </g>
+
+  <!-- Geological sequences (4 px/m scale) -->
+  <g id="formations" transform="translate(0,90)" font-family="Segoe UI, Roboto, Helvetica, Arial, sans-serif">
+    <!-- Bellflower Aquiclude: 0-52 m = 0-208 px -->
+    <rect x="100" y="0" width="1500" height="208" fill="url(#bellflower)"/>
+    <!-- Gage-Gardena Aquifer: 52-91 m = 208-364 px -->
+    <rect x="100" y="208" width="1500" height="156" fill="url(#gage)"/>
+    <!-- Lynwood/Silverado Aquifer: 91-140 m = 364-560 px -->
+    <rect x="100" y="364" width="1500" height="196" fill="url(#lynwood)"/>
+    <!-- Lynwood/Silverado Brackish: 140-170 m = 560-680 px -->
+    <rect x="100" y="560" width="1500" height="120" fill="url(#brackish)"/>
+
+    <g fill="#1f2937" font-size="20" font-weight="700" text-anchor="end">
+      <text x="1580" y="110">Bellflower Aquiclude</text>
+      <text x="1580" y="290">Gage-Gardena Aquifer</text>
+      <text x="1580" y="470">Lynwood/Silverado Aquifer</text>
+      <text x="1580" y="620">Lynwood/Silverado Brackish</text>
+    </g>
+  </g>
+
+  <!-- PM-07 nested well -->
+  <g id="PM-07" transform="translate(350,90)" font-family="Segoe UI, Roboto, Helvetica, Arial, sans-serif">
+    <text x="-20" y="-12" font-size="22" font-weight="700" fill="#ffffff">PM-07</text>
+    <text x="-20" y="8" font-size="13" fill="#cccccc">5-zone piezometer</text>
+
+    <!-- Zone 5 (shallowest): 88-94 m screen -->
+    <g id="zone5">
+      <rect x="-50" y="0" width="14" height="352" fill="#8b9aa6" stroke="#4a5661" stroke-width="1.2"/>
+      <rect x="-50" y="352" width="14" height="24" fill="url(#screen-hatch)" stroke="#4a5661" stroke-width="1.2"/>
+      <text x="-43" y="-6" font-size="12" font-weight="700" fill="#ffffff" text-anchor="middle">Z5</text>
+    </g>
+    <!-- Zone 3: 128-134 m screen -->
+    <g id="zone3">
+      <rect x="-24" y="0" width="14" height="512" fill="#8b9aa6" stroke="#4a5661" stroke-width="1.2"/>
+      <rect x="-24" y="512" width="14" height="24" fill="url(#screen-hatch)" stroke="#4a5661" stroke-width="1.2"/>
+      <text x="-17" y="-6" font-size="12" font-weight="700" fill="#ffffff" text-anchor="middle">Z3</text>
+    </g>
+    <!-- Zone 1 (deepest): 197+ m screen + DAS fiber -->
+    <g id="zone1">
+      <rect x="2" y="0" width="14" height="680" fill="#8b9aa6" stroke="#111827" stroke-width="2"/>
+      <!-- Fiber strapped to outside -->
+      <rect x="17" y="0" width="4" height="680" fill="#ff2c55"/>
+      <text x="9" y="-6" font-size="12" font-weight="700" fill="#ffffff" text-anchor="middle">Z1</text>
+    </g>
+    <!-- Zone 2: 148-154 m screen -->
+    <g id="zone2">
+      <rect x="30" y="0" width="14" height="592" fill="#8b9aa6" stroke="#4a5661" stroke-width="1.2"/>
+      <rect x="30" y="592" width="14" height="24" fill="url(#screen-hatch)" stroke="#4a5661" stroke-width="1.2"/>
+      <text x="37" y="-6" font-size="12" font-weight="700" fill="#ffffff" text-anchor="middle">Z2</text>
+    </g>
+    <!-- Zone 4: 110-116 m screen -->
+    <g id="zone4">
+      <rect x="56" y="0" width="14" height="440" fill="#8b9aa6" stroke="#4a5661" stroke-width="1.2"/>
+      <rect x="56" y="440" width="14" height="24" fill="url(#screen-hatch)" stroke="#4a5661" stroke-width="1.2"/>
+      <text x="63" y="-6" font-size="12" font-weight="700" fill="#ffffff" text-anchor="middle">Z4</text>
+    </g>
+  </g>
+
+  <!-- PT-01c extraction well (screen 79-94 m) -->
+  <g id="PT-01c" transform="translate(800,90)" font-family="Segoe UI, Roboto, Helvetica, Arial, sans-serif">
+    <text x="-25" y="-12" font-size="22" font-weight="700" fill="#ffffff">PT-01c</text>
+    <rect x="-40" y="0" width="80" height="316" fill="#6b7280" stroke="#374151" stroke-width="2"/>
+    <rect x="-40" y="316" width="80" height="60" fill="url(#screen-hatch)" stroke="#4a5661" stroke-width="2"/>
+    <text x="50" y="352" font-size="15" font-weight="700" fill="#111827">79-94 m</text>
+  </g>
+
+  <!-- PT-01a extraction well (screen 137-155 m) -->
+  <g id="PT-01a" transform="translate(1000,90)" font-family="Segoe UI, Roboto, Helvetica, Arial, sans-serif">
+    <text x="-25" y="-12" font-size="22" font-weight="700" fill="#ffffff">PT-01a</text>
+    <rect x="-40" y="0" width="80" height="548" fill="#6b7280" stroke="#374151" stroke-width="2"/>
+    <rect x="-40" y="548" width="80" height="72" fill="url(#screen-hatch)" stroke="#4a5661" stroke-width="2"/>
+    <text x="50" y="590" font-size="15" font-weight="700" fill="#111827">137-155 m</text>
+  </g>
+
+  <!-- PT-01b extraction well (screen 107-122 m) -->
+  <g id="PT-01b" transform="translate(1200,90)" font-family="Segoe UI, Roboto, Helvetica, Arial, sans-serif">
+    <text x="-25" y="-12" font-size="22" font-weight="700" fill="#ffffff">PT-01b</text>
+    <rect x="-40" y="0" width="80" height="428" fill="#6b7280" stroke="#374151" stroke-width="2"/>
+    <rect x="-40" y="428" width="80" height="60" fill="url(#screen-hatch)" stroke="#4a5661" stroke-width="2"/>
+    <text x="50" y="464" font-size="15" font-weight="700" fill="#111827">107-122 m</text>
+  </g>
+
+  <!-- ============================================================ -->
+  <!-- DAS RESPONSE HIGHLIGHTS (colored zones at each screen) -->
+  <!-- ============================================================ -->
+
+  <!-- PT-01c DAS response zone (79-94 m) - orange/red glow -->
+  <rect x="120" y="406" width="1460" height="60" fill="#ff6b35" opacity="0.15" transform="translate(0,0)"/>
+  <rect x="120" y="406" width="1460" height="60" fill="none" stroke="#ff6b35" stroke-width="2" stroke-dasharray="6 3" opacity="0.6"/>
+
+  <!-- PT-01b DAS response zone (107-122 m) - extends downward -->
+  <rect x="120" y="518" width="1460" height="60" fill="#ff6b35" opacity="0.12"/>
+  <rect x="120" y="518" width="1460" height="60" fill="none" stroke="#ff6b35" stroke-width="2" stroke-dasharray="6 3" opacity="0.5"/>
+
+  <!-- PT-01a DAS response zone (137-155 m) - abrupt cutoff -->
+  <rect x="120" y="638" width="1460" height="72" fill="#ff6b35" opacity="0.12"/>
+  <rect x="120" y="638" width="1460" height="72" fill="none" stroke="#ff6b35" stroke-width="2" stroke-dasharray="6 3" opacity="0.5"/>
+
+  <!-- DTS null result annotation - vertical red X lines between formations -->
+  <g transform="translate(0,90)" font-family="Segoe UI, Roboto, Helvetica, Arial, sans-serif">
+    <!-- X marks between Gage-Gardena and Lynwood-Silverado (at 91 m = 364 px) -->
+    <line x1="460" y1="354" x2="480" y2="374" stroke="#dc2626" stroke-width="3.5"/>
+    <line x1="480" y1="354" x2="460" y2="374" stroke="#dc2626" stroke-width="3.5"/>
+    <text x="495" y="370" font-size="14" fill="#dc2626" font-weight="700">No vertical flow (DTS)</text>
+
+    <!-- X marks between Lynwood-Silverado and Brackish (at 140 m = 560 px) -->
+    <line x1="460" y1="550" x2="480" y2="570" stroke="#dc2626" stroke-width="3.5"/>
+    <line x1="480" y1="550" x2="460" y2="570" stroke="#dc2626" stroke-width="3.5"/>
+    <text x="495" y="566" font-size="14" fill="#dc2626" font-weight="700">No vertical flow (DTS)</text>
+  </g>
+
+  <!-- ============================================================ -->
+  <!-- RIGHT PANEL - KEY FINDINGS (~35%) -->
+  <!-- ============================================================ -->
+  <rect x="1610" y="90" width="790" height="700" fill="#2D2D2D" rx="0"/>
+
+  <g font-family="Segoe UI, Roboto, Helvetica, Arial, sans-serif" transform="translate(1630,110)">
+
+    <!-- FINDING 1: Storage Results -->
+    <text x="375" y="30" font-size="22" font-weight="700" fill="#FFD700" text-anchor="middle">Storage Parameter Results</text>
+
+    <!-- PT-01c result box -->
+    <rect x="10" y="55" width="740" height="85" rx="8" fill="#3a3a3a" stroke="#ff6b35" stroke-width="2"/>
+    <text x="30" y="82" font-size="18" font-weight="700" fill="#ffe792">PT-01c  (Gage-Gardena, 79-94 m)</text>
+    <text x="30" y="107" font-size="17" fill="#ffffff">S<tspan font-size="13" dy="3">s</tspan><tspan dy="-3"> = 1.05 � 10</tspan><tspan font-size="13" dy="-6">-7</tspan><tspan dy="6"> 1/m</tspan></text>
+    <text x="420" y="107" font-size="17" fill="#ffffff">R� = 0.941</text>
+    <text x="580" y="107" font-size="17" fill="#ffffff">RMSE = 6.48 � 10<tspan font-size="13" dy="-6">-13</tspan><tspan dy="6"></tspan></text>
+    <rect x="680" y="120" width="55" height="5" rx="2" fill="#22c55e"/>
+    <text x="30" y="130" font-size="14" fill="#9ca3af" font-style="italic">Slope: 3.17 � 10{x | Zone 5 piezometer</text>
+
+    <!-- PT-01b result box -->
+    <rect x="10" y="155" width="740" height="85" rx="8" fill="#3a3a3a" stroke="#6a93f0" stroke-width="2"/>
+    <text x="30" y="182" font-size="18" font-weight="700" fill="#97b7ff">PT-01b  (Lynwood-Silverado, 107-122 m)</text>
+    <text x="30" y="207" font-size="17" fill="#ffffff">S<tspan font-size="13" dy="3">s</tspan><tspan dy="-3"> = 7.10 � 10</tspan><tspan font-size="13" dy="-6">-8</tspan><tspan dy="6"> 1/m</tspan></text>
+    <text x="420" y="207" font-size="17" fill="#ffffff">R� = 0.976</text>
+    <text x="580" y="207" font-size="17" fill="#ffffff">RMSE = 3.67 � 10<tspan font-size="13" dy="-6">-13</tspan><tspan dy="6"></tspan></text>
+    <rect x="680" y="220" width="55" height="5" rx="2" fill="#22c55e"/>
+    <text x="30" y="230" font-size="14" fill="#9ca3af" font-style="italic">Slope: 2.16 � 10{x | Zone 4 piezometer</text>
+
+    <!-- PT-01a result box -->
+    <rect x="10" y="255" width="740" height="85" rx="8" fill="#3a3a3a" stroke="#6a93f0" stroke-width="2"/>
+    <text x="30" y="282" font-size="18" font-weight="700" fill="#97b7ff">PT-01a  (Lynwood-Silverado, 137-155 m)</text>
+    <text x="30" y="307" font-size="17" fill="#ffffff">S<tspan font-size="13" dy="3">s</tspan><tspan dy="-3"> = 7.05 � 10</tspan><tspan font-size="13" dy="-6">-8</tspan><tspan dy="6"> 1/m</tspan></text>
+    <text x="420" y="307" font-size="17" fill="#ffffff">R� = 0.971</text>
+    <text x="580" y="307" font-size="17" fill="#ffffff">RMSE = 1.09 � 10<tspan font-size="13" dy="-6">-12</tspan><tspan dy="6"></tspan></text>
+    <rect x="680" y="320" width="55" height="5" rx="2" fill="#22c55e"/>
+    <text x="30" y="330" font-size="14" fill="#9ca3af" font-style="italic">Slope: 2.15 � 10{x | Zone 2 piezometer</text>
+
+    <!-- Divider -->
+    <line x1="30" y1="360" x2="730" y2="360" stroke="#555555" stroke-width="1.5"/>
+
+    <!-- FINDING 2: Key Takeaways -->
+    <text x="375" y="395" font-size="22" font-weight="700" fill="#FFD700" text-anchor="middle">Key Findings</text>
+
+    <!-- Checkmark items -->
+    <text x="30" y="430" font-size="18" fill="#22c55e" font-weight="700"></text>
+    <text x="55" y="430" font-size="16" fill="#ffffff" font-weight="600">Vertical compartmentalization confirmed</text>
+    <text x="55" y="452" font-size="14" fill="#9ca3af">DAS strain confined to pumped zones | DTS: no vertical flow</text>
+
+    <text x="30" y="486" font-size="18" fill="#22c55e" font-weight="700"></text>
+    <text x="55" y="486" font-size="16" fill="#ffffff" font-weight="600">Consistent storage across 76 m vertical span</text>
+    <text x="55" y="508" font-size="14" fill="#9ca3af">S<tspan font-size="11" dy="2">s</tspan><tspan dy="-2"> range: 7.05 � 10{x to 1.05 � 10{w 1/m (1.5� variation)</tspan></text>
+
+    <text x="30" y="542" font-size="18" fill="#22c55e" font-weight="700"></text>
+    <text x="55" y="542" font-size="16" fill="#ffffff" font-weight="600">Strong linear correlations (R� = 0.94-0.98)</text>
+    <text x="55" y="564" font-size="14" fill="#9ca3af">Poroelastic response validated against independent piezometers</text>
+
+    <text x="30" y="598" font-size="18" fill="#fbbf24" font-weight="700">�</text>
+    <text x="55" y="598" font-size="16" fill="#ffffff" font-weight="600">2,600+ DAS points vs. 5 piezometer zones</text>
+    <text x="55" y="620" font-size="14" fill="#9ca3af">Continuous strain profile at 0.25 m spacing across 665 ft</text>
+
+    <!-- Divider -->
+    <line x1="30" y1="645" x2="730" y2="645" stroke="#555555" stroke-width="1.5"/>
+
+    <!-- AQTESOLV comparison -->
+    <text x="30" y="678" font-size="16" fill="#ff6b6b" font-weight="600">� AQTESOLV discrepancy: 243-391� higher S<tspan font-size="12" dy="2">s</tspan><tspan dy="-2"></tspan></text>
+    <text x="55" y="700" font-size="14" fill="#9ca3af">DAS = elastic skeletal storage | AQTESOLV = integrated hydraulic response</text>
+
+  </g>
+
+  <!-- ============================================================ -->
+  <!-- BOTTOM BANNER -->
+  <!-- ============================================================ -->
+  <rect x="0" y="800" width="2400" height="60" fill="#FFD700"/>
+  <text x="1200" y="838" font-size="22" font-weight="700" fill="#1f2937" text-anchor="middle"
+        font-family="Segoe UI, Roboto, Helvetica, Arial, sans-serif">
+    One fiber optic cable turned a 5-point pressure profile into a continuous picture of aquifer response
+  </text>
+
+  <!-- Legend -->
+  <g id="legend" transform="translate(120,98)" font-family="Segoe UI, Roboto, Helvetica, Arial, sans-serif">
+    <rect x="0" y="0" width="580" height="30" rx="4" fill="#ffffff" opacity="0.9" stroke="#d1d5db" stroke-width="1"/>
+    <g transform="translate(15,10)" font-size="13" fill="#111827">
+      <rect x="0" y="2" width="18" height="8" fill="#8b9aa6" stroke="#4a5661" stroke-width="1"/>
+      <text x="24" y="10">Casing</text>
+      <rect x="90" y="2" width="18" height="8" fill="url(#screen-hatch)" stroke="#4a5661" stroke-width="1"/>
+      <text x="114" y="10">Screen</text>
+      <rect x="180" y="2" width="18" height="8" fill="#ff2c55"/>
+      <text x="204" y="10">Fiber Optic</text>
+      <rect x="290" y="2" width="18" height="8" fill="#ff6b35" opacity="0.3" stroke="#ff6b35" stroke-width="1" stroke-dasharray="3 2"/>
+      <text x="314" y="10">DAS Response Zone</text>
+      <line x1="435" y1="2" x2="447" y2="12" stroke="#dc2626" stroke-width="2"/>
+      <line x1="447" y1="2" x2="435" y2="12" stroke="#dc2626" stroke-width="2"/>
+      <text x="455" y="10">No Flow (DTS)</text>
+    </g>
+  </g>
+
+</svg>
