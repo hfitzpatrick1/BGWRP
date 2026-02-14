@@ -93,7 +93,7 @@ try
     console_log('STEP 2/2: Running ROI linear regression analysis...\n');
     console_log('  - Depth range: 450-510 ft (PT-01a pumping zone)\n');
     console_log('  - Regression window: 20:45:15 to 20:46:30 UTC\n');
-    console_log('  - Head timing correction: 14 seconds backward\n\n');
+    console_log('  - Strain shift: -14 seconds (left)\n\n');
     
     % --- DIAGNOSTIC: check before ROI ---
     if exist(diag_rogue, 'dir')
@@ -102,7 +102,8 @@ try
         console_log('DIAG [PRE-ROI]: No rogue dir (good).\n');
     end
     
-    run_roi_analysis;
+    run_roi_analysis_PT01a_100Hz;
+    test_name = dataset_name;  % ROI script uses dataset_name; thesis script expects test_name
     
     % --- DIAGNOSTIC: check after ROI ---
     if exist(diag_rogue, 'dir')

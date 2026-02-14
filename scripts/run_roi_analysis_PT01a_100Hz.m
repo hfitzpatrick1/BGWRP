@@ -30,7 +30,7 @@ lr_config = struct();
 lr_config.zone = 'z2';  % USING ZONE 2 (PT01a pumping zone)
 lr_config.depth_range_ft = [450, 510];  % PT01a pumping zone (includes channel 1099 at 480 ft)
 lr_config.timing_correction_sec = 0;    % Head data stays fixed (same approach as PT-01b/c)
-lr_config.strain_shift_sec = 0;       % Strain shift LEFT by 14s
+lr_config.strain_shift_sec = -15;     % Strain shift LEFT by 15s
 lr_config.visual_strain_shift_sec = 0;
 lr_config.show_plots = true;  % Set to false for cleaner output
 
