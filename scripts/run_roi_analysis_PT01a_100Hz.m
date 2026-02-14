@@ -29,8 +29,16 @@ console_log('DEBUG: Fields in %s: %s\n', dataset_name, strjoin(dataset_fields, '
 lr_config = struct();
 lr_config.zone = 'z2';  % USING ZONE 2 (PT01a pumping zone)
 lr_config.depth_range_ft = [450, 510];  % PT01a pumping zone (includes channel 1099 at 480 ft)
-lr_config.timing_correction_sec = 14;  % Optimal timing correction
+lr_config.timing_correction_sec = 0;    % Head data stays fixed (same approach as PT-01b/c)
+lr_config.strain_shift_sec = 0;       % Strain shift LEFT by 14s
+lr_config.visual_strain_shift_sec = 0;
 lr_config.show_plots = true;  % Set to false for cleaner output
+
+% Pass dataset smoothing config from global config
+run('config.m');
+if isfield(config, 'dataset_smoothing')
+    lr_config.dataset_smoothing = config.dataset_smoothing;
+end
 
 % Focus on PEAK REGION for best correlation (PT01a dates: Nov 7, 2023)
 lr_config.recovery_window = [datetime('2023-11-07 20:45:15', 'TimeZone', 'UTC'), ...
