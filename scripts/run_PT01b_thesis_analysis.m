@@ -3,10 +3,12 @@
 % for PT-01b Recovery test data (100Hz)
 %
 % PT-01b parameters:
-%   - 100Hz DAS data with 50-second movmean filter (5000 samples)
+%   - 100Hz DAS data with dataset-specific smoothing
 %   - Analysis window: 19:29:00 to 19:32:00 UTC (Oct 31, 2023)
-%   - Regression window: 19:30:00 to 19:31:15 UTC (peak region)
+%   - Regression window: 19:30:10 to 19:31:25 UTC (75-second peak region)
 %   - Depth range: 350-400 ft (PT-01b pumping zone)
+%   - Head shift: +12 seconds (piezometer data shifted right)
+%   - DAS stays fixed; Bourdet derivative + 15s smoothing for head rate
 %   - Calibration: C1=513, MperChan=0.25
 %
 % Usage:
@@ -51,7 +53,9 @@ try
     %% STEP 2: Run ROI Linear Regression Analysis
     console_log('STEP 2/2: Running ROI linear regression analysis...\n');
     console_log('  - Depth range: 350-400 ft (PT-01b pumping zone)\n');
-    console_log('  - Regression window: 19:30:00 to 19:31:15 UTC\n\n');
+    console_log('  - Regression window: 19:30:10 to 19:31:25 UTC (75 seconds)\n');
+    console_log('  - Head shift: +12 seconds (piezometer data shifted right)\n');
+    console_log('  - DAS stays fixed\n\n');
     
     run_roi_analysis_PT01b;
     
