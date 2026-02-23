@@ -257,7 +257,11 @@ console_log('Head data: %d time points\n', length(zone_time));
 
 %% Apply timing correction
 console_log('\n=== TIMING CORRECTION ===\n');
-console_log('Shifting head data backward by %d seconds\n', config.timing_correction_sec);
+if config.timing_correction_sec >= 0
+    console_log('Shifting head data backward (left) by %d seconds\n', config.timing_correction_sec);
+else
+    console_log('Shifting head data forward (right) by %d seconds\n', abs(config.timing_correction_sec));
+end
 zone_time_corrected = zone_time - seconds(config.timing_correction_sec);
 
 %% Calculate HEAD RATE (not drawdown rate!)
@@ -384,11 +388,11 @@ console_log('  Using TEMPORAL WEIGHTING to emphasize well-aligned regions\n');
 % For PT01a, temporal weighting helps; for PT01b, uniform is better
 if time_clean(1) > datetime('2023-11-01', 'TimeZone', 'UTC')
     % PT01a dates (November 7, 2023) - use temporal weighting
-    peak_start = datetime('2023-11-07 20:45:25', 'TimeZone', 'UTC');
-    peak_end = datetime('2023-11-07 20:45:40', 'TimeZone', 'UTC');
-    secondary_start = datetime('2023-11-07 20:45:55', 'TimeZone', 'UTC');
-    secondary_end = datetime('2023-11-07 20:46:10', 'TimeZone', 'UTC');
-    tail_start = datetime('2023-11-07 20:46:10', 'TimeZone', 'UTC');
+    peak_start = datetime('2023-11-07 20:45:38', 'TimeZone', 'UTC');
+    peak_end = datetime('2023-11-07 20:45:53', 'TimeZone', 'UTC');
+    secondary_start = datetime('2023-11-07 20:46:08', 'TimeZone', 'UTC');
+    secondary_end = datetime('2023-11-07 20:46:23', 'TimeZone', 'UTC');
+    tail_start = datetime('2023-11-07 20:46:23', 'TimeZone', 'UTC');
     
     weights = ones(size(time_clean));
     for i = 1:length(time_clean)

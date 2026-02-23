@@ -338,14 +338,20 @@ for i = 1:length(test_labels)
     % Apply waterfall time shift to align DAS waterfall with head data
     % Per-dataset waterfall time shift to align DAS waterfall with head data
     % PT-01c needs -10s, PT-01b may need different value
-    if contains(test_name, 'PT01c', 'IgnoreCase', true)
-        waterfall_shift_sec = -10;  % PT-01c: shift left 10 seconds
+    waterfall_shift_sec = 0;
+    if contains(test_label, 'PT01a', 'IgnoreCase', true)
+        head_shift_sec = 13;
+    elseif contains(test_label, 'PT01b', 'IgnoreCase', true)
+        head_shift_sec = 12;
+    elseif contains(test_label, 'PT01c', 'IgnoreCase', true)
+        head_shift_sec = 15;
     else
-        waterfall_shift_sec = -15;  % Default: shift left 15 seconds
+        head_shift_sec = 0;
     end
-    % Grab extra data to compensate for the shift so the plot fills the full window
-    analysis_mask_fig101 = das_data.time_array >= analysis_start & das_data.time_array <= analysis_end - seconds(waterfall_shift_sec);
-    filtered_time = das_data.time_array(analysis_mask_fig101) + seconds(waterfall_shift_sec);
+    plot_window_start = analysis_start;
+    plot_window_end = analysis_end;
+    analysis_mask_fig101 = das_data.time_array >= plot_window_start & das_data.time_array <= plot_window_end;
+    filtered_time = das_data.time_array(analysis_mask_fig101);
     filtered_data = das_data.smoothed_data(analysis_mask_fig101, :);
     
     % Downsample for plotting if data is high-resolution (>2000 time points)
@@ -459,7 +465,7 @@ for i = 1:length(test_labels)
     if contains(test_label, 'PT01a', 'IgnoreCase', true)
         xlim([datetime('2023-11-07 20:44:30', 'TimeZone', 'UTC'), datetime('2023-11-07 20:47:30', 'TimeZone', 'UTC')]);
     else
-        xlim([analysis_start analysis_end]);
+        xlim([plot_window_start plot_window_end]);
     end
     
     xlabel('Date Time UTC');
@@ -485,9 +491,9 @@ for i = 1:length(test_labels)
     % Apply configurable plotting method to test pixelation sources
     % For displacement rate, use the analysis window data only
     % Grab extra data to compensate for the shift so the plot fills the full window
-    analysis_mask = das_data.time_array >= analysis_start & das_data.time_array <= analysis_end - seconds(waterfall_shift_sec);
+    analysis_mask = das_data.time_array >= plot_window_start & das_data.time_array <= plot_window_end;
     analysis_smoothed_data = das_data.smoothed_data(analysis_mask, :);
-    analysis_time_array = das_data.time_array(analysis_mask) + seconds(waterfall_shift_sec);
+    analysis_time_array = das_data.time_array(analysis_mask);
     % Downsample for plotting if high-resolution
     plot_time_102 = analysis_time_array;
     plot_data_102 = analysis_smoothed_data;
@@ -564,7 +570,7 @@ for i = 1:length(test_labels)
     if contains(test_label, 'PT01a', 'IgnoreCase', true)
         xlim([datetime('2023-11-07 20:44:30', 'TimeZone', 'UTC'), datetime('2023-11-07 20:47:30', 'TimeZone', 'UTC')]);
     else
-        xlim([analysis_start analysis_end]);
+        xlim([plot_window_start plot_window_end]);
     end
     
     % Add screened interval label (per-dataset)
@@ -594,9 +600,9 @@ for i = 1:length(test_labels)
     text(-0.12, 0.95, '(a)', 'Units', 'normalized', 'FontSize', 14, 'FontWeight', 'bold', 'VerticalAlignment', 'top');
     
     % Pre-compute extended DAS displacement rate for subplots 2 & 3
-    % Apply dataset-specific DAS time shift to align with head data
-    das_plot_shift = -13;  % No shift for Figure 102 (shift only applied in regression figure)
-    ext_mask = das_data.time_array >= analysis_start - seconds(abs(das_plot_shift) + 15) & das_data.time_array <= analysis_end + seconds(abs(das_plot_shift) + 15);
+    % Shift head/drawdown data right to align with DAS (piezometer response lag)
+    das_plot_shift = 0;
+    ext_mask = das_data.time_array >= plot_window_start - seconds(abs(das_plot_shift) + 15) & das_data.time_array <= plot_window_end + seconds(abs(das_plot_shift) + 15);
     plot_das_time_ext = das_data.time_array(ext_mask) + seconds(das_plot_shift);
     % For PT01b: pick the most responsive channel in the screened interval
     if contains(test_label, 'PT01b', 'IgnoreCase', true)
@@ -635,7 +641,7 @@ for i = 1:length(test_labels)
                         [drawdown_rate_ftmin, rate_time] = calculate_drawdown_rate(averaged_data.Date, averaged_data.Drawdownft, 'ft_per_min');
                         % Convert from ft/min to m/s: 1 ft/min = 0.3048/60 m/s = 0.00508 m/s
                         drawdown_rate = drawdown_rate_ftmin * 0.00508;
-                        plot(rate_time, drawdown_rate, 'DisplayName', 'Drawdown Rate (avg)');
+                        plot(rate_time + seconds(head_shift_sec), drawdown_rate, 'DisplayName', 'Drawdown Rate (avg)');
                         if contains(test_label, 'PT01a', 'IgnoreCase', true)
                             xlim([datetime('2023-11-07 20:44:30', 'TimeZone', 'UTC'), datetime('2023-11-07 20:47:30', 'TimeZone', 'UTC')]);
                         else
@@ -643,7 +649,7 @@ for i = 1:length(test_labels)
     if contains(test_label, 'PT01a', 'IgnoreCase', true)
         xlim([datetime('2023-11-07 20:44:30', 'TimeZone', 'UTC'), datetime('2023-11-07 20:47:30', 'TimeZone', 'UTC')]);
     else
-        xlim([analysis_start analysis_end]);
+        xlim([plot_window_start plot_window_end]);
     end
                         end
                         xlabel('Date Time UTC');
@@ -681,7 +687,7 @@ for i = 1:length(test_labels)
                             [drawdown_rate_ftmin, rate_time] = calculate_drawdown_rate(zone_data.recovery_data.Date, zone_data.recovery_data.Drawdownft, 'ft_per_min');
                             % Convert from ft/min to m/s: 1 ft/min = 0.3048/60 m/s = 0.00508 m/s
                             drawdown_rate = drawdown_rate_ftmin * 0.00508;
-                            plot(rate_time, drawdown_rate, ...
+                            plot(rate_time + seconds(head_shift_sec), drawdown_rate, ...
                                 'Color', zone_color, 'LineStyle', '-', 'LineWidth', 2.0, ...
                                 'DisplayName', sprintf('Drawdown Rate %s', zone_name));
                         end
@@ -694,7 +700,7 @@ for i = 1:length(test_labels)
     if contains(test_label, 'PT01a', 'IgnoreCase', true)
         xlim([datetime('2023-11-07 20:44:30', 'TimeZone', 'UTC'), datetime('2023-11-07 20:47:30', 'TimeZone', 'UTC')]);
     else
-        xlim([analysis_start analysis_end]);
+        xlim([plot_window_start plot_window_end]);
     end
                     end
                     xlabel('Date Time UTC');
@@ -721,7 +727,7 @@ for i = 1:length(test_labels)
     if contains(test_label, 'PT01a', 'IgnoreCase', true)
         xlim([datetime('2023-11-07 20:44:30', 'TimeZone', 'UTC'), datetime('2023-11-07 20:47:30', 'TimeZone', 'UTC')]);
     else
-        xlim([analysis_start analysis_end]);
+        xlim([plot_window_start plot_window_end]);
     end
                 end
                 ylabel('Displacement Rate (nm/s)');
@@ -735,7 +741,7 @@ for i = 1:length(test_labels)
     if contains(test_label, 'PT01a', 'IgnoreCase', true)
         xlim([datetime('2023-11-07 20:44:30', 'TimeZone', 'UTC'), datetime('2023-11-07 20:47:30', 'TimeZone', 'UTC')]);
     else
-        xlim([analysis_start analysis_end]);
+        xlim([plot_window_start plot_window_end]);
     end
             ylabel('Displacement Rate (nm/s)');
             xlabel('Date Time UTC');
@@ -748,7 +754,7 @@ for i = 1:length(test_labels)
     if contains(test_label, 'PT01a', 'IgnoreCase', true)
         xlim([datetime('2023-11-07 20:44:30', 'TimeZone', 'UTC'), datetime('2023-11-07 20:47:30', 'TimeZone', 'UTC')]);
     else
-        xlim([analysis_start analysis_end]);
+        xlim([plot_window_start plot_window_end]);
     end
         ylabel('Displacement Rate (nm/s)');
         xlabel('Date Time UTC');
@@ -784,7 +790,7 @@ for i = 1:length(test_labels)
             else
                 pw_label = 'PW';
             end
-            plot(rate_time, drawdown_rate, 'Color', [0.0000 1.0000 1.0000], 'LineStyle', '-', 'LineWidth', 2.0, 'DisplayName', sprintf('Drawdown Rate %s', pw_label));
+            plot(rate_time + seconds(head_shift_sec), drawdown_rate, 'Color', [0.0000 1.0000 1.0000], 'LineStyle', '-', 'LineWidth', 2.0, 'DisplayName', sprintf('Drawdown Rate %s', pw_label));
             if strcmpi(test_label, 'PT01a_Recovery_short')
                 xlim([datetime('2023-11-07 20:44:30', 'TimeZone', 'UTC'), datetime('2023-11-07 20:47:30', 'TimeZone', 'UTC')]);
             else
@@ -792,7 +798,7 @@ for i = 1:length(test_labels)
     if contains(test_label, 'PT01a', 'IgnoreCase', true)
         xlim([datetime('2023-11-07 20:44:30', 'TimeZone', 'UTC'), datetime('2023-11-07 20:47:30', 'TimeZone', 'UTC')]);
     else
-        xlim([analysis_start analysis_end]);
+        xlim([plot_window_start plot_window_end]);
     end
             end
             xlabel('Date Time UTC');
@@ -950,7 +956,7 @@ for i = 1:length(test_labels)
     if contains(test_label, 'PT01a', 'IgnoreCase', true)
         xlim([datetime('2023-11-07 20:44:30', 'TimeZone', 'UTC'), datetime('2023-11-07 20:47:30', 'TimeZone', 'UTC')]);
     else
-        xlim([analysis_start analysis_end]);
+        xlim([plot_window_start plot_window_end]);
     end
     
     xlabel('Date Time UTC');
@@ -982,7 +988,7 @@ for i = 1:length(test_labels)
     if contains(test_label, 'PT01a', 'IgnoreCase', true)
         xlim([datetime('2023-11-07 20:44:30', 'TimeZone', 'UTC'), datetime('2023-11-07 20:47:30', 'TimeZone', 'UTC')]);
     else
-        xlim([analysis_start analysis_end]);
+        xlim([plot_window_start plot_window_end]);
     end
                         end
                         xlabel('Date Time UTC');
@@ -1028,7 +1034,7 @@ for i = 1:length(test_labels)
     if contains(test_label, 'PT01a', 'IgnoreCase', true)
         xlim([datetime('2023-11-07 20:44:30', 'TimeZone', 'UTC'), datetime('2023-11-07 20:47:30', 'TimeZone', 'UTC')]);
     else
-        xlim([analysis_start analysis_end]);
+        xlim([plot_window_start plot_window_end]);
     end
                     end
                     xlabel('Date Time UTC');
@@ -1052,7 +1058,7 @@ for i = 1:length(test_labels)
     if contains(test_label, 'PT01a', 'IgnoreCase', true)
         xlim([datetime('2023-11-07 20:44:30', 'TimeZone', 'UTC'), datetime('2023-11-07 20:47:30', 'TimeZone', 'UTC')]);
     else
-        xlim([analysis_start analysis_end]);
+        xlim([plot_window_start plot_window_end]);
     end
                 ylabel('Strain (nm/m)');
                 xlabel('Date Time UTC');
@@ -1065,7 +1071,7 @@ for i = 1:length(test_labels)
     if contains(test_label, 'PT01a', 'IgnoreCase', true)
         xlim([datetime('2023-11-07 20:44:30', 'TimeZone', 'UTC'), datetime('2023-11-07 20:47:30', 'TimeZone', 'UTC')]);
     else
-        xlim([analysis_start analysis_end]);
+        xlim([plot_window_start plot_window_end]);
     end
             ylabel('Strain (nm/m)');
             xlabel('Date Time UTC');
@@ -1077,7 +1083,7 @@ for i = 1:length(test_labels)
     if contains(test_label, 'PT01a', 'IgnoreCase', true)
         xlim([datetime('2023-11-07 20:44:30', 'TimeZone', 'UTC'), datetime('2023-11-07 20:47:30', 'TimeZone', 'UTC')]);
     else
-        xlim([analysis_start analysis_end]);
+        xlim([plot_window_start plot_window_end]);
     end
         ylabel('Strain (nm/m)');
         xlabel('Date Time UTC');
@@ -1101,7 +1107,7 @@ for i = 1:length(test_labels)
     if contains(test_label, 'PT01a', 'IgnoreCase', true)
         xlim([datetime('2023-11-07 20:44:30', 'TimeZone', 'UTC'), datetime('2023-11-07 20:47:30', 'TimeZone', 'UTC')]);
     else
-        xlim([analysis_start analysis_end]);
+        xlim([plot_window_start plot_window_end]);
     end
             end
             xlabel('Date Time UTC');
@@ -1202,7 +1208,7 @@ for i = 1:length(test_labels)
     if contains(test_label, 'PT01a', 'IgnoreCase', true)
         xlim([datetime('2023-11-07 20:44:30', 'TimeZone', 'UTC'), datetime('2023-11-07 20:47:30', 'TimeZone', 'UTC')]);
     else
-        xlim([analysis_start analysis_end]);
+        xlim([plot_window_start plot_window_end]);
     end
     %             xlabel('Date Time UTC', 'FontSize', 12);
     %             ylabel('Drawdown Rate (ft/min)', 'FontSize', 12);
@@ -1271,7 +1277,7 @@ for i = 1:length(test_labels)
     if contains(test_label, 'PT01a', 'IgnoreCase', true)
         xlim([datetime('2023-11-07 20:44:30', 'TimeZone', 'UTC'), datetime('2023-11-07 20:47:30', 'TimeZone', 'UTC')]);
     else
-        xlim([analysis_start analysis_end]);
+        xlim([plot_window_start plot_window_end]);
     end
     %             xlabel('Date Time UTC', 'FontSize', 12);
     %             ylabel('Head Level (ft)', 'FontSize', 12);

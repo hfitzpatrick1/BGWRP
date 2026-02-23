@@ -463,7 +463,11 @@ zone_time = head_filtered.zones.(config.zone).recovery_data.Date;  % Datetime ar
 %% Apply timing correction
 console_log('\n=== TIMING CORRECTION ===\n');
 console_log('Original head time: %s to %s\n', datestr(zone_time(1)), datestr(zone_time(end)));
-console_log('Shifting head data backward by %d seconds\n', config.timing_correction_sec);
+if config.timing_correction_sec >= 0
+    console_log('Shifting head data backward (left) by %d seconds\n', config.timing_correction_sec);
+else
+    console_log('Shifting head data forward (right) by %d seconds\n', abs(config.timing_correction_sec));
+end
 
 zone_time_corrected = zone_time - seconds(config.timing_correction_sec);
 
