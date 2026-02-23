@@ -20,8 +20,8 @@ console_log('Auto-detected dataset: %s\n', test_name);
 lr_config = struct();
 lr_config.zone = 'z4';
 lr_config.depth_range_ft = [350, 400];  % PT01b full screened interval (required)
-lr_config.timing_correction_sec = 0;    % Head data stays fixed (same approach as PT01c)
-lr_config.strain_shift_sec = -12;       % Strain shift LEFT - tuning for new displacement_rate/L method
+lr_config.timing_correction_sec = -12;  % Head shifted RIGHT 12s to align with DAS (matches plot convention)
+lr_config.strain_shift_sec = 0;         % DAS stays fixed
 lr_config.visual_strain_shift_sec = 0;
 lr_config.show_plots = true;
 
