@@ -7,6 +7,8 @@
 %   - Analysis window: 19:14:00 to 19:19:00 UTC (Oct 24, 2023)
 %   - Regression window: 19:15:00 to 19:16:15 UTC (peak region)
 %   - Depth range: 260-310 ft (PT-01c pumping zone)
+%   - Head shift: +14 seconds (piezometer data shifted right)
+%   - DAS stays fixed; Bourdet derivative + 15s smoothing for head rate
 %   - Screen: 79.25-94.49 m
 %   - Calibration: C1=513, MperChan=0.25
 %
@@ -52,7 +54,9 @@ try
     %% STEP 2: Run ROI Linear Regression Analysis
     console_log('STEP 2/2: Running ROI linear regression analysis...\n');
     console_log('  - Depth range: 260-310 ft (PT-01c pumping zone)\n');
-    console_log('  - Regression window: 19:15:00 to 19:16:15 UTC\n\n');
+    console_log('  - Regression window: 19:15:00 to 19:16:15 UTC (75 seconds)\n');
+    console_log('  - Head shift: +14 seconds (piezometer data shifted right)\n');
+    console_log('  - DAS stays fixed\n\n');
     
     run_roi_analysis_PT01c;
     

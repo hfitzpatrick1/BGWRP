@@ -20,7 +20,7 @@ console_log('Auto-detected dataset: %s\n', test_name);
 lr_config = struct();
 lr_config.zone = 'z5';
 lr_config.depth_range_ft = [260, 310];  % PT01c screened interval (79.25-94.49 m)
-lr_config.timing_correction_sec = -15;  % Head shifted RIGHT 15s to align with DAS (matches plot convention)
+lr_config.timing_correction_sec = -14;  % Head shifted RIGHT +14s to align with DAS (matches plot convention)
 lr_config.strain_shift_sec = 0;         % DAS stays fixed
 lr_config.visual_strain_shift_sec = 0;
 lr_config.show_plots = true;
@@ -40,7 +40,7 @@ console_log('=== RUNNING ROI STRAIN RATE ANALYSIS (PT01c PUMPING ZONE) ===\n');
 console_log('Head zone: z4\n');
 console_log('Depth range: %.0f-%.0f ft (PT01c screened interval)\n', lr_config.depth_range_ft(1), lr_config.depth_range_ft(2));
 console_log('Method: Proper Becker spatial difference\n');
-console_log('Timing correction: %d seconds (head shifted forward)\n', lr_config.timing_correction_sec);
+console_log('Timing correction: +14 seconds (head shifted right)\n');
 console_log('Regression window: 19:15:00 to 19:16:15 UTC (75 seconds)\n\n');
 
 % Run ROI depth range analysis

@@ -344,7 +344,7 @@ for i = 1:length(test_labels)
     elseif contains(test_label, 'PT01b', 'IgnoreCase', true)
         head_shift_sec = 12;
     elseif contains(test_label, 'PT01c', 'IgnoreCase', true)
-        head_shift_sec = 15;
+        head_shift_sec = 14;
     else
         head_shift_sec = 0;
     end
