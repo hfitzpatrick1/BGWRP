@@ -238,7 +238,7 @@ Raw fibre distance was converted to depth below casing in feet, then scaled so t
 
 ### 7.3 DTS_W_LAS.m: Pre/Post Pump Temperature Profiles (Thesis Figure 8)
 
-`DTS_W_LAS.m` generates pre- and post-pumping temperature profiles for each test date:
+`scripts/DTS_W_LAS.m` generates pre- and post-pumping temperature profiles for each test date:
 
 1. **Profile selection:** For each pump test date (Oct 24, Oct 31, Nov 7 2023), the script identifies DTS profiles collected before, during, and after pumping using UTC timestamps.
 2. **Depth masking:** Only subsurface channels (depth >= 0 ft, <= 665 ft) are retained.
@@ -247,7 +247,7 @@ Raw fibre distance was converted to depth below casing in feet, then scaled so t
 
 ### 7.4 geothermal_gradient_PM07.m: Ambient Temperature Profile (Thesis Figure 7)
 
-`geothermal_gradient_PM07.m` computes the long-term average geothermal gradient:
+`scripts/geothermal_gradient_PM07.m` computes the long-term average geothermal gradient:
 
 1. **Mean profile:** All 111 DTS temperature profiles are averaged to produce a mean and standard deviation profile, suppressing transient perturbations from individual pump tests or seasonal effects.
 2. **Bourdet derivative:** The geothermal gradient is computed using the Bourdet derivative method (Bourdet et al., 1989) with a smoothing distance of L = 6.1 m (20 ft), matching the PM-07 screened interval length. This weighted central-difference approach provides a smoother gradient estimate than simple finite differencing.
@@ -283,8 +283,8 @@ Raw fibre distance was converted to depth below casing in feet, then scaled so t
 
 | Thesis Figure | Script | Content |
 |---------------|--------|---------|
-| Figure 7 | `geothermal_gradient_PM07.m` | 3-panel: all profiles + mean, mean + linear fit, Bourdet derivative |
-| Figure 8 | `DTS_W_LAS.m` | Pre/post pump temperature profiles for each test date |
+| Figure 7 | `scripts/geothermal_gradient_PM07.m` | 3-panel: all profiles + mean, mean + linear fit, Bourdet derivative |
+| Figure 8 | `scripts/DTS_W_LAS.m` | Pre/post pump temperature profiles for each test date |
 
 ### Waterfall Plot Rendering
 
@@ -296,7 +296,15 @@ Waterfall plots use `pcolor` with `'interp'` shading and `jet` colormap (256 lev
 
 ### 9.1 Running the DAS Analysis
 
-Each dataset has a dedicated driver script in `scripts/`:
+**Setup:** The toolkit expects data at `data/_BATCH/_active/<dataset_name>/`. Stage a dataset by copying or creating a directory junction from `_processed_DAS/`:
+
+```cmd
+mklink /J "data\_BATCH\_active\PT01c_Recovery_100" "_processed_DAS\PT01c_Recovery_100"
+```
+
+Process one dataset at a time to stay within memory limits (~1.4 GB per dataset in memory).
+
+**Running:** In MATLAB, navigate to `scripts/` and run:
 
 ```matlab
 % PT-01c (Gage-Gardena, 79-94 m)
@@ -309,60 +317,59 @@ run_PT01b_thesis_analysis
 run_PT01a_thesis_analysis
 ```
 
-Each script executes two steps:
-1. **`BGWRP_Toolkit`** in `run_correlation_analysis` mode: loads data, applies smoothing and time shift, generates Figures 101-103.
+Each script adds `src/` to the MATLAB path (which contains `config.m` and all toolkit functions), then executes two steps:
+1. **`BGWRP_Toolkit`** in `run_correlation_analysis` mode: loads data from `_active/`, applies smoothing and time shift, generates Figures 101-103.
 2. **`run_roi_analysis_PT01x_100Hz.m`**: performs spatial differencing, regression, storage calculation, generates Figure 104 and the 4-subplot regression figure.
-
-**Before running:** Copy the processed 100 Hz dataset from `_processed_DAS/PT01x_Recovery_100/` to `data/_BATCH/_active/PT01x_Recovery_100/` in the main repository working directory.
 
 ### 9.2 Running the DTS Analysis
 
+From `scripts/`:
 ```matlab
-% Navigate to the folder containing DTS_W_LAS.m and the .mat data file
-DTS_W_LAS              % Produces pre/post pump profiles + LAS exports (Figure 8)
 geothermal_gradient_PM07   % Produces average temperature + Bourdet gradient (Figure 7)
+DTS_W_LAS                  % Produces pre/post pump profiles + LAS exports (Figure 8)
 ```
 
-Both scripts load `Channel1_alldataupto070224.mat` from `_processed_DTS/`.
+Both scripts load `Channel1_alldataupto070224.mat` from `_processed_DTS/` using relative paths. Output files (LAS and PNG) are written to the appendix root.
 
 ### 9.3 Pipeline Call Graph
 
 ```
 DAS Analysis:
-  run_PT01x_thesis_analysis.m
-    +-- BGWRP_Toolkit.m  (mode = 'run_correlation_analysis')
-    |     +-- config.m                      <- analysis windows, smoothing, bounds
-    |     +-- analyze_head_data.m           <- load & process piezometer data
-    |     +-- analyze_das_data.m            <- load, smooth, time-shift DAS data
-    |     |     +-- apply_filter.m          <- dispatches movmean smoothing
-    |     +-- generate_plots.m              <- Figures 101, 102, 103
+  scripts/run_PT01x_thesis_analysis.m
+    +-- addpath(genpath('src/'))             <- puts config.m and all toolkit code on path
+    +-- src/BGWRP_Toolkit.m  (mode = 'run_correlation_analysis')
+    |     +-- src/config.m                   <- analysis windows, smoothing, bounds
+    |     +-- src/analyze/analyze_head_data.m  <- load & process piezometer data
+    |     +-- src/analyze/analyze_das_data.m   <- load, smooth, time-shift DAS data
+    |     |     +-- src/filter/apply_filter.m  <- dispatches movmean smoothing
+    |     +-- src/plot/generate_plots.m        <- Figures 101, 102, 103
     |
-    +-- run_roi_analysis_PT01x_100Hz.m
-          +-- linear_regression_depth_range.m   <- spatial differencing + regression
-          |     +-- calculate_specific_storage_becker.m  <- S_s from slope
+    +-- scripts/run_roi_analysis_PT01x_100Hz.m
+          +-- src/analyze/linear_regression_depth_range.m  <- spatial differencing + regression
+          |     +-- src/analyze/calculate_specific_storage_becker.m  <- S_s from slope
           +-- Depth profile plot (Figure 104)
 
 DTS Analysis:
-  DTS_W_LAS.m
-    +-- Channel1_alldataupto070224.mat      <- 111 compiled profiles
+  scripts/DTS_W_LAS.m
+    +-- _processed_DTS/Channel1_alldataupto070224.mat  <- 111 compiled profiles
     +-- Depth calibration (cold test parameters)
     +-- Pre/post pump differencing
     +-- LAS export
 
-  geothermal_gradient_PM07.m
-    +-- Channel1_alldataupto070224.mat      <- same source data
+  scripts/geothermal_gradient_PM07.m
+    +-- _processed_DTS/Channel1_alldataupto070224.mat  <- same source data
     +-- Mean profile computation
     +-- Bourdet derivative (L = 20 ft)
     +-- Linear fit (below 100 ft)
-    +-- LAS export
+    +-- LAS + PNG export
 ```
 
 ### 9.4 Key Source Files
 
 | File | Purpose |
 |------|---------|
+| `src/config.m` | All analysis windows, smoothing parameters, plot bounds |
 | `src/BGWRP_Toolkit.m` | Main entry point; mode switch configures pipeline |
-| `config.m` | All analysis windows, smoothing parameters, plot bounds |
 | `src/prepare/Silixa_TDMSDataToPhysicalDispRate.m` | TDMS to MAT conversion with physical scaling |
 | `src/prepare/process_mat_data.m` | Concatenation and optional decimation |
 | `src/analyze/analyze_das_data.m` | DAS loading, unit correction, smoothing, time shift |
@@ -371,12 +378,12 @@ DTS Analysis:
 | `src/analyze/calculate_specific_storage_becker.m` | Poroelastic storage from regression slope |
 | `src/filter/apply_filter.m` | Filter dispatcher (movmean, spatial median, etc.) |
 | `src/plot/generate_plots.m` | Figure generation (101, 102, 103) |
-| `DTS_W_LAS.m` | DTS pre/post pump profiles and LAS export |
-| `geothermal_gradient_PM07.m` | Geothermal gradient (Bourdet derivative) and LAS export |
+| `scripts/DTS_W_LAS.m` | DTS pre/post pump profiles and LAS export |
+| `scripts/geothermal_gradient_PM07.m` | Geothermal gradient (Bourdet derivative) and LAS export |
 
 ### 9.5 Configuration Keys
 
-The toolkit uses **directory names** as dataset identifiers. Configuration lookups use `upper()` normalization. For each 100 Hz dataset, three configuration entries are required in `config.m`:
+The toolkit uses **directory names** as dataset identifiers. Configuration lookups use `upper()` normalization. For each 100 Hz dataset, three configuration entries are required in `src/config.m`:
 
 1. **Analysis window** -- `config.analysis_windows.<DirectoryName>.start/.end`
 2. **Dataset smoothing** -- `config.dataset_smoothing.<UPPERCASE_NAME>.fs`, `.preprocessing_window_sec`, `.strain_rate_window_sec`, `.regression_window_sec`

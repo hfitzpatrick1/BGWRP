@@ -7,26 +7,26 @@
 
 ## Contents
 
-This appendix contains all data, source code, and processing scripts needed to reproduce the DAS poroelastic storage analysis (Thesis Figures 11-16, Table 4) and DTS temperature analysis (Thesis Figures 7-8).
+This appendix contains all data, source code, and processing scripts needed to reproduce the DAS poroelastic storage analysis (Thesis Figures 11-16, Table 4) and DTS temperature analysis (Thesis Figures 7-8). All scripts use relative paths derived from `mfilename('fullpath')` and require no manual path editing.
 
 ```
 DATA APPENDIX/
 |
 |-- README_dev.md                     <- This file
 |-- 100Hz_Processing_Appendix.md      <- Detailed processing pipeline documentation
-|-- config.m                          <- Analysis parameters (smoothing, windows, bounds)
-|-- DTS_W_LAS.m                       <- DTS pre/post pump profiles (Figure 8)
-|-- geothermal_gradient_PM07.m        <- Geothermal gradient analysis (Figure 7)
 |
-|-- scripts/                          <- Thesis analysis runner scripts
-|   |-- run_PT01a_thesis_analysis.m   <-   PT-01a entry point (Lynwood-Silverado, 137-155 m)
-|   |-- run_PT01b_thesis_analysis.m   <-   PT-01b entry point (Lynwood-Silverado, 107-122 m)
-|   |-- run_PT01c_thesis_analysis.m   <-   PT-01c entry point (Gage-Gardena, 79-94 m)
+|-- scripts/                          <- All analysis runner scripts
+|   |-- run_PT01a_thesis_analysis.m   <-   PT-01a DAS entry point (Lynwood-Silverado, 137-155 m)
+|   |-- run_PT01b_thesis_analysis.m   <-   PT-01b DAS entry point (Lynwood-Silverado, 107-122 m)
+|   |-- run_PT01c_thesis_analysis.m   <-   PT-01c DAS entry point (Gage-Gardena, 79-94 m)
 |   |-- run_roi_analysis_PT01a_100Hz.m  <- ROI regression + storage (PT-01a)
 |   |-- run_roi_analysis_PT01b_100Hz.m  <- ROI regression + storage (PT-01b)
-|   +-- run_roi_analysis_PT01c_100Hz.m  <- ROI regression + storage (PT-01c)
+|   |-- run_roi_analysis_PT01c_100Hz.m  <- ROI regression + storage (PT-01c)
+|   |-- geothermal_gradient_PM07.m    <-   Geothermal gradient analysis (Figure 7)
+|   +-- DTS_W_LAS.m                   <-   DTS pre/post pump profiles + LAS export (Figure 8)
 |
 |-- src/                              <- BGWRP Toolkit source code
+|   |-- config.m                      <-   Analysis parameters (smoothing, windows, bounds)
 |   |-- BGWRP_Toolkit.m              <-   Main processing orchestrator
 |   |-- analyze/                      <-   Core analysis functions
 |   |   |-- analyze_das_data.m        <-     DAS data loading and smoothing
@@ -51,20 +51,23 @@ DATA APPENDIX/
 |       |-- discover_datasets.m
 |       +-- load_batch_config.m
 |
+|-- data/                             <- Toolkit working directory (auto-created)
+|   |-- _BATCH/
+|   |   |-- _active/                  <-   Datasets staged for analysis (junction or copy)
+|   |   +-- _log/                     <-   Console log output
+|   +-- head/                         <-   Individual zone head files (head_a_z2.mat, etc.)
+|
 |-- _processed_DAS/                   <- Processed 100 Hz DAS recovery data
-|   |-- PT01a_Recovery_100/           <-   PT-01a (Nov 7, 2023)
+|   |-- PT01a_Recovery_100/           <-   PT-01a (Nov 7, 2023, ~400 MB)
 |   |   |-- _das/Dataset_PT01a_Recovery_short_1Hz.mat
 |   |   |-- _head/head_data.mat
 |   |   +-- _das_timing/get_timing_PT01a_Recovery_short.m
-|   |-- PT01b_Recovery_100/           <-   PT-01b (Oct 31, 2023)
-|   +-- PT01c_Recovery_100/           <-   PT-01c (Oct 24, 2023)
+|   |-- PT01b_Recovery_100/           <-   PT-01b (Oct 31, 2023, ~412 MB)
+|   +-- PT01c_Recovery_100/           <-   PT-01c (Oct 24, 2023, ~290 MB)
 |
 |-- _processed_DTS/                   <- Processed DTS temperature data
 |   |-- Channel1_alldataupto070224.mat  <- 111 compiled profiles (815 ch x 111 timestamps)
-|   |-- Channel2_alldataupto070224.mat  <- Channel 2 compiled profiles
-|   |-- PT01a_Recovery_short/         <-   1 Hz DAS for PT-01a (decimated backup)
-|   |-- PT01b_Recovery_short/
-|   +-- PT01c_Recovery_short/
+|   +-- Channel2_alldataupto070224.mat  <- Channel 2 compiled profiles
 |
 |-- _processed_head/                  <- Processed piezometer head data (MAT)
 |   |-- head_a_z2.mat ... head_a_z5.mat, head_a_pw.mat  <- PT-01a zones + pumping well
@@ -97,7 +100,7 @@ DATA APPENDIX/
 - **MATLAB R2023b** or later
 - **Signal Processing Toolbox** (for `pwelch`, `spectrogram`, `filtfilt`, `butter`)
 - Core functions used: `movmean`, `cumtrapz`, `datetime` (timezone support), `polyfit`, `interp1`
-- **RAM:** >= 16 GB recommended (100 Hz datasets are ~1.4 GB each in memory)
+- **RAM:** >= 16 GB recommended (100 Hz datasets are ~290-412 MB on disk, ~1.4 GB in memory)
 
 No Python installation is required.
 
@@ -105,31 +108,45 @@ No Python installation is required.
 
 ## Quick Start: Reproducing the Analysis
 
-### DAS Poroelastic Storage (Figures 14-16, Table 4)
+### Setup (one-time)
 
-1. Copy a processed dataset to the toolkit working directory:
-   ```
-   Copy _processed_DAS\PT01c_Recovery_100\  to  data\_BATCH\_active\PT01c_Recovery_100\
-   ```
+The toolkit expects DAS datasets at `data/_BATCH/_active/<dataset_name>/`. Stage a dataset by either copying or creating a directory junction from `_processed_DAS/`:
 
-2. In MATLAB, navigate to `scripts/` and run:
+**Option A -- Copy (portable, uses disk space):**
+```
+Copy _processed_DAS\PT01c_Recovery_100\  to  data\_BATCH\_active\PT01c_Recovery_100\
+```
+
+**Option B -- Junction (no duplication, Windows only):**
+```cmd
+mklink /J "data\_BATCH\_active\PT01c_Recovery_100" "_processed_DAS\PT01c_Recovery_100"
+```
+
+Process one dataset at a time to stay within memory limits.
+
+### DAS Poroelastic Storage (Figures 11-16, Table 4)
+
+In MATLAB, navigate to `scripts/` and run any of:
 ```matlab
-   run_PT01c_thesis_analysis    % PT-01c (Gage-Gardena, 79-94 m)
-   ```
+run_PT01c_thesis_analysis    % PT-01c (Gage-Gardena, 79-94 m)
+run_PT01b_thesis_analysis    % PT-01b (Lynwood-Silverado, 107-122 m)
+run_PT01a_thesis_analysis    % PT-01a (Lynwood-Silverado, 137-155 m)
+```
 
-3. The script loads the DAS + head data via `BGWRP_Toolkit`, then runs `run_roi_analysis_PT01c_100Hz` for regression and storage calculation.
-
-4. Repeat with `run_PT01b_thesis_analysis` and `run_PT01a_thesis_analysis` for the other two tests.
+Each script:
+1. Adds `src/` to the MATLAB path (locates `config.m` and all toolkit functions)
+2. Runs `BGWRP_Toolkit` in `run_correlation_analysis` mode (loads DAS + head data, applies smoothing, generates Figures 101-103)
+3. Runs `run_roi_analysis_PT01x_100Hz` (spatial differencing, regression, storage calculation, generates Figure 104 and the 4-subplot regression figure)
 
 ### DTS Temperature Analysis (Figures 7-8)
 
-1. Ensure `Channel1_alldataupto070224.mat` is in the same folder as the DTS scripts (or in `_processed_DTS/`).
-
-2. Run:
+From `scripts/`:
 ```matlab
-   DTS_W_LAS                    % Pre/post pump profiles (Figure 8)
-   geothermal_gradient_PM07     % Geothermal gradient (Figure 7)
-   ```
+geothermal_gradient_PM07     % Geothermal gradient (Figure 7)
+DTS_W_LAS                    % Pre/post pump profiles + LAS export (Figure 8)
+```
+
+Both scripts load `Channel1_alldataupto070224.mat` from `_processed_DTS/` using relative paths.
 
 ---
 
@@ -137,13 +154,13 @@ No Python installation is required.
 
 | Thesis Figure | Script | Description |
 |---------------|--------|-------------|
-| Figure 7 | `geothermal_gradient_PM07.m` | Average ambient temperature profile and Bourdet-derived geothermal gradient |
-| Figure 8 | `DTS_W_LAS.m` | Pre- and post-pumping temperature profiles for each test |
+| Figure 7 | `scripts/geothermal_gradient_PM07.m` | Average ambient temperature profile and Bourdet-derived geothermal gradient |
+| Figure 8 | `scripts/DTS_W_LAS.m` | Pre- and post-pumping temperature profiles for each test |
 | Figures 11-13 | `scripts/run_PT01c/b/a_thesis_analysis.m` | DAS displacement rate waterfalls and time series |
-| Figure 14 | `run_PT01c_thesis_analysis.m` + `run_roi_analysis_PT01c_100Hz.m` | PT-01c poroelastic regression (4-subplot) |
-| Figure 15 | `run_PT01b_thesis_analysis.m` + `run_roi_analysis_PT01b_100Hz.m` | PT-01b poroelastic regression |
-| Figure 16 | `run_PT01a_thesis_analysis.m` + `run_roi_analysis_PT01a_100Hz.m` | PT-01a poroelastic regression |
-| Table 4 | `run_roi_analysis_PT01*_100Hz.m` | Regression and storage results (compiled from all three tests) |
+| Figure 14 | `scripts/run_PT01c_thesis_analysis.m` + `run_roi_analysis_PT01c_100Hz.m` | PT-01c poroelastic regression (4-subplot) |
+| Figure 15 | `scripts/run_PT01b_thesis_analysis.m` + `run_roi_analysis_PT01b_100Hz.m` | PT-01b poroelastic regression |
+| Figure 16 | `scripts/run_PT01a_thesis_analysis.m` + `run_roi_analysis_PT01a_100Hz.m` | PT-01a poroelastic regression |
+| Table 4 | `scripts/run_roi_analysis_PT01*_100Hz.m` | Regression and storage results (compiled from all three tests) |
 
 ---
 
