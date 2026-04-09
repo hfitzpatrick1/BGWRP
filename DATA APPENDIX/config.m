@@ -7,7 +7,7 @@ function config = config()
 %   config - Configuration structure
 
 %% Base Configuration
-config.base_input = 'C:\Coding\BGWRP\data\_BATCH\';
+config.base_input = fullfile(fileparts(mfilename('fullpath')), 'data', '_BATCH');
 
 %% Decimation Configuration
 config.decimation_factor = 100;  % Heavy decimation (100Hz → 1Hz)

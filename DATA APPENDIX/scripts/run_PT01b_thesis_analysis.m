@@ -18,16 +18,16 @@
 %close all;
 %clc;
 
+% Add src to path for console_log
+script_dir = fileparts(mfilename('fullpath'));
+parent_dir = fileparts(script_dir);
+
 % Initialize console logging (overwrites same file each run)
-log_dir = fullfile('C:', 'Coding', 'BGWRP', 'data', '_BATCH', '_log');
+log_dir = fullfile(parent_dir, 'data', '_BATCH', '_log');
 if ~exist(log_dir, 'dir')
     mkdir(log_dir);
 end
 log_path = fullfile(log_dir, 'console_log.txt');
-
-% Add src to path for console_log
-script_dir = fileparts(mfilename('fullpath'));
-parent_dir = fileparts(script_dir);
 addpath(genpath(fullfile(parent_dir, 'src')));
 
 console_log('init', log_path);

@@ -1,30 +1,41 @@
-# Digital Appendix: 100 Hz DAS Data Processing for PT-01a, PT-01b, and PT-01c
+# Digital Appendix: Data Processing for DAS and DTS Analyses
 
-> **Thesis companion document** — describes the data processing pipeline, parameters, and reproducibility steps for all 100 Hz recovery datasets analyzed in this work.
+> **Thesis companion document** — describes the data processing pipelines, parameters, and reproducibility steps for the 100 Hz DAS recovery datasets and DTS temperature analyses presented in this work.
 
 ---
 
 ## 1. Overview
 
-Three constant-rate pump tests (PT-01a, PT-01b, PT-01c) were monitored with a Silixa iDAS distributed acoustic sensing (DAS) system installed in a fiber-optic cable cemented behind well casing. Raw data were acquired at 100 Hz with 0.25 m channel spacing. Recovery-phase data were processed to extract strain rate, correlated with piezometric head, and used to estimate specific storage via the simplified poroelastic method (Becker et al., 2023).
+Three constant-rate pump tests (PT-01a, PT-01b, PT-01c) were monitored with a Silixa iDAS distributed acoustic sensing (DAS) system and a Silixa XT-DTS distributed temperature sensing (DTS) system, both installed on the same fiber optic cable cemented behind well casing at PM-07. DAS data were acquired at 100 Hz with 0.25 m channel spacing; DTS profiles were collected at approximately 11-minute intervals.
 
-All processing was performed in MATLAB using a custom toolkit (`BGWRP_Toolkit`). Source code is available in the accompanying repository.
+Recovery-phase DAS data were processed to extract strain rate, correlated with piezometric head rate, and used to estimate specific storage via the simplified poroelastic method (Becker et al., 2023). DTS temperature profiles were used to establish a long-term ambient geothermal gradient and to evaluate vertical hydraulic connectivity by comparing pre- and post-pumping temperatures.
 
-### Datasets
+All processing was performed in MATLAB using a custom toolkit (`BGWRP_Toolkit`). Source code is included in the `src/` directory of this appendix.
+
+### 1.1 DAS Datasets
 
 | Dataset | Directory Name | Test Date (UTC) | Well Depth Range |
 |---------|---------------|------------------|------------------|
-| PT-01a Recovery | `PT01a_Recovery_100` | 2023-11-07 | 450–510 ft (137–155 m) |
-| PT-01b Recovery | `PT01b_Recovery_100` | 2023-10-31 | 350–400 ft (107–122 m) |
-| PT-01c Recovery | `PT01c_Recovery_100` | 2023-10-24 | 260–310 ft (79–94 m) |
+| PT-01a Recovery | `PT01a_Recovery_100` | 2023-11-07 | 450-510 ft (137-155 m) |
+| PT-01b Recovery | `PT01b_Recovery_100` | 2023-10-31 | 350-400 ft (107-122 m) |
+| PT-01c Recovery | `PT01c_Recovery_100` | 2023-10-24 | 260-310 ft (79-94 m) |
+
+### 1.2 DTS Datasets
+
+| Dataset | Description | Profiles |
+|---------|-------------|----------|
+| `Channel1_alldataupto070224.mat` | Compiled temperature profiles (Jun 2023 - Jul 2024) | 111 |
+| `_raw_DTS/channel 1/Step-tests DTS/` | Raw XML profiles during pump tests | ~90 |
+| `_raw_DTS/channel 1/LCR DTS/` | Ambient LCR survey profiles | ~20 |
+| `_raw_DTS/channel 1/COLD TEST CH1/` | Cold test calibration profiles (Jul 2, 2024) | 4 |
 
 ---
 
-## 2. Data Preparation Pipeline
+## 2. DAS Data Preparation Pipeline
 
 ### 2.1 Raw TDMS to MAT Conversion
 
-Raw Silixa iDAS TDMS files were converted to MATLAB `.mat` files using `Silixa_TDMSDataToPhysicalDispRate.m`. This function:
+Raw Silixa iDAS TDMS files were converted to MATLAB `.mat` files using `Silixa_TDMSDataToPhysicalDispRate.m` (`src/prepare/`). This function:
 
 - Reads TDMS binary data and applies ADC-to-physical scaling
 - Outputs displacement rate in **nm/sample** (native iDAS units)
@@ -32,7 +43,7 @@ Raw Silixa iDAS TDMS files were converted to MATLAB `.mat` files using `Silixa_T
 
 ### 2.2 Concatenation (No Decimation)
 
-Sequential TDMS files recorded at 60-second intervals were concatenated at the native 100 Hz sampling rate into continuous datasets using `process_mat_data.m` with **`decimation_factor = 1`** (mode `prep_no_decim`). Concatenation at full sampling rate preserved temporal continuity without introducing edge effects between files. The output variable is `fulldata` (matrix dimensions: time samples × channels).
+Sequential TDMS files recorded at 60-second intervals were concatenated at the native 100 Hz sampling rate into continuous datasets using `process_mat_data.m` with **`decimation_factor = 1`** (mode `prep_no_decim`). Concatenation at full sampling rate preserved temporal continuity without introducing edge effects between files. The output variable is `fulldata` (matrix dimensions: time samples x channels).
 
 **Memory note:** Each 100 Hz dataset is approximately 1.4 GB in memory. Only one dataset should reside in the `_active/` directory at a time.
 
@@ -42,24 +53,24 @@ DAS data were spatially calibrated by identifying characteristic transitions in 
 
 ### 2.4 Directory Structure
 
-Each dataset was placed in `data/_BATCH/_active/` with the following layout:
+Each processed DAS dataset is stored in `_processed_DAS/` with the following layout:
 
 ```
-data/_BATCH/_active/
+_processed_DAS/
   PT01a_Recovery_100/
     _das/
-      Dataset_PT01a_Recovery_short_1Hz.mat    ← DAS data (fulldata variable)
+      Dataset_PT01a_Recovery_short_1Hz.mat    <- DAS data (fulldata variable)
     _head/
-      head_data.mat                            ← Pressure transducer data
+      head_data.mat                            <- Pressure transducer data
     _das_timing/
-      get_timing_PT01a_Recovery_short.m        ← Timing configuration
+      get_timing_PT01a_Recovery_short.m        <- Timing configuration
 ```
 
 Timing configuration files were auto-generated from TDMS filenames (UTC timestamps) and define the `start` and `end` datetimes for each dataset.
 
 ---
 
-## 3. Signal Processing
+## 3. DAS Signal Processing
 
 ### 3.1 Unit Conversion
 
@@ -76,7 +87,7 @@ A MATLAB `movmean` moving average filter was applied along the time axis (dimens
 | Strain rate window | 30 s (3000 samples) | 30 s (3000 samples) | 30 s (3000 samples) |
 | Regression window | 20 s (2000 samples) | 20 s (2000 samples) | 20 s (2000 samples) |
 
-The `run_correlation_analysis` mode in `BGWRP_Toolkit.m` sets global defaults of `matlab_movmean_window = 5000` (50 s), but the per-dataset `config.dataset_smoothing` entries override these to 30 s for the preprocessing pass. The toolkit resolves windows as **seconds × fs** to convert to samples.
+The `run_correlation_analysis` mode in `BGWRP_Toolkit.m` sets global defaults of `matlab_movmean_window = 5000` (50 s), but the per-dataset `config.dataset_smoothing` entries override these to 30 s for the preprocessing pass. The toolkit resolves windows as **seconds x fs** to convert to samples.
 
 ### 3.3 DAS Time Shift
 
@@ -84,7 +95,7 @@ A forward time shift of **+38 seconds** was applied to the DAS time array before
 
 ### 3.4 Common Mode Noise Removal
 
-Common mode noise (coherent signals affecting the entire cable equally) was removed by subtracting a reference signal from the bottom 30 m (100 ft) of fiber at 172–202 m (565–665 ft) depth, corresponding to the Pico Formation. This interval showed minimal displacement rate response during all three tests, confirming it reflects only instrument-wide noise. Common mode subtraction removed instrument drift and environmental noise, improving waterfall plot resolution and producing a cleaner strain rate signal for linear regression.
+Common mode noise (coherent signals affecting the entire cable equally) was removed by subtracting a reference signal from the bottom 30 m (100 ft) of fiber at 172-202 m (565-665 ft) depth, corresponding to the Pico Formation. This interval showed minimal displacement rate response during all three tests, confirming it reflects only instrument-wide noise. Common mode subtraction removed instrument drift and environmental noise, improving waterfall plot resolution and producing a cleaner strain rate signal for linear regression.
 
 ### 3.5 Spatial Smoothing (Display Only)
 
@@ -92,23 +103,23 @@ For waterfall display plots only, a 40-channel spatial moving average (~10 m) wa
 
 ---
 
-## 4. Analysis Windows
+## 4. DAS Analysis Windows
 
 Each dataset was analyzed over a focused time window during the early recovery period, selected to capture the strongest poroelastic response:
 
 | Dataset | Analysis Window (UTC) | Duration |
 |---------|-----------------------|----------|
-| PT-01a | 2023-11-07 20:44:30 – 20:47:30 | 3 min |
-| PT-01b | 2023-10-31 19:29:30 – 19:32:30 | 3 min |
-| PT-01c | 2023-10-24 19:14:30 – 19:17:30 | 3 min |
+| PT-01a | 2023-11-07 20:44:30 - 20:47:30 | 3 min |
+| PT-01b | 2023-10-31 19:29:30 - 19:32:30 | 3 min |
+| PT-01c | 2023-10-24 19:14:30 - 19:17:30 | 3 min |
 
 Within each analysis window, a narrower **regression window** was selected around the peak strain-rate signal:
 
 | Dataset | Regression Window (UTC) | Duration |
 |---------|-----------------------|----------|
-| PT-01a | 2023-11-07 20:45:15 – 20:46:30 | 75 s |
-| PT-01b | 2023-10-31 19:30:10 – 19:31:25 | 75 s |
-| PT-01c | 2023-10-24 19:15:15 – 19:16:30 | 75 s |
+| PT-01a | 2023-11-07 20:45:15 - 20:46:30 | 75 s |
+| PT-01b | 2023-10-31 19:30:10 - 19:31:25 | 75 s |
+| PT-01c | 2023-10-24 19:15:15 - 19:16:30 | 75 s |
 
 ---
 
@@ -119,24 +130,24 @@ The region-of-interest (ROI) analysis follows the spatial differencing approach 
 ### 5.1 Processing Steps
 
 1. **Channel extraction:** All DAS channels within the screened-interval depth range were extracted (test-specific ROIs: PT-01c 58 channels, PT-01b 61 channels, PT-01a 73 channels).
-2. **Strain rate computation:** At each channel within the ROI, strain rate was computed from the difference in displacement rate between two points separated by the gauge length $L$, divided by $L$:
+2. **Strain rate computation:** At each channel within the ROI, strain rate was computed from the difference in displacement rate between two points separated by the gauge length L, divided by L:
 
 $$\dot{\varepsilon}(z,t) = \frac{\dot{u}(z + L, t) - \dot{u}(z, t)}{L}$$
 
-where $L = 10$ m is the gauge length and $\dot{u}$ is displacement rate (nm/s).
+where L = 10 m is the gauge length and u-dot is displacement rate (nm/s).
 
 3. **Spatial averaging:** The resulting strain rates were spatially averaged across all channels in the ROI, reducing channel-to-channel noise while preserving the temporal shape of the signal.
 4. **Regression smoothing:** A 20-second moving average (2000 samples) was applied to the strain rate time series prior to regression.
 
 ### 5.2 Head Data Processing
 
-- **Bourdet derivative** (Bourdet et al., 1989) of the piezometric head was computed to obtain drawdown rate — a time-weighted central differencing approach that provides robust noise reduction compared to simple finite differencing.
+- **Bourdet derivative** (Bourdet et al., 1989) of the piezometric head was computed to obtain drawdown rate, a time-weighted central differencing approach that provides robust noise reduction compared to simple finite differencing.
 - A **15-second moving average** was applied to the Bourdet derivative to stabilize the head rate estimate.
 - For PT-01a, **temporal weighting** emphasized the peak recovery interval; PT-01b and PT-01c used **uniform weighting**.
 
 ### 5.3 Timing Correction (Head Shift)
 
-A backward time shift was applied to the head data to align it with the DAS signal. This corrects for the combined effects of wellbore storage, transducer response time, and any residual GPS–logger clock offset.
+A backward time shift was applied to the head data to align it with the DAS signal. This corrects for the combined effects of wellbore storage, transducer response time, and any residual GPS-logger clock offset.
 
 | Dataset | Head Timing Correction | Direction |
 |---------|----------------------|-----------|
@@ -150,9 +161,8 @@ A backward time shift was applied to the head data to align it with the DAS sign
 |-----------|--------|--------|--------|
 | Aquifer | Lynwood-Silverado | Lynwood-Silverado | Gage-Gardena |
 | Head zone | z2 | z4 | z5 |
-| Zone β | 0.132 | 0.020 | 0.021 |
-| Depth range (ft) | 450–510 | 350–400 | 260–310 |
-| Depth range (m) | 137–155 | 107–122 | 79–94 |
+| Depth range (ft) | 450-510 | 350-400 | 260-310 |
+| Depth range (m) | 137-155 | 107-122 | 79-94 |
 | Channels in ROI | 73 | 61 | 58 |
 | Head shift (s) | +13 | +12 | +14 |
 | Calibration C1 | 513 | 513 | 513 |
@@ -172,45 +182,94 @@ Poroelastic storage was calculated from the simplified poroelasticity equation (
 
 $$S_\epsilon = \frac{\alpha}{\gamma_w} \cdot \frac{\partial h / \partial t}{\partial \varepsilon / \partial t}$$
 
-where $\partial h / \partial t$ is drawdown rate (piezometer) and $\partial \varepsilon / \partial t$ is strain rate (DAS). Specific storage is then $S_s \approx S_\epsilon \cdot \gamma_w$.
+where dh/dt is drawdown rate (piezometer) and d-epsilon/dt is strain rate (DAS). Specific storage is then S_s = S_epsilon * gamma_w.
 
 Parameters:
-- $\alpha$ = 1.0 (Biot-Willis coefficient for unconsolidated alluvium)
-- $\gamma_w$ = 9810 N/m³ (specific weight of water)
+- alpha = 1.0 (Biot-Willis coefficient for unconsolidated alluvium)
+- gamma_w = 9810 N/m^3 (specific weight of water)
 
 ### 6.3 Results Summary
 
 | Metric | PT-01c (Zone 5) | PT-01b (Zone 4) | PT-01a (Zone 2) |
 |--------|-----------------|-----------------|-----------------|
 | Aquifer | Gage-Gardena | Lynwood-Silverado | Lynwood-Silverado |
-| Depth (m) | 79–94 | 107–122 | 137–155 |
+| Depth (m) | 79-94 | 107-122 | 137-155 |
 | Channels | 58 | 61 | 73 |
-| β | 0.021 | 0.020 | 0.132 |
 | Head shift (s) | +14 | +12 | +13 |
-| Slope (1/m) | 3.19 × 10⁻⁸ | 2.16 × 10⁻⁸ | 2.43 × 10⁻⁸ |
+| Slope (1/m) | 3.19 x 10^-8 | 2.16 x 10^-8 | 2.43 x 10^-8 |
 | R | 0.970 | 0.988 | 0.986 |
-| R² | 0.941 | 0.976 | 0.972 |
-| RMSE (1/s) | 1.45 × 10⁻¹² | 3.67 × 10⁻¹³ | 7.63 × 10⁻¹³ |
-| S_ε (1/Pa) | 1.07 × 10⁻¹¹ | 7.24 × 10⁻¹² | 8.14 × 10⁻¹² |
-| S_s (1/m) | 1.05 × 10⁻⁷ | 7.10 × 10⁻⁸ | 7.98 × 10⁻⁸ |
+| R^2 | 0.941 | 0.976 | 0.972 |
+| RMSE (1/s) | 1.45 x 10^-12 | 3.67 x 10^-13 | 7.63 x 10^-13 |
+| S_epsilon (1/Pa) | 1.07 x 10^-11 | 7.24 x 10^-12 | 8.14 x 10^-12 |
+| S_s (1/m) | 1.05 x 10^-7 | 7.10 x 10^-8 | 7.98 x 10^-8 |
 
-All three tests yielded strong linear correlations (R² = 0.941–0.976). The two Lynwood-Silverado tests (PT-01a and PT-01b) produced consistent specific storage values (7.98 × 10⁻⁸ and 7.10 × 10⁻⁸ 1/m), while the shallower Gage-Gardena interval (PT-01c) exhibits higher storage (1.05 × 10⁻⁷ 1/m), consistent with lower compaction at shallower depths.
+All three tests yielded strong linear correlations (R^2 = 0.941-0.976). The two Lynwood-Silverado tests (PT-01a and PT-01b) produced consistent specific storage values (7.98 x 10^-8 and 7.10 x 10^-8 1/m), while the shallower Gage-Gardena interval (PT-01c) exhibits higher storage (1.05 x 10^-7 1/m), consistent with lower compaction at shallower depths.
 
 ### 6.4 Comparison with Traditional Pressure-Based Analysis
 
 | Test | DAS S_s (1/m) | AQTESOLV S_s (1/m) | Ratio |
 |------|---------------|---------------------|-------|
-| PT-01c (Zone 5) | 1.05 × 10⁻⁷ | 2.55 × 10⁻⁵ | 243× |
-| PT-01b (Zone 4) | 7.10 × 10⁻⁸ | 1.80 × 10⁻⁵ | 254× |
-| PT-01a (Zone 2) | 7.98 × 10⁻⁸ | 2.76 × 10⁻⁵ | 346× |
+| PT-01c (Zone 5) | 1.05 x 10^-7 | 2.55 x 10^-5 | 243x |
+| PT-01b (Zone 4) | 7.10 x 10^-8 | 1.80 x 10^-5 | 254x |
+| PT-01a (Zone 2) | 7.98 x 10^-8 | 2.76 x 10^-5 | 346x |
 
-The Hantush-Jacob estimates are systematically 243–346× higher than DAS values. This discrepancy reflects the fundamental difference between the two methods: the DAS poroelastic approach isolates elastic skeletal compressibility, while the pressure-based approach yields a composite storativity that lumps skeletal compressibility, fluid compressibility, leakage, and other hydraulic contributions.
+The Hantush-Jacob estimates are systematically 243-346x higher than DAS values. This discrepancy reflects the fundamental difference between the two methods: the DAS poroelastic approach isolates elastic skeletal compressibility, while the pressure-based approach yields a composite storativity that lumps skeletal compressibility, fluid compressibility, leakage, and other hydraulic contributions.
 
 ---
 
-## 7. Figures Produced
+## 7. DTS Temperature Processing
 
-For each dataset, the following figures were generated:
+### 7.1 Instrument and Data Acquisition
+
+Temperature profiles were collected using a Silixa XT-DTS along the same fiber optic cable at PM-07. Each profile records temperature at 815 channels (0.25 m spacing) from the instrument to the bottom of the well. A total of 111 profiles spanning June 2023 to July 2024 are compiled in `Channel1_alldataupto070224.mat` (variables: `tempC` [815 x 111], `distance` [815 x 1] in metres, `datetime` [1 x 111]).
+
+### 7.2 Depth Calibration
+
+DTS depth calibration mirrors the DAS approach. The top-of-casing was identified at channel 80 from the cold test, and a correction factor was applied to map channel 815 to the known well depth of 665 ft (202.69 m):
+
+| Parameter | Value |
+|-----------|-------|
+| Top of casing channel | 80 |
+| Known well depth | 665 ft (202.69 m) |
+| Excess cable above casing | 54.46 ft |
+| Scale factor | ~1.085 |
+
+Raw fibre distance was converted to depth below casing in feet, then scaled so that the bottom channel maps to 665 ft.
+
+### 7.3 DTS_W_LAS.m: Pre/Post Pump Temperature Profiles (Thesis Figure 8)
+
+`DTS_W_LAS.m` generates pre- and post-pumping temperature profiles for each test date:
+
+1. **Profile selection:** For each pump test date (Oct 24, Oct 31, Nov 7 2023), the script identifies DTS profiles collected before, during, and after pumping using UTC timestamps.
+2. **Depth masking:** Only subsurface channels (depth >= 0 ft, <= 665 ft) are retained.
+3. **Profile differencing:** Post-pump minus pre-pump temperature differences are computed to identify thermal anomalies. All three tests showed differences < 0.06 C, consistent with no vertical fluid movement.
+4. **LAS export:** Temperature profiles are exported to LAS 2.0 format for visualization in WellCAD, with depth in feet below casing and temperature in degrees Celsius.
+
+### 7.4 geothermal_gradient_PM07.m: Ambient Temperature Profile (Thesis Figure 7)
+
+`geothermal_gradient_PM07.m` computes the long-term average geothermal gradient:
+
+1. **Mean profile:** All 111 DTS temperature profiles are averaged to produce a mean and standard deviation profile, suppressing transient perturbations from individual pump tests or seasonal effects.
+2. **Bourdet derivative:** The geothermal gradient is computed using the Bourdet derivative method (Bourdet et al., 1989) with a smoothing distance of L = 6.1 m (20 ft), matching the PM-07 screened interval length. This weighted central-difference approach provides a smoother gradient estimate than simple finite differencing.
+3. **Linear fit:** A bulk gradient is computed by linear regression of temperature vs depth below 100 ft, excluding the shallow zone where surface temperature influence dominates.
+4. **Outputs:** A three-panel figure (all profiles + mean, mean + linear fit, Bourdet derivative) and a LAS file (`PM07_AvgGeothermalGradient.las`) containing depth, mean temperature, and gradient.
+
+### 7.5 DTS Processing Parameters
+
+| Parameter | Value | Rationale |
+|-----------|-------|-----------|
+| Top of casing channel | CH-80 | Identified from cold test |
+| Well depth | 665 ft (202.69 m) | Known from well completion |
+| Scale factor | ~1.085 | Aligns fiber length to known depth |
+| Bourdet smoothing distance | L = 6.1 m (20 ft) | Matches PM-07 screened interval length |
+| Temperature resolution | < 0.06 C | Sufficient to detect vertical flow |
+| Number of profiles | 111 | June 2023 - July 2024 |
+
+---
+
+## 8. Figures Produced
+
+### 8.1 DAS Figures (per test)
 
 | Figure | Content |
 |--------|---------|
@@ -220,57 +279,91 @@ For each dataset, the following figures were generated:
 | 104 | Depth profile of mean displacement rate over regression window |
 | Regression | 4-subplot figure: scatter + time series + residuals + spatial difference |
 
+### 8.2 DTS Figures
+
+| Thesis Figure | Script | Content |
+|---------------|--------|---------|
+| Figure 7 | `geothermal_gradient_PM07.m` | 3-panel: all profiles + mean, mean + linear fit, Bourdet derivative |
+| Figure 8 | `DTS_W_LAS.m` | Pre/post pump temperature profiles for each test date |
+
 ### Waterfall Plot Rendering
 
-Waterfall plots use `pcolor` with `'interp'` shading and `jet` colormap (256 levels). The time axis is downsampled to 2000 points for rendering performance. Depth is displayed in meters (converted from feet via × 0.3048).
+Waterfall plots use `pcolor` with `'interp'` shading and `jet` colormap (256 levels). The time axis is downsampled to 2000 points for rendering performance. Depth is displayed in meters (converted from feet via x 0.3048).
 
 ---
 
-## 8. Reproducibility
+## 9. Reproducibility
 
-### 8.1 Running the Analysis
+### 9.1 Running the DAS Analysis
 
 Each dataset has a dedicated driver script in `scripts/`:
 
 ```matlab
-% PT-01a
-cd('C:\Coding\BGWRP'); run('scripts\run_PT01a_thesis_analysis.m')
+% PT-01c (Gage-Gardena, 79-94 m)
+run_PT01c_thesis_analysis
 
-% PT-01b
-cd('C:\Coding\BGWRP'); run('scripts\run_PT01b_thesis_analysis.m')
+% PT-01b (Lynwood-Silverado, 107-122 m)
+run_PT01b_thesis_analysis
 
-% PT-01c
-cd('C:\Coding\BGWRP'); run('scripts\run_PT01c_thesis_analysis.m')
+% PT-01a (Lynwood-Silverado, 137-155 m)
+run_PT01a_thesis_analysis
 ```
 
 Each script executes two steps:
-1. **`BGWRP_Toolkit`** in `run_correlation_analysis` mode — loads data, applies smoothing and time shift, generates Figures 101–103.
-2. **`run_roi_analysis_PT01x.m`** — performs spatial differencing, regression, storage calculation, generates Figure 104 and regression figure.
+1. **`BGWRP_Toolkit`** in `run_correlation_analysis` mode: loads data, applies smoothing and time shift, generates Figures 101-103.
+2. **`run_roi_analysis_PT01x_100Hz.m`**: performs spatial differencing, regression, storage calculation, generates Figure 104 and the 4-subplot regression figure.
 
-### 8.2 Pipeline Call Graph
+**Before running:** Copy the processed 100 Hz dataset from `_processed_DAS/PT01x_Recovery_100/` to `data/_BATCH/_active/PT01x_Recovery_100/` in the main repository working directory.
 
-```
-run_PT01x_thesis_analysis.m
-  ├── BGWRP_Toolkit.m  (mode = 'run_correlation_analysis')
-  │     ├── config.m                      ← analysis windows, smoothing, bounds
-  │     ├── analyze_head_data.m           ← load & process piezometer data
-  │     ├── analyze_das_data.m            ← load, smooth, time-shift DAS data
-  │     │     └── apply_filter.m          ← dispatches movmean smoothing
-  │     └── generate_plots.m              ← Figures 101, 102, 103
-  │
-  └── run_roi_analysis_PT01x.m
-        ├── linear_regression_depth_range.m   ← spatial differencing + regression
-        │     └── calculate_specific_storage_becker.m  ← S_s from slope
-        └── Depth profile plot (Figure 104)
+### 9.2 Running the DTS Analysis
+
+```matlab
+% Navigate to the folder containing DTS_W_LAS.m and the .mat data file
+DTS_W_LAS              % Produces pre/post pump profiles + LAS exports (Figure 8)
+geothermal_gradient_PM07   % Produces average temperature + Bourdet gradient (Figure 7)
 ```
 
-### 8.3 Key Source Files
+Both scripts load `Channel1_alldataupto070224.mat` from `_processed_DTS/`.
+
+### 9.3 Pipeline Call Graph
+
+```
+DAS Analysis:
+  run_PT01x_thesis_analysis.m
+    +-- BGWRP_Toolkit.m  (mode = 'run_correlation_analysis')
+    |     +-- config.m                      <- analysis windows, smoothing, bounds
+    |     +-- analyze_head_data.m           <- load & process piezometer data
+    |     +-- analyze_das_data.m            <- load, smooth, time-shift DAS data
+    |     |     +-- apply_filter.m          <- dispatches movmean smoothing
+    |     +-- generate_plots.m              <- Figures 101, 102, 103
+    |
+    +-- run_roi_analysis_PT01x_100Hz.m
+          +-- linear_regression_depth_range.m   <- spatial differencing + regression
+          |     +-- calculate_specific_storage_becker.m  <- S_s from slope
+          +-- Depth profile plot (Figure 104)
+
+DTS Analysis:
+  DTS_W_LAS.m
+    +-- Channel1_alldataupto070224.mat      <- 111 compiled profiles
+    +-- Depth calibration (cold test parameters)
+    +-- Pre/post pump differencing
+    +-- LAS export
+
+  geothermal_gradient_PM07.m
+    +-- Channel1_alldataupto070224.mat      <- same source data
+    +-- Mean profile computation
+    +-- Bourdet derivative (L = 20 ft)
+    +-- Linear fit (below 100 ft)
+    +-- LAS export
+```
+
+### 9.4 Key Source Files
 
 | File | Purpose |
 |------|---------|
 | `src/BGWRP_Toolkit.m` | Main entry point; mode switch configures pipeline |
 | `config.m` | All analysis windows, smoothing parameters, plot bounds |
-| `src/prepare/Silixa_TDMSDataToPhysicalDispRate.m` | TDMS → MAT conversion with physical scaling |
+| `src/prepare/Silixa_TDMSDataToPhysicalDispRate.m` | TDMS to MAT conversion with physical scaling |
 | `src/prepare/process_mat_data.m` | Concatenation and optional decimation |
 | `src/analyze/analyze_das_data.m` | DAS loading, unit correction, smoothing, time shift |
 | `src/analyze/analyze_head_data.m` | Head data loading and recovery rate calculation |
@@ -278,29 +371,26 @@ run_PT01x_thesis_analysis.m
 | `src/analyze/calculate_specific_storage_becker.m` | Poroelastic storage from regression slope |
 | `src/filter/apply_filter.m` | Filter dispatcher (movmean, spatial median, etc.) |
 | `src/plot/generate_plots.m` | Figure generation (101, 102, 103) |
-| `scripts/run_PT01a_thesis_analysis.m` | PT-01a driver script |
-| `scripts/run_PT01b_thesis_analysis.m` | PT-01b driver script |
-| `scripts/run_PT01c_thesis_analysis.m` | PT-01c driver script |
-| `scripts/run_roi_analysis_PT01a_100Hz.m` | PT-01a ROI analysis |
-| `scripts/run_roi_analysis_PT01b.m` | PT-01b ROI analysis |
-| `scripts/run_roi_analysis_PT01c.m` | PT-01c ROI analysis |
+| `DTS_W_LAS.m` | DTS pre/post pump profiles and LAS export |
+| `geothermal_gradient_PM07.m` | Geothermal gradient (Bourdet derivative) and LAS export |
 
-### 8.4 Configuration Keys
+### 9.5 Configuration Keys
 
 The toolkit uses **directory names** as dataset identifiers. Configuration lookups use `upper()` normalization. For each 100 Hz dataset, three configuration entries are required in `config.m`:
 
-1. **Analysis window** — `config.analysis_windows.<DirectoryName>.start/.end`
-2. **Dataset smoothing** — `config.dataset_smoothing.<UPPERCASE_NAME>.fs`, `.preprocessing_window_sec`, `.strain_rate_window_sec`, `.regression_window_sec`
-3. **Manual plot bounds** — `config.manual_bounds.<DirectoryName>.*` (optional, for fixed colorbars)
+1. **Analysis window** -- `config.analysis_windows.<DirectoryName>.start/.end`
+2. **Dataset smoothing** -- `config.dataset_smoothing.<UPPERCASE_NAME>.fs`, `.preprocessing_window_sec`, `.strain_rate_window_sec`, `.regression_window_sec`
+3. **Manual plot bounds** -- `config.manual_bounds.<DirectoryName>.*` (optional, for fixed colorbars)
 
 ---
 
-## 9. Software Environment
+## 10. Software Environment
 
-- **MATLAB** R2023b or later (requires `movmean`, `cumtrapz`, `datetime` with timezone support)
+- **MATLAB** R2023b or later (requires `movmean`, `cumtrapz`, `datetime` with timezone support, `polyfit`, `interp1`)
+- **Signal Processing Toolbox** (for `pwelch`, `spectrogram`, `filtfilt`, `butter`)
 - **Silixa TDMS reader** bundled in `src/prepare/`
 - **Operating system:** Windows 10/11 (paths use backslash convention)
-- **RAM requirement:** ≥ 16 GB recommended for 100 Hz datasets (~1.4 GB per matrix)
+- **RAM requirement:** >= 16 GB recommended for 100 Hz datasets (~1.4 GB per matrix)
 
 ---
 
@@ -310,6 +400,6 @@ Becker, M. W., Coleman, T. I., & Ciervo, C. C. (2020). Distributed Acoustic Sens
 
 Becker, M. W., Harris, B., & Pevzner, R. (2023). Characterization of aquifer poroelastic response to impulse and oscillatory well pressure using distributed acoustic sensing. *Geophysical Research Letters*, 50(1), e2022GL100904. https://doi.org/10.1029/2022GL100904
 
-Bourdet, D., Ayoub, J. A., & Pirard, Y. M. (1989). Use of pressure derivative in well-test interpretation. *SPE Formation Evaluation*, 4(2), 293–302. https://doi.org/10.2118/12777-PA
+Bourdet, D., Ayoub, J. A., & Pirard, Y. M. (1989). Use of pressure derivative in well-test interpretation. *SPE Formation Evaluation*, 4(2), 293-302. https://doi.org/10.2118/12777-PA
 
 Wang, H. F. (2000). *Theory of Linear Poroelasticity with Applications to Geomechanics and Hydrogeology* (Vol. 2). Princeton University Press.

@@ -3,9 +3,11 @@
 
 clear; clc; close all;
 
+script_dir = fileparts(mfilename('fullpath'));
+
 %% 1. LOAD DATA -----------------------------------------------------------
 fprintf('--- Loading DTS Dataset ---\n');
-load('C:\Users\Hannah Fitz\OneDrive - csulb\Documents\RBGRP\DTS\PM-7\Channel1_alldataupto070224.mat');
+load(fullfile(script_dir, '_processed_DTS', 'Channel1_alldataupto070224.mat'));
 fprintf('DTS Data Loaded: [%d depths  x  %d timestamps]\n',length(distance),length(datetime));
 
 %% 2. DEPTH CALIBRATION ---------------------------------------------------

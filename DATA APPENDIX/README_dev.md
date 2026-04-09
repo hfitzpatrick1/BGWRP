@@ -1,476 +1,188 @@
-# BGWRP Data Processing Toolkit
+# DATA APPENDIX: BGWRP Thesis Digital Appendix
 
-A comprehensive MATLAB toolkit for processing and analyzing Distributed Acoustic Sensing (DAS) data from TDMS files to analysis-ready datasets. Features advanced noise reduction, signal processing, and diagnostic capabilities for groundwater monitoring applications.
+**Thesis:** Estimating Hydraulic Properties of a Coastal Aquifer Using Distributed Fiber Optic Sensing
+**Author:** Hannah Fitzpatrick, M.S. Geology, California State University, Long Beach (December 2025)
 
-## Architecture
+---
 
-### Directory Structure
+## Contents
+
+This appendix contains all data, source code, and processing scripts needed to reproduce the DAS poroelastic storage analysis (Thesis Figures 11-16, Table 4) and DTS temperature analysis (Thesis Figures 7-8).
+
 ```
-BGWRP/
-├── config.m               # Root configuration file
-├── scripts/               # ⭐ Main analysis runner scripts
-│   ├── run_PT01a_thesis_analysis.m    # PT-01a thesis analysis
-│   ├── run_roi_analysis.m              # ROI linear regression
-│   └── run_*.m                         # Other runner scripts
-├── src/                   # Source code (organized by function)
-│   ├── BGWRP_Toolkit.m    # Main processing script (unified entry point)
-│   ├── config.m           # Configuration settings
-│   ├── prepare/           # Data preparation functions
-│   │   ├── Silixa_TDMSDataToPhysicalDispRate.m
-│   │   ├── process_head_data.m
-│   │   ├── process_mat_data.m
-│   │   └── organize_workspace.m
-│   ├── analyze/           # Analysis functions
-│   │   ├── analyze_head_data.m
-│   │   ├── analyze_das_data.m
-│   │   ├── linear_regression_depth_range.m     # Depth-based regression
-│   │   ├── linear_regression_strain_drawdown.m # Linear regression
-│   │   └── calculate_specific_storage_becker.m # Storage calculation
-│   ├── plot/              # Plotting and visualization
-│   │   ├── generate_plots.m
-│   │   ├── plot_*.m                  # Various plotting functions
-│   │   └── [visualization utilities]
-│   ├── filter/            # Advanced filtering and signal processing
-│   │   ├── chen_*.m                  # Chen denoising framework
-│   │   ├── spatial_median_filter.m
-│   │   ├── ensemble_averaging.m
-│   │   └── [other filters]
-│   ├── diagnostic/        # Diagnostic and quality assessment
-│   │   ├── diagnose_file_boundaries.m
-│   │   ├── check_*.m                 # Various diagnostic checks
-│   │   └── analyze_quantization.m
-│   ├── processing/        # 🆕 Data processing pipelines
-│   │   ├── process_*.m               # Processing workflows
-│   │   ├── batch_*.m                 # Batch processing scripts
-│   │   ├── extract_*.m               # Data extraction utilities
-│   │   └── migrate_*.m               # Data migration tools
-│   ├── experiments/       # 🆕 Experimental/test scripts
-│   │   ├── test_*.m                  # Test scripts
-│   │   ├── check_*.m                 # Verification scripts
-│   │   ├── debug_*.m                 # Debug utilities
-│   │   ├── quick_*.m                 # Quick test scripts
-│   │   └── optimize_*.m              # Optimization experiments
-│   ├── export/            # 🆕 Export utilities
-│   │   ├── export_*.m                # Various export functions
-│   │   └── create_pump_schedule*.m
-│   ├── weight_adjustment/ # 🆕 Temporal weighting functions
-│   │   ├── add_*_weights.m
-│   │   └── weight_*.m
-│   ├── correction/        # 🆕 Data correction utilities
-│   │   ├── flatten_*.m
-│   │   ├── shift_*.m
-│   │   ├── renormalize_*.m
-│   │   └── fix_*.m
-│   └── _utils/            # Utility functions
-│       ├── chart_logger.m
-│       ├── detect_file_type.m
-│       └── [helper functions]
-├── data/
-│   └── _BATCH/            # Processing workspace (configurable)
-│       ├── [input_dirs]/  # Raw TDMS files organized by test
-│       │   ├── _das/      # DAS TDMS files
-│       │   └── _head/     # Head monitoring data
-│       ├── _tdms_to_mat/  # Converted MAT files
-│       ├── _combined_head/# Processed head data
-│       ├── _concatenated/ # Concatenated and decimated datasets
-│       ├── _active/       # Final analysis-ready data
-│       │   └── [dataset]/ # Per-dataset directories
-│       │       ├── _das/  # DAS data files
-│       │       ├── _head/ # Head data files
-│       │       └── _das_timing/ # Timing configuration
-│       └── _configs/      # Global timing configurations
-└── README.md
-```
-
-### Data Flow
-1. **Raw TDMS** → `_tdms_to_mat/` → `_concatenated/` → `_active/`
-2. **Head data processing**: `_head/` → `_combined_head/` → `_active/[dataset]/_head/`
-3. **Directory names are authority** - all processing references parent directory names
-4. **Flexible file discovery** - automatically detects any `.mat` files and timing configs
-5. **Workspace organization** - automatic cleanup and archiving of intermediate files
-
-## Configuration
-
-Edit `src/config.m` to set:
-- `config.base_input` - Root data processing directory (default: `C:\Coding\BGWRP\data\_BATCH\`)
-- Analysis windows, waterfall bounds, filtering options
-- Decimation factors, calibration parameters
-- Chart output settings and file paths
-- **FFT analysis parameters** (Figure 4 configuration):
-  - `config.sampling_rate` - Sampling rate for FFT analysis (default: 1.0 Hz)
-  - `config.fft_window_length` - FFT window size (default: 512)
-  - `config.freq_range_max` - Maximum frequency to analyze (default: 0.4 Hz)
-  - `config.psd_method` - PSD computation method ('pwelch' or 'periodogram')
-  - Grid pattern detection thresholds for artifact identification
-- Advanced filtering algorithm parameters (Chen, spatial, temporal, ensemble)
-- MATLAB movmean filter parameters (`matlab_movmean_window`, etc.)
-
-## Quick Start
-
-### For Thesis Analysis (PT-01a)
-```matlab
-% Navigate to scripts directory
-cd('C:\Coding\BGWRP\scripts')
-
-% Run complete PT-01a thesis analysis
-run_PT01a_thesis_analysis
+DATA APPENDIX/
+|
+|-- README_dev.md                     <- This file
+|-- 100Hz_Processing_Appendix.md      <- Detailed processing pipeline documentation
+|-- config.m                          <- Analysis parameters (smoothing, windows, bounds)
+|-- DTS_W_LAS.m                       <- DTS pre/post pump profiles (Figure 8)
+|-- geothermal_gradient_PM07.m        <- Geothermal gradient analysis (Figure 7)
+|
+|-- scripts/                          <- Thesis analysis runner scripts
+|   |-- run_PT01a_thesis_analysis.m   <-   PT-01a entry point (Lynwood-Silverado, 137-155 m)
+|   |-- run_PT01b_thesis_analysis.m   <-   PT-01b entry point (Lynwood-Silverado, 107-122 m)
+|   |-- run_PT01c_thesis_analysis.m   <-   PT-01c entry point (Gage-Gardena, 79-94 m)
+|   |-- run_roi_analysis_PT01a_100Hz.m  <- ROI regression + storage (PT-01a)
+|   |-- run_roi_analysis_PT01b_100Hz.m  <- ROI regression + storage (PT-01b)
+|   +-- run_roi_analysis_PT01c_100Hz.m  <- ROI regression + storage (PT-01c)
+|
+|-- src/                              <- BGWRP Toolkit source code
+|   |-- BGWRP_Toolkit.m              <-   Main processing orchestrator
+|   |-- analyze/                      <-   Core analysis functions
+|   |   |-- analyze_das_data.m        <-     DAS data loading and smoothing
+|   |   |-- analyze_head_data.m       <-     Piezometer head processing
+|   |   |-- linear_regression_depth_range.m  <- Strain-rate vs head-rate regression
+|   |   +-- calculate_specific_storage_becker.m  <- Poroelastic storage calculation
+|   |-- filter/                       <-   Signal processing filters
+|   |   |-- apply_filter.m            <-     Filter dispatcher
+|   |   |-- common_mode_removal_filter.m
+|   |   |-- spatial_median_filter.m
+|   |   +-- resample_antialias_filter.m
+|   |-- plot/                         <-   Visualization
+|   |   |-- generate_plots.m          <-     Waterfall and time series plots
+|   |   +-- get_plot_bounds.m
+|   |-- prepare/                      <-   Data preparation
+|   |   |-- Silixa_TDMSDataToPhysicalDispRate.m  <- TDMS-to-MAT conversion
+|   |   |-- process_mat_data.m        <-     Concatenation and decimation
+|   |   |-- process_head_data.m       <-     Head data combination
+|   |   +-- TDMS_Adv_Read.m           <-     TDMS binary reader
+|   +-- _utils/                       <-   Utility functions
+|       |-- console_log.m
+|       |-- discover_datasets.m
+|       +-- load_batch_config.m
+|
+|-- _processed_DAS/                   <- Processed 100 Hz DAS recovery data
+|   |-- PT01a_Recovery_100/           <-   PT-01a (Nov 7, 2023)
+|   |   |-- _das/Dataset_PT01a_Recovery_short_1Hz.mat
+|   |   |-- _head/head_data.mat
+|   |   +-- _das_timing/get_timing_PT01a_Recovery_short.m
+|   |-- PT01b_Recovery_100/           <-   PT-01b (Oct 31, 2023)
+|   +-- PT01c_Recovery_100/           <-   PT-01c (Oct 24, 2023)
+|
+|-- _processed_DTS/                   <- Processed DTS temperature data
+|   |-- Channel1_alldataupto070224.mat  <- 111 compiled profiles (815 ch x 111 timestamps)
+|   |-- Channel2_alldataupto070224.mat  <- Channel 2 compiled profiles
+|   |-- PT01a_Recovery_short/         <-   1 Hz DAS for PT-01a (decimated backup)
+|   |-- PT01b_Recovery_short/
+|   +-- PT01c_Recovery_short/
+|
+|-- _processed_head/                  <- Processed piezometer head data (MAT)
+|   |-- head_a_z2.mat ... head_a_z5.mat, head_a_pw.mat  <- PT-01a zones + pumping well
+|   |-- head_b_z2.mat ... head_b_z5.mat, head_b_pw.mat  <- PT-01b
+|   +-- head_c_z2.mat ... head_c_z5.mat, head_c_pw.mat  <- PT-01c
+|
+|-- _raw_das/                         <- Raw TDMS files (Silixa iDAS, 100 Hz)
+|   |-- PT01a_Recovery_short/_das/    <-   21 TDMS files (20:35-20:55 UTC, Nov 7 2023)
+|   |-- PT01b_Recovery_short/_das/    <-   21 TDMS files (19:19-19:39 UTC, Oct 31 2023)
+|   +-- PT01c_Recovery_short/_das/    <-   21 TDMS files (19:04-19:24 UTC, Oct 24 2023)
+|
+|-- _raw_DTS/                         <- Raw DTS XML temperature profiles
+|   |-- channel 1/                    <-   Channel 1 (primary)
+|   |   |-- *.xml                     <-     Individual profiles (ambient surveys)
+|   |   |-- Step-tests DTS/           <-     Profiles during pump tests (by date)
+|   |   |-- LCR DTS/                  <-     LCR survey profiles (by date)
+|   |   +-- COLD TEST CH1/            <-     Cold test calibration (Jul 2, 2024)
+|   +-- channel 2/                    <-   Channel 2 (redundant)
+|
++-- _raw_head/                        <- Raw piezometer CSV files (VuSitu)
+    |-- a/                            <-   PT-01a zones (Nov 7, 2023)
+    |-- b/                            <-   PT-01b zones (Oct 31, 2023)
+    +-- c/                            <-   PT-01c zones + pumping wells (Oct 24, 2023)
 ```
 
-### For General Processing
-```matlab
-% Navigate to src directory
-cd('C:\Coding\BGWRP\src')
+---
 
-% Use BGWRP_Toolkit with various modes (see below)
-```
+## Software Requirements
 
-### Basic Commands
+- **MATLAB R2023b** or later
+- **Signal Processing Toolbox** (for `pwelch`, `spectrogram`, `filtfilt`, `butter`)
+- Core functions used: `movmean`, `cumtrapz`, `datetime` (timezone support), `polyfit`, `interp1`
+- **RAM:** >= 16 GB recommended (100 Hz datasets are ~1.4 GB each in memory)
 
-| Mode | Command | Description |
-|------|---------|-------------|
-| **Data Preparation** |
-| `prep` | `mode = 'prep'; BGWRP_Toolkit` | Full prep: TDMS→MAT→concatenate→timing with cleanup |
-| `prep_tdms` | `mode = 'prep_tdms'; BGWRP_Toolkit` | Convert TDMS to MAT files only |
-| `prep_concat` | `mode = 'prep_concat'; BGWRP_Toolkit` | Concatenate existing MAT files only |
-| `prep_timing` | `mode = 'prep_timing'; BGWRP_Toolkit` | Extract timing configuration only |
-| `prep_no_decim` | `mode = 'prep_no_decim'; BGWRP_Toolkit` | Full prep preserving 100Hz (no decimation) |
-| `prep_purge` | `mode = 'prep_purge'; BGWRP_Toolkit` | Full prep with purge of previous data |
-| **Analysis** |
-| `run` | `mode = 'run'; BGWRP_Toolkit` | Analyze data, display 4 figures |
-| `run_save` | `mode = 'run_save'; BGWRP_Toolkit` | Analyze data, save 4 figures |
-| **Advanced Filtering** |
-| `run_filter_chen` | `mode = 'run_filter_chen'; BGWRP_Toolkit` | Chen et al. complete denoising framework |
-| `run_filter_chen_fk` | `mode = 'run_filter_chen_fk'; BGWRP_Toolkit` | Chen F-K filter (grid pattern removal) |
-| `run_filter_spatial` | `mode = 'run_filter_spatial'; BGWRP_Toolkit` | Spatial median filtering (BEST) |
-| `run_filter_temporal` | `mode = 'run_filter_temporal'; BGWRP_Toolkit` | Temporal median filtering |
-| `run_filter_ensemble` | `mode = 'run_filter_ensemble'; BGWRP_Toolkit` | Multi-channel ensemble averaging |
-| `run_filter_grid` | `mode = 'run_filter_grid'; BGWRP_Toolkit` | Targeted grid pattern removal |
-| `run_filter_movavg` | `mode = 'run_filter_movavg'; BGWRP_Toolkit` | Parameterized moving average filter |
-| `run_filter_matlab_movmean` | `mode = 'run_filter_matlab_movmean'; BGWRP_Toolkit` | **NEW** MATLAB movmean filter (10-second window) |
-| `run_filter_matlab_movmean_5sec` | `mode = 'run_filter_matlab_movmean_5sec'; BGWRP_Toolkit` | **NEW** MATLAB movmean filter (5-second window) |
-| `run_filter_movmean_plus_grid` | `mode = 'run_filter_movmean_plus_grid'; BGWRP_Toolkit` | **NEW** MATLAB movmean + 0.35 Hz grid removal |
-| `run_filter_baseline` | `mode = 'run_filter_baseline'; BGWRP_Toolkit` | Baseline (no filtering) |
-| **Correlation & Storage Analysis** |
-| `run_correlation_analysis` | `mode = 'run_correlation_analysis'; BGWRP_Toolkit` | **NEW** Strain rate vs head data correlation (DAS shifted +20s) |
-| `run_storage_analysis` | `mode = 'run_storage_analysis'; BGWRP_Toolkit` | **NEW** Storage parameter estimation from DAS-head correlation |
-| **Basic Filtering** |
-| `run_detrend` | `mode = 'run_detrend'; BGWRP_Toolkit` | Analysis with detrend filtering |
-| `run_highpass` | `mode = 'run_highpass'; BGWRP_Toolkit` | Analysis with highpass filtering |
+No Python installation is required.
 
-## Analysis Figures
+---
 
-The toolkit generates **4 comprehensive figures** for each test:
+## Quick Start: Reproducing the Analysis
 
-### Figure 1: Raw Data Waterfall
-- **Purpose**: Visualize raw DAS displacement rate data across depth and time
-- **Content**: Waterfall plot with color-coded displacement rates
-- **Features**: Configurable depth bounds, analysis window filtering, head data overlay
+### DAS Poroelastic Storage (Figures 14-16, Table 4)
 
-### Figure 2: Displacement Rate Analysis  
-- **Purpose**: Compare DAS displacement rate with head monitoring data
-- **Content**: 3 subplots
-  - Subplot 1: DAS displacement rate waterfall (analysis window)
-  - Subplot 2: Monitoring wells drawdown rate vs DAS representative channel
-  - Subplot 3: Pumping well drawdown rate vs DAS representative channel
-- **Features**: Dual y-axis plots, configurable bounds, zone-specific analysis
+1. Copy a processed dataset to the toolkit working directory:
+   ```
+   Copy _processed_DAS\PT01c_Recovery_100\  to  data\_BATCH\_active\PT01c_Recovery_100\
+   ```
 
-### Figure 3: Strain Analysis
-- **Purpose**: Analyze integrated DAS strain with head data correlation
-- **Content**: 3 subplots  
-  - Subplot 1: DAS strain waterfall (integrated displacement)
-  - Subplot 2: Monitoring wells head levels vs DAS strain
-  - Subplot 3: Pumping well head levels vs DAS strain
-- **Features**: Time-based integration, detrended strain, correlation analysis
+2. In MATLAB, navigate to `scripts/` and run:
+   ```matlab
+   run_PT01c_thesis_analysis    % PT-01c (Gage-Gardena, 79-94 m)
+   ```
 
-### Figure 4: FFT Analysis
-- **Purpose**: Comprehensive frequency domain analysis of DAS data
-- **Content**: 4 subplots
-  - **Subplot 1**: Power Spectral Density (PSD) with dominant frequency identification
-  - **Subplot 2**: Spatial Frequency Coherence across channels
-  - **Subplot 3**: Time-Frequency Evolution (spectrogram)
-  - **Subplot 4**: Frequency Band Power Analysis with grid pattern detection
-- **Features**:
-  - Automatic grid pattern artifact detection (0.15-0.33 Hz and 0.35-0.45 Hz bands)
-  - Dominant frequency peak identification and labeling
-  - Signal-to-noise ratio estimation
-  - Spatial coherence analysis across fiber optic channels
-  - Configurable FFT parameters (window size, overlap, frequency range)
+3. The script loads the DAS + head data via `BGWRP_Toolkit`, then runs `run_roi_analysis_PT01c_100Hz` for regression and storage calculation.
 
-### Figure 20: Linear Regression Analysis (NEW)
-- **Purpose**: Quantify correlation between DAS strain rate and drawdown rate for poroelastic storage calculation
-- **Content**: 2 subplots
-  - **Subplot 1**: Scatter plot with linear regression fit and statistics (R, R², RMSE, slope)
-  - **Subplot 2**: Time series overlay showing peak alignment between strain rate and drawdown rate
-- **Features**:
-  - Automatic timing correction to align DAS and pressure transducer data
-  - Quality assessment (good/moderate/weak correlation)
-  - Derivative-based drawdown rate calculation
-  - Results stored in `das_results.(test_name).linear_regression` for downstream storage analysis
-- **Usage**: Automatically generated when running `mode = 'run_correlation_analysis'; BGWRP_Toolkit`
+4. Repeat with `run_PT01b_thesis_analysis` and `run_PT01a_thesis_analysis` for the other two tests.
 
-#### FFT Analysis Capabilities
-- **Grid Pattern Detection**: Automatically identifies and quantifies grid pattern artifacts
-- **Frequency Peak Analysis**: Finds and labels dominant frequencies in the signal
-- **Spatial Coherence**: Analyzes frequency consistency across different fiber channels
-- **Time-Frequency Evolution**: Shows how frequency content changes over time
-- **Power Distribution**: Breaks down signal power across different frequency bands
-- **Quality Assessment**: Provides SNR estimates and noise characterization
-| `run_median` | `mode = 'run_median'; BGWRP_Toolkit` | Analysis with median filtering |
-| **Diagnostics** |
-| `diagnostic_boundaries` | `mode = 'diagnostic_boundaries'; BGWRP_Toolkit` | Analyze file boundary artifacts |
-| `diagnostic_enhanced` | `mode = 'diagnostic_enhanced'; BGWRP_Toolkit` | Enhanced boundary analysis |
-| `diagnostic_tdms` | `mode = 'diagnostic_tdms'; BGWRP_Toolkit` | TDMS metadata analysis |
-| `diagnostic_quantization` | `mode = 'diagnostic_quantization'; BGWRP_Toolkit` | Data quantization analysis |
-| **Maintenance** |
-| `purge_inactive` | `mode = 'purge_inactive'; BGWRP_Toolkit` | Clean up inactive intermediate directories |
-| `purge_unraw` | `mode = 'purge_unraw'; BGWRP_Toolkit` | Archive non-underscore dirs and purge |
-| **Complete Pipeline** |
-| `all` | `mode = 'all'; BGWRP_Toolkit` | Full pipeline: prep + analysis |
+### DTS Temperature Analysis (Figures 7-8)
 
-## Poroelastic Storage Analysis
+1. Ensure `Channel1_alldataupto070224.mat` is in the same folder as the DTS scripts (or in `_processed_DTS/`).
 
-### Linear Regression: Strain Rate vs Drawdown Rate
+2. Run:
+   ```matlab
+   DTS_W_LAS                    % Pre/post pump profiles (Figure 8)
+   geothermal_gradient_PM07     % Geothermal gradient (Figure 7)
+   ```
 
-The toolkit includes automated linear regression analysis to quantify the relationship between DAS strain rate and drawdown rate from pressure transducers. This is a critical step for calculating aquifer storage parameters using poroelasticity theory (Wang, 2000).
+---
 
-**Complete Workflow (REQUIRED STEPS):**
-```matlab
-% Step 1: Run initial correlation analysis
-mode = 'run_correlation_analysis'; 
-BGWRP_Toolkit
+## Script-to-Figure Mapping
 
-% Step 2: Optimize timing correction (REQUIRED)
-test_timing_correction
-% Adjust TIMING_CORRECTION_SECONDS until peaks align perfectly
-% Green (drawdown rate) and black (strain rate) should overlay
+| Thesis Figure | Script | Description |
+|---------------|--------|-------------|
+| Figure 7 | `geothermal_gradient_PM07.m` | Average ambient temperature profile and Bourdet-derived geothermal gradient |
+| Figure 8 | `DTS_W_LAS.m` | Pre- and post-pumping temperature profiles for each test |
+| Figures 11-13 | `scripts/run_PT01c/b/a_thesis_analysis.m` | DAS displacement rate waterfalls and time series |
+| Figure 14 | `run_PT01c_thesis_analysis.m` + `run_roi_analysis_PT01c_100Hz.m` | PT-01c poroelastic regression (4-subplot) |
+| Figure 15 | `run_PT01b_thesis_analysis.m` + `run_roi_analysis_PT01b_100Hz.m` | PT-01b poroelastic regression |
+| Figure 16 | `run_PT01a_thesis_analysis.m` + `run_roi_analysis_PT01a_100Hz.m` | PT-01a poroelastic regression |
+| Table 4 | `run_roi_analysis_PT01*_100Hz.m` | Regression and storage results (compiled from all three tests) |
 
-% Step 3: Update optimized timing in generate_plots.m (line 67)
-%         Change: lr_config.timing_correction_sec = X.X;  
-%         (where X.X is your optimized value, e.g., 7.5)
+---
 
-% Step 4: Re-run correlation analysis with optimized timing
-mode = 'run_correlation_analysis'; 
-BGWRP_Toolkit
+## Processing Parameters (Thesis Chapter 3)
 
-% Step 5: Calculate storage parameters
-calculate_storage_from_regression
+| Parameter | Value | Rationale |
+|-----------|-------|-----------|
+| DAS sampling rate | 100 Hz | Resolves rapid poroelastic transient during recovery |
+| Temporal smoothing | 30 s movmean (3000 samples) | Suppresses instrument noise; < half the 75 s recovery window |
+| Regression smoothing | 20 s movmean (2000 samples) | Bridges 100 Hz DAS and 0.2 Hz piezometer rates |
+| Spatial smoothing | 40 channels (~10 m) | Matches gauge length; display plots only |
+| Recovery window | 75 seconds post shut-off | Period of strongest strain-rate/head-rate correlation |
+| DAS time shift | +38 seconds | GPS-to-logger clock offset correction |
+| Bourdet smoothing (DTS) | L = 6.1 m (20 ft) | Matches PM-07 screened interval length |
+| Depth correction factor | 1.0849 | Ratio of known well depth to fiber-measured optical length |
+| Biot-Willis coefficient | alpha = 1.0 | Appropriate for unconsolidated alluvium (Wang, 2000) |
 
-% Results stored in: das_results.(test_name).linear_regression
-% - slope: Regression slope (ns/s per ft/min)
-% - R: Correlation coefficient
-% - R_squared: R^2 value
-% - strain_rate, drawdown_rate, time: Aligned data arrays
-```
+---
 
-**Direct Function Call:**
-```matlab
-% Load correlation results first
-mode = 'run_correlation_analysis'; BGWRP_Toolkit
+## Data Provenance
 
-% Configure and run linear regression
-lr_config.timing_correction_sec = 8;  % Optimized for PT01c_Recovery_short (R=0.724)
-lr_config.zone = 'z5';                 % Zone 5 by default
-lr_config.show_plots = true;
+| Data Type | Instrument | Format | Location in Appendix |
+|-----------|-----------|--------|---------------------|
+| DAS (raw) | Silixa iDAS v2, 100 Hz, 0.25 m spacing | TDMS | `_raw_das/` |
+| DAS (processed) | Concatenated at 100 Hz, no decimation | MAT | `_processed_DAS/` |
+| DTS (raw) | Silixa XT-DTS, ~11 min intervals | XML | `_raw_DTS/` |
+| DTS (compiled) | 111 profiles, Jun 2023 - Jul 2024 | MAT | `_processed_DTS/` |
+| Piezometer (raw) | In-Situ VuSitu SDT, PM-07 zones 1-5 | CSV | `_raw_head/` |
+| Piezometer (processed) | Per-zone MAT files | MAT | `_processed_head/` |
+| Pumping well | In-Situ VuSitu, PT-01a/b/c | CSV | `_raw_head/c/PTWells/` |
 
-results = linear_regression_strain_drawdown(das_results, head_results, 'PT01c_Recovery_short', lr_config);
+---
 
-% results contains: slope, R, R_squared, strain_rate, drawdown_rate, time
-```
+## Detailed Processing Documentation
 
-**Key Parameters:**
-- `timing_correction_sec`: Time shift (seconds) to apply backward to head data to align with GPS-synced DAS data
-- `zone`: Pressure transducer zone to analyze (default: 'z5' for Zone 5)
-- Optimized timing correction: **8 seconds** (PT01c Recovery dataset, R=0.724, R²=0.525)
-- Note: Timing correction must be optimized for each dataset using `test_timing_correction`
+See [100Hz_Processing_Appendix.md](100Hz_Processing_Appendix.md) for the complete signal processing pipeline, analysis parameters, and results tables.
 
-**Quality Assessment:**
-- R^2 > 0.5: Good correlation, suitable for storage calculation
-- R^2 > 0.25: Moderate correlation, use with caution
-- R^2 < 0.25: Weak correlation, adjust timing or check data quality
+---
 
-**Troubleshooting:**
-- If peaks not aligned: Adjust `timing_correction_sec` ±2 seconds at a time
-- If correlation weak: Try different depth ranges, longer time windows, or different zones
-- Check Figure 20 (right plot) for visual alignment of peaks
+## Citation
 
-## Data Export Utilities
-
-### LAS File Export
-Export DAS amplitude statistics to LAS format for WellCAD visualization:
-
-```matlab
-% Export DAS variance data to LAS format
-export_das_to_las('PT01c_Recovery_short')
-% Creates: PT01c_Recovery_short_DAS_Variance.las
-
-% Custom output filename
-export_das_to_las('PT01c_Recovery_short', 'MyDAS_Analysis.las')
-```
-
-**LAS File Contents:**
-- `DEPT`: Depth in feet (matching DTS format)
-- `DAS_VAR`: Amplitude variance by depth
-- `DAS_RMS`: RMS amplitude by depth  
-- `DAS_STD`: Standard deviation by depth
-- `DAS_MEAN`: Mean amplitude by depth
-- `DAS_MAX`: Maximum absolute amplitude by depth
-
-Load the generated LAS file into WellCAD alongside DTS temperature logs for integrated thermal-acoustic analysis.
-
-## Adding New Data
-
-### For Raw TDMS Data (Structured)
-1. Create directory under `data/_BATCH/` (e.g., `data/_BATCH/MyNewTest/`)
-2. Create subdirectories:
-   - `_das/` for DAS TDMS files
-   - `_head/` for head monitoring data (optional)
-3. Place TDMS files in appropriate subdirectories
-4. Run: `mode = 'prep'; BGWRP_Toolkit`
-5. Results appear in `data/_BATCH/_active/MyNewTest/`
-
-### For Raw TDMS Data (Flat Structure)
-1. Create directory under `data/_BATCH/` (e.g., `data/_BATCH/MyNewTest/`)
-2. Place TDMS files directly in this directory
-3. Run: `mode = 'prep'; BGWRP_Toolkit`
-4. Results appear in `data/_BATCH/_active/MyNewTest/`
-
-### For Pre-processed Data
-1. Create directory under `data/_BATCH/_active/` (e.g., `data/_BATCH/_active/MyAnalysis/`)
-2. Create subdirectories:
-   - `_das/` for processed DAS data
-   - `_head/` for head data (optional)
-   - `_das_timing/` for timing configuration
-3. Place your `.mat` data file in `_das/` subdirectory
-4. Add timing configuration file `get_timing_*.m` in `_das_timing/` subdirectory
-5. Run: `mode = 'run'; BGWRP_Toolkit`
-
-## Data Requirements
-
-### TDMS Files
-- Must contain DAS displacement rate data from Silixa iDAS system
-- Filename pattern: `*UTC_YYYYMMDD_HHMMSS.mmm.tdms`
-- Timestamps used for automatic timing extraction
-- Automatically converted to physical displacement rates
-
-### MAT Files  
-- Must contain variable `decdata` (displacement rate matrix)
-- Format: `[time_samples x channels]`
-- Sampling rate: typically 100Hz (decimated to 1Hz by default)
-- Units: physical displacement rate (nm/sample)
-
-### Head Data Files
-- CSV or MAT format with time series data
-- Automatic zone combination and synchronization
-- Optional but recommended for groundwater analysis
-
-### Timing Configuration
-- MATLAB function returning timing structure  
-- Required fields: `start`, `end`, `num_files`
-- Optional fields: calibration parameters, analysis windows
-- Auto-generated from TDMS filenames or manually created
-
-## Key Features
-
-### Flexible File Discovery
-- Directory name determines dataset identity (no hardcoded names)
-- Automatic detection of any `.mat` files in data directories
-- Timing config files matched by pattern `get_timing_*.m`
-- Support for both structured and flat directory layouts
-
-### Advanced Signal Processing
-- **Chen et al. Denoising**: Complete framework from literature
-- **Spatial/Temporal Filtering**: Multi-dimensional noise reduction  
-- **Ensemble Averaging**: Multi-channel signal extraction
-- **Grid Pattern Removal**: Targeted artifact suppression
-- **MATLAB movmean Filter**: Direct MATLAB implementation for simple, fast smoothing
-  - 10-second window (`run_filter_matlab_movmean`): Standard smoothing like reference scripts
-  - 5-second window (`run_filter_matlab_movmean_5sec`): Faster response, less smoothing
-- **Combined Filtering**: MATLAB movmean + grid removal for comprehensive noise reduction
-- **Phase Alignment**: Correction for file boundary discontinuities
-
-### Mode Isolation
-- Each mode completely resets configuration (no carryover)
-- Clean separation of preprocessing vs analysis functions
-- Configurable processing stages (skip/enable individual steps)
-
-### Workspace Management
-- Automatic organization of intermediate files
-- Selective archiving and cleanup modes
-- Purge modes for managing disk space
-- Consistent `_underscore` naming convention
-
-### Diagnostic Capabilities
-- **Boundary Analysis**: File concatenation artifact detection
-- **TDMS Metadata**: Raw file property extraction
-- **Quantization Analysis**: Data quality assessment
-- **Enhanced Diagnostics**: Focused analysis tools
-
-### Automatic Calibration
-- Built-in parameters for PT01a, PT01b, PT01c datasets
-- Calibration auto-selected based on directory name patterns
-- Fully configurable via timing configuration files
-- Support for custom calibration parameters
-
-## Troubleshooting
-
-### Common Issues
-- **"No TDMS files found"** - Check directory path, file permissions, and subdirectory structure
-- **"No timing config found"** - Ensure `get_timing_*.m` file exists in `_das_timing/` subdirectory
-- **"DAS data file not found"** - Verify `.mat` file exists in `_active/[dataset]/_das/` subdirectory
-- **"Workspace organization failed"** - Check write permissions on base directory
-- **Mode conflicts** - Each mode resets configuration completely (by design)
-- **Filter errors** - Check input data format and sampling rate compatibility
-- **Memory issues** - Use `prep_no_decim` mode sparingly; 100Hz data requires significant RAM
-- **Vertical bands/grid patterns** - Use `run_filter_movmean_plus_grid` to remove 0.35 Hz artifacts
-- **"Weak correlation in linear regression"** - Adjust `timing_correction_sec`, check for Noordbergum effect, or try longer recovery dataset
-- **"Peaks not aligned in Figure 20"** - Fine-tune timing correction ±1-2 seconds using `test_timing_correction.m`
-
-### Debug Modes
-Test individual components:
-```matlab
-mode = 'prep_timing'; BGWRP_Toolkit     % Test timing extraction only
-mode = 'diagnostic_tdms'; BGWRP_Toolkit % Check TDMS file integrity  
-mode = 'diagnostic_boundaries'; BGWRP_Toolkit % Check concatenation quality
-```
-
-### Performance Tips
-- Use `prep_purge` to clean workspace before major processing
-- Monitor disk space during concatenation steps
-- Use diagnostic modes to identify data quality issues early
-- For large datasets, consider processing in smaller time windows
-
-## Development
-
-### Adding New Modes
-1. Add case to switch statement in `BGWRP_Toolkit.m` (around line 34-432)
-2. Set appropriate configuration flags for desired behavior
-3. Add mode name to error message list (line 432)
-4. Test isolation from other modes (no variable carryover)
-5. Update README.md with new mode documentation
-
-### Adding New Analysis Functions
-1. Create function in appropriate subdirectory:
-   - `prepare/` - Data preprocessing and conversion
-   - `analyze/` - Core analysis algorithms
-   - `plot/` - Visualization and chart generation  
-   - `diagnostic/` - Quality assessment and debugging
-   - `modify/` - Signal processing and filtering
-   - `utils/` - General utility functions
-2. Functions automatically available via `addpath(genpath(script_dir))`
-3. Use `test_label` (directory name) as primary identifier
-4. Avoid hardcoded dataset names or file patterns
-5. Follow consistent error handling patterns with try-catch blocks
-
-### Adding New Filtering Algorithms
-1. Create filter function in `modify/` subdirectory
-2. Add mode case in `BGWRP_Toolkit.m` switch statement
-3. Set `config.smoothing_method` or `config.filter_method` appropriately
-4. Document parameters in `config.m`
-5. Test with diagnostic modes to verify effectiveness
-
-### Code Style Guidelines
-- Use descriptive variable names (avoid single letters)
-- Include function documentation headers
-- Use `fprintf` for user feedback during processing
-- Implement proper error handling with meaningful messages
-- Follow MATLAB naming conventions (camelCase for variables, PascalCase for functions)
+> Fitzpatrick, H. (2025). *Estimating Hydraulic Properties of a Coastal Aquifer Using Distributed Fiber Optic Sensing* [Master's thesis, California State University, Long Beach].
