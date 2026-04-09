@@ -11,10 +11,11 @@
 clear; clc; close all;
 
 script_dir = fileparts(mfilename('fullpath'));
+parent_dir = fileparts(script_dir);
 
 %% 1. LOAD DATA -----------------------------------------------------------
 fprintf('--- Loading DTS Dataset ---\n');
-load(fullfile(script_dir, 'Channel1_alldataupto070224.mat'));
+load(fullfile(parent_dir, '_processed_DTS', 'Channel1_alldataupto070224.mat'));
 
 [n_channels, n_profiles] = size(tempC);
 fprintf('Loaded %d temperature profiles, %d depth channels\n', n_profiles, n_channels);
@@ -118,7 +119,7 @@ z_uniform = (ceil(depth_sub_m(1) / STEP_M) * STEP_M : STEP_M : ...
 avg_temp_u = interp1(depth_sub_m, mean_temp, z_uniform, 'linear');
 grad_u     = interp1(depth_gradient_m, gradient_per_100m_v, z_uniform, 'linear');
 
-las_path = fullfile(script_dir, 'PM07_AvgGeothermalGradient.las');
+las_path = fullfile(parent_dir, 'PM07_AvgGeothermalGradient.las');
 fid = fopen(las_path, 'w');
 if fid == -1, error('Cannot create %s', las_path); end
 
@@ -188,6 +189,6 @@ linkaxes([ax1 ax2 ax3], 'y');
 sgtitle(sprintf('PM-07 Geothermal Gradient Profile — DTS Mean of %d profiles\n(%s – %s)', ...
     n_profiles, date_first, date_last), 'FontSize', 14, 'FontWeight', 'bold');
 
-out_path = fullfile(script_dir, 'PM07_geothermal_gradient.png');
+out_path = fullfile(parent_dir, 'PM07_geothermal_gradient.png');
 exportgraphics(fig, out_path, 'Resolution', 200);
 fprintf('\nFigure saved -> %s\n', out_path);

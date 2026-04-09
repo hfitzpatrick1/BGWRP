@@ -4,10 +4,11 @@
 clear; clc; close all;
 
 script_dir = fileparts(mfilename('fullpath'));
+parent_dir = fileparts(script_dir);
 
 %% 1. LOAD DATA -----------------------------------------------------------
 fprintf('--- Loading DTS Dataset ---\n');
-load(fullfile(script_dir, '_processed_DTS', 'Channel1_alldataupto070224.mat'));
+load(fullfile(parent_dir, '_processed_DTS', 'Channel1_alldataupto070224.mat'));
 fprintf('DTS Data Loaded: [%d depths  x  %d timestamps]\n',length(distance),length(datetime));
 
 %% 2. DEPTH CALIBRATION ---------------------------------------------------
@@ -89,7 +90,7 @@ end
 %
 % ========================================================================
 
-output_dir = 'C:\Users\Hannah Fitz\OneDrive - csulb\RBGRP\WellCAD\LAS\';   % adjust if needed
+output_dir = [parent_dir filesep];
 step_ft    = 0.25;                      % uniform vertical resolution
 
 for i = 1:numel(test_dates)

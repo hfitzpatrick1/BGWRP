@@ -12,7 +12,7 @@
 %   - Calibration: C1=513, MperChan=0.25
 %
 % Usage:
-%   cd('C:\Coding\BGWRP'); run('scripts\run_PT01b_thesis_analysis.m')
+%   cd('<DATA APPENDIX>'); run('scripts\run_PT01b_thesis_analysis.m')
 
 %clear all;
 %close all;

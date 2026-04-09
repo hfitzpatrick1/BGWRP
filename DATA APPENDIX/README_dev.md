@@ -113,7 +113,7 @@ No Python installation is required.
    ```
 
 2. In MATLAB, navigate to `scripts/` and run:
-   ```matlab
+```matlab
    run_PT01c_thesis_analysis    % PT-01c (Gage-Gardena, 79-94 m)
    ```
 
@@ -126,7 +126,7 @@ No Python installation is required.
 1. Ensure `Channel1_alldataupto070224.mat` is in the same folder as the DTS scripts (or in `_processed_DTS/`).
 
 2. Run:
-   ```matlab
+```matlab
    DTS_W_LAS                    % Pre/post pump profiles (Figure 8)
    geothermal_gradient_PM07     % Geothermal gradient (Figure 7)
    ```
