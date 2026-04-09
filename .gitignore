@@ -6,6 +6,12 @@
 *.mat
 *.fig
 
+# Allow .mat files in thesis data directories
+!data/_BAK/_raw/**/*.mat
+!data/_BAK/BAK/**/*.mat
+!data/_BAK/_TEMP/**/*.mat
+!data/DTS Data/**/*.mat
+
 # Temporary files
 *~
 *.tmp
@@ -33,6 +39,29 @@ output/
 results/
 temp/
 
-# Data directories (now submodules)
+# Data directories
 _archive/
 data/
+
+# Selectively include thesis data for digital appendix
+!data/_BAK/
+!data/_BAK/_raw/
+!data/_BAK/_raw/**
+!data/_BAK/BAK/
+!data/_BAK/BAK/PT01a_Recovery_100/
+!data/_BAK/BAK/PT01a_Recovery_100/**
+!data/_BAK/BAK/PT01b_Recovery_100/
+!data/_BAK/BAK/PT01b_Recovery_100/**
+!data/_BAK/BAK/PT01c_Recovery_100/
+!data/_BAK/BAK/PT01c_Recovery_100/**
+!data/_BAK/_TEMP/
+!data/_BAK/_TEMP/**
+!data/Transducer Data/
+!data/Transducer Data/**
+!data/PTWells/
+!data/PTWells/**
+!data/DTS Data/
+!data/DTS Data/**
+!data/_BATCH/
+!data/_BATCH/_configs/
+!data/_BATCH/_configs/**
